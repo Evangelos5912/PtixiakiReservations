@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using PtixiakiReservations.Data;
@@ -11,9 +12,11 @@ using PtixiakiReservations.Data;
 namespace PtixiakiReservations.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260428094851_AddRoleRequestFields")]
+    partial class AddRoleRequestFields
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -294,7 +297,7 @@ namespace PtixiakiReservations.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("City", (string)null);
+                    b.ToTable("City");
                 });
 
             modelBuilder.Entity("PtixiakiReservations.Models.Date", b =>
@@ -321,7 +324,7 @@ namespace PtixiakiReservations.Migrations
 
                     b.HasIndex("EventId");
 
-                    b.ToTable("Date", (string)null);
+                    b.ToTable("Date");
                 });
 
             modelBuilder.Entity("PtixiakiReservations.Models.Event", b =>
@@ -366,7 +369,7 @@ namespace PtixiakiReservations.Migrations
 
                     b.HasIndex("VenueId");
 
-                    b.ToTable("Event", (string)null);
+                    b.ToTable("Event");
                 });
 
             modelBuilder.Entity("PtixiakiReservations.Models.EventType", b =>
@@ -382,7 +385,7 @@ namespace PtixiakiReservations.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("EventType", (string)null);
+                    b.ToTable("EventType");
                 });
 
             modelBuilder.Entity("PtixiakiReservations.Models.Reservation", b =>
@@ -416,7 +419,7 @@ namespace PtixiakiReservations.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Reservation", (string)null);
+                    b.ToTable("Reservation");
                 });
 
             modelBuilder.Entity("PtixiakiReservations.Models.Seat", b =>
@@ -448,7 +451,7 @@ namespace PtixiakiReservations.Migrations
 
                     b.HasIndex("SubAreaId");
 
-                    b.ToTable("Seat", (string)null);
+                    b.ToTable("Seat");
                 });
 
             modelBuilder.Entity("PtixiakiReservations.Models.SubArea", b =>
@@ -492,7 +495,7 @@ namespace PtixiakiReservations.Migrations
 
                     b.HasIndex("VenueId");
 
-                    b.ToTable("SubArea", (string)null);
+                    b.ToTable("SubArea");
                 });
 
             modelBuilder.Entity("PtixiakiReservations.Models.Venue", b =>
@@ -530,7 +533,7 @@ namespace PtixiakiReservations.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Venue", (string)null);
+                    b.ToTable("Venue");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
