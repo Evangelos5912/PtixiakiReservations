@@ -89,7 +89,7 @@
 
     <!-- Events Grid -->
     <div id="events-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-        @foreach (var item in Model.Where(e => e.ParentEventId == null))
+        @foreach (var item in Model.Where(e => e.ParentEventId == null).Take(6))
         {
             var eventTimeClass = ViewBag.GetEventTimeClass != null ? ViewBag.GetEventTimeClass(item.StartDateTime) : "event-upcoming";
 
@@ -111,7 +111,12 @@
                         </div>
                     }
                     </div>
-                    <h3 class="text-lg font-semibold text-gray-900 mb-2 line-clamp-2">@item.Name</h3>
+                    <div class="flex items-start mb-3">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-2 line-clamp-2">@item.Name</h3>
+                        <svg class="h-5 w-5 mx-2 text-gray-500 mr-2 mt-0.5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3L5 13h4l-3 6h12l-3-6h4L12 3z M12 19v4" />
+                        </svg>
+                    </div>
                     <div class="flex items-start mb-3">
                         <svg class="h-5 w-5 text-gray-500 mr-2 mt-0.5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -289,14 +294,17 @@
     <script>
         $(document).ready(function () {
             let currentPage = 1;
-            let totalPages = 1;
-            let pageSize = 12;
+            let pageSize = 6;
+            
+            // Get the exact count of Master Events from C# and calculate the total pages
+            let totalRecords = @Model.Count(e => e.ParentEventId == null);
+            let totalPages = Math.max(1, Math.ceil(totalRecords / pageSize));
+            
             let searchParams = {};
             let dateRangePicker;
             let autocompleteTimeout;
             let autocompleteResults = [];
             let currentAutocompleteIndex = -1;
-            // Store the max number of autocomplete results to show
             let maxAutocompleteResults = 8;
 
             // Initialize Flatpickr date range picker with improved styling
@@ -307,14 +315,15 @@
                 altFormat: "F j, Y",
                 conjunction: " to ",
                 minDate: "today",
-                defaultDate: [new Date(), new Date(new Date().setDate(new Date().getDate() + 7))],
+                // DELETE THE defaultDate LINE HERE!
                 onChange: function(selectedDates) {
                     validateSearch();
                 }
             });
 
-            // Update filtered count based on initial model
-            $('#filtered-count').text(@Model.Count());
+            $('#filtered-count').text(totalRecords);
+
+            updatePagination(totalPages > 1);
 
             // Reset date button
             $('#reset-date').click(function() {
@@ -744,8 +753,14 @@
                                     
                                     <div class="event-content flex-grow">
                                         <!-- Title -->
-                                        <h3 class="text-lg font-semibold text-gray-900 mb-2 line-clamp-2">${event.name || 'Unnamed Event'}</h3>
-                                        
+                                        <div class="flex items-start mb-3">
+                                            <h3 class="text-lg font-semibold text-gray-900 mb-2 line-clamp-2">${event.name || 'Unnamed Event'}</h3>
+                                            ${isMasterEvent ? 
+                                            `<svg class="h-5 w-5 mx-2 text-gray-500 mr-2 mt-0.5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3L5 13h4l-3 6h12l-3-6h4L12 3z M12 19v4" />
+                                            </svg>` : ''}
+                                        </div>
+
                                         <div class="flex items-start mb-3">
                                             <svg class="h-5 w-5 text-gray-500 mr-2 mt-0.5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
