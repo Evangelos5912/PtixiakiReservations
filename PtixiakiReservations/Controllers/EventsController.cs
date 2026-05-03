@@ -1342,4 +1342,16 @@ private async Task ReloadCreateDropdowns(string userId)
 
         return View(childEvents);
     }
+
+    [HttpGet]
+    public async Task<IActionResult> SearchVenues(string query)
+    {
+        var venues = await context.Venue
+            .Where(v => v.Name.ToLower().Contains(query.ToLower()))
+            .Select(v => new { id = v.Id, name = v.Name, city = v.City.Name })
+            .Take(10)
+            .ToListAsync();
+
+        return Json(venues);
+    }
 }
