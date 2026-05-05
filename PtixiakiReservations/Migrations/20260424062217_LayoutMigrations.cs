@@ -5,7 +5,7 @@
 namespace PtixiakiReservations.Migrations
 {
     /// <inheritdoc />
-    public partial class initialCreate : Migration
+    public partial class LayoutMigrations : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

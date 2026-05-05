@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using PtixiakiReservations.Data;
@@ -11,9 +12,11 @@ using PtixiakiReservations.Data;
 namespace PtixiakiReservations.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260422154826_InitialCreate")]
+    partial class InitialCreate
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -189,23 +192,8 @@ namespace PtixiakiReservations.Migrations
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("boolean");
 
-                    b.Property<DateTime?>("EventManagerRequestDate")
-                        .HasColumnType("timestamp without time zone");
-
-                    b.Property<string>("EventManagerRequestReason")
-                        .HasColumnType("text");
-
-                    b.Property<string>("EventManagerRequestStatus")
-                        .HasColumnType("text");
-
                     b.Property<string>("FirstName")
                         .HasColumnType("text");
-
-                    b.Property<bool>("HasRequestedEventManagerRole")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("HasRequestedSuperOrganizerRole")
-                        .HasColumnType("boolean");
 
                     b.Property<bool>("HasRequestedVenueManagerRole")
                         .HasColumnType("boolean");
@@ -240,15 +228,6 @@ namespace PtixiakiReservations.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("SecurityStamp")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("SuperOrganizerRequestDate")
-                        .HasColumnType("timestamp without time zone");
-
-                    b.Property<string>("SuperOrganizerRequestReason")
-                        .HasColumnType("text");
-
-                    b.Property<string>("SuperOrganizerRequestStatus")
                         .HasColumnType("text");
 
                     b.Property<bool>("TwoFactorEnabled")
@@ -307,9 +286,6 @@ namespace PtixiakiReservations.Migrations
 
                     b.Property<bool>("Active")
                         .HasColumnType("boolean");
-
-                    b.Property<DateOnly>("Day")
-                        .HasColumnType("date");
 
                     b.Property<TimeOnly>("EndTime")
                         .HasColumnType("time without time zone");
@@ -396,9 +372,6 @@ namespace PtixiakiReservations.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("ID"));
 
-                    b.Property<bool?>("Attended")
-                        .HasColumnType("boolean");
-
                     b.Property<DateTime>("Date")
                         .HasColumnType("timestamp without time zone");
 
@@ -407,15 +380,6 @@ namespace PtixiakiReservations.Migrations
 
                     b.Property<int>("EventId")
                         .HasColumnType("integer");
-
-                    b.Property<bool>("IsPastReservation")
-                        .HasColumnType("boolean");
-
-                    b.Property<int?>("Rating")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Review")
-                        .HasColumnType("text");
 
                     b.Property<int>("SeatId")
                         .HasColumnType("integer");
@@ -612,7 +576,7 @@ namespace PtixiakiReservations.Migrations
             modelBuilder.Entity("PtixiakiReservations.Models.Date", b =>
                 {
                     b.HasOne("PtixiakiReservations.Models.Event", "Event")
-                        .WithMany("EventDates")
+                        .WithMany()
                         .HasForeignKey("EventId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
@@ -722,8 +686,6 @@ namespace PtixiakiReservations.Migrations
             modelBuilder.Entity("PtixiakiReservations.Models.Event", b =>
                 {
                     b.Navigation("ChildEvents");
-
-                    b.Navigation("EventDates");
                 });
 #pragma warning restore 612, 618
         }
