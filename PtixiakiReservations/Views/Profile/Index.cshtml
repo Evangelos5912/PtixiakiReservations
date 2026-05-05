@@ -236,6 +236,11 @@
                                 <div class="text-sm text-gray-500 dark:text-gray-400">
                                     @reservation.Date.ToString("MMM dd, yyyy h:mm tt")
                                 </div>
+
+                                <a href="/reservation/@reservation.ID/ics"
+                                    class="px-5 py-2 rounded-md bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium transition flex items-center gap-2">
+                                        Add Reminder
+                                </a>
                             </td>
                         </tr>
                     }
