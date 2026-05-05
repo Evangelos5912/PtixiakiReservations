@@ -11,6 +11,10 @@ using Microsoft.EntityFrameworkCore;
 using PtixiakiReservations.Data;
 using PtixiakiReservations.Models;
 using PtixiakiReservations.Models.Requests;
+using Ical.Net;
+using Ical.Net.CalendarComponents;
+using Ical.Net.DataTypes;
+using Ical.Net.Serialization;
 using PtixiakiReservations.Services;
 
 namespace PtixiakiReservations.Controllers;
@@ -492,6 +496,58 @@ public class ReservationController(
         return RedirectToAction(nameof(Index));
     }
 
+    [HttpGet("reservation/{ID}/ics")]
+    public IActionResult GetIcs(int id)
+    {
+        var reservation = _context.Reservation.FirstOrDefault(r => r.ID == id);
+
+        var calendar = new Ical.Net.Calendar();
+
+        var bookedEvent = _context.Event.FirstOrDefault(e => e.Id ==reservation.EventId);
+        if (bookedEvent == null)
+        {
+            return BadRequest("Event not found");
+        }
+
+        var eventVenue = _context.Venue.FirstOrDefault(v => v.Id ==bookedEvent.VenueId);
+        if (eventVenue == null)
+        {
+            return BadRequest("Venue not found");
+        }
+
+        var bookedSeat = _context.Seat.FirstOrDefault(s => s.Id ==reservation.SeatId);
+
+        var venueCity = _context.City.FirstOrDefault(c => c.Id ==eventVenue.CityId);
+
+        var resDesc = (bookedEvent.Name + " at " + eventVenue.Name + " (" + eventVenue.Address + ", " + venueCity.Name + ")" + ".");
+
+        if (bookedSeat != null) 
+        {
+            resDesc += (" Seat: " + bookedSeat.Name);
+        }
+
+        var mapQuery = Uri.EscapeDataString(eventVenue.Name + ", " + eventVenue.Address + ", " + venueCity.Name);
+
+        var e = new Ical.Net.CalendarComponents.CalendarEvent
+        {
+            Summary = bookedEvent.Name,
+            Description = resDesc,
+            Location= $"https://www.google.com/maps/search/?api=1&query={mapQuery}",
+            Start = new Ical.Net.DataTypes.CalDateTime(reservation.Date),
+            End = new Ical.Net.DataTypes.CalDateTime(reservation.Date.AddHours(1)),
+            Uid = Guid.NewGuid().ToString(),
+            Created = new Ical.Net.DataTypes.CalDateTime(DateTime.UtcNow)
+        };
+
+        calendar.Events.Add(e);
+
+        var serializer = new Ical.Net.Serialization.CalendarSerializer();
+        var icalString = serializer.SerializeToString(calendar);
+
+        var bytes = System.Text.Encoding.UTF8.GetBytes(icalString);
+
+        return File(bytes, "text/calendar", "reservation.ics");
+    }
     [HttpPost]
     public async Task<IActionResult> SaveReview(int reservationId, string review, int rating)
     {
