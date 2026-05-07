@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <UserSecretsId>aspnet-PtixiakiReservations-5D1D0AAF-2349-4831-A081-52D4C1028561</UserSecretsId>
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFramework>net9.0</TargetFramework>
     <DockerDefaultTargetOS>Windows</DockerDefaultTargetOS>
     <StaticWebAssetBasePath>/</StaticWebAssetBasePath>
   </PropertyGroup>
