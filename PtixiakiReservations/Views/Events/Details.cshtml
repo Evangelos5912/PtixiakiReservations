@@ -140,7 +140,24 @@
     </div>
     <!-- Sub Events -->
     @if(Model.ParentEventId == null && Model.ChildEvents!= null && Model.ChildEvents.Any()){
-        <div class="overflow-x-auto mt-10">
+        var schedulePageSize = 4;
+        var schedulePage = 1;
+        var orderedChildEvents = Model.ChildEvents.OrderBy(s => s.StartDateTime).ToList();
+        var totalSchedulePages = (int)Math.Ceiling(orderedChildEvents.Count / (double)schedulePageSize);
+
+        if (int.TryParse(Context.Request.Query["schedulePage"], out var requestedSchedulePage))
+        {
+            schedulePage = requestedSchedulePage;
+        }
+
+        schedulePage = Math.Clamp(schedulePage, 1, totalSchedulePages);
+
+        var pagedChildEvents = orderedChildEvents
+            .Skip((schedulePage - 1) * schedulePageSize)
+            .Take(schedulePageSize)
+            .ToList();
+
+        <div id="available-schedules" class="overflow-x-auto mt-10">
             <div class="bg-gray-50 px-8 py-5 border-b border-gray-200 flex justify-between items-center">
                 <h2 class="text-xl font-bold text-gray-800">Available Schedules</h2>
                 <span class="bg-blue-100 text-blue-800 text-l font-semibold px-3 py-1 rounded-full">
@@ -158,7 +175,7 @@
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100">
-                    @foreach(var child in Model.ChildEvents.OrderBy(s => s.StartDateTime)){
+                    @foreach(var child in pagedChildEvents){
                         <tr class="hover:bg-blue-50/50 transition-colors group bg-white border-b border-gray-200 mt-5 ">
                             <td class="px-6 py-4">
                                 <div class="flex items-center text-sm text-gray-600">
@@ -187,6 +204,43 @@
                     }
                 </tbody>
             </table>
+            @if (totalSchedulePages > 1)
+            {
+                <div class="bg-white px-8 py-5 border-t border-gray-200 flex items-center justify-center gap-2">
+                    @if (schedulePage > 1)
+                    {
+                        <a href="@(Url.Action("Details", "Events", new { id = Model.Id, schedulePage = schedulePage - 1 }) + "#available-schedules")"
+                           class="px-3 py-2 text-sm font-medium rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors">
+                            Previous
+                        </a>
+                    }
+
+                    @for (var pageNumber = 1; pageNumber <= totalSchedulePages; pageNumber++)
+                    {
+                        if (pageNumber == schedulePage)
+                        {
+                            <span class="min-w-10 px-3 py-2 text-sm font-semibold rounded-md bg-blue-600 text-white text-center">
+                                @pageNumber
+                            </span>
+                        }
+                        else
+                        {
+                            <a href="@(Url.Action("Details", "Events", new { id = Model.Id, schedulePage = pageNumber }) + "#available-schedules")"
+                               class="min-w-10 px-3 py-2 text-sm font-medium rounded-md border border-gray-300 text-gray-700 text-center hover:bg-gray-50 transition-colors">
+                                @pageNumber
+                            </a>
+                        }
+                    }
+
+                    @if (schedulePage < totalSchedulePages)
+                    {
+                        <a href="@(Url.Action("Details", "Events", new { id = Model.Id, schedulePage = schedulePage + 1 }) + "#available-schedules")"
+                           class="px-3 py-2 text-sm font-medium rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors">
+                            Next
+                        </a>
+                    }
+                </div>
+            }
         </div>
         }
 
