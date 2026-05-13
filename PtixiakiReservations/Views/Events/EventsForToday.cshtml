@@ -9,7 +9,7 @@
     <div class="bg-white rounded-xl shadow-lg mb-10 overflow-hidden">
         <div class="bg-gradient-to-r from-blue-600 to-indigo-700 px-6 py-4 flex flex-row items-center justify-between">
             <h3 class="text-xl font-bold text-white">Find Events</h3>
-            <button id="panel-button" class="text-xl font-bold text-white">V</button>
+            <button id="panel-button" class="text-xl font-bold text-white">X</button>
         </div>
 
         <div id="panel-body" class="p-6">
@@ -82,13 +82,34 @@
         <h2 class="text-xl font-semibold text-gray-800">
             Results: Events <span class="text-blue-600 font-bold">(<span id="filtered-count">0</span>)</span>
         </h2>
+        <select id="variable-pagination" class="appearance-none bg-white border border-gray-300 rounded-lg py-3 px-4 pr-8 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors w-[150px]">
+            <option value="12" selected>12 per page</option>
+            <option value="24">24 per page</option>
+            <option value="36">36 per page</option>
+        </select>
     </div>
 
     <!-- Events Grid -->
     <div id="events-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
         @foreach (var item in Model)
         {
-            var eventTimeClass = ViewBag.GetEventTimeClass != null ? ViewBag.GetEventTimeClass(item.StartDateTime) : "event-upcoming";
+                string eventTimeClass;
+                DateTime today = DateTime.Today;
+                DateTime eventDay = item.StartDateTime.Date; // Only compare dates
+
+                if (eventDay == today)
+                {
+                    eventTimeClass = "event-today";
+                }
+                else if (eventDay > today)
+                {
+                    eventTimeClass = "event-upcoming";
+                }
+                else
+                {
+                    eventTimeClass = "event-past";
+                }
+            
 
             <div class="event-card @eventTimeClass rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
                 <div class="p-5">
@@ -685,6 +706,17 @@
             // Monitor all search inputs for validation
             $('#event-type, #date-range, #search-term').on('change input', validateSearch);
 
+            // Handle page size change asynchronously
+            $('#variable-pagination').on('change', function() {
+                pageSize = parseInt($(this).val()) || 12;
+                currentPage = 1; // Reset to first page when changing view size
+                
+                $('#events-container').addClass('hidden');
+                $('#loading-indicator').removeClass('hidden');
+                
+                performSearch();
+            });
+
             // Search button click handler
             $('#search-button').click(function() {
                 if (!validateSearch()) return;
@@ -960,7 +992,7 @@
         const btn = document.getElementById("panel-button");
 
         btn.addEventListener("click", () => {
-            btn.textContent = btn.textContent === "V" ? "X" : "V";
+            btn.textContent = btn.textContent === "X" ? "V" : "X";
         });
     </script>
 }
