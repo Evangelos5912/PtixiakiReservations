@@ -1,4 +1,4 @@
-﻿using System;
+﻿﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -48,10 +48,12 @@ namespace PtixiakiReservations.Controllers
         }
 
         [Authorize(Roles = "Admin,Venue")]
-        public async Task<IActionResult> MyVenues(string filter = "mine")
+        public async Task<IActionResult> MyVenues(string filter = "mine", int page = 1, int pageSize = 12)
         {
             string userId = _userManager.GetUserId(HttpContext.User);
             ViewBag.CurrentFilter = filter;
+            ViewBag.CurrentPage = page;
+            ViewBag.PageSize = pageSize;
 
             var query = _context.Venue
                 .Include(v => v.City)
@@ -62,7 +64,17 @@ namespace PtixiakiReservations.Controllers
                 query = query.Where(v => v.UserId == userId);
             }
 
-            var venues = await query.ToListAsync();
+            // Calculate global stats for the filtered set before applying pagination
+            int totalCount = await query.CountAsync();
+            ViewBag.TotalCount = totalCount;
+            ViewBag.TotalPages = (int)Math.Ceiling((double)totalCount / pageSize);
+            ViewBag.CityCount = await query.Select(v => v.CityId).Distinct().CountAsync();
+
+            // Fetch only the venues for the current page
+            var venues = await query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
 
             var subAreaCounts = new Dictionary<int, int>();
             var imagePaths = new Dictionary<int, string>();
@@ -78,15 +90,10 @@ namespace PtixiakiReservations.Controllers
             ViewBag.SubAreaCounts = subAreaCounts;
             ViewBag.ImagePaths = imagePaths;
 
-            var venueIds = venues.Select(v => v.Id).ToList();
-            var eventCount = 0;
-            
-            if (venueIds.Any())
-            {
-                eventCount = await _context.Event
-                    .Where(e => venueIds.Contains(e.VenueId))
-                    .CountAsync();
-            }
+            // Global event count for this specific filter
+            var eventCount = await _context.Event
+                .Where(e => query.Any(v => v.Id == e.VenueId))
+                .CountAsync();
 
             ViewBag.EventCount = eventCount;
 
