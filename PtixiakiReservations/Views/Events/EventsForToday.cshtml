@@ -82,11 +82,17 @@
         <h2 class="text-xl font-semibold text-gray-800">
             Results: Events <span class="text-blue-600 font-bold">(<span id="filtered-count">0</span>)</span>
         </h2>
-        <select id="variable-pagination" class="appearance-none bg-white border border-gray-300 rounded-lg py-3 px-4 pr-8 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors w-[150px]">
-            <option value="12" selected>12 per page</option>
-            <option value="24">24 per page</option>
-            <option value="36">36 per page</option>
-        </select>
+        <div class="flex items-center gap-3"> 
+            <select id="variable-view" class="appearance-none bg-white border border-gray-300 rounded-lg py-3 px-4 pr-8 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors w-[180px]">
+                <option value="asc" selected>Ascending by Date</option>
+                <option value="desc">Descending by Date</option>
+            </select>
+            <select id="variable-pagination" class="appearance-none bg-white border border-gray-300 rounded-lg py-3 px-4 pr-8 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors w-[150px]">
+                <option value="12" selected>12 per page</option>
+                <option value="24">24 per page</option>
+                <option value="36">36 per page</option>
+            </select>
+        </div>
     </div>
 
     <!-- Events Grid -->
@@ -216,24 +222,25 @@
     </div>
 
     <!-- Pagination -->
-    <div id="pagination" class="mt-12 flex flex-col sm:flex-row justify-center items-center space-y-4 sm:space-y-0 sm:space-x-4 @(ViewBag.TotalPages > 1 ? "" : "hidden")">
-        <button id="prev-page" class="flex items-center px-5 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-            </svg>
-            Previous
-        </button>
+    <div class="mt-12 flex justify-center">
+        <nav id="pagination" class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px @(ViewBag.TotalPages > 1 ? "" : "hidden")" aria-label="Pagination">
+            <button id="prev-page" class="pagination-prev relative inline-flex items-center px-4 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                <svg class="h-5 w-5 mr-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                    <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                </svg>
+                Previous
+            </button>
 
-        <div id="page-numbers" class="flex flex-wrap justify-center gap-2">
-            <!-- Page numbers will be added here -->
-        </div>
+            <div id="page-numbers" class="flex flex-wrap justify-center">
+            </div>
 
-        <button id="next-page" class="flex items-center px-5 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-            Next
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-            </svg>
-        </button>
+            <button id="next-page" class="pagination-next relative inline-flex items-center px-4 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                Next
+                <svg class="h-5 w-5 ml-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                    <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                </svg>
+            </button>
+        </nav>
     </div>
 </div>
 
@@ -337,13 +344,6 @@
         box-shadow: 0 10px 15px -3px rgba(148, 163, 184, 0.1), 0 4px 6px -2px rgba(148, 163, 184, 0.05);
     }
 
-    /* Pagination active page */
-    .page-active {
-        background-color: #3b82f6;
-        color: white;
-        border-color: #3b82f6;
-    }
-
     /* Autocomplete dropdown styling */
     #autocomplete-dropdown {
         box-shadow: 0 4px 10px -2px rgba(0, 0, 0, 0.2);
@@ -372,6 +372,7 @@
         $(document).ready(function () {
             let currentPage = 1;
             let pageSize = 12;
+            let sortOrder = 'asc';
             
             let totalRecords = @(ViewBag.TotalMasterEvents ?? 0);
             let totalPages = Math.max(1, Math.ceil(totalRecords / pageSize));
@@ -439,6 +440,15 @@
                 }, 300);
 
                 validateSearch();
+            });
+
+            // Handle sort order change asynchronously
+            $('#variable-view').on('change', function() {
+                sortOrder = $(this).val();
+                currentPage = 1;
+                $('#events-container').addClass('hidden');
+                $('#loading-indicator').removeClass('hidden');
+                performSearch();
             });
 
             // Handle keyboard navigation in autocomplete dropdown
@@ -782,6 +792,7 @@
                     startDate: startDate,
                     endDate: endDate,
                     searchTerm: $('#search-term').val(),
+                    sort: sortOrder,
                     page: currentPage,
                     pageSize: pageSize
                 };
@@ -939,7 +950,7 @@
                 $('#prev-page').prop('disabled', currentPage === 1);
                 $('#next-page').prop('disabled', currentPage === totalPages);
 
-                // Calculate which page numbers to show
+
                 let startPage = Math.max(1, currentPage - 2);
                 let endPage = Math.min(totalPages, startPage + 4);
 
@@ -952,7 +963,7 @@
                 if (startPage > 1) {
                     pageNumbersContainer.append(createPageButton(1));
                     if (startPage > 2) {
-                        pageNumbersContainer.append('<span class="px-3 py-2 text-gray-500">...</span>');
+                        pageNumbersContainer.append('<span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">...</span>');
                     }
                 }
 
@@ -964,7 +975,7 @@
                 // Add last page if not included
                 if (endPage < totalPages) {
                     if (endPage < totalPages - 1) {
-                        pageNumbersContainer.append('<span class="px-3 py-2 text-gray-500">...</span>');
+                        pageNumbersContainer.append('<span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">...</span>');
                     }
                     pageNumbersContainer.append(createPageButton(totalPages));
                 }
@@ -974,8 +985,10 @@
             function createPageButton(pageNumber) {
                 const isActive = pageNumber === currentPage;
                 return $('<button>', {
-                    class: `page-button w-10 h-10 flex items-center justify-center border rounded-md text-sm font-medium transition-colors ${
-                        isActive ? 'page-active' : 'text-gray-700 hover:bg-gray-50 border-gray-300'
+                    class: `page-number pagination-link page-button relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                        isActive 
+                        ? 'active current-page z-10 bg-indigo-50 border-indigo-500 text-indigo-600' 
+                        : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
                     }`,
                     'data-page': pageNumber,
                     text: pageNumber

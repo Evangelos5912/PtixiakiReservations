@@ -657,15 +657,17 @@ private async Task ReloadCreateDropdowns(string userId)
         string startDate = null,
         string endDate = null,
         string searchTerm = null,
+        string sort = "asc",
         int page = 1,
         int pageSize = 12)
     {
         logger.LogInformation(
-            "Event search with criteria: EventType={EventType}, StartDate={StartDate}, EndDate={EndDate}, SearchTerm={SearchTerm}",
+            "Event search with criteria: EventType={EventType}, StartDate={StartDate}, EndDate={EndDate}, SearchTerm={SearchTerm}, Sort={Sort}",
             eventTypeId,
             startDate,
             endDate,
-            searchTerm);
+            searchTerm,
+            sort);
 
         try
         {
@@ -735,7 +737,14 @@ private async Task ReloadCreateDropdowns(string userId)
             }
 
             // Order by start date (nearest first)
-            query = query.OrderBy(e => e.StartDateTime);
+            if (sort == "desc")
+            {
+                query = query.OrderByDescending(e => e.StartDateTime);
+            }
+            else
+            {
+                query = query.OrderBy(e => e.StartDateTime);
+            }
 
             // Get total count for pagination
             var totalCount = await query.CountAsync();
