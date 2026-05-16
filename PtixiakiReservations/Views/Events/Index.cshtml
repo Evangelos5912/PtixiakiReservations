@@ -8,6 +8,9 @@
     var currentUser = await UserManager.GetUserAsync(User);
     var userRoles = await UserManager.GetRolesAsync(currentUser);
     bool isAdmin = User.IsInRole("Admin");
+    int currentPage = ViewBag.CurrentPage ?? 1;
+    int totalPages = ViewBag.TotalPages ?? 1;
+    int pageSize = ViewBag.PageSize ?? 12;
 }
 
 <div class="bg-gradient-to-r from-blue-50 to-indigo-50 min-h-screen py-8 px-4 sm:px-6 lg:px-8">
@@ -91,6 +94,7 @@
                 </table>
             </div>
 
+
             <!-- No Events Message -->
             <div id="no-events-message" class="hidden p-12 text-center">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -112,6 +116,69 @@
     </div>
 </div>
 
+@if (totalPages > 1)
+{
+    <div class="mt-12 flex justify-center">
+        <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+            @if (currentPage > 1)
+            {
+            <a href="@Url.Action("Index", new { page = currentPage - 1, pageSize = pageSize })"
+                class="pagination-prev relative inline-flex items-center px-4 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+                    <span class="sr-only">Previous</span>
+                    <svg class="h-5 w-5 mr-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                        <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                    </svg>
+                    Previous
+                </a>
+            }
+
+            @{
+                int startPage = Math.Max(1, currentPage - 2);
+                int endPage = Math.Min(totalPages, startPage + 4);
+                if (endPage - startPage < 4) startPage = Math.Max(1, endPage - 4);
+            }
+
+            @if (startPage > 1)
+            {
+                <a href="@Url.Action("Index", new { page = 1, pageSize = pageSize })" 
+                class="page-number pagination-link relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">1</a>
+                @if (startPage > 2)
+                {
+                    <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">...</span>
+                }
+            }
+
+            @for (int i = startPage; i <= endPage; i++)
+            {
+                <a href="@Url.Action("Index", new { page = i, pageSize = pageSize })"
+                class="page-number pagination-link @(i == currentPage ? "active current-page z-10 bg-indigo-50 border-indigo-500 text-indigo-600" : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50") relative inline-flex items-center px-4 py-2 border text-sm font-medium">
+                    @i
+                </a>
+            }
+
+            @if (endPage < totalPages)
+            {
+                @if (endPage < totalPages - 1)
+                {
+                    <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">...</span>
+                }
+                <a href="@Url.Action("Index", new { page = totalPages, pageSize = pageSize })" 
+                class="page-number pagination-link relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">@totalPages</a>
+            }
+
+            @if (currentPage < totalPages)
+            {
+                <a href="@Url.Action("Index", new { page = currentPage + 1, pageSize = pageSize })"
+                class="pagination-next relative inline-flex items-center px-4 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+                    Next
+                    <svg class="h-5 w-5 ml-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                        <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                    </svg>
+                </a>
+            }
+        </nav>
+    </div>
+}
 <!-- Event Details Modal -->
 <div id="event-details-modal" class="fixed inset-0 z-50 hidden bg-gray-900 bg-opacity-50 flex items-center justify-center">
     <div class="bg-white rounded-lg shadow-lg w-full max-w-2xl">
@@ -123,17 +190,17 @@
                 </svg>
             </button>
         </div>
+        
         <div class="p-6 space-y-4" id="modal-event-details">
             <!-- Event details will be populated here -->
         </div>
+        
         <div class="bg-gray-100 border-t border-gray-200 px-6 py-4 flex justify-end space-x-4 rounded-b-lg">
-            @if (isAdmin) {
-                <a id="modal-edit-link" href="#" class="px-4 py-2 bg-indigo-500 text-white rounded shadow hover:bg-indigo-700 transition-colors">
+            <a id="modal-edit-btn" class="cursor-pointer px-4 py-2 bg-indigo-500 text-white rounded shadow hover:bg-indigo-700 transition-colors">
                 Edit Event
             </a>
-            }
 
-            <button onclick="closeModal()" class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors">
+            <button onclick="closeModal()" type="button" class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors">
                 Close
             </button>
         </div>
@@ -161,10 +228,10 @@
         // Function to load all events for the current user
         function loadEvents() {
             $.ajax({
-                url: '/Events/GetUserEvents',
+                url: '/Events/GetUserEvents?page=@currentPage&pageSize=@pageSize',
                 type: 'GET',
                 success: function(data) {
-                    allEvents = data;
+                    allEvents = data.events;
                     renderEvents(allEvents);
                     $("#loading-indicator").addClass("hidden");
                     $("#events-table").removeClass("hidden");
@@ -335,7 +402,10 @@
         // Function to show event details in modal
         function showEventDetails(eventId) {
             const event = allEvents.find(e => e.id === eventId);
-            if (!event) return;
+            if (!event) {
+                console.error("Could not find event with ID:", eventId);
+                return;
+            }
 
             const startDate = new Date(event.startDateTime);
             const endDate = new Date(event.endTime);
@@ -348,9 +418,24 @@
             const formattedEndDate = endDate.toLocaleDateString(undefined, dateOptions);
             const formattedEndTime = endDate.toLocaleTimeString(undefined, timeOptions);
 
-            // Set modal content
+            // Set modal title
             $("#modal-event-title").text(event.name);
-            $("#modal-edit-link").attr("href", `/Events/Edit/${event.id}`);
+
+            const editBtn = document.getElementById("modal-edit-btn");
+            
+            editBtn.onclick = null; 
+            
+    
+            editBtn.onclick = function(e) {
+                e.preventDefault(); // Stop any browser weirdness
+                
+                // If you see this alert, the button works!
+                console.log("Navigating to: /Events/Edit/" + event.id);
+                
+                // Force the browser to go to the Edit page
+                window.location.assign("/Events/Edit/" + event.id);
+            };
+            // -----------------------------------------
 
             // Build details HTML
             let detailsHtml = `
@@ -391,5 +476,15 @@
         function closeModal() {
             $("#event-details-modal").addClass("hidden");
         }
+
+        function updateUrl(param, value) {
+            const url = new URL(window.location.href);
+            url.searchParams.set(param, value);
+            if (param !== 'page') {
+                url.searchParams.set('page', '1');
+            }
+            window.location.href = url.href;
+        }
+
     </script>
 }

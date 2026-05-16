@@ -291,6 +291,9 @@
                     if(parentError) parentError.classList.add('hidden');
                     eventTypeSelect.disabled = false;
                     resetDateConstraints();
+                    
+                    isMultiDay.disabled = false;
+                    document.querySelector('label[for="isMultiDay"]').classList.remove('text-gray-400');
                 } else {
                     hideChildEventForm(); 
                     
@@ -345,8 +348,43 @@
                 }
             }
 
+            // --- Constraint Helper ---
+            async function applyParentTimingConstraints(parentId) {
+                if (!parentId) return;
+                try {
+                    const response = await fetch(`/Events/GetEventTiming?id=${parentId}`);
+                    if (!response.ok) throw new Error("Failed to fetch parent timing.");
+                    const timing = await response.json();
+
+                    const minISO = timing.start;
+                    const maxISO = timing.end;
+                    const minD = minISO.split('T')[0];
+                    const maxD = maxISO.split('T')[0];
+
+                    startInput.min = minISO; startInput.max = maxISO;
+                    endInput.min = minISO; endInput.max = maxISO;
+                    multiStartDate.min = minD; multiStartDate.max = maxD;
+                    multiEndDate.min = minD; multiEndDate.max = maxD;
+                    
+                    multiStartTime.value = minISO.split('T')[1].substring(0, 5);
+                    multiDailyEndTime.value = maxISO.split('T')[1].substring(0, 5);
+
+                    if (minD === maxD) {
+                        isMultiDay.checked = false;
+                        isMultiDay.disabled = true;
+                        document.querySelector('label[for="isMultiDay"]').classList.add('text-gray-400');
+                        singleDayContainer.classList.remove('hidden');
+                        multiDayContainer.classList.add('hidden');
+                    } else {
+                        isMultiDay.disabled = false;
+                        document.querySelector('label[for="isMultiDay"]').classList.remove('text-gray-400');
+                    }
+                    if (isMultiDay.checked) updatePreview();
+                } catch (err) { console.error("Error applying constraints:", err); }
+            }
+
             // --- 2. Parent Event Selection ---
-            function selectParent(ev) {
+            async function selectParent(ev) {
                 hiddenIdInput.value = ev.id;
                 searchInput.value = ev.name;
                 searchInput.disabled = true;
@@ -354,7 +392,6 @@
                 resultsList.classList.add('hidden');
                 if(parentError) parentError.classList.add('hidden');
 
-                // Ensure sub-event list is visible, but HIDE the form inputs
                 subEventsListContainer.classList.remove('hidden');
                 hideChildEventForm(); 
                 updateSubEventsList(ev.id);
@@ -371,19 +408,7 @@
 
                 allScheduleInputs.forEach(i => i.disabled = false);
                 resetDateConstraints();
-
-                if (ev.rawStartDate && ev.rawEndDate) {
-                    const minD = ev.rawStartDate.split('T')[0];
-                    const maxD = ev.rawEndDate.split('T')[0];
-                    startInput.min = ev.rawStartDate; startInput.max = ev.rawEndDate;
-                    endInput.min = ev.rawStartDate; endInput.max = ev.rawEndDate;
-                    multiStartDate.min = minD; multiStartDate.max = maxD;
-                    multiEndDate.min = minD; multiEndDate.max = maxD;
-                    
-                    multiStartTime.value = ev.rawStartDate.split('T')[1].substring(0,5);
-                    multiDailyEndTime.value = ev.rawEndDate.split('T')[1].substring(0,5);
-                }
-                if (isMultiDay.checked) updatePreview();
+                await applyParentTimingConstraints(ev.id);
             }
 
             searchInput.addEventListener('input', function(e) {
@@ -414,6 +439,8 @@
                     subAreaSelect.innerHTML = '<option value="">Select a sub area</option>';
                     allScheduleInputs.forEach(i => i.disabled = true);
                 }
+                isMultiDay.disabled = false;
+                document.querySelector('label[for="isMultiDay"]').classList.remove('text-gray-400');
                 resetDateConstraints();
             };
 
@@ -490,15 +517,54 @@
                 if(this.checked) updatePreview();
             };
 
+            function enforceParentConstraints() {
+                if (!document.getElementById('radioChild').checked || !hiddenIdInput.value) return;
+
+                const minISO = startInput.getAttribute('min');
+                const maxISO = startInput.getAttribute('max');
+
+                // 1. Correct Single Day (datetime-local)
+                if (minISO && startInput.value < minISO) startInput.value = minISO;
+                if (maxISO && startInput.value > maxISO) startInput.value = maxISO;
+                if (minISO && endInput.value < minISO) endInput.value = minISO;
+                if (maxISO && endInput.value > maxISO) endInput.value = maxISO;
+
+                // 2. Correct Multi Day Dates
+                if (multiStartDate.min && multiStartDate.value < multiStartDate.min) multiStartDate.value = multiStartDate.min;
+                if (multiStartDate.max && multiStartDate.value > multiStartDate.max) multiStartDate.value = multiStartDate.max;
+                if (multiEndDate.min && multiEndDate.value < multiEndDate.min) multiEndDate.value = multiEndDate.min;
+                if (multiEndDate.max && multiEndDate.value > multiEndDate.max) multiEndDate.value = multiEndDate.max;
+
+                // 3. Correct Multi Day Times (Only constrained on the edge days)
+                const pStartTime = minISO ? minISO.split('T')[1].substring(0, 5) : null;
+                const pEndTime = maxISO ? maxISO.split('T')[1].substring(0, 5) : null;
+
+                if (pStartTime && multiStartDate.value === multiStartDate.min) {
+                    if (multiStartTime.value < pStartTime) multiStartTime.value = pStartTime;
+                }
+                if (pEndTime && multiEndDate.value === multiEndDate.max) {
+                    if (multiDailyEndTime.value > pEndTime) multiDailyEndTime.value = pEndTime;
+                }
+            }
+
             function updatePreview() {
-                const s = new Date(multiStartDate.value);
-                const e = new Date(multiEndDate.value);
+                enforceParentConstraints();
+
+                const s = new Date(multiStartDate.value + 'T00:00:00');
+                const e = new Date(multiEndDate.value + 'T00:00:00');
+
                 const cont = document.getElementById('datePreviewContainer');
-                if (isNaN(s) || isNaN(e) || s > e) { cont.classList.add('hidden'); return; }
+                if (isNaN(s.getTime()) || isNaN(e.getTime()) || s > e) { 
+                    cont.classList.add('hidden'); 
+                    return; 
+                }
                 
                 let list = ""; let count = 0;
                 for (let d = new Date(s); d <= e; d.setDate(d.getDate() + 1)) {
-                    list += `<div>${d.toLocaleDateString()}</div>`; count++;
+                    list += `<div class="py-1 border-b border-blue-100 last:border-0">
+                                <span class="font-medium">${d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}</span>
+                             </div>`; 
+                    count++;
                 }
                 document.getElementById('eventPreviewList').innerHTML = list;
                 document.getElementById('eventCount').textContent = count;
@@ -507,10 +573,30 @@
                 document.getElementById('multiStartDateTime').value = `${multiStartDate.value}T${multiStartTime.value}`;
                 document.getElementById('multiEndDateTime').value = `${multiEndDate.value}T${multiDailyEndTime.value}`;
             }
-            [multiStartDate, multiEndDate, multiStartTime, multiDailyEndTime].forEach(i => i.onchange = updatePreview);
+            [multiStartDate, multiEndDate, multiStartTime, multiDailyEndTime].forEach(i => i.oninput = updatePreview);
+
+            [startInput, endInput].forEach(input => {
+                input.addEventListener('change', function() {
+                    if (document.getElementById('radioChild').checked && hiddenIdInput.value) {
+                        if (this.min && this.value < this.min) this.value = this.min;
+                        if (this.max && this.value > this.max) this.value = this.max;
+                    }
+                });
+            });
 
             form.addEventListener('submit', async function(e) {
                 e.preventDefault();
+
+                // Run one final enforcement check to clean up any "half-typed" or browser-autofilled data
+                enforceParentConstraints();
+
+                // Validation checks
+                const eventNameInput = document.getElementById('Name');
+                if (!eventNameInput.value.trim()) {
+                    alert("Please enter an Event Name.");
+                    eventNameInput.focus();
+                    return;
+                }
 
                 if (document.getElementById('radioChild').checked && !hiddenIdInput.value) {
                     if(parentError) parentError.classList.remove('hidden');
@@ -519,7 +605,52 @@
                 
                 if (!venueHiddenInput.value) {
                     alert("Please search and select a Venue from the dropdown list.");
+                    venueSearch.focus();
                     return;
+                }
+
+                if (!subAreaSelect.value) {
+                    alert("Please select a Sub Area.");
+                    subAreaSelect.focus();
+                    return;
+                }
+
+                if (isMultiDay.checked) {
+                    const s = new Date(multiStartDate.value);
+                    const e = new Date(multiEndDate.value);
+                    if (isNaN(s) || isNaN(e) || s > e) { alert("Please select a valid date range."); return; }
+                } else {
+                    const s = new Date(startInput.value);
+                    const e = new Date(endInput.value);
+                    if (isNaN(s) || isNaN(e) || s >= e) { alert("Event must end after it starts."); return; }
+                }
+
+                if (document.getElementById('radioChild').checked && hiddenIdInput.value) {
+                    const parentMin = startInput.getAttribute('min');
+                    const parentMax = startInput.getAttribute('max');
+                    
+                    if (parentMin && parentMax) {
+                        const pStart = new Date(parentMin);
+                        const pEnd = new Date(parentMax);
+                        
+                        if (isMultiDay.checked) {
+                            const firstInstanceStart = new Date(`${multiStartDate.value}T${multiStartTime.value}`);
+                            const lastInstanceEnd = new Date(`${multiEndDate.value}T${multiDailyEndTime.value}`);
+                            if (firstInstanceStart < pStart || lastInstanceEnd > pEnd) {
+                                alert(`Sub-events must stay entirely within the Master Event's timeframe.\n\nMaster Event Limits:\nStarts: ${pStart.toLocaleString()}\nEnds: ${pEnd.toLocaleString()}`);
+                                return;
+                            }
+                        } else {
+   
+                            const childStart = new Date(startInput.value);
+                            const childEnd = new Date(endInput.value);
+                            
+                            if (childStart < pStart || childEnd > pEnd) {
+                                alert(`Sub-events must stay entirely within the Master Event's timeframe.\n\nMaster Event Limits:\nStarts: ${pStart.toLocaleString()}\nEnds: ${pEnd.toLocaleString()}`);
+                                return;
+                            }
+                        }
+                    }
                 }
 
                 // Temporarily re-enable locked fields so FormData picks them up
@@ -624,6 +755,7 @@
 
                             allScheduleInputs.forEach(i => { if(i) i.disabled = false; });
                             resetDateConstraints();
+                            await applyParentTimingConstraints(data.eventId);
                             updateSubEventsList(currentParentId);
                             
                         } else {
