@@ -89,6 +89,7 @@
                                         <tr>
                                             <th class="px-6 py-2 text-left">Event Name</th>
                                             <th class="px-6 py-2 text-left">Date & Time</th>
+                                            <th class="px-6 py-2 text-left">City</th>
                                             <th class="px-6 py-2 text-right">Actions</th>
                                         </tr>
                                     </thead>
@@ -835,6 +836,9 @@
                         <td class="px-6 py-3 whitespace-nowrap">
                             <div class="font-medium text-gray-700">${ev.date}</div>
                             <div class="text-xs text-indigo-600 font-medium mt-0.5">${ev.time}</div>
+                        </td>
+                        <td class="px-6 py-3 whitespace-nowrap">
+                            <div class="font-bold text-gray-900">${ev.city}</div>
                         </td>
                         <td class="px-6 py-3 whitespace-nowrap text-right text-sm font-medium flex justify-end items-center gap-2">
                             <button type="button" onclick="deleteSubEvent(${ev.id})" class="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-50 transition-colors" title="Delete this instance">
