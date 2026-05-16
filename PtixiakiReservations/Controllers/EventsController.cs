@@ -30,9 +30,18 @@ public class EventsController(
     : Controller
 {
     // GET: Events
-    [AllowAnonymous]
-    public IActionResult Index()
+    [Authorize]
+    [HttpGet]
+    public async Task<IActionResult> Index(int page = 1, int pageSize = 12)
     {
+        var query = context.Event.AsQueryable();
+
+        int totalCount = await query.CountAsync();
+
+
+        ViewBag.CurrentPage = page;
+        ViewBag.PageSize = pageSize;
+        ViewBag.TotalPages = totalCount == 0 ? 1 : (int)Math.Ceiling((double)totalCount / pageSize);
         return View();
     }
 
@@ -435,11 +444,12 @@ public class EventsController(
                 TimeSpan startTimeSpan = DateTime.TryParse(StartTime, out DateTime pst) ? pst.TimeOfDay : TimeSpan.Parse(StartTime);
                 TimeSpan endTimeSpan = DateTime.TryParse(MultiEndTime, out DateTime pet) ? pet.TimeOfDay : TimeSpan.Parse(MultiEndTime);
 
+                var count = 1;
                 for (DateTime date = startDate; date <= endDate; date = date.AddDays(1))
                 {
                     var eventForDay = new Event
                     {
-                        Name = newEvent.Name,
+                        Name = newEvent.Name+" Day "+count,
                         VenueId = newEvent.VenueId,
                         EventTypeId = newEvent.EventTypeId,
                         SubAreaId = newEvent.SubAreaId,
@@ -448,29 +458,12 @@ public class EventsController(
                         ImagePath = newEvent.ImagePath 
                     };
 
-                    // SCENARIO A: Existing parent selected
                     if (newEvent.ParentEventId.HasValue)
                     {
                         eventForDay.ParentEventId = newEvent.ParentEventId;
                         context.Add(eventForDay);
                     }
-                    // SCENARIO B: No parent selected (Make first day the Master)
-                    else 
-                    {
-                        if (fatherEvent == null)
-                        {
-                            eventForDay.ParentEventId = null; 
-                            context.Add(eventForDay);
-                            
-                            await context.SaveChangesAsync(); 
-                            fatherEvent = eventForDay; 
-                        }
-                        else
-                        {
-                            eventForDay.ParentEventId = fatherEvent.Id; 
-                            context.Add(eventForDay);
-                        }
-                    }
+                    count++;
                 }
             }
             else
@@ -931,28 +924,35 @@ private async Task ReloadCreateDropdowns(string userId)
         });
     }
 
-    [Authorize]
     [HttpGet]
-    public async Task<IActionResult> GetUserEvents()
+    [Authorize]
+    public async Task<IActionResult> GetUserEvents(int page = 1, int pageSize = 12)
     {
-        var userId = userManager.GetUserId(User);
+        try
+        {
+            var query = context.Event.AsQueryable();
 
-        var events = await context.Event
-            .Include(e => e.EventType)
-            .Include(e => e.Venue)
-            .OrderByDescending(e => e.StartDateTime)
-            .Select(e => new {
-                e.Id,
-                e.Name,
-                e.StartDateTime,
-                e.EndTime,
-                EventType = new { e.EventType.Name },
-                Venue = new { e.Venue.Name },
-                // Add other fields you need for your JS here
-            })
-            .ToListAsync();
+            var events = await query
+                .OrderByDescending(e => e.StartDateTime)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(e => new {
+                    id = e.Id,
+                    name = e.Name,
+                    startDateTime = e.StartDateTime,
+                    endTime = e.EndTime,
+                    venueId = e.VenueId,
+                    venue = e.Venue != null ? new { name = e.Venue.Name } : null,
+                    eventType = e.EventType != null ? new { name = e.EventType.Name } : null
+                })
+                .ToListAsync();
 
-        return Json(events);
+            return Json(new { success = true, events = events });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { success = false, message = ex.Message, inner = ex.InnerException?.Message });
+        }
     }
 
     [AllowAnonymous]
@@ -1069,17 +1069,7 @@ private async Task ReloadCreateDropdowns(string userId)
             return NotFound();
         }
 
-        // Check if the current user owns the venue associated with this event
-        var venueOwner = await context.Venue
-            .FirstOrDefaultAsync(v => v.Id == eventToEdit.VenueId && v.UserId == userId);
-
-        if (venueOwner == null)
-        {
-            // If the user doesn't own this venue, they can't edit the event
-            logger.LogWarning("User {UserId} attempted to edit event {EventId} they don't own", userId, id);
-            TempData["ErrorMessage"] = "You can only edit events for venues you own.";
-            return RedirectToAction(nameof(Index));
-        }
+       
 
         // Get venues for dropdown
         var venues = await context.Venue
@@ -1438,5 +1428,21 @@ private async Task ReloadCreateDropdowns(string userId)
 
         // If no trailing number found, append " 1"
         return $"{currentName.TrimEnd()} 1";
+    }
+
+    [Authorize]
+    [HttpGet]
+    public async Task<IActionResult> GetEventTiming(int id)
+    {
+        var ev = await context.Event
+            .Where(e => e.Id == id)
+            .Select(e => new {
+                start = e.StartDateTime.ToString("yyyy-MM-ddTHH:mm"),
+                end = e.EndTime.ToString("yyyy-MM-ddTHH:mm")
+            })
+            .FirstOrDefaultAsync();
+
+        if (ev == null) return NotFound();
+        return Json(ev);
     }
 }
