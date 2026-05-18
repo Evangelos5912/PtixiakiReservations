@@ -74,6 +74,40 @@
                 </div>
             </div>
 
+            <div class="flex w-full gap-4 px-6 pb-6">
+                <!-- Events Card -->
+                <div class="w-full bg-gray-50 rounded-lg p-4 flex items-center shadow-sm">
+                    <div class="rounded-full bg-purple-100 p-3 mr-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-medium text-gray-500">Event Categories</h3>
+                        <p class="text-lg font-semibold text-gray-900">
+                            @if (Model.VenueCategory != null && Model.VenueCategory.Any(c => c.CategoryId != null))
+                            {
+                                @foreach (var category in Model.VenueCategory.Where(c => c.CategoryId != null))
+                                {
+                                    <span class="px-3 py-1 bg-indigo-100 text-indigo-800 text-xs font-semibold rounded-full">
+                                        @category.EventType?.Name 
+                                    </span>
+                                }
+                            }
+                            else
+                            {
+                                <span class="px-3 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full border border-green-200">
+                                    All Categories
+                                </span>
+                            }
+
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+
             <!-- Map Section -->
             <div class="px-6 pb-6">
                 <h3 class="text-lg font-medium text-gray-900 mb-3">Location</h3>

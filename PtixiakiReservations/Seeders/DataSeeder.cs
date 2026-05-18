@@ -58,6 +58,12 @@ public class DataSeeder
             context.SaveChanges();  
         }
 
+        if (!context.VenueCategory.Any())
+        {
+            SeedVenueCategories(context);
+            context.SaveChanges();
+        }
+
         if (!context.SubArea.Any()){
             SeedSubAreas(context);
             context.SaveChanges();
@@ -116,7 +122,7 @@ public class DataSeeder
                 if (user.Email.StartsWith("admin"))
                     await userManager.AddToRoleAsync(user, "Admin");
                 else if (user.Email.StartsWith("manager"))
-                    await userManager.AddToRoleAsync(user, "Manager");
+                    await userManager.AddToRoleAsync(user, "Venue");
                 else
                     await userManager.AddToRoleAsync(user, "User");
             }
@@ -475,6 +481,47 @@ public class DataSeeder
             : eventType.Id.ToString();
     }
 
+    private static void SeedVenueCategories(ApplicationDbContext context)
+    {
+        var etypes = context.EventType.ToList();
+        var venues = context.Venue.ToList();
+        var categories = new List<VenueCategory>();
+
+        if (!etypes.Any() || !venues.Any())
+            return;
+
+        var random = new Random();
+        foreach(var venue in venues)
+        {
+            int randomIndex = random.Next(0, etypes.Count);
+            if (randomIndex == -1)
+            {
+                categories.Add(new VenueCategory
+                {
+                    VenueId = venue.Id,
+                    CategoryId = null
+                });
+            }
+            else
+            {
+                var randomET = etypes
+                .OrderBy(e => random.Next())
+                .Take(randomIndex)
+                .ToList();
+                foreach(var type in randomET)
+                {
+                    
+                    categories.Add(new VenueCategory
+                    {
+                        VenueId = venue.Id,
+                        CategoryId = type.Id
+                    });
+                }
+            }
+
+        }
+        context.VenueCategory.AddRange(categories);
+    }
 
     private static void SeedSeats(ApplicationDbContext context)
     {

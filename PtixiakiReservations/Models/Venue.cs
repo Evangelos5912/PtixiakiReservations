@@ -1,4 +1,6 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace PtixiakiReservations.Models;
 
@@ -14,4 +16,5 @@ public class Venue
     public string UserId { get; set; }
     [ForeignKey("UserId")] public ApplicationUser ApplicationUser { get; set; }
     public string imgUrl { get; set; }
+    public ICollection<VenueCategory> VenueCategory { get; set; }
 }

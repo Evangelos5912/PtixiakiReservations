@@ -47,7 +47,7 @@ namespace PtixiakiReservations.Controllers
             return View(venues2);
         }
 
-        [Authorize(Roles = "Admin,Venue")]
+        [Authorize(Roles = "Admin,Venue,SuperOrganizer")]
         public async Task<IActionResult> MyVenues(string filter = "mine", int page = 1, int pageSize = 12)
         {
             string userId = _userManager.GetUserId(HttpContext.User);
@@ -57,6 +57,8 @@ namespace PtixiakiReservations.Controllers
 
             var query = _context.Venue
                 .Include(v => v.City)
+                .Include(v => v.VenueCategory)
+                    .ThenInclude(vc => vc.EventType)
                 .AsQueryable();
 
             if (filter != "all") 
@@ -201,19 +203,14 @@ namespace PtixiakiReservations.Controllers
             return RedirectToAction("details", new { id = venue.Id });
         }
 
-        // GET: Shops/Create
         [Authorize(Roles = "Admin,Venue,SuperOrganizer")]
         public IActionResult Create()
         {
             string id = _userManager.GetUserId(HttpContext.User);
-            var tmp = _context.Venue.Include(v => v.City).Where(s => s.UserId == id).ToList();
-
-            // if (tmp.Count != 0)
-            // {
-            //     ViewBag.Error = string.Format("You can have only 1 Venue");
-            //     return View("Error");
-            // }
+            
             ViewBag.ListOfCity = _context.City.ToList();
+            ViewBag.EventTypes = new MultiSelectList(_context.EventType.ToList(), "Id", "Name");
+            
             return View();
         }
 
@@ -250,10 +247,31 @@ namespace PtixiakiReservations.Controllers
                 };
                 _context.Add(newshop);
                 await _context.SaveChangesAsync();
+
+                if (model.SelectedEventTypeIds != null && model.SelectedEventTypeIds.Any())
+                {
+                    var categoriesToAttach = model.SelectedEventTypeIds.Select(typeId => new VenueCategory
+                    {
+                        VenueId = newshop.Id,
+                        CategoryId = typeId
+                    }).ToList();
+
+                    _context.VenueCategory.AddRange(categoriesToAttach);
+                    await _context.SaveChangesAsync();
+                }
+                else
+                {
+                    _context.VenueCategory.Add(new VenueCategory
+                    {
+                        VenueId = newshop.Id,
+                        CategoryId = null 
+                    });
+                }
                 return RedirectToAction("details", new { id = newshop.Id });
             }
-            ViewBag.Error = string.Format("Something Went Wrong");
-            return View("Error");
+            ViewBag.ListOfCity = new SelectList(_context.City.ToList(), "Id", "Name", model.CityId);
+            ViewBag.EventTypes = new MultiSelectList(_context.EventType.ToList(), "Id", "Name", model.SelectedEventTypeIds);
+            return View(model);
         }
 
         // GET: Venue/Details/5
@@ -266,6 +284,8 @@ namespace PtixiakiReservations.Controllers
 
             var venue = await _context.Venue
                 .Include(v => v.City)
+                .Include(v => v.VenueCategory)           // YOU NEED THIS
+                    .ThenInclude(vc => vc.EventType)
                 .FirstOrDefaultAsync(v => v.Id == id);
         
             if (venue == null)

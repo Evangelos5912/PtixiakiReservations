@@ -153,6 +153,31 @@
                         </h3>
 
                         <!-- Location and Contact Info -->
+                        
+                        <div class="flex items-start">
+                            <svg class="h-5 w-5 text-gray-500 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14v6m-3-3h6M6 10h2a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v2a2 2 0 002 2zm10 0h2a2 2 0 002-2V6a2 2 0 00-2-2h-2a2 2 0 00-2 2v2a2 2 0 002 2zM6 20h2a2 2 0 002-2v-2a2 2 0 00-2-2H6a2 2 0 00-2 2v2a2 2 0 002 2z"></path>
+                            </svg>
+                            <p class="text-sm text-gray-600 leading-snug">
+                                @if (item.VenueCategory != null && item.VenueCategory.Any())
+                                {
+                                    @foreach (var category in item.VenueCategory.Where(c => c.CategoryId != null))
+                                    {
+                                        @if (category.CategoryId != null){
+                                            <span class="whitespace-nowrap px-2 py-1 bg-indigo-100 text-indigo-800 text-xs rounded-full">
+                                                @category.EventType.Name 
+                                            </span>
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    <span class="px-2 py-1 bg-indigo-100 text-indigo-800 text-xs rounded-full">All</span>
+                                }
+                            </p>
+                        </div>
+
+                        <!-- Location and Contact Info -->
                         <div class="space-y-2 mb-4">
                             <div class="flex items-start">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-500 mt-0.5 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">

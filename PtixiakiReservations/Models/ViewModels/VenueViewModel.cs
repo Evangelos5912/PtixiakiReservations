@@ -20,5 +20,6 @@ namespace PtixiakiReservations.Models.ViewModels
         public string UserId { get; set; }
         public ApplicationUser ApplicationUser { get; set; }
         public IFormFile Photo { get; set; }
+        public List<int> SelectedEventTypeIds { get; set; } = new List<int>();
     }
 }
