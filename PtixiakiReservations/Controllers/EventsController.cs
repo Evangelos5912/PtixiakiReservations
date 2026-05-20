@@ -926,7 +926,7 @@ private async Task ReloadCreateDropdowns(string userId)
 
     [HttpGet]
     [Authorize]
-    public async Task<IActionResult> GetUserEvents(int page = 1, int pageSize = 12)
+    public async Task<IActionResult> GetUserEvents()
     {
         try
         {
@@ -934,8 +934,6 @@ private async Task ReloadCreateDropdowns(string userId)
 
             var events = await query
                 .OrderByDescending(e => e.StartDateTime)
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
                 .Select(e => new {
                     id = e.Id,
                     name = e.Name,
