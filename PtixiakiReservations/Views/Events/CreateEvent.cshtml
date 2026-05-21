@@ -178,7 +178,17 @@
                                         <input id="DailyEndTime" name="MultiEndTime" type="time" class="border p-2 rounded-lg disabled:bg-gray-100" />
                                     </div>
                                     <div id="datePreviewContainer" class="bg-blue-50 p-4 rounded hidden">
-                                        <div id="eventPreviewList" class="text-sm"></div>
+                                        <table class="min-w-full divide-y divide-gray-200">
+                                            <thead class="bg-gray-50 text-[10px] uppercase font-bold text-gray-500">
+                                                <tr>
+                                                    <th class="px-6 py-2 text-left">Date & Time</th>
+                                                    <th class="px-6 py-2 text-right">Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="eventPreviewList" class="divide-y divide-gray-100 text-sm">
+
+                                            </tbody>
+                                        </table>
                                         <p class="text-xs mt-2"><span id="eventCount">0</span> events total</p>
                                     </div>
                                 </div>
@@ -227,6 +237,7 @@
     <script>
         document.addEventListener("DOMContentLoaded", function () {
             // --- Elements ---
+            let previewDates = [];
             const form = document.getElementById('createEventForm');
             const modeRadios = document.getElementsByName('eventMode');
             const parentEventSection = document.getElementById('parentEventSection');
@@ -264,6 +275,8 @@
             const multiDayContainer = document.getElementById('multiDayContainer');
 
             const allScheduleInputs = [startInput, endInput, multiStartDate, multiEndDate, multiStartTime, multiDailyEndTime];
+
+            const eventPreviewList = document.getElementById('eventPreviewList');
 
             window.showChildEventForm = function() {
                 eventDetailsWrapper.classList.remove('hidden');
@@ -570,30 +583,43 @@
 
             function updatePreview() {
                 enforceParentConstraints();
-
                 const s = new Date(multiStartDate.value + 'T00:00:00');
                 const e = new Date(multiEndDate.value + 'T00:00:00');
 
-                const cont = document.getElementById('datePreviewContainer');
-                if (isNaN(s.getTime()) || isNaN(e.getTime()) || s > e) { 
-                    cont.classList.add('hidden'); 
-                    return; 
-                }
-                
-                let list = ""; let count = 0;
+                previewDates = [];
                 for (let d = new Date(s); d <= e; d.setDate(d.getDate() + 1)) {
-                    list += `<div class="py-1 border-b border-blue-100 last:border-0">
-                                <span class="font-medium">${d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}</span>
-                             </div>`; 
-                    count++;
+                    previewDates.push(new Date(d));
                 }
-                document.getElementById('eventPreviewList').innerHTML = list;
-                document.getElementById('eventCount').textContent = count;
-                cont.classList.remove('hidden');
-                
-                document.getElementById('multiStartDateTime').value = `${multiStartDate.value}T${multiStartTime.value}`;
-                document.getElementById('multiEndDateTime').value = `${multiEndDate.value}T${multiDailyEndTime.value}`;
+                renderPreviewTable();
             }
+
+            function renderPreviewTable() {
+                const cont = document.getElementById('datePreviewContainer');
+                eventPreviewList.innerHTML = '';
+                
+                previewDates.forEach((date, index) => {
+                    const row = document.createElement('tr');
+
+                    row.setAttribute('data-date', date.toLocaleDateString('en-CA'));
+
+                    row.innerHTML = `
+                        <td class="px-6 py-3">${date.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}</td>
+                        <td class="px-6 py-3 text-right">
+                            <button type="button" onclick="removeDate(${index})" class="text-red-500 hover:text-red-700">
+                                Delete
+                            </button>
+                        </td>`;
+                    eventPreviewList.appendChild(row);
+                });
+                
+                document.getElementById('eventCount').textContent = previewDates.length;
+                cont.classList.remove('hidden');
+            }
+
+            window.removeDate = function(index) {
+                previewDates.splice(index, 1); 
+                renderPreviewTable();
+            };
             [multiStartDate, multiEndDate, multiStartTime, multiDailyEndTime].forEach(i => i.oninput = updatePreview);
 
             [startInput, endInput].forEach(input => {
@@ -680,6 +706,12 @@
                 if (subAreaSelect) subAreaSelect.disabled = false;
 
                 const formData = new FormData(form);
+
+                if (isMultiDay.checked) {
+                    const dateRows = document.querySelectorAll('#eventPreviewList tr');
+                    const finalDates = Array.from(dateRows).map(row => row.getAttribute('data-date'));
+                    formData.append("SpecificDatesJson", JSON.stringify(finalDates));
+                }
                 const submitBtn = form.querySelector('button[type="submit"]');
                 const originalBtnText = submitBtn.innerHTML;
 
