@@ -15,6 +15,7 @@ using PtixiakiReservations.Models;
 using PtixiakiReservations.Models.ViewModels;
 using PtixiakiReservations.Services;
 using System.Text;
+using System.Text.Json; 
 using Microsoft.AspNetCore.Hosting; 
 using Microsoft.AspNetCore.Http;    
 
@@ -375,10 +376,9 @@ public class EventsController(
         Event newEvent,
         IFormFile? imageFile,
         string IsMultiDay = null,
-        string StartDate = null,
-        string EndDate = null,
         string StartTime = null,
-        string MultiEndTime = null)
+        string MultiEndTime = null,
+        string SpecificDatesJson = null)
     {
         bool isMultiDay = IsMultiDay == "on" || IsMultiDay == "true";
         var userId = userManager.GetUserId(User);
@@ -434,37 +434,40 @@ public class EventsController(
             Event fatherEvent = null;
 
             // 4. Handle Save Logic
-            if (isMultiDay && !string.IsNullOrEmpty(StartDate) && !string.IsNullOrEmpty(EndDate)
+            if (isMultiDay && !string.IsNullOrEmpty(SpecificDatesJson)
                 && !string.IsNullOrEmpty(StartTime) && !string.IsNullOrEmpty(MultiEndTime))
             {
-                logger.LogInformation("Creating multi-day events from {StartDate} to {EndDate}", StartDate, EndDate);
+                logger.LogInformation("Creating multi-day events");
 
-                DateTime startDate = DateTime.Parse(StartDate);
-                DateTime endDate = DateTime.Parse(EndDate);
+                var selectedDates = JsonSerializer.Deserialize<List<string>>(SpecificDatesJson);
                 
                 TimeSpan startTimeSpan = DateTime.TryParse(StartTime, out DateTime pst) ? pst.TimeOfDay : TimeSpan.Parse(StartTime);
                 TimeSpan endTimeSpan = DateTime.TryParse(MultiEndTime, out DateTime pet) ? pet.TimeOfDay : TimeSpan.Parse(MultiEndTime);
 
                 var count = 1;
-                for (DateTime date = startDate; date <= endDate; date = date.AddDays(1))
+                foreach (var dateString in selectedDates)
                 {
-                    var eventForDay = new Event
+                    if (DateTime.TryParse(dateString, out DateTime date))
                     {
-                        Name = newEvent.Name+" Day "+count,
-                        VenueId = newEvent.VenueId,
-                        EventTypeId = newEvent.EventTypeId,
-                        SubAreaId = newEvent.SubAreaId,
-                        StartDateTime = date.Add(startTimeSpan),
-                        EndTime = date.Add(endTimeSpan),
-                        ImagePath = newEvent.ImagePath 
-                    };
 
-                    if (newEvent.ParentEventId.HasValue)
-                    {
-                        eventForDay.ParentEventId = newEvent.ParentEventId;
-                        context.Add(eventForDay);
+                        var eventForDay = new Event
+                        {
+                            Name = newEvent.Name+" Day "+count,
+                            VenueId = newEvent.VenueId,
+                            EventTypeId = newEvent.EventTypeId,
+                            SubAreaId = newEvent.SubAreaId,
+                            StartDateTime = date.Date.Add(startTimeSpan),
+                            EndTime = date.Date.Add(endTimeSpan),
+                            ImagePath = newEvent.ImagePath 
+                        };
+
+                        if (newEvent.ParentEventId.HasValue)
+                        {
+                            eventForDay.ParentEventId = newEvent.ParentEventId;
+                            context.Add(eventForDay);
+                        }
+                        count++;
                     }
-                    count++;
                 }
             }
             else
@@ -1100,7 +1103,7 @@ private async Task ReloadCreateDropdowns(string userId)
     [HttpPost]
     [ValidateAntiForgeryToken]
     [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> Edit(int id, Event updatedEvent)
+    public async Task<IActionResult> Edit(int id, Event updatedEvent,IFormFile? imageFile)
     {
         if (id != updatedEvent.Id)
         {
@@ -1117,12 +1120,48 @@ private async Task ReloadCreateDropdowns(string userId)
                 {
                     return NotFound();
                 }
+
+                if (imageFile != null && imageFile.Length > 0)
+                {
+                    if (!string.IsNullOrEmpty(originalEvent.ImagePath))
+                    {
+
+                        string oldFilePath = Path.Combine(environment.WebRootPath, originalEvent.ImagePath.TrimStart('/'));
+                        if (System.IO.File.Exists(oldFilePath))
+                        {
+                            System.IO.File.Delete(oldFilePath);
+                        }
+                    }
+                    try
+                    {
+                        string uploadsFolder = Path.Combine(environment.WebRootPath, "images/events");
+                        if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
+
+                        string uniqueFileName = Guid.NewGuid().ToString() + "_" + Path.GetFileName(imageFile.FileName);
+                        string filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+                        using (var fileStream = new FileStream(filePath, FileMode.Create))
+                        {
+                            await imageFile.CopyToAsync(fileStream);
+                        }
+
+                        originalEvent.ImagePath = "/images/events/" + uniqueFileName;
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.LogError(ex, "Error saving event image to disk.");
+                        ModelState.AddModelError("", "Error saving image.");
+                        return View(updatedEvent);
+                    }
+                }
+
                 originalEvent.Name = updatedEvent.Name;
                 originalEvent.StartDateTime = updatedEvent.StartDateTime;
                 originalEvent.EndTime = updatedEvent.EndTime;
                 originalEvent.EventTypeId = updatedEvent.EventTypeId;
                 originalEvent.VenueId = updatedEvent.VenueId;
                 originalEvent.SubAreaId = updatedEvent.SubAreaId;
+                originalEvent.ParentEventId = updatedEvent.ParentEventId;
 
                 await context.SaveChangesAsync();
 
