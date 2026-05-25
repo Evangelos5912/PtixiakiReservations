@@ -293,11 +293,26 @@ public class EventsController(
     }
 
     [Authorize]
-    public JsonResult GetEvents2(int? venueId)
+    [HttpGet]
+    public async Task<IActionResult> GetEvents2(int? venueId)
     {
-        var events = context.Event.Where(e => e.Venue.Id == venueId).ToList();
 
-        return new JsonResult(events);
+        var events = context.Event
+            .Where(e => e.VenueId == venueId)
+            .Include(e => e.EventType) 
+            .ToList();
+
+
+        var result = events.Select(e => new {
+            id = e.Id,
+            name = e.Name,
+            startDateTime = e.StartDateTime,
+            endTime = e.EndTime,
+
+            eventType = e.EventType != null ? e.EventType.Name : "Default" 
+        });
+
+        return Json(result); 
     }
 
     [AllowAnonymous]
@@ -1475,5 +1490,22 @@ private async Task ReloadCreateDropdowns(string userId)
             return BadRequest(new { success = false, message = "Error renaming events." });
         }
         
+    }
+
+    [AllowAnonymous]
+    [HttpGet]
+    public async Task<IActionResult> getNewestEvents()
+    {
+        var ev = await context.Event
+            .OrderByDescending(e => e.Id)
+            .Include(e => e.Venue)
+                .ThenInclude(v => v.City)
+            .Include(e => e.EventType) 
+            .Where(e => e.ParentEventId == null)
+            .Take(5)
+            .ToListAsync();
+            
+        if (ev == null) return NotFound();
+        return Json(ev);
     }
 }

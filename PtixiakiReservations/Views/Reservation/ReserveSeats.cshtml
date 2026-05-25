@@ -15,7 +15,7 @@
             <p class="text-blue-100 mt-2">@Model.Name</p>
             @if (Model.SubArea != null)
             {
-                <p class="text-blue-200 text-sm mt-1">Sub Area: @Model.SubArea.AreaName</p>
+                <p class="text-blue-200 text-sm mt-1">Layout: @Model.SubArea.AreaName</p>
             }
         </div>
 
@@ -114,7 +114,7 @@
                 </div>
             </div>
 
-            <!-- Only show sub area message if no sub area is set -->
+            <!-- Only show Layout message if no Layout is set -->
             @if (subAreaId == null || subAreaId == 0)
             {
                 <div class="mb-8 bg-yellow-50 border border-yellow-200 rounded-lg p-6">
@@ -123,8 +123,8 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
                         </svg>
                         <div>
-                            <h3 class="text-yellow-800 font-medium">No Sub Area Selected</h3>
-                            <p class="text-yellow-700 text-sm mt-1">This event doesn't have a specific sub area assigned. Seat selection is not available.</p>
+                            <h3 class="text-yellow-800 font-medium">No Layout Selected</h3>
+                            <p class="text-yellow-700 text-sm mt-1">This event doesn't have a specific Layout assigned. Seat selection is not available.</p>
                         </div>
                     </div>
                 </div>
@@ -284,7 +284,7 @@
                 
                 console.log("SubArea ID:", subAreaIdValue, "Event ID:", eventIdValue);
                 
-                // Only initialize seat map if we have a sub area
+                // Only initialize seat map if we have a Layout
                 if (subAreaIdValue && subAreaIdValue !== '0') {
                     loadSeatMap(subAreaIdValue, eventIdValue);
                 }
@@ -292,12 +292,12 @@
         });
 
         function loadSeatMap(subAreaId, eventId) {
-            console.log("Loading seat map for SubArea:", subAreaId, "Event:", eventId);
+            console.log("Loading seat map for Layout:", subAreaId, "Event:", eventId);
             
             // Show loading indicator
             showLoadingOnFabric(fabricCanvas);
 
-            // Fetch seats for this sub area and event
+            // Fetch seats for this Layout and event
             $.getJSON(`/Seat/get_data?SubAreaId=${subAreaId}&eventId=${eventId}`, function(data) {
                 console.log("Seat data received:", data);
                 fabricCanvas.clear();
@@ -354,7 +354,7 @@
                     const reservationSubAreaId = subAreaId;
 
                     if (!reservationSubAreaId || reservationSubAreaId === 0) {
-                        showNotification('No sub area assigned to this event.', 'warning');
+                        showNotification('No Layout assigned to this event.', 'warning');
                         return;
                     }
 
