@@ -185,6 +185,13 @@ namespace PtixiakiReservations.Controllers
             {
                 subArea.AreaName = subAreaEdit.AreaName;
                 subArea.Desc = subAreaEdit.Desc;
+                subArea.Height = subAreaEdit.Height;
+                subArea.Width = subAreaEdit.Width;
+                subArea.Top = subAreaEdit.Top;
+                subArea.Left = subAreaEdit.Left;
+
+
+
                 try
                 {                   
                     _context.Update(subArea);
@@ -197,7 +204,7 @@ namespace PtixiakiReservations.Controllers
                     throw;
                 }
                 
-                return RedirectToAction(nameof(Index));
+                return RedirectToAction("VenueSubAreas", "SubAreas", new { venueId = subArea.VenueId });
             }
             ViewData["VenueId"] = new SelectList(_context.Venue, "Id", "Id", subArea.VenueId);
             return View(subArea);
