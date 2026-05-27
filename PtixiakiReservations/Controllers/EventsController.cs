@@ -1195,7 +1195,8 @@ private async Task ReloadCreateDropdowns(string userId)
                 originalEvent.EventTypeId = updatedEvent.EventTypeId;
                 originalEvent.VenueId = updatedEvent.VenueId;
                 originalEvent.SubAreaId = updatedEvent.SubAreaId;
-                originalEvent.ParentEventId = updatedEvent.ParentEventId;
+                originalEvent.ParentEventId = originalEvent.ParentEventId;
+
 
                 await context.SaveChangesAsync();
 

@@ -132,7 +132,7 @@
                             </p>
                         </div>
 
-                        @if(Model.ParentEventId != null){
+                        @if(Model.ParentEventId != null || Model.ChildEvents == null || !Model.ChildEvents.Any()){
                         <!-- Direct Reserve Button -->
                         <a href="@Url.Action("ReserveSeats", "Reservation", new { eventId = Model.Id })"
                            class="w-full block text-center px-6 py-4 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors">
