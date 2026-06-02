@@ -23,6 +23,7 @@ namespace PtixiakiReservations.Data
         public DbSet<City> City { get; set; }
         public DbSet<EventType> EventType { get; set; }
 		public DbSet<VenueCategory> VenueCategory { get; set; }
+		public DbSet<NonSelectable> NonSelectable { get; set; }
 
 
 

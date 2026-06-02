@@ -305,6 +305,9 @@ namespace PtixiakiReservations.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
                     b.Property<DateTime>("EndTime")
                         .HasColumnType("timestamp without time zone");
 
@@ -315,6 +318,9 @@ namespace PtixiakiReservations.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("Name")
+                        .HasColumnType("text");
+
+                    b.Property<string>("OrganizerId")
                         .HasColumnType("text");
 
                     b.Property<int?>("ParentEventId")
@@ -333,6 +339,8 @@ namespace PtixiakiReservations.Migrations
 
                     b.HasIndex("EventTypeId");
 
+                    b.HasIndex("OrganizerId");
+
                     b.HasIndex("ParentEventId");
 
                     b.HasIndex("SubAreaId");
@@ -340,6 +348,30 @@ namespace PtixiakiReservations.Migrations
                     b.HasIndex("VenueId");
 
                     b.ToTable("Event");
+                });
+
+            modelBuilder.Entity("PtixiakiReservations.Models.EventImage", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("EventId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ImagePath")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EventId");
+
+                    b.ToTable("EventImage");
                 });
 
             modelBuilder.Entity("PtixiakiReservations.Models.EventType", b =>
@@ -356,6 +388,48 @@ namespace PtixiakiReservations.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("EventType");
+                });
+
+            modelBuilder.Entity("PtixiakiReservations.Models.NonSelectable", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("BackgroundColor")
+                        .HasColumnType("text");
+
+                    b.Property<decimal>("Height")
+                        .HasColumnType("numeric");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("Scene")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("ShapeType")
+                        .HasColumnType("text");
+
+                    b.Property<int>("SubAreaId")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("Width")
+                        .HasColumnType("numeric");
+
+                    b.Property<decimal>("X")
+                        .HasColumnType("numeric");
+
+                    b.Property<decimal>("Y")
+                        .HasColumnType("numeric");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SubAreaId");
+
+                    b.ToTable("NonSelectable");
                 });
 
             modelBuilder.Entity("PtixiakiReservations.Models.Reservation", b =>
@@ -415,11 +489,17 @@ namespace PtixiakiReservations.Migrations
                     b.Property<bool>("Available")
                         .HasColumnType("boolean");
 
+                    b.Property<decimal?>("Height")
+                        .HasColumnType("numeric");
+
                     b.Property<string>("Name")
                         .HasColumnType("text");
 
                     b.Property<int>("SubAreaId")
                         .HasColumnType("integer");
+
+                    b.Property<decimal?>("Width")
+                        .HasColumnType("numeric");
 
                     b.Property<decimal>("X")
                         .HasPrecision(18, 2)
@@ -616,6 +696,11 @@ namespace PtixiakiReservations.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("PtixiakiReservations.Models.ApplicationUser", "Organizer")
+                        .WithMany()
+                        .HasForeignKey("OrganizerId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("PtixiakiReservations.Models.Event", "ParentEvent")
                         .WithMany("ChildEvents")
                         .HasForeignKey("ParentEventId")
@@ -634,11 +719,35 @@ namespace PtixiakiReservations.Migrations
 
                     b.Navigation("EventType");
 
+                    b.Navigation("Organizer");
+
                     b.Navigation("ParentEvent");
 
                     b.Navigation("SubArea");
 
                     b.Navigation("Venue");
+                });
+
+            modelBuilder.Entity("PtixiakiReservations.Models.EventImage", b =>
+                {
+                    b.HasOne("PtixiakiReservations.Models.Event", "Event")
+                        .WithMany("GalleryImages")
+                        .HasForeignKey("EventId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Event");
+                });
+
+            modelBuilder.Entity("PtixiakiReservations.Models.NonSelectable", b =>
+                {
+                    b.HasOne("PtixiakiReservations.Models.SubArea", "SubArea")
+                        .WithMany()
+                        .HasForeignKey("SubAreaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("SubArea");
                 });
 
             modelBuilder.Entity("PtixiakiReservations.Models.Reservation", b =>
@@ -728,6 +837,8 @@ namespace PtixiakiReservations.Migrations
             modelBuilder.Entity("PtixiakiReservations.Models.Event", b =>
                 {
                     b.Navigation("ChildEvents");
+
+                    b.Navigation("GalleryImages");
                 });
 
             modelBuilder.Entity("PtixiakiReservations.Models.Venue", b =>

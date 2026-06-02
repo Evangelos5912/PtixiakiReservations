@@ -15,6 +15,9 @@ public class Event
     public int VenueId { get; set; }
     [ForeignKey("VenueId")] public Venue Venue { get; set; }
     public int? SubAreaId { get; set; }
+    public string? Description { get; set; }
+    public string? OrganizerId { get; set; }
+    public ApplicationUser? Organizer { get; set; }
     [ForeignKey("SubAreaId")] public SubArea SubArea { get; set; }
     public int? ParentEventId { get; set; }
     [ForeignKey("ParentEventId")] public Event ParentEvent { get; set; }
@@ -22,4 +25,6 @@ public class Event
     [NotMapped]
     public string DisplayImagePath => ImagePath ?? ParentEvent?.ImagePath;
     public ICollection<Event> ChildEvents { get; set; } = new List<Event>();
+
+    public ICollection<EventImage> GalleryImages { get; set; } = new List<EventImage>();
 }

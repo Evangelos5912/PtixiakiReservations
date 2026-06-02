@@ -56,14 +56,44 @@ public class SeatController(ApplicationDbContext context, UserManager<Applicatio
         return Json(seatViewModels);
     }
 
-    public async Task<IActionResult> ListOfMySeats(int? subAreaId)
+    public class SeatUpdateDto
     {
-        var id = userManager.GetUserId(HttpContext.User);
+        public int Id { get; set; }
+        public string Name { get; set; }
+        public decimal X { get; set; }
+        public decimal Y { get; set; }
+    }
 
-        var seats = context.Seat
-            .Include(s => s.SubArea)
-            .Include(r => r.SubArea.Venue).Where(s => s.SubArea.Venue.UserId == id && s.SubAreaId == subAreaId);
-        return View(await seats.ToListAsync());
+    [HttpPost]
+    [ValidateAntiForgeryToken] 
+    public async Task<IActionResult> UpdateSeat([FromBody] SeatUpdateDto request)
+    {
+        if (request == null || request.Id <= 0)
+        {
+            return BadRequest(new { success = false, message = "Invalid seat data." });
+        }
+
+        var seat = await context.Seat.FindAsync(request.Id);
+        if (seat == null)
+        {
+            return NotFound(new { success = false, message = "Seat not found." });
+        }
+
+        seat.Name = request.Name;
+        seat.X = request.X;
+        seat.Y = request.Y;
+
+        try
+        {
+            context.Update(seat);
+            await context.SaveChangesAsync();
+            
+            return Ok(new { success = true });
+        }
+        catch (DbUpdateException ex)
+        {
+            return StatusCode(500, new { success = false, message = "Database error occurred while updating the seat." });
+        }
     }
 
     // GET: Table/Details/5
@@ -85,6 +115,23 @@ public class SeatController(ApplicationDbContext context, UserManager<Applicatio
         return View(seat);
     }
 
+    public async Task<IActionResult> Single(int? id)
+    {
+        if (id == null)
+        {
+            return NotFound();
+        }
+
+        var seat = await context.Seat
+            .FirstOrDefaultAsync(m => m.Id == id);
+        if (seat == null)
+        {
+            return NotFound();
+        }
+
+        return Json(seat);
+    }
+
     // GET: Table/Create
     public IActionResult Create(int? subAreaId)
     {
@@ -99,13 +146,13 @@ public class SeatController(ApplicationDbContext context, UserManager<Applicatio
         return View("CreateSeatMap");
     }
 
-// POST: Table/Create
-    [HttpPost]
-    public async Task<IActionResult> CreateTableMap([FromBody] JsonSeatModel[] seats, int subAreaId)
+    [HttpPost]     
+    [Route("Seat/CreateTableMap")]
+    public async Task<IActionResult> CreateTableMap(int subAreaId, [FromBody] List<Seat> layoutElements)
     {
         try
         {
-            if (seats == null || !seats.Any())
+            if (layoutElements == null || !layoutElements.Any()) 
             {
                 return BadRequest("No seat data provided");
             }
@@ -115,33 +162,31 @@ public class SeatController(ApplicationDbContext context, UserManager<Applicatio
                 return BadRequest("Invalid layout ID");
             }
 
-            // Verify the layout exists
             var subArea = await context.SubArea.FindAsync(subAreaId);
             if (subArea == null)
             {
                 return NotFound("Layout not found");
             }
 
-            // Check if there are existing seats for this subarea
             var existingSeats = await context.Seat
                 .Where(s => s.SubAreaId == subAreaId)
                 .ToListAsync();
 
-            // If this is an edit operation (existing seats found), remove them all first
             if (existingSeats.Any())
             {
                 context.Seat.RemoveRange(existingSeats);
                 await context.SaveChangesAsync();
             }
 
-            // Now add the new seats
-            foreach (var s in seats)
+            foreach (var s in layoutElements)
             {
                 Seat seat = new Seat
                 {
                     Name = s.Name,
-                    X = s.x,
-                    Y = s.y,
+                    X = s.X,            
+                    Y = s.Y,            
+                    Width = s.Width,   
+                    Height = s.Height,  
                     SubAreaId = subAreaId,
                     Available = true
                 };
@@ -149,12 +194,11 @@ public class SeatController(ApplicationDbContext context, UserManager<Applicatio
             }
 
             await context.SaveChangesAsync();
-            return Ok(new { success = true, message = "Seats created successfully" });
+            return Ok(new { success = true, message = "Layout saved successfully" });
         }
         catch (Exception ex)
         {
-            // Log the error
-            return StatusCode(500, new { success = false, message = "An error occurred while saving seats", error = ex.Message });
+            return StatusCode(500, new { success = false, message = "An error occurred", error = ex.Message });
         }
     }
     
@@ -289,7 +333,7 @@ public class SeatController(ApplicationDbContext context, UserManager<Applicatio
         context.Seat.Remove(seat);
         await context.SaveChangesAsync();
 
-        return RedirectToAction(nameof(ListOfMySeats));
+        return RedirectToAction("ListOfMySeats");
     }
 
     private bool SeatExists(int id)

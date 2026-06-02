@@ -11,4 +11,8 @@ public class Seat
     public bool Available { get; set; }
     public int SubAreaId { get; set; }
     [ForeignKey("SubAreaId")] public SubArea SubArea { get; set; }
+    
+    // Dimensions for resizable square tables
+    public decimal? Width { get; set; }
+    public decimal? Height { get; set; }
 }
