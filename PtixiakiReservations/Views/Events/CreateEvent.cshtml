@@ -21,7 +21,6 @@
                     @Html.AntiForgeryToken()
                     <div class="space-y-6">
                         
-
                         <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
                             <div class="flex items-center mb-4">
                                 <div class="h-10 w-10 rounded-md bg-indigo-100 flex items-center justify-center text-indigo-600">
@@ -54,7 +53,6 @@
                             </p>
                         </div>
 
-
                         <div id="parentEventSection" class="hidden bg-gray-50 rounded-lg p-4 border border-gray-200">
                             <h2 class="text-lg font-medium text-gray-800 mb-4">Parent Event Selection</h2>
                             <input type="hidden" asp-for="ParentEventId" id="ParentEventId" name="ParentEventId" />
@@ -68,7 +66,6 @@
                             </div>
                             <p id="parentRequiredError" class="text-red-500 text-xs mt-2 hidden font-bold">You must select a father event to continue in child mode!</p>
                         </div>
-
 
                         <div id="subEventsListContainer" class="hidden mt-6 bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden">
                             <div class="bg-indigo-50 px-6 py-4 border-b border-indigo-100 flex justify-between items-center">
@@ -106,10 +103,8 @@
                             </div>
                         </div>
 
-
                         <div id="eventDetailsWrapper" class="space-y-6">
                             
-   
                             <div class="bg-gray-50 rounded-lg p-4 border border-gray-200 mt-6">
                                 <h3 class="text-md font-medium text-gray-700 mb-4">Event Details</h3>
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -121,6 +116,24 @@
                                     <div>
                                         <label asp-for="EventTypeId" class="block text-sm font-medium text-gray-700 mb-1">Event Type</label>
                                         <select asp-for="EventTypeId" asp-items="ViewBag.EventTypeList" class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white"></select>
+                                    </div>
+                                </div>
+                                
+                                <div class="mt-4" id="descriptionContainer">
+                                    <label asp-for="Description" class="block text-sm font-medium text-gray-700 mb-1">Description (Optional)</label>
+                                    <textarea asp-for="Description" rows="4" placeholder="Enter event description..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"></textarea>
+                                    <span asp-validation-for="Description" class="text-red-500 text-xs mt-1"></span>
+                                </div>
+
+                                <div class="mt-4 hidden" id="childDescriptionNote">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                                    <div class="w-full px-4 py-3 bg-gray-100 border border-gray-200 rounded-lg">
+                                        <p class="text-sm text-gray-500 italic flex items-center">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                            Sub-events automatically inherit the description from their Master Event.
+                                        </p>
                                     </div>
                                 </div>
                             </div>
@@ -218,9 +231,8 @@
 <div id="renameModal" tabindex="-1" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm transition-opacity">
     <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md relative transform transition-all">
         <h3 class="text-xl font-bold text-gray-900 mb-2">Choose a Name</h3>
-        <input type="text" id="ModalField" placeholder="New Name..." />
+        <input type="text" id="ModalField" placeholder="New Name..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 mb-4" />
 
-        <!-- Modal Action Buttons -->
         <div class="flex justify-end gap-3 mt-4">
             <button type="button" onclick="closeRenameModal()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium text-sm">
                 Cancel
@@ -275,6 +287,10 @@
             const cancelChildBtn = document.getElementById('cancelChildBtn');
             const subEventsListContainer = document.getElementById('subEventsListContainer');
             
+            // Description Elements
+            const descriptionContainer = document.getElementById('descriptionContainer');
+            const childDescriptionNote = document.getElementById('childDescriptionNote');
+
             // Venue Elements
             const venueSearch = document.getElementById('venueSearch');
             const venueResultsList = document.getElementById('venueSearchResults');
@@ -322,6 +338,10 @@
                 multiDayToggleContainer.classList.toggle('hidden', isFather);
                 if(childImageNote) childImageNote.classList.toggle('hidden', isFather);
 
+                // Toggle Description Fields
+                if(descriptionContainer) descriptionContainer.classList.toggle('hidden', !isFather);
+                if(childDescriptionNote) childDescriptionNote.classList.toggle('hidden', isFather);
+
                 if (isFather) {
                     eventDetailsWrapper.classList.remove('hidden'); 
                     cancelChildBtn.classList.add('hidden'); 
@@ -350,11 +370,15 @@
                         document.getElementById('subEventsListContainer').classList.remove('hidden');
                     }
                     
-                    if(venueSearch) venueSearch.disabled = true;
-                    if(clearVenueBtn) clearVenueBtn.classList.add('hidden');
+                    // Allow searching for a different venue in child mode
+                    if(venueSearch) venueSearch.disabled = false;
+                    if(clearVenueBtn && venueHiddenInput.value) clearVenueBtn.classList.remove('hidden');
                     subAreaSelect.disabled = true;
                     eventTypeSelect.disabled = true;
                     allScheduleInputs.forEach(i => { if(i) i.disabled = true; });
+
+                    // Clear out any description typed by accident
+                    document.getElementById('Description').value = ""; 
                 }
                 updateRadioStyles();
             };
@@ -444,11 +468,11 @@
                 hideChildEventForm(); 
                 updateSubEventsList(ev.id);
 
-                // Auto-fill venue from parent
+                // Auto-fill venue from parent, but keep it active for searching a new one!
                 venueHiddenInput.value = ev.venueId;
                 venueSearch.value = ev.venue || 'Inherited Venue'; 
-                venueSearch.disabled = true;
-                clearVenueBtn.classList.add('hidden'); 
+                venueSearch.disabled = false;
+                clearVenueBtn.classList.remove('hidden'); 
                 subAreaSelect.disabled = false;
                 eventTypeSelect.value = ev.eventTypeId;
                 eventTypeSelect.disabled = true;
@@ -509,18 +533,17 @@
                             li.onclick = () => {
                                 venueHiddenInput.value = v.id;
                                 venueSearch.value = v.name + (v.city ? ', ' + v.city : '');
-                                venueSearch.disabled = true;
+                                venueSearch.disabled = false;
                                 clearVenueBtn.classList.remove('hidden');
                                 venueResultsList.classList.add('hidden');
                                 fetchSubAreas(v.id);
+                                subAreaSelect.disabled = false;
                             };
                             venueResultsList.appendChild(li);
                         });
                         venueResultsList.classList.remove('hidden');
                     });
             });
-
-
 
             // Highlight matching text
             function highlightMatch(text, query) {
@@ -536,6 +559,7 @@
                 venueSearch.disabled = false;
                 clearVenueBtn.classList.add('hidden');
                 subAreaSelect.innerHTML = '<option value="">Select a Layout</option>';
+                subAreaSelect.disabled = true;
             };
 
             function fetchSubAreas(vId) {
@@ -825,8 +849,8 @@
                             // Auto-fill Venue in Child Mode
                             venueHiddenInput.value = data.venueId;
                             venueSearch.value = data.venueName || 'Inherited Venue';
-                            venueSearch.disabled = true;
-                            clearVenueBtn.classList.add('hidden');
+                            venueSearch.disabled = false;
+                            clearVenueBtn.classList.remove('hidden');
                             subAreaSelect.disabled = false;
                             fetchSubAreas(data.venueId);
 
@@ -855,7 +879,8 @@
                             
                             venueHiddenInput.value = currentVenueId;
                             venueSearch.value = currentVenueName;
-                            venueSearch.disabled = true;
+                            venueSearch.disabled = false;
+                            if(currentVenueId) clearVenueBtn.classList.remove('hidden');
                             
                             if (eventTypeSelect) {
                                 eventTypeSelect.value = currentEventTypeId;
