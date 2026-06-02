@@ -4,15 +4,14 @@
     ViewData["Title"] = "Event Details";
 }
 
-<div class="container mx-auto px-4 py-8 max-w-5xl">
+<div class="container mx-auto px-4 py-8 max-w-9xl">
     <div class="bg-white rounded-xl shadow-lg overflow-hidden">
         <!-- Header with gradient background -->
         <div class="bg-gradient-to-r from-blue-600 to-indigo-700 py-6 px-8">
             <h1 class="text-3xl font-bold text-white">@Model.Name</h1>
-            <p class="text-blue-100 mt-2">Event Details</p>
         </div>
 
-        <div class="p-8">
+        <div class="overflow-hidden">
         @{
             var finalPath = !string.IsNullOrEmpty(Model.DisplayImagePath) 
                 ? Model.DisplayImagePath 
@@ -27,59 +26,89 @@
                     {
                         <div data-type="@Model.EventType.Name" class="event-icon flex items-center justify-center h-full text-gray-400"></div>
                     }
-            <!-- Event Details -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mt-10">
-                <!-- Left Column - Event Information -->
-                <div class="md:col-span-2 space-y-6">
-                    <!-- Date and Time -->
-                    <div class="bg-blue-50 p-5 rounded-lg">
-                        <div class="flex items-start">
-                            <svg class="h-6 w-6 text-blue-600 mr-3 mt-0.5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                            </svg>
-                            <div>
-                                <h3 class="text-lg font-semibold text-gray-800">Date & Time</h3>
-                                <p class="text-gray-700 mt-1">
-                                    @Model.StartDateTime.ToString("dddd, MMMM d, yyyy")
-                                </p>
-                                <p class="text-gray-600">
+        </div>
+        <div class="p-6">
+            <!-- Grid Container: Stacks on mobile (grid-cols-1), splits 50/50 on desktop (lg:grid-cols-2) -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-6 mb-8">
+                
+                <!-- LEFT COLUMN - Blue Info Box -->
+                <div class="bg-blue-50 p-8 rounded-xl flex flex-col gap-6 border border-blue-100 shadow-sm h-full">
+                    
+                    <!-- Date & Time -->
+                    <div class="flex items-start">
+                        <svg class="h-6 w-6 text-blue-600 mr-4 mt-0.5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <div>
+                            @if (Model.StartDateTime.Date != Model.EndTime.Date)
+                            {
+                                <h3 class="text-lg font-semibold text-gray-900">
+                                    @Model.StartDateTime.ToString("MMM d, yyyy") - @Model.EndTime.ToString("MMM d, yyyy")
+                                </h3>
+                            }
+                            else
+                            {
+                                <h3 class="text-lg font-semibold text-gray-900">
+                                    @Model.StartDateTime.ToString("dddd, MMMM d, yyyy") 
+                                </h3>
+                                <p class="text-gray-700 mt-1 font-medium">
                                     @Model.StartDateTime.ToString("h:mm tt") - @Model.EndTime.ToString("h:mm tt")
                                 </p>
-                                <p class="text-gray-600 mt-1">
-                                    Duration: @(Model.EndTime.Subtract(Model.StartDateTime).Hours)h @(Model.EndTime.Subtract(Model.StartDateTime).Minutes)m
-                                </p>
-                            </div>
+                            }
                         </div>
                     </div>
 
                     <!-- Location -->
                     @if (Model.Venue != null)
                     {
-                        <div class="bg-blue-50 p-5 rounded-lg">
-                            <div class="flex items-start">
-                                <svg class="h-6 w-6 text-blue-600 mr-3 mt-0.5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                                </svg>
-                                <div>
-                                    <h3 class="text-lg font-semibold text-gray-800">Location</h3>
-                                    <p class="text-gray-700 mt-1">@Model.Venue.Name</p>
-                                    @if (Model.Venue.Address != null)
-{
-    <p class="text-gray-600">@Model.Venue.Address</p>
+                        <div class="border-t border-blue-200/70"></div>
 
-    var mapQuery = Uri.EscapeDataString(
-        Model.Venue.Name + ", " +
-        Model.Venue.Address + ", " +
-        Model.Venue.City.Name
-    );
+                        <div class="flex items-start">
+                            <svg class="h-6 w-6 text-blue-600 mr-4 mt-0.5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                            <div>
+                                @{
+                                    bool hasMultipleLocations = false;
+                                    
+                                    if (Model.ChildEvents != null && Model.ChildEvents.Any())
+                                    {
+                                        int distinctVenuesCount = Model.ChildEvents
+                                            .Where(c => c.VenueId != null)
+                                            .Select(c => c.VenueId)
+                                            .Distinct()
+                                            .Count();
+                                            
+                                        hasMultipleLocations = distinctVenuesCount > 1;
+                                    }
+                                }
 
-    <a href="https://www.google.com/maps/search/?api=1&query=@mapQuery"
-       class="inline-flex items-center mt-3 text-blue-600 hover:text-blue-800 font-medium transition-colors">
-        📍 View on Google Maps
-    </a>
-}
-                                </div>
+                                @if (hasMultipleLocations)
+                                {
+                                    <h3 class="text-lg font-semibold text-gray-900">Multiple Locations</h3>
+                                    <p class="text-gray-700 mt-1">This event takes place across several venues.</p>
+                                    <a href="#available-schedules" class="inline-flex items-center mt-2 text-blue-700 hover:text-blue-900 font-medium transition-colors">
+                                        Check schedule below ↓
+                                    </a>
+                                }
+                                else
+                                {
+                                    <h3 class="text-lg font-semibold text-gray-900">Location</h3>
+                                    <p class="text-gray-800 mt-1 font-medium">@Model.Venue.Name</p>
+                                    
+                                    @if (Model.Venue.Address != null && Model.Venue.City != null)
+                                    {
+                                        <p class="text-gray-600">@Model.Venue.Address, @Model.Venue.City.Name</p>
+                                        <a href="https://maps.google.com/?q=@Uri.EscapeDataString($"{Model.Venue.Name}, {Model.Venue.Address}, {Model.Venue.City.Name}")" 
+                                        target="_blank" 
+                                        rel="noopener noreferrer"
+                                        class="inline-flex items-center mt-3 text-blue-700 hover:text-blue-900 font-medium transition-colors">
+                                            View on Google Maps
+                                            <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                                        </a>
+                                    } 
+                                }
                             </div>
                         </div>
                     }
@@ -87,61 +116,39 @@
                     <!-- Event Type -->
                     @if (Model.EventType != null)
                     {
-                        <div class="bg-blue-50 p-5 rounded-lg">
-                            <div class="flex items-start">
-                                <svg class="h-6 w-6 text-blue-600 mr-3 mt-0.5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                                </svg>
-                                <div>
-                                    <h3 class="text-lg font-semibold text-gray-800">Event Type</h3>
-                                    <p class="text-gray-700 mt-1">@Model.EventType.Name</p>
-                                </div>
+                        <div class="border-t border-blue-200/70"></div>
+
+                        <div class="flex items-start">
+                            <svg class="h-6 w-6 text-blue-600 mr-4 mt-0.5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                            </svg>
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-900">Event Type</h3>
+                                <p class="text-gray-700 mt-1 font-medium">@Model.EventType.Name</p>
                             </div>
                         </div>
                     }
-
-                    <div class="w-full mt-3 text-center">
-   
-</div>
-
-</div>
-                    
                 </div>
 
-                <!-- Right Column - Action Card -->
+                <!-- RIGHT COLUMN - Action Card -->
                 <div>
-                    <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-6 sticky top-6">
-                        <h3 class="text-xl font-bold text-gray-900 mb-4">Reserve Your Spot</h3>
-
-                        <!-- Event Summary -->
-                        <div class="mb-6 bg-blue-50 p-4 rounded-lg">
-                            <div class="flex items-center mb-3">
-                                <svg class="h-5 w-5 text-blue-600 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                                </svg>
-                                <h4 class="font-medium text-gray-800">Event Summary</h4>
-                            </div>
-                            <p class="text-sm text-gray-600 mb-2">
-                                <span class="font-medium">Date:</span> @Model.StartDateTime.ToString("MMM d, yyyy")
-                            </p>
-                            <p class="text-sm text-gray-600 mb-2">
-                                <span class="font-medium">Time:</span> @Model.StartDateTime.ToString("h:mm tt")
-                            </p>
-                            <p class="text-sm text-gray-600">
-                                <span class="font-medium">Venue:</span> @Model.Venue.Name
-                            </p>
-                        </div>
-
+                    <!-- sticky top-6 keeps the reservation box visible if you scroll past a tall blue box -->
+                    <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-8 sticky top-6">
                         @if(Model.ParentEventId != null || Model.ChildEvents == null || !Model.ChildEvents.Any()){
-                        <!-- Direct Reserve Button -->
-                        <a href="@Url.Action("ReserveSeats", "Reservation", new { eventId = Model.Id })"
-                           class="w-full block text-center px-6 py-4 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors">
-                            Reserve Seats
-                        </a>
-
-                        <p class="text-sm text-gray-500 mt-4 text-center">
-                            Select your preferred seats on the next page
-                        </p>
+                            <div class="text-center">
+                                <h3 class="text-2xl font-bold text-gray-900 mb-2">Reserve Your Spot</h3>
+                                <p class="text-gray-600 mb-6">Select your preferred seats and secure your tickets now.</p>
+                                
+                                <a href="@Url.Action("ReserveSeats", "Reservation", new { eventId = Model.Id })"
+                                class="w-full block text-center px-6 py-4 bg-blue-600 text-white font-semibold text-lg rounded-lg shadow-md hover:bg-blue-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 transform hover:-translate-y-1">
+                                    Reserve Seats
+                                </a>
+                                
+                                <p class="text-sm text-gray-500 mt-4 flex items-center justify-center">
+                                    <svg class="w-4 h-4 mr-1 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+                                    Secure checkout available
+                                </p>
+                            </div>
                         }
                     </div>
                 </div>

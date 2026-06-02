@@ -6,25 +6,21 @@
 }
 
 <div class="bg-gradient-to-r from-blue-50 to-indigo-50 min-h-screen py-8 px-4 sm:px-6 lg:px-8">
-    <div class="max-w-6xl mx-auto">
-        <!-- Header -->
+    <div class="w-full mx-auto">
         <div class="bg-white rounded-xl shadow-md overflow-hidden mb-8">
             <div class="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-8">
                 <div class="flex flex-col md:flex-row md:items-center md:justify-between">
                     <div>
                         <h1 class="text-2xl md:text-3xl font-bold text-white">Edit Layout</h1>
                         <p class="mt-2 text-indigo-100 max-w-3xl">
-                            Update details and seating arrangement for <span
-                                                                           class="font-semibold">@Model.AreaName</span>
+                            Update details and seating arrangement for <span class="font-semibold">@Model.AreaName</span>
                         </p>
                     </div>
                     <div class="mt-4 md:mt-0">
                         <a href="@Url.Action("Index", "SubAreas")"
                            class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-indigo-700 bg-white hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24"
-                                 stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                      d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
                             </svg>
                             Back to List
                         </a>
@@ -33,233 +29,198 @@
             </div>
         </div>
 
-        <!-- Main content with tabs -->
         <div class="bg-white rounded-xl shadow-lg overflow-hidden">
-            <!-- Tabs -->
             <div class="border-b border-gray-200">
                 <nav class="flex -mb-px" aria-label="Tabs">
-                    <button id="tab-details"
-                            class="tab-button border-indigo-500 text-indigo-600 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm"
-                            aria-current="page">
+                    <button id="tab-details" class="tab-button border-indigo-500 text-indigo-600 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" aria-current="page">
                         Basic Details
                     </button>
-                    <button id="tab-seats"
-                            class="tab-button border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ml-8">
+                    <button id="tab-seats" class="tab-button border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ml-8">
                         Seat Map
                     </button>
                 </nav>
             </div>
 
-            <!-- Tab Content -->
             <div class="p-6">
-                <!-- Basic Details Tab Content -->
                 <div id="details-content" class="tab-content">
                     <form asp-action="Edit" id="editSubAreaForm" class="space-y-6 max-w-xl mx-auto">
+                        @Html.AntiForgeryToken()
                         <div asp-validation-summary="ModelOnly" class="text-red-500"></div>
                         <input type="hidden" asp-for="Id"/>
                         <input type="hidden" asp-for="VenueId"/>
 
-                        <!-- Area Name -->
                         <div>
-                            <label asp-for="AreaName" class="block text-sm font-medium text-gray-700 mb-1">Layout
-                                Name</label>
+                            <label asp-for="AreaName" class="block text-sm font-medium text-gray-700 mb-1">Layout Name</label>
                             <div class="relative">
                                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none"
-                                         viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                              d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
                                     </svg>
                                 </div>
-                                <input asp-for="AreaName"
-                                       class="pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"/>
+                                <input asp-for="AreaName" class="pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"/>
                             </div>
                             <span asp-validation-for="AreaName" class="text-red-500 text-xs mt-1"></span>
                         </div>
 
-                        <!-- Description -->
                         <div>
-                            <label asp-for="Desc"
-                                   class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                            <label asp-for="Desc" class="block text-sm font-medium text-gray-700 mb-1">Description</label>
                             <div class="relative">
                                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none"
-                                         viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                              d="M4 6h16M4 12h16M4 18h7"/>
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"/>
                                     </svg>
                                 </div>
-                                <input asp-for="Desc"
-                                       class="pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"/>
+                                <input asp-for="Desc" class="pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"/>
                             </div>
                             <span asp-validation-for="Desc" class="text-red-500 text-xs mt-1"></span>
                         </div>
 
-                        <!-- Dimensions -->
                         <div class="grid grid-cols-2 gap-4">
                             <div>
-                                <label asp-for="Width"
-                                       class="block text-sm font-medium text-gray-700 mb-1">Width</label>
+                                <label asp-for="Width" class="block text-sm font-medium text-gray-700 mb-1">Width</label>
                                 <div class="relative">
                                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400"
-                                             fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                  d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5"/>
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5"/>
                                         </svg>
                                     </div>
-                                    <input asp-for="Width" type="number" min="0"
-                                           class="pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"/>
+                                    <input asp-for="Width" type="number" min="0" class="pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"/>
                                 </div>
                                 <span asp-validation-for="Width" class="text-red-500 text-xs mt-1"></span>
                             </div>
                             <div>
-                                <label asp-for="Height"
-                                       class="block text-sm font-medium text-gray-700 mb-1">Height</label>
+                                <label asp-for="Height" class="block text-sm font-medium text-gray-700 mb-1">Height</label>
                                 <div class="relative">
                                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400"
-                                             fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                  d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5"/>
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l-5-5m11 5v-4m0 4h-4m4 0l-5-5"/>
                                         </svg>
                                     </div>
-                                    <input asp-for="Height" type="number" min="0"
-                                           class="pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"/>
+                                    <input asp-for="Height" type="number" min="0" class="pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"/>
                                 </div>
                                 <span asp-validation-for="Height" class="text-red-500 text-xs mt-1"></span>
                             </div>
                         </div>
 
-                        <!-- Position -->
                         <div class="grid grid-cols-2 gap-4">
                             <div>
-                                <label asp-for="Left" class="block text-sm font-medium text-gray-700 mb-1">Left
-                                    Position</label>
+                                <label asp-for="Left" class="block text-sm font-medium text-gray-700 mb-1">Left Position</label>
                                 <div class="relative">
                                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400"
-                                             fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                  d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
                                         </svg>
                                     </div>
-                                    <input asp-for="Left" type="number"
-                                           class="pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"/>
+                                    <input asp-for="Left" type="number" class="pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"/>
                                 </div>
                                 <span asp-validation-for="Left" class="text-red-500 text-xs mt-1"></span>
                             </div>
                             <div>
-                                <label asp-for="Top" class="block text-sm font-medium text-gray-700 mb-1">Top
-                                    Position</label>
+                                <label asp-for="Top" class="block text-sm font-medium text-gray-700 mb-1">Top Position</label>
                                 <div class="relative">
                                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400"
-                                             fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                  d="M5 10l7-7m0 0l7 7m-7-7v18"/>
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"/>
                                         </svg>
                                     </div>
-                                    <input asp-for="Top" type="number"
-                                           class="pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"/>
+                                    <input asp-for="Top" type="number" class="pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"/>
                                 </div>
                                 <span asp-validation-for="Top" class="text-red-500 text-xs mt-1"></span>
                             </div>
                         </div>
 
-                        <!-- Submit Buttons -->
                         <div class="flex items-center space-x-3 pt-5 border-t border-gray-200">
-                            <button type="submit"
-                                    class="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-medium rounded-md shadow transition duration-200 hover:from-blue-700 hover:to-indigo-700 focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 cursor-pointer">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="inline-block h-5 w-5 mr-1" fill="none"
-                                     viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                          d="M5 13l4 4L19 7"/>
+                            <button type="submit" class="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-medium rounded-md shadow transition duration-200 hover:from-blue-700 hover:to-indigo-700 focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 cursor-pointer">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="inline-block h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                                 </svg>
                                 Save Changes
                             </button>
-                            <a asp-action="Index"
-                               class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                            <a asp-action="Index" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
                                 Cancel
                             </a>
                         </div>
                     </form>
                 </div>
 
-                <!-- Seat Map Tab Content -->
                 <div id="seats-content" class="tab-content hidden">
-                    <!-- Seat Map Controls Topbar -->
-                    <div class="bg-gray-50 rounded-t-lg border border-b-0 border-gray-200 px-6 py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                        <div class="flex items-center gap-3 mb-2 md:mb-0">
-                            <div class="h-10 w-10 rounded-md bg-indigo-100 flex items-center justify-center text-indigo-600">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
-                                </svg>
+                    
+                    <div class="grid grid-cols-1 bg-gray-50 rounded-t-lg border border-b-0 border-gray-200 px-6 py-4 gap-4">
+                        <div class="flex flex-wrap gap-4 items-center w-full justify-between">
+                            
+                            <div class="flex gap-2">
+                                <button type="button" id="show-seat" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md shadow-sm transition-colors">Seat</button>
+                                <button type="button" id="show-table" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md shadow-sm transition-colors">Table</button>
+                                <button type="button" id="show-scene" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md shadow-sm transition-colors">Scene</button>
                             </div>
-                            <h2 class="text-lg font-medium text-gray-800">Seat Map Controls</h2>
+
+                            <div class="flex gap-4">
+                                <button type="button" id="save-seats" class="flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/>
+                                    </svg>
+                                    Save Seat Map
+                                </button>
+                                <button type="button" id="deleteSeatBtn" onclick="removeSelectedItems()" class="flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                    </svg>
+                                    Delete Selected
+                                </button>
+                            </div>
+
                         </div>
-                        <div class="flex flex-wrap gap-4 items-center">
-                            <div class="flex flex-col">
-                                <label for="Row" class="block text-xs font-medium text-gray-700 mb-1">Rows</label>
-                                <input type="number" id="Row" value="0" min="0" max="20" class="w-24 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"/>
-                            </div>
-                            <div class="flex flex-col">
-                                <label for="Col" class="block text-xs font-medium text-gray-700 mb-1">Columns</label>
-                                <input type="number" id="Col" value="0" min="0" max="20" class="w-24 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"/>
-                            </div>
-                            <button type="button" id="create" class="flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                                </svg>
-                                Generate Seats
-                            </button>
-                            <button type="button" id="save" class="flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/>
-                                </svg>
-                                Save Seat Map
-                            </button>
-                            <button type="button" id="deleteSeat" class="flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                                </svg>
-                                Delete Selected Seats
-                            </button>
+                    </div>
+                    
+                    <div class="bg-white border border-gray-200 p-4 shadow-md w-full flex flex-col items-center">
+                        <div class="AddContainer w-full bg-blue-50 p-3 border border-blue-200 hidden flex gap-2 justify-center rounded-md" id="seatContainer">
+                            <button type="button" id="add-seat-single" draggable="true" class="px-4 py-2 text-sm font-medium text-blue-700 bg-white border border-blue-300 hover:bg-blue-50 rounded-md shadow-sm">Single</button>
+                            <button type="button" id="add-seat-hline" class="px-4 py-2 text-sm font-medium text-blue-700 bg-white border border-blue-300 hover:bg-blue-50 rounded-md shadow-sm">Horizontal Line</button>
+                            <button type="button" id="add-seat-vline" class="px-4 py-2 text-sm font-medium text-blue-700 bg-white border border-blue-300 hover:bg-blue-50 rounded-md shadow-sm">Vertical Line</button>
+                            <button type="button" id="add-seat-grid" class="px-4 py-2 text-sm font-medium text-blue-700 bg-white border border-blue-300 hover:bg-blue-50 rounded-md shadow-sm">Grid</button>
                         </div>
-                        <div class="hidden md:block border-l border-gray-200 h-10 mx-4"></div>
-                        <div class="flex-1">
-                            <div class="bg-blue-50 p-3 rounded-md border border-blue-100">
-                                <h4 class="text-sm font-medium text-blue-800 flex items-center">
+                        <div class="AddContainer w-full bg-blue-50 p-3 border border-blue-200 hidden flex gap-2 justify-center rounded-md" id="tableContainer">
+                            <button type="button" id="add-table-square" draggable="true" class="px-4 py-2 text-sm font-medium text-blue-700 bg-white border border-blue-300 hover:bg-blue-50 rounded-md shadow-sm">Square</button>
+                            <button type="button" id="add-table-circle" draggable="true" class="px-4 py-2 text-sm font-medium text-blue-700 bg-white border border-blue-300 hover:bg-blue-50 rounded-md shadow-sm">Circle</button>
+                            <button type="button" id="add-table-triangle" draggable="true" class="px-4 py-2 text-sm font-medium text-blue-700 bg-white border border-blue-300 hover:bg-blue-50 rounded-md shadow-sm">Triangle</button>
+                        </div>
+                        <div class="AddContainer w-full bg-blue-50 p-3 border border-blue-200 hidden flex justify-center rounded-md" id="sceneContainer">
+                            <button type="button" id="add-scene-stage" draggable="true" class="px-4 py-2 text-sm font-medium text-blue-700 bg-white border border-blue-300 hover:bg-blue-50 rounded-md shadow-sm">Stage/Scene</button>
+                        </div>
+
+                        <div id="seat-status" class="mt-4 p-3 bg-gray-100 rounded-md text-gray-700 text-sm w-full text-center">
+                            Ready to manage layout. Click buttons above to add items, or drag and drop onto the map.
+                        </div>
+                    </div>
+
+                    <div class="flex gap-4 mt-4">
+                        
+                        <div class="flex bg-blue-50 border border-blue-200 rounded-lg p-5 w-1/4">
+                            <div id="optionsPanel" class="flex flex-col w-full hidden">
+                                </div>
+                            
+                            <div id="tipsPanel" class="flex flex-col w-full">
+                                <h4 class="text-sm font-bold text-blue-800 flex items-center border-b border-blue-200 pb-2 mb-3">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                     </svg>
-                                    Tips
+                                    Editor Tips
                                 </h4>
-                                <ul class="text-xs text-blue-700 mt-1 space-y-1 pl-5 list-disc">
-                                    <li>Drag seats to position them</li>
-                                    <li>Click to select seats for deletion</li>
-                                    <li>Use Shift+Click for multiple selection</li>
-                                    <li>Remember to save your changes</li>
+                                <ul class="text-sm text-blue-700 space-y-2 pl-4 list-disc">
+                                    <li><b>Click</b> an item to select and edit its properties.</li>
+                                    <li><b>Drag</b> seats and tables to position them.</li>
+                                    <li><b>Shift + Click</b> or <b>Click and Drag</b> the map to select multiple items.</li>
+                                    <li>Remember to click <b>Save Seat Map</b> when finished.</li>
                                 </ul>
                             </div>
                         </div>
-                    </div>
-                    <!-- Canvas Container -->
-                    <div class="bg-white border border-gray-200 rounded-b-lg p-4 shadow-md w-full flex flex-col items-center">
-                        <div class="w-full bg-gray-50 p-3 rounded-t-lg border border-gray-200 text-center">
-                            <h3 class="text-sm font-medium text-gray-700">Drag seats to reposition | Select seats to delete</h3>
-                        </div>
-                        <div class="w-full flex justify-center">
-                            <canvas id="c" width="600" height="500" class="border border-gray-300 rounded bg-gray-50 shadow-inner"></canvas>
-                        </div>
-                        <div id="seatMapStatus" class="mt-3 text-sm text-gray-600 hidden">
-                            <span class="inline-flex items-center">
-                                <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-indigo-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                </svg>
-                                <span id="seatMapStatusText">Loading seat map...</span>
-                            </span>
+
+                        <div class="bg-white rounded-lg border border-gray-200 p-4 w-3/4">
+                            <div class="bg-gray-100 border border-gray-300 rounded-lg p-4 relative" style="min-height: 400px; height: 600px;">
+                                <div id="seat-map" class="relative w-full h-full overflow-auto select-none">
+                                    <div id="selection-box" class="selection-box"></div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -268,606 +229,687 @@
     </div>
 </div>
 
+<style>
+    .selection-box {
+        position: absolute;
+        border: 2px dashed #3b82f6; 
+        background-color: rgba(59, 130, 246, 0.2); 
+        pointer-events: none;
+        z-index: 100;
+        display: none;
+    }
+</style>
+
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        console.log("DOM is loaded, initializing seat management");
-
-        // First, make sure the tabs exist and are properly initialized
-        const tabDetails = document.getElementById('tab-details');
-        const tabSeats = document.getElementById('tab-seats');
-        const detailsContent = document.getElementById('details-content');
-
-        // Check if seat content exists or initialize it
-        let seatsContent = document.getElementById('seats-content');
-        if (!seatsContent) {
-            console.log("Creating seats content from scratch");
-            seatsContent = document.createElement('div');
-            seatsContent.id = 'seats-content';
-            seatsContent.className = 'tab-content';
-            seatsContent.style.display = 'none';
-
-            // If there's a parent for the details content, add the seats content there
-            if (detailsContent && detailsContent.parentNode) {
-                detailsContent.parentNode.appendChild(seatsContent);
-            } else {
-                // Fallback to adding after details content
-                const contentContainer = document.querySelector('.p-6');
-                if (contentContainer) {
-                    contentContainer.appendChild(seatsContent);
-                }
-            }
-        }
-
-        // Verify the required elements exist before proceeding
-        if (!tabDetails || !tabSeats || !detailsContent || !seatsContent) {
-            console.error("Critical UI elements not found, cannot initialize seat management");
-            return;
-        }
-
-        console.log("Tab elements found, continuing initialization");
-
-        // Tab switching event listeners
-        tabDetails.addEventListener('click', function() {
-            console.log("Switching to details tab");
-            tabDetails.classList.add('border-indigo-500', 'text-indigo-600');
-            tabDetails.classList.remove('border-transparent', 'text-gray-500');
-            tabSeats.classList.remove('border-indigo-500', 'text-indigo-600');
-            tabSeats.classList.add('border-transparent', 'text-gray-500');
-
-            detailsContent.style.display = 'block';
-            seatsContent.style.display = 'none';
-        });
-
-        tabSeats.addEventListener('click', function() {
-            console.log("Switching to seats tab");
-            tabSeats.classList.add('border-indigo-500', 'text-indigo-600');
-            tabSeats.classList.remove('border-transparent', 'text-gray-500');
-            tabDetails.classList.remove('border-indigo-500', 'text-indigo-600');
-            tabDetails.classList.add('border-transparent', 'text-gray-500');
-
-            detailsContent.style.display = 'none';
-            seatsContent.style.display = 'block';
-
-            // Initialize seats if needed
-            if (!window.seatsInitialized) {
-                initializeSeats();
-            }
-        });
-
-        // Variables to track state
         let currentSeats = [];
-        let selectedSeats = new Set();
+        let currentShapes = [];
+        let selectedItems = new Set(); // Unified selection set
         window.seatsInitialized = false;
 
-        // Initialize the seats UI and functionality
-        function initializeSeats() {
-            console.log("Initializing seats interface");
+        const subAreaId = document.querySelector('input[name="Id"]').value;
+        const seatMap = document.getElementById('seat-map');
+        const optionsPanel = document.getElementById("optionsPanel");
+        const tipsPanel = document.getElementById("tipsPanel");
 
-            // Create the UI elements for seat management
-            seatsContent.innerHTML = `
-                <div class="flex flex-col gap-6">
-                    <!-- Seat Map Controls (Topbar) -->
-                    <div class="bg-gray-50 rounded-lg p-5 border border-gray-200">
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center mb-4">
-                                <div class="h-10 w-10 rounded-md bg-indigo-100 flex items-center justify-center text-indigo-600">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
-                                    </svg>
-                                </div>
-                                <h2 class="ml-3 text-lg font-medium text-gray-800">Seat Map Controls</h2>
-                            </div>
-
-                            <div class="flex flex-wrap gap-2">
-                                <button type="button" id="add-seat" class="flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                                    </svg>
-                                    Add New Seat
-                                </button>
-                                <button type="button" id="save-seats" class="flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/>
-                                    </svg>
-                                    Save Seat Map
-                                </button>
-                                <button type="button" id="remove-seats" class="flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                                    </svg>
-                                    Delete Selected Seats
-                                </button>
-                            </div>
-                        </div>
-
-                        <div class="flex flex-wrap gap-3 items-start">
-                            <!-- Action Buttons -->
-                            
-
-                            <!-- Help Text + Status (side by side, flex-grow to fill remaining space) -->
-                            <div class="flex flex-1 gap-3 min-w-0">
-                                <!-- Status Message -->
-                                <div id="seat-status" class="p-3 bg-gray-100 rounded-md text-gray-700 text-sm flex-1 flex items-center">
-                                    Ready to manage seats. Add or modify seats and save when done.
-                                </div>
-                            </div>
-
-                        </div>
-                    </div>
-
-                    <!-- Canvas Container -->
-                    <div class="bg-white rounded-lg border border-gray-200 p-4">
-                        <div class="bg-gray-100 border border-gray-300 rounded-lg p-4 relative" style="min-height: 400px">
-                            <div id="seat-map" class="relative w-full h-96 overflow-auto">
-                                <!-- Seats will be populated here -->
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-
-            // Now that elements are created, we can add event listeners
-            const subAreaId = document.querySelector('input[name="Id"]').value;
-            console.log("Found subAreaId:", subAreaId);
-
-            const addSeatBtn = document.getElementById('add-seat');
-            const saveSeatBtn = document.getElementById('save-seats');
-            const removeSeatBtn = document.getElementById('remove-seats');
-            const seatMap = document.getElementById('seat-map');
-            const statusBar = document.getElementById('seat-status');
-
-            if (!addSeatBtn || !saveSeatBtn || !removeSeatBtn || !seatMap || !statusBar) {
-                console.error("Could not find required elements for seat management");
-                return;
+        // --- UI UTILS ---
+        window.hideAllOptions = function() {
+            optionsPanel.classList.add("hidden");
+            optionsPanel.innerHTML = "";
+            
+            // Show tips if nothing is selected
+            if (selectedItems.size === 0) {
+                tipsPanel.classList.remove("hidden");
             }
+        };
 
-            console.log("Seat management elements found, setting up event handlers");
-
-            // Load seats from server
-            loadSeats(subAreaId);
-
-            // Event handlers for buttons
-            // --- Add Mode State ---
-            let addMode = false;
-            let dragStart = null;
-            let dragEnd = null;
-            let addModeHandler = null;
-            let dragHandler = null;
-            let upHandler = null;
-            let outlineDiv = null;
-            let hintSeatsDiv = null;
-
-            function exitAddMode() {
-                addMode = false;
-                addSeatBtn.classList.remove('bg-yellow-400', 'text-black', 'ring-2', 'ring-yellow-400');
-                addSeatBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>Add New Seat`;
-                updateStatus('Exited add seat mode.', 'info');
-                seatMap.style.cursor = '';
-                seatMap.removeEventListener('mousedown', addModeHandler);
-                document.removeEventListener('mousemove', dragHandler);
-                document.removeEventListener('mouseup', upHandler);
-                document.removeEventListener('keydown', escHandler);
-                if (outlineDiv && outlineDiv.parentNode) outlineDiv.parentNode.removeChild(outlineDiv);
-                outlineDiv = null;
-                if (hintSeatsDiv && hintSeatsDiv.parentNode) hintSeatsDiv.parentNode.removeChild(hintSeatsDiv);
-                hintSeatsDiv = null;
-            }
-
-            function escHandler(e) {
-                if (e.key === 'Escape') exitAddMode();
-            }
-
-            addSeatBtn.addEventListener('click', function() {
-                // Prompt for both values in one dialog, defaulting to 1 if blank/invalid
-                let input = prompt('How many seats and rows? (format: seats,rows)\nExample: 5,2 for 5 seats in 2 rows. \n\nLeave blank for 1 seat in 1 row.');
-                if (input === null) {
-                    // User cancelled
-                    return;
-                }
-                let numSeats = 1, numRows = 1;
-                if (input && input.trim() !== '') {
-                    let parts = input.split(',');
-                    if (parts.length > 0 && !isNaN(parts[0]) && parseInt(parts[0]) > 0) {
-                        numSeats = parseInt(parts[0]);
-                    }
-                    if (parts.length > 1 && !isNaN(parts[1]) && parseInt(parts[1]) > 0) {
-                        numRows = parseInt(parts[1]);
-                    }
-                }
-
-                // Find the last row's Y position (or start at 0 if none)
-                let lastRowY = 0;
-                if (currentSeats.length > 0) {
-                    lastRowY = Math.max(...currentSeats.map(s => s.y));
-                    lastRowY += 70; // 60px seat + 10px spacing
-                }
-
-                // Add seats in rows
-                for (let row = 0; row < numRows; row++) {
-                    let y = lastRowY + row * 70;
-                    for (let col = 0; col < numSeats; col++) {
-                        let x = col * 70;
-                        const seatNumber = currentSeats.length + 1;
-                        const newSeat = {
-                            id: `temp-${Date.now()}-${Math.random().toString(36).slice(2,7)}`,
-                            name: `Seat ${seatNumber}`,
-                            x: x,
-                            y: y,
-                            available: true
-                        };
-                        currentSeats.push(newSeat);
-                    }
-                }
-                renderSeats();
-                updateStatus(`Added ${numSeats * numRows} seat(s) in ${numRows} row(s).`, 'success');
-            });
-
-            removeSeatBtn.addEventListener('click', function() {
-                console.log("Removing selected seats");
-                if (selectedSeats.size === 0) {
-                    updateStatus("No seats selected. Click on seats to select them for removal.", "warning");
-                    return;
-                }
-
-                if (confirm(`Are you sure you want to remove ${selectedSeats.size} selected seat(s)?`)) {
-                    // Remove from UI immediately
-                    currentSeats = currentSeats.filter(seat => !selectedSeats.has(seat.name));
-
-                    // If there are existing seats with IDs, send deletion request to server
-                    const seatsToDelete = Array.from(selectedSeats);
-
-                    fetch('/Seat/DeleteMultipleSeats', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
-                        },
-                        body: JSON.stringify({
-                            seatNames: seatsToDelete,
-                            subAreaId: subAreaId
-                        })
-                    })
-                        .then(response => response.json())
-                        .then(result => {
-                            if (result.success) {
-                                selectedSeats.clear();
-                                updateStatus(`Removed ${seatsToDelete.length} seats successfully.`, "success");
-                            } else {
-                                updateStatus("Error deleting seats: " + (result.message || "Unknown error"), "error");
-                            }
-                            renderSeats();
-                        })
-                        .catch(error => {
-                            console.error('Error deleting seats:', error);
-                            updateStatus("Error communicating with server. Seats removed from view only.", "error");
-                            renderSeats();
-                        });
-                }
-            });
-
-            saveSeatBtn.addEventListener('click', saveSeats);
-
-            // Mark as initialized
-            window.seatsInitialized = true;
-
-            // Add this function to your existing script section in Edit.cshtml
-            function saveSeats() {
-                console.log("Saving seats...");
-
-                const subAreaId = document.querySelector('input[name="Id"]').value;
-
-                if (!subAreaId) {
-                    console.error("SubArea ID not found");
-                    updateStatus("Error: SubArea ID not found", "error");
-                    return;
-                }
-
-                if (!currentSeats || currentSeats.length === 0) {
-                    updateStatus("No seats to save", "warning");
-                    return;
-                }
-
-                // Transform seats to the format expected by the server
-                const seatsData = currentSeats.map(seat => ({
-                    name: seat.name,
-                    x: seat.x,
-                    y: seat.y,
-                    available: seat.available !== false, // Default to true if not specified
-                    subAreaId: parseInt(subAreaId)
-                }));
-
-                console.log("Sending seats data:", seatsData);
-                updateStatus("Saving seats...", "loading");
-
-                // Send to server using the existing CreateTableMap endpoint
-                fetch(`/Seat/CreateTableMap?subAreaId=${subAreaId}`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
-                    },
-                    body: JSON.stringify(seatsData)
-                })
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error(`HTTP error! status: ${response.status}`);
-                        }
-                        return response.json();
-                    })
-                    .then(data => {
-                        console.log("Seats saved successfully:", data);
-                        updateStatus("Seats saved successfully!", "success");
-
-                        // Reload seats to get updated IDs from server
-                        loadSeats(subAreaId);
-                    })
-                    .catch(error => {
-                        console.error("Error saving seats:", error);
-                        updateStatus("Error saving seats: " + error.message, "error");
-                    });
-            }
-
-// Also add this helper function to update the status display
-            function updateStatus(message, type = "info") {
-                const statusBar = document.getElementById('seat-status');
-                if (!statusBar) return;
-
-                // Remove existing status classes
-                statusBar.className = statusBar.className.replace(/bg-\w+-\d+/g, '').replace(/text-\w+-\d+/g, '');
-
-                // Apply appropriate styling based on type
-                switch(type) {
-                    case "success":
-                        statusBar.classList.add('bg-green-100', 'text-green-700');
-                        break;
-                    case "error":
-                        statusBar.classList.add('bg-red-100', 'text-red-700');
-                        break;
-                    case "warning":
-                        statusBar.classList.add('bg-yellow-100', 'text-yellow-700');
-                        break;
-                    case "loading":
-                        statusBar.classList.add('bg-blue-100', 'text-blue-700');
-                        break;
-                    default:
-                        statusBar.classList.add('bg-gray-100', 'text-gray-700');
-                }
-
-                statusBar.textContent = message;
-            }
-
-// Also update the save button event handler in your existing script
-// Find this line in your existing code and make sure it calls saveSeats():
-// saveSeatBtn.addEventListener('click', saveSeats);
-        }
-
-        // Load seats from server
-        function loadSeats(subAreaId) {
-            console.log("Loading seats for subArea:", subAreaId);
-            updateStatus("Loading seat map...");
-
-            fetch(`/Seat/get_data?SubAreaId=${subAreaId}`)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`Server returned status ${response.status}`);
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    console.log("Loaded seats:", data);
-                    currentSeats = Array.isArray(data) ? data : [];
-                    selectedSeats.clear();
-                    renderSeats();
-
-                    if (currentSeats.length > 0) {
-                        updateStatus(`Loaded ${currentSeats.length} seats. Click to select, drag to reposition.`, "success");
-                    } else {
-                        updateStatus("No existing seats found. Add seats using the 'Add New Seat' button.", "info");
-                    }
-                })
-                .catch(error => {
-                    console.error('Error loading seats:', error);
-                    updateStatus("Error loading seats: " + error.message, "error");
-                });
-        }
-
-        // Render seats on the map
-        function renderSeats() {
-            console.log("Rendering seats:", currentSeats.length);
-            const seatMap = document.getElementById('seat-map');
-            if (!seatMap) {
-                console.error("Seat map element not found");
-                return;
-            }
-
-            // Clear the seat map
-            seatMap.innerHTML = '';
-
-            // Add each seat
-            currentSeats.forEach(seat => {
-                const seatElement = document.createElement('div');
-                seatElement.className = 'absolute text-white rounded-md flex flex-col items-center justify-center cursor-move shadow-md';
-                seatElement.classList.add(selectedSeats.has(seat.name) ? 'bg-red-500' : 'bg-blue-500');
-                seatElement.classList.add(selectedSeats.has(seat.name) ? 'hover:bg-red-600' : 'hover:bg-blue-600');
-
-                seatElement.style.width = '60px';
-                seatElement.style.height = '60px';
-                seatElement.style.left = `${seat.x}px`;
-                seatElement.style.top = `${seat.y}px`;
-                seatElement.dataset.id = seat.id;
-                seatElement.dataset.name = seat.name;
-
-                // Seat name display
-                const seatNameDiv = document.createElement('div');
-                seatNameDiv.textContent = seat.name;
-                seatNameDiv.className = 'w-full text-center truncate';
-                seatElement.appendChild(seatNameDiv);
-
-                // Edit button
-                const editBtn = document.createElement('button');
-                editBtn.type = 'button';
-                editBtn.className = 'mt-0.5 px-2 border-white rounded text-lg hover:text-yellow-400 focus:outline-none';
-                editBtn.textContent = '✎';
-                editBtn.title = 'Edit seat name';
-                seatElement.appendChild(editBtn);
-
-                // Edit seat name handler
-                editBtn.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    // Show prompt for new name
-                    const newName = prompt('Edit seat name:', seat.name);
-                    if (newName && newName.trim() && newName !== seat.name) {
-                        // Check for duplicate names
-                        if (currentSeats.some(s => s.name === newName)) {
-                            updateStatus('Seat name must be unique.', 'error');
-                            return;
-                        }
-                        seat.name = newName;
-                        seatNameDiv.textContent = newName;
-                        seatElement.dataset.name = newName;
-                        updateStatus(`Seat name updated to: ${newName}`, 'success');
-                    }
-                });
-
-                // Handle seat selection
-                seatElement.addEventListener('click', function(e) {
-                    // Only select if not clicking edit button
-                    if (e.target === editBtn) return;
-                    e.preventDefault();
-                    e.stopPropagation();
-
-                    if (selectedSeats.has(seat.name)) {
-                        selectedSeats.delete(seat.name);
-                        this.classList.remove('bg-red-500', 'hover:bg-red-600');
-                        this.classList.add('bg-blue-500', 'hover:bg-blue-600');
-                        updateStatus(`Deselected: ${seat.name}`);
-                    } else {
-                        selectedSeats.add(seat.name);
-                        this.classList.remove('bg-blue-500', 'hover:bg-blue-600');
-                        this.classList.add('bg-red-500', 'hover:bg-red-600');
-                        updateStatus(`Selected: ${seat.name}`);
-                    }
-                });
-
-                // Make seat draggable using mouse events for better control
-                let isDragging = false;
-                let dragStartX, dragStartY;
-                let originalX, originalY;
-
-                seatElement.addEventListener('mousedown', function(e) {
-                    // Don't drag if clicking edit button
-                    if (e.target === editBtn) return;
-                    e.preventDefault();
-
-                    // Prepare for potential drag
-                    isDragging = false;
-                    dragStartX = e.clientX;
-                    dragStartY = e.clientY;
-                    originalX = seat.x;
-                    originalY = seat.y;
-
-                    const onMouseMove = function(e) {
-                        e.preventDefault();
-
-                        // Detect if we've moved enough to consider it a drag
-                        const dx = Math.abs(e.clientX - dragStartX);
-                        const dy = Math.abs(e.clientY - dragStartY);
-
-                        if (!isDragging && (dx > 5 || dy > 5)) {
-                            isDragging = true;
-                            seatElement.classList.add('opacity-70'); // Visual feedback
-                        }
-
-                        if (isDragging) {
-                            // Calculate movement
-                            const deltaX = e.clientX - dragStartX;
-                            const deltaY = e.clientY - dragStartY;
-
-                            // Update position
-                            seat.x = originalX + deltaX;
-                            seat.y = originalY + deltaY;
-
-                            // Update visual position
-                            seatElement.style.left = `${seat.x}px`;
-                            seatElement.style.top = `${seat.y}px`;
-
-                            updateStatus(`Moving: ${seat.name}`);
-                        }
-                    };
-
-                    const onMouseUp = function() {
-                        document.removeEventListener('mousemove', onMouseMove);
-                        document.removeEventListener('mouseup', onMouseUp);
-
-                        seatElement.classList.remove('opacity-70');
-
-                        if (isDragging) {
-                            // Snap to grid (optional)
-                            seat.x = Math.round(seat.x / 10) * 10;
-                            seat.y = Math.round(seat.y / 10) * 10;
-
-                            // Update final position
-                            seatElement.style.left = `${seat.x}px`;
-                            seatElement.style.top = `${seat.y}px`;
-
-                            updateStatus(`Repositioned: ${seat.name}`);
-                        }
-                    };
-
-                    document.addEventListener('mousemove', onMouseMove);
-                    document.addEventListener('mouseup', onMouseUp);
-                });
-
-                seatMap.appendChild(seatElement);
-            });
-        }
-
-        // Update status message
-        function updateStatus(message, type = "info") {
-            console.log(`Status update (${type}): ${message}`);
+        window.updateStatus = function(message, type = "info") {
             const statusBar = document.getElementById('seat-status');
             if (!statusBar) return;
-
             statusBar.textContent = message;
+            statusBar.className = 'mt-4 p-3 rounded-md w-full text-center ' + 
+                (type === 'success' ? 'bg-green-100 text-green-800' : 
+                 type === 'error' ? 'bg-red-100 text-red-800' : 
+                 type === 'warning' ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-700');
+        };
 
-            // Reset classes
-            statusBar.className = 'mt-4 p-3 rounded-md';
+        // Fast Visual Updater (Prevents DOM Thrashing & Ghosting)
+        function updateSelectionVisuals() {
+            // Update Seats
+            seatMap.querySelectorAll('div[data-id]:not([data-type="shape"])').forEach(el => {
+                const name = el.dataset.name;
+                if (selectedItems.has(name)) {
+                    el.classList.remove('bg-blue-500', 'hover:bg-blue-600');
+                    el.classList.add('bg-red-500', 'hover:bg-red-600');
+                } else {
+                    el.classList.remove('bg-red-500', 'hover:bg-red-600');
+                    el.classList.add('bg-blue-500', 'hover:bg-blue-600');
+                }
+            });
 
-            // Apply appropriate styling
-            switch (type) {
-                case "success":
-                    statusBar.classList.add('bg-green-100', 'text-green-800');
-                    break;
-                case "error":
-                    statusBar.classList.add('bg-red-100', 'text-red-800');
-                    break;
-                case "warning":
-                    statusBar.classList.add('bg-yellow-100', 'text-yellow-800');
-                    break;
-                case "info":
-                default:
-                    statusBar.classList.add('bg-gray-100', 'text-gray-700');
-                    break;
-            }
-        }
-
-        // Fix the back button to work correctly
-        const backButton = document.querySelector('a[href="@Url.Action("Index")"]');
-        if (backButton) {
-            backButton.addEventListener('click', function(e) {
-                e.preventDefault();
-                // Directly navigate to the Index action on SubAreas controller
-                window.location.href = '@Url.Action("Index", "SubAreas")';
+            // Update Shapes
+            seatMap.querySelectorAll('div[data-type="shape"]').forEach(el => {
+                const name = el.dataset.name;
+                const visualBg = el.querySelector('.visual-bg');
+                if (visualBg) {
+                    if (selectedItems.has(name)) {
+                        visualBg.classList.add('ring-4', 'ring-red-500');
+                    } else {
+                        visualBg.classList.remove('ring-4', 'ring-red-500');
+                    }
+                }
             });
         }
 
-        // Check URL hash for initial tab
-        if (window.location.hash === '#seats') {
-            document.getElementById('tab-seats').click();
+        // --- MENU TABS ---
+        document.getElementById('show-seat').addEventListener('click', () => {
+            document.querySelectorAll('.AddContainer').forEach(con => con.classList.add("hidden"));
+            document.getElementById('seatContainer').classList.remove('hidden');
+        });
+        document.getElementById('show-table').addEventListener('click', () => {
+            document.querySelectorAll('.AddContainer').forEach(con => con.classList.add("hidden"));
+            document.getElementById('tableContainer').classList.remove('hidden');
+        });
+        document.getElementById('show-scene').addEventListener('click', () => {
+            document.querySelectorAll('.AddContainer').forEach(con => con.classList.add("hidden"));
+            document.getElementById('sceneContainer').classList.remove('hidden');
+        });
+
+        // --- DELETION LOGIC ---
+        window.removeSelectedItems = async function() {
+            if (selectedItems.size === 0) return updateStatus("No items selected.", "warning");
+
+            if (confirm(`Remove ${selectedItems.size} selected item(s)?`)) {
+                const itemsToDelete = Array.from(selectedItems);
+                const dbItemsToDelete = itemsToDelete.filter(name => !name.startsWith('temp-'));
+
+                currentSeats = currentSeats.filter(s => !selectedItems.has(s.name));
+                currentShapes = currentShapes.filter(s => !selectedItems.has(s.name));
+
+                if (dbItemsToDelete.length > 0) {
+                    try {
+                        await fetch('/Seat/DeleteMultipleSeats', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                            },
+                            body: JSON.stringify({ seatNames: dbItemsToDelete, subAreaId: subAreaId })
+                        });
+                        
+                        await fetch('/NonSelectable/DeleteElements', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ names: dbItemsToDelete, subAreaId: subAreaId })
+                        });
+
+                        updateStatus("Items removed successfully from database.", "success");
+                    } catch (err) {
+                        updateStatus("Items removed from view, but database sync failed.", "warning");
+                    }
+                } else {
+                    updateStatus("Unsaved items removed.", "success");
+                }
+
+                selectedItems.clear();
+                renderAll();
+                hideAllOptions(); // This will automatically show the tips panel again
+            }
+        };
+
+        // --- SHOW OPTIONS MENU ---
+        window.showOptions = function(data, type) {
+            tipsPanel.classList.add("hidden"); 
+            optionsPanel.classList.remove("hidden");
+            
+            const isTemp = String(data.id).startsWith('temp-');
+            const displayId = isTemp ? 'Unsaved' : data.id;
+
+            optionsPanel.innerHTML = `
+                <h3 class="font-bold mb-4 text-gray-800 border-b pb-2">${type === 'seat' ? 'Seat' : 'Shape'} Settings</h3>
+                <p class="text-xs mb-4 text-gray-500" id="opt-display-id"></p>
+                
+                <label class="text-xs font-semibold text-gray-700">Name</label>
+                <input id="opt-name" type="text" class="w-full mb-3 border border-gray-300 rounded px-2 py-1 text-sm focus:ring-indigo-500" onfocus="this.select()" />
+                
+                <div class="grid grid-cols-2 gap-2 mb-3">
+                    <div>
+                        <label class="text-xs font-semibold text-gray-700">X Position</label>
+                        <input id="opt-x" type="number" class="w-full border border-gray-300 rounded px-2 py-1 text-sm focus:ring-indigo-500" />
+                    </div>
+                    <div>
+                        <label class="text-xs font-semibold text-gray-700">Y Position</label>
+                        <input id="opt-y" type="number" class="w-full border border-gray-300 rounded px-2 py-1 text-sm focus:ring-indigo-500" />
+                    </div>
+                </div>
+
+                ${type === 'shape' ? `
+                    <div class="grid grid-cols-2 gap-2 mb-4">
+                        <div>
+                            <label class="text-xs font-semibold text-gray-700">Width</label>
+                            <input id="opt-w" type="number" class="w-full border border-gray-300 rounded px-2 py-1 text-sm focus:ring-indigo-500" />
+                        </div>
+                        <div>
+                            <label class="text-xs font-semibold text-gray-700">Height</label>
+                            <input id="opt-h" type="number" class="w-full border border-gray-300 rounded px-2 py-1 text-sm focus:ring-indigo-500" />
+                        </div>
+                    </div>
+                ` : '<div class="mb-4"></div>'}
+                
+                <button type="button" id="opt-confirm" class="w-full bg-indigo-600 text-white py-2 rounded shadow-sm hover:bg-indigo-700 transition-colors text-sm font-medium">
+                    Apply Changes
+                </button>
+            `;
+
+            document.getElementById('opt-display-id').textContent = `ID: ${displayId}`;
+            document.getElementById('opt-name').value = data.name;
+            document.getElementById('opt-x').value = data.x;
+            document.getElementById('opt-y').value = data.y;
+
+            if (type === 'shape') {
+                document.getElementById('opt-w').value = data.width;
+                document.getElementById('opt-h').value = data.height;
+            }
+
+            document.getElementById('opt-confirm').addEventListener('click', async () => {
+                const newName = document.getElementById('opt-name').value;
+                data.name = newName;
+                data.x = parseInt(document.getElementById('opt-x').value);
+                data.y = parseInt(document.getElementById('opt-y').value);
+
+                if (type === 'shape') {
+                    data.width = parseInt(document.getElementById('opt-w').value);
+                    data.height = parseInt(document.getElementById('opt-h').value);
+                }
+
+                renderAll(); // Re-render to show updated text/size
+
+                if (!isTemp) {
+                    const endpoint = type === 'seat' ? '/Seat/UpdateSeat' : '/NonSelectable/UpdateElement';
+                    try {
+                        await fetch(endpoint, {
+                            method: 'POST',
+                            headers: { 
+                                'Content-Type': 'application/json',
+                                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                            },
+                            body: JSON.stringify(data)
+                        });
+                        updateStatus(`${type} updated successfully!`, "success");
+                    } catch (err) {
+                        updateStatus(`Failed to sync ${type} to database.`, "error");
+                    }
+                } else {
+                    updateStatus(`Unsaved ${type} updated locally.`, "success");
+                }
+            });
+        };
+
+        // --- GRID GENERATION ---
+        function generateSeats(numRows, numCols) {
+            let lastRowY = currentSeats.length > 0 ? Math.max(...currentSeats.map(s => s.y)) + 70 : 0;
+            for (let row = 0; row < numRows; row++) {
+                for (let col = 0; col < numCols; col++) {
+                    currentSeats.push({
+                        id: `temp-${Date.now()}-${Math.random().toString(36).slice(2,5)}`,
+                        name: `Seat ${currentSeats.length + 1}`,
+                        x: col * 70, y: lastRowY + (row * 70), available: true
+                    });
+                }
+            }
+            renderAll();
+            updateStatus(`Added ${numCols * numRows} seat(s).`, 'success');
         }
 
-        console.log("Seat management initialization complete");
+        document.getElementById('add-seat-hline').addEventListener('click', () => {
+            let input = prompt('How many seats in this horizontal line?');
+            if (input && !isNaN(input) && parseInt(input) > 0) generateSeats(1, parseInt(input));
+        });
+        
+        document.getElementById('add-seat-vline').addEventListener('click', () => {
+            let input = prompt('How many seats in this vertical line?');
+            if (input && !isNaN(input) && parseInt(input) > 0) generateSeats(parseInt(input), 1);
+        });
+        
+        document.getElementById('add-seat-grid').addEventListener('click', () => {
+            let input = prompt('Format: seats,rows (e.g. 5,2 for 5 seats across 2 rows)');
+            if (input && input.trim() !== '') {
+                let parts = input.split(',');
+                let cols = (parts.length > 0 && !isNaN(parts[0])) ? parseInt(parts[0]) : 1;
+                let rows = (parts.length > 1 && !isNaN(parts[1])) ? parseInt(parts[1]) : 1;
+                generateSeats(rows, cols);
+            }
+        });
+
+        // Drag & Drop Generation
+        document.querySelectorAll('[draggable="true"]').forEach(btn => {
+            btn.addEventListener('dragstart', (e) => {
+                let type = btn.id.replace('add-table-', '').replace('add-scene-', '').replace('add-seat-', '');
+                e.dataTransfer.setData('itemType', type);
+                e.dataTransfer.effectAllowed = 'copy';
+            });
+        });
+
+        seatMap.addEventListener('dragover', (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; });
+        
+        seatMap.addEventListener('drop', (e) => {
+            e.preventDefault();
+            const itemType = e.dataTransfer.getData('itemType');
+            const rect = seatMap.getBoundingClientRect();
+            const dropX = Math.round((e.clientX - rect.left + seatMap.scrollLeft) / 10) * 10;
+            const dropY = Math.round((e.clientY - rect.top + seatMap.scrollTop) / 10) * 10;
+
+            if (itemType === 'single') {
+                currentSeats.push({
+                    id: `temp-${Date.now()}`,
+                    name: `Seat ${currentSeats.length + 1}`,
+                    x: dropX, y: dropY, available: true
+                });
+                updateStatus('Dropped new seat', 'success');
+            } else if (['square', 'circle', 'triangle', 'stage'].includes(itemType)) {
+                let shapeType = 'rectangle';
+                let width = 100; let height = 100; let namePrefix = "Table"; let bgColor = '#D1D5DB';
+
+                if (itemType === 'circle') shapeType = 'ellipse';
+                if (itemType === 'triangle') shapeType = 'triangle';
+                if (itemType === 'stage') {
+                    shapeType = 'rectangle';
+                    width = 300; height = 150; namePrefix = "Stage"; bgColor = '#4B5563';
+                }
+                
+                currentShapes.push({
+                    id: `temp-${Date.now()}`,
+                    name: `${namePrefix} ${currentShapes.length + 1}`,
+                    x: dropX, y: dropY, width: width, height: height,
+                    shapeType: shapeType, backgroundColor: bgColor
+                });
+                updateStatus(`Dropped new ${itemType}`, 'success');
+            }
+            renderAll();
+        });
+
+
+        // --- RENDERING MAIN ---
+        function renderAll() {
+            seatMap.querySelectorAll('div[data-id]').forEach(el => el.remove());
+
+            // Render Seats
+            currentSeats.forEach(seat => {
+                const el = document.createElement('div');
+                el.dataset.id = seat.id;
+                el.dataset.name = seat.name;
+                el.className = `absolute text-white rounded-md flex flex-col items-center justify-center cursor-move shadow-md select-none ${selectedItems.has(seat.name) ? 'bg-red-500 hover:bg-red-600' : 'bg-blue-500 hover:bg-blue-600'}`;
+                el.style.width = '60px'; el.style.height = '60px';
+                el.style.left = `${seat.x}px`; el.style.top = `${seat.y}px`;
+                
+                const nameDiv = document.createElement('div');
+                nameDiv.textContent = seat.name;
+                nameDiv.className = 'w-full text-center truncate text-sm px-1 pointer-events-none select-none';
+                el.appendChild(nameDiv);
+
+                setupDragAndSelect(el, seat, 'seat');
+                seatMap.appendChild(el);
+            });
+
+            // Render Shapes
+            currentShapes.forEach(shape => {
+                const el = document.createElement('div');
+                el.dataset.type = "shape";
+                el.dataset.id = shape.id;
+                el.dataset.name = shape.name;
+                el.className = 'absolute flex flex-col items-center justify-center text-sm font-medium group z-10 hover:z-20 select-none';
+                el.style.left = `${shape.x}px`; el.style.top = `${shape.y}px`;
+                el.style.width = `${shape.width}px`; el.style.height = `${shape.height}px`;
+
+                const visualBg = document.createElement('div');
+                visualBg.className = `visual-bg absolute inset-0 shadow-md pointer-events-none opacity-80 group-hover:opacity-100 transition-opacity border border-gray-300 ${selectedItems.has(shape.name) ? 'ring-4 ring-red-500' : ''}`;
+                visualBg.style.backgroundColor = shape.backgroundColor || '#D1D5DB';
+                if (shape.backgroundColor === '#4B5563') visualBg.classList.add('text-white'); // Fix text color for dark stage
+
+                if (shape.shapeType === 'ellipse') visualBg.style.borderRadius = '50%';
+                if (shape.shapeType === 'triangle') {
+                    visualBg.style.clipPath = 'polygon(50% 0%, 0% 100%, 100% 100%)';
+                    visualBg.style.border = 'none';
+                }
+                el.appendChild(visualBg);
+
+                if (shape.name) {
+                    const label = document.createElement('span');
+                    label.className = `z-10 text-center pointer-events-none font-bold ${shape.backgroundColor === '#4B5563' ? 'text-white bg-gray-800/60' : 'text-gray-800 bg-white/60'} px-2 py-0.5 rounded backdrop-blur-sm shadow-sm select-none`;
+                    label.textContent = shape.name;
+                    if (shape.shapeType === 'triangle') label.style.marginTop = '25%';
+                    el.appendChild(label);
+                }
+
+                // Add resize handle for shapes
+                const resizeHandle = document.createElement('div');
+                resizeHandle.className = 'absolute bottom-0 right-0 w-6 h-6 cursor-nwse-resize flex items-end justify-end p-1 z-20 opacity-0 group-hover:opacity-100 transition-opacity bg-white/70 rounded-tl-lg backdrop-blur-sm shadow-sm border-t border-l border-gray-200';
+                resizeHandle.innerHTML = `<svg viewBox="0 0 24 24" width="14" height="14" class="text-gray-700"><path fill="currentColor" d="M22,22H20V20H22V22M22,18H20V16H22V18M18,22H16V20H18V22M18,18H16V16H18V18M14,22H12V20H14V22M22,14H20V12H22V14Z" /></svg>`;
+                el.appendChild(resizeHandle);
+
+                setupShapeResize(resizeHandle, el, shape);
+                setupDragAndSelect(el, shape, 'shape');
+                seatMap.appendChild(el);
+            });
+        }
+
+        // --- INTERACTION LOGIC (DRAG & SELECT) ---
+        function setupDragAndSelect(element, dataObj, type) {
+            let isDragging = false;
+            let startX, startY;
+
+            element.addEventListener('mousedown', function(e) {
+                if (e.target.closest('.cursor-nwse-resize')) return; 
+                e.preventDefault(); e.stopPropagation();
+
+                if (!selectedItems.has(dataObj.name)) {
+                    // Clicked an unselected item
+                    if (!e.shiftKey) selectedItems.clear();
+                    selectedItems.add(dataObj.name);
+                    updateSelectionVisuals();
+                } else if (e.shiftKey) {
+                    // Shift-clicked an already selected item (Deselect it)
+                    selectedItems.delete(dataObj.name);
+                    updateSelectionVisuals();
+                    hideAllOptions(); // Always hide options when deselecting via shift
+                    return; // Stop drag execution
+                }
+
+                // HIDE OPTIONS IF MULTIPLE ITEMS ARE SELECTED
+                if (selectedItems.size === 1) {
+                    showOptions(dataObj, type);
+                } else {
+                    hideAllOptions();
+                }
+
+                startX = e.clientX; startY = e.clientY;
+                
+                const startingPositions = new Map();
+                currentSeats.concat(currentShapes).forEach(s => {
+                    if (selectedItems.has(s.name)) {
+                        startingPositions.set(s.name, { x: s.x, y: s.y });
+                        // Add drag transparency
+                        const el = document.querySelector(`[data-name="${s.name}"]`);
+                        if(el) el.classList.add('opacity-70', 'z-50');
+                    }
+                });
+
+                const onMouseMove = function(moveEvent) {
+                    const dx = moveEvent.clientX - startX;
+                    const dy = moveEvent.clientY - startY;
+                    if (!isDragging && (Math.abs(dx) > 3 || Math.abs(dy) > 3)) isDragging = true;
+
+                    if (isDragging) {
+                        currentSeats.concat(currentShapes).forEach(s => {
+                            if (selectedItems.has(s.name)) {
+                                const startPos = startingPositions.get(s.name);
+                                s.x = Math.max(0, startPos.x + dx);
+                                s.y = Math.max(0, startPos.y + dy);
+                                const el = document.querySelector(`[data-name="${s.name}"]`);
+                                if (el) {
+                                    el.style.left = `${s.x}px`;
+                                    el.style.top = `${s.y}px`;
+                                }
+                            }
+                        });
+                    }
+                };
+
+                const onMouseUp = function(eUp) {
+                    document.removeEventListener('mousemove', onMouseMove);
+                    document.removeEventListener('mouseup', onMouseUp);
+
+                    // Remove drag transparency
+                    currentSeats.concat(currentShapes).forEach(s => {
+                        if (selectedItems.has(s.name)) {
+                            const el = document.querySelector(`[data-name="${s.name}"]`);
+                            if(el) el.classList.remove('opacity-70', 'z-50');
+                        }
+                    });
+
+                    if (isDragging) {
+                        currentSeats.concat(currentShapes).forEach(s => {
+                            if (selectedItems.has(s.name)) {
+                                s.x = Math.round(s.x / 10) * 10;
+                                s.y = Math.round(s.y / 10) * 10;
+                                const el = document.querySelector(`[data-name="${s.name}"]`);
+                                if(el) {
+                                    el.style.left = `${s.x}px`;
+                                    el.style.top = `${s.y}px`;
+                                }
+                            }
+                        });
+                        
+                        if (selectedItems.size > 1) {
+                            updateStatus(`Repositioned ${selectedItems.size} item(s)`, 'success');
+                            hideAllOptions(); // Keep menu hidden for groups
+                        } else if (selectedItems.size === 1) {
+                            updateStatus(`Repositioned item`, 'success');
+                            showOptions(dataObj, type); // Update side menu for single item
+                        }
+
+                    } else if (!eUp.shiftKey) {
+                        // Just a standard click on an already selected item (clears rest of group)
+                        selectedItems.clear();
+                        selectedItems.add(dataObj.name);
+                        updateSelectionVisuals();
+                        showOptions(dataObj, type);
+                    }
+                };
+
+                document.addEventListener('mousemove', onMouseMove);
+                document.addEventListener('mouseup', onMouseUp);
+            });
+        }
+
+        function setupShapeResize(handleElement, parentElement, shapeData) {
+            let isResizing = false;
+            let startW, startH, startX, startY;
+
+            handleElement.addEventListener('mousedown', function(e) {
+                e.preventDefault(); e.stopPropagation();
+                isResizing = true;
+                startX = e.clientX; startY = e.clientY;
+                startW = shapeData.width; startH = shapeData.height;
+
+                const onMouseMove = function(moveEvent) {
+                    if (!isResizing) return;
+                    const dx = moveEvent.clientX - startX;
+                    const dy = moveEvent.clientY - startY;
+
+                    shapeData.width = Math.max(40, Math.round((startW + dx) / 10) * 10);
+                    shapeData.height = Math.max(40, Math.round((startH + dy) / 10) * 10);
+
+                    parentElement.style.width = `${shapeData.width}px`;
+                    parentElement.style.height = `${shapeData.height}px`;
+                };
+
+                const onMouseUp = function() {
+                    isResizing = false;
+                    document.removeEventListener('mousemove', onMouseMove);
+                    document.removeEventListener('mouseup', onMouseUp);
+                    
+                    selectedItems.clear();
+                    selectedItems.add(shapeData.name);
+                    updateSelectionVisuals();
+                    showOptions(shapeData, 'shape');
+                    updateStatus(`Resized shape to ${shapeData.width}x${shapeData.height}`, 'success');
+                };
+
+                document.addEventListener('mousemove', onMouseMove);
+                document.addEventListener('mouseup', onMouseUp);
+            });
+        }
+
+        // --- MARQUEE BOX SELECTION ---
+        const selectionBox = document.getElementById('selection-box');
+        let isBoxSelecting = false;
+        let startBoxX, startBoxY;
+
+        seatMap.addEventListener('mousedown', function(e) {
+            if (e.target !== this) return; 
+
+            if (!e.shiftKey) {
+                selectedItems.clear();
+                updateSelectionVisuals();
+            }
+
+            // Always hide options when starting a box selection
+            hideAllOptions();
+
+            isBoxSelecting = true;
+            const rect = seatMap.getBoundingClientRect();
+            startBoxX = e.clientX - rect.left + seatMap.scrollLeft;
+            startBoxY = e.clientY - rect.top + seatMap.scrollTop;
+
+            selectionBox.style.left = `${startBoxX}px`; selectionBox.style.top = `${startBoxY}px`;
+            selectionBox.style.width = '0px'; selectionBox.style.height = '0px';
+            selectionBox.style.display = 'block';
+
+            const onMouseMove = function(eMove) {
+                if (!isBoxSelecting) return;
+                eMove.preventDefault();
+
+                const currentX = eMove.clientX - rect.left + seatMap.scrollLeft;
+                const currentY = eMove.clientY - rect.top + seatMap.scrollTop;
+
+                const left = Math.min(startBoxX, currentX);
+                const top = Math.min(startBoxY, currentY);
+                const width = Math.abs(currentX - startBoxX);
+                const height = Math.abs(currentY - startBoxY);
+
+                selectionBox.style.left = `${left}px`; selectionBox.style.top = `${top}px`;
+                selectionBox.style.width = `${width}px`; selectionBox.style.height = `${height}px`;
+
+                currentSeats.forEach(seat => {
+                    const cX = seat.x + 30; const cY = seat.y + 30;
+                    if (cX >= left && cX <= left + width && cY >= top && cY <= top + height) {
+                        selectedItems.add(seat.name);
+                    } else if (!eMove.shiftKey) {
+                        selectedItems.delete(seat.name);
+                    }
+                });
+
+                currentShapes.forEach(shape => {
+                    const cX = shape.x + (shape.width / 2); const cY = shape.y + (shape.height / 2);
+                    if (cX >= left && cX <= left + width && cY >= top && cY <= top + height) {
+                        selectedItems.add(shape.name);
+                    } else if (!eMove.shiftKey) {
+                        selectedItems.delete(shape.name);
+                    }
+                });
+                
+                updateSelectionVisuals(); 
+            };
+
+            const onMouseUp = function() {
+                if (!isBoxSelecting) return;
+                isBoxSelecting = false;
+                selectionBox.style.display = 'none';
+                
+                if (parseInt(selectionBox.style.width) > 5) {
+                    updateStatus(`Selected ${selectedItems.size} items.`);
+                }
+
+                // If exactly 1 item was lassoed, show its options, else hide them
+                if (selectedItems.size === 1) {
+                    const selectedName = Array.from(selectedItems)[0];
+                    const obj = currentSeats.find(s => s.name === selectedName) || currentShapes.find(s => s.name === selectedName);
+                    if (obj) {
+                        const type = currentSeats.includes(obj) ? 'seat' : 'shape';
+                        showOptions(obj, type);
+                    }
+                } else {
+                    hideAllOptions();
+                }
+                
+                document.removeEventListener('mousemove', onMouseMove);
+                document.removeEventListener('mouseup', onMouseUp);
+            };
+
+            document.addEventListener('mousemove', onMouseMove);
+            document.addEventListener('mouseup', onMouseUp);
+        });
+
+        // --- SAVE MAP ---
+        document.getElementById('save-seats').addEventListener('click', async () => {
+            updateStatus("Saving layout...", "loading");
+            
+            const seatsData = currentSeats.map(seat => ({
+                name: seat.name, X: seat.x, Y: seat.y, available: true, subAreaId: parseInt(subAreaId), width: 60, height: 60
+            }));
+            const shapesData = currentShapes.map(shape => ({
+                name: shape.name, X: shape.x, Y: shape.y, available: true, subAreaId: parseInt(subAreaId), shapeType: shape.shapeType, width: shape.width, height: shape.height, backgroundColor: shape.backgroundColor
+            }));
+
+            try {
+                const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+                const reqOptions = (data) => ({
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': token },
+                    body: JSON.stringify(data)
+                });
+
+                const seatRes = await fetch(`/Seat/CreateTableMap?subAreaId=${subAreaId}`, reqOptions(seatsData));
+                const shapeRes = await fetch(`/NonSelectable/SaveElements?subAreaId=${subAreaId}`, reqOptions(shapesData));
+
+                if (seatRes.ok && shapeRes.ok) {
+                    updateStatus("Layout saved successfully!", "success");
+                    loadSeats(subAreaId); 
+                } else {
+                    throw new Error("Save failed");
+                }
+            } catch (error) {
+                updateStatus("Error saving layout", "error");
+            }
+        });
+
+        // --- INITIAL LOAD ---
+        async function loadSeats(id) {
+            updateStatus("Loading layout...", "loading");
+            try {
+                const [seatRes, shapeRes] = await Promise.all([
+                    fetch(`/Seat/get_data?SubAreaId=${id}`),
+                    fetch(`/NonSelectable/GetElements?subAreaId=${id}`)
+                ]);
+
+                const seatData = await seatRes.json();
+                const shapeData = shapeRes.ok ? await shapeRes.json() : [];
+
+                currentSeats = Array.isArray(seatData) ? seatData.map(s => ({...s, x: s.x ?? s.X ?? 0, y: s.y ?? s.Y ?? 0})) : [];
+                currentShapes = Array.isArray(shapeData) ? shapeData.map(s => ({...s, x: s.x ?? s.X ?? 0, y: s.y ?? s.Y ?? 0})) : [];
+                
+                selectedItems.clear();
+                renderAll();
+                hideAllOptions(); 
+                updateStatus(`Loaded ${currentSeats.length} seats and ${currentShapes.length} shapes.`, "success");
+            } catch (error) {
+                updateStatus("Error loading layout", "error");
+            }
+        }
+
+        // Tab and Initial Load Triggers
+        document.getElementById('tab-details').addEventListener('click', function() {
+            this.classList.add('border-indigo-500', 'text-indigo-600');
+            this.classList.remove('border-transparent', 'text-gray-500');
+            document.getElementById('tab-seats').className = 'tab-button border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ml-8';
+            document.getElementById('details-content').style.display = 'block';
+            document.getElementById('seats-content').style.display = 'none';
+        });
+
+        document.getElementById('tab-seats').addEventListener('click', function() {
+            this.classList.add('border-indigo-500', 'text-indigo-600');
+            this.classList.remove('border-transparent', 'text-gray-500');
+            document.getElementById('tab-details').className = 'tab-button border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm';
+            document.getElementById('details-content').style.display = 'none';
+            document.getElementById('seats-content').style.display = 'block';
+            
+            if (!window.seatsInitialized) {
+                window.seatsInitialized = true;
+                loadSeats(subAreaId);
+            }
+        });
+
+        if (window.location.hash === '#seats') document.getElementById('tab-seats').click();
     });
 </script>
-}

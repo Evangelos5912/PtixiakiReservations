@@ -1,7 +1,15 @@
-﻿@model IEnumerable<PtixiakiReservations.Models.Event>
+﻿@using Microsoft.AspNetCore.Identity
+@inject SignInManager<ApplicationUser> SignInManager
+@inject UserManager<ApplicationUser> UserManager
+@model IEnumerable<PtixiakiReservations.Models.Event>
 
 @{
     ViewData["Title"] = "Events";
+    var currentUser = SignInManager.IsSignedIn(User) ? await UserManager.GetUserAsync(User) : null;
+    var userRoles = currentUser != null ? await UserManager.GetRolesAsync(currentUser) : new List<string>();
+    var isAdmin = userRoles.Contains("Admin");
+    var isSuper = userRoles.Contains("SuperOrganizer");
+    var isEventManager = userRoles.Contains("Event");
 }
 
 <div class="container mx-auto px-4 py-8 max-w-7xl">
@@ -165,12 +173,22 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                         </svg>
                         <div>
-                            <p class="text-sm text-gray-600">
-                                @item.StartDateTime.ToString("dddd, MMMM d, yyyy")
-                            </p>
-                            <p class="text-sm text-gray-500">
-                                @item.StartDateTime.ToString("h:mm tt") - @item.EndTime.ToString("h:mm tt")
-                            </p>
+                            @if (item.StartDateTime.Date != item.EndTime.Date)
+                            {
+                                <p class="text-sm text-gray-600">
+                                    <b>@item.StartDateTime.ToString("MMM d yyyy") - @item.EndTime.ToString("MMM d yyyy")</b>
+                                </p>
+                                
+                            }
+                            else
+                            {
+                                <p class="text-sm text-gray-600">
+                                    <b>@item.StartDateTime.ToString("dddd, MMMM d, yyyy") </b>
+                                </p>
+                                <p class="text-sm text-gray-500">
+                                    @item.StartDateTime.ToString("h:mm tt") - @item.EndTime.ToString("h:mm tt")
+                                </p>
+                            }
                         </div>
                     </div>
                     @if (item.Venue != null)
@@ -189,22 +207,32 @@
                             </div>
                         </div>
                     }
-                    <div class="flex justify-between items-center border-t pt-4">
-                        @{
-                            var childCounts = ViewBag.ChildCounts as Dictionary<int, int>;
+                    @if (isSuper || isAdmin || isEventManager)
+                    {
+                        <div class="flex justify-between items-center border-t pt-4">
+                            @{
+                                var childCounts = ViewBag.ChildCounts as Dictionary<int, int>;
+                                
+                                int childCount = childCounts != null && childCounts.ContainsKey(item.Id) 
+                                    ? childCounts[item.Id] 
+                                    : 0;
+                            }
+                            <a asp-action="ChildEvents" asp-route-id="@item.Id" class="text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors">
+                                Multiple Events (@childCount) →
+                            </a>
                             
-                            int childCount = childCounts != null && childCounts.ContainsKey(item.Id) 
-                                ? childCounts[item.Id] 
-                                : 0;
-                        }
-                        
-                        <a asp-action="ChildEvents" asp-route-id="@item.Id" class="text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors">
-                            View Sub Events (@childCount) →
-                        </a>
-                        <a href="@Url.Action("Details", "Events", new { id = item.Id })" class="text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors">
-                            View Details →
-                        </a>
-                    </div>
+                            <a href="@Url.Action("Details", "Events", new { id = item.Id })" class="text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors">
+                                View Details →
+                            </a>
+                        </div>
+                    }
+                    else{
+                       <div class="flex justify-end items-center border-t pt-4"> 
+                            <a href="@Url.Action("Details", "Events", new { id = item.Id })" class="text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors">
+                                View Details →
+                            </a>
+                        </div> 
+                    }
                 </div>
             </div>
         }
@@ -315,6 +343,7 @@
         box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
         z-index: 1;
         }
+
 
     .event-content {
         flex-grow: 1;          
@@ -846,19 +875,41 @@
                         });
 
                         function buildEventCard(event, timeClass) {
-                            // 1. Calculate dates and times (This is probably what got deleted!)
+                            // 1. Calculate dates and times
                             const startDate = new Date(event.startDateTime);
                             const endDate = new Date(event.endTime);
                             
-                            const dateStr = startDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
-                            const timeStr = `${startDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })} - ${endDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`;
+                            // 2. Multi-day check
+                            const isMultiDay = startDate.toDateString() !== endDate.toDateString();
+                            let dateDisplayHtml = "";
+
+                            if (isMultiDay) {
+                                // Multi-day format: "Sun, Jun 2, 2026 - Tue, Jun 4, 2026"
+                                const startStr = startDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+                                const endStr = endDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+                                
+                                dateDisplayHtml = `
+                                    <p class="text-sm text-gray-600">
+                                        <b>${startStr} - ${endStr}</b>
+                                    </p>`;
+                            } else {
+                                // Single-day format: "Sunday, June 2, 2026" with time underneath
+                                const dateStr = startDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+                                const timeStr = `${startDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })} - ${endDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`;
+                                
+                                dateDisplayHtml = `
+                                    <p class="text-sm text-gray-600"><b>${dateStr}</b></p>
+                                    <p class="text-sm text-gray-500">${timeStr}</p>`;
+                            }
 
                             const hasImage = event.imagePath && event.imagePath.trim() !== "";
 
-                            // 2. Check if it's a Master Event
+                            // 3. Roles and Master Event Checks
                             const isMasterEvent = event.parentEventId == null && event.ParentEventId == null;
+                            const canViewSubEvents = @((isSuper || isAdmin || isEventManager).ToString().ToLower());
+                            const showSubEventsLink = isMasterEvent && canViewSubEvents;
 
-                            // 3. Return the HTML Card
+                            // 4. Return the HTML Card
                             return `
                             <div class="event-card ${timeClass} rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
                                 <div class="p-5 flex flex-col h-full">
@@ -870,7 +921,6 @@
                                     </div>
                                     
                                     <div class="event-content flex-grow">
-                                        <!-- Title -->
                                         <div class="flex items-center justify-between mb-3">
                                             <h3 class="text-lg font-semibold text-gray-900 mb-2 line-clamp-2">${event.name || 'Unnamed Event'}</h3>
                                             ${isMasterEvent ? 
@@ -879,8 +929,6 @@
                                                     <path d="M12 11V5" />          
                                                     <path d="M12 11L6 18" />      
                                                     <path d="M12 11L18 18" />     
-                                                    
-
                                                     <circle cx="12" cy="4" r="2.5" fill="currentColor" stroke="none" />
                                                     <circle cx="6" cy="19" r="2.5" fill="currentColor" stroke="none" /> 
                                                     <circle cx="18" cy="19" r="2.5" fill="currentColor" stroke="none" /> 
@@ -894,8 +942,7 @@
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                             </svg>
                                             <div>
-                                                <p class="text-sm text-gray-600">${dateStr}</p>
-                                                <p class="text-sm text-gray-500">${timeStr}</p>
+                                                ${dateDisplayHtml}
                                             </div>
                                         </div>
 
@@ -911,15 +958,14 @@
                                         </div>
                                     </div>
 
-                                    <!-- Dynamic Alignment: 'justify-between' for Master, 'justify-end' for Child -->
-                                    <div class="event-footer flex ${isMasterEvent ? 'justify-between' : 'justify-end'} items-center border-t pt-4">
-                                        
-                                        ${isMasterEvent ? `
+                                    <div class="event-footer flex ${showSubEventsLink ? 'justify-between' : 'justify-end'} items-center border-t pt-4">
+                                    
+                                        ${showSubEventsLink ? `
                                             <a href="/Events/ChildEvents/${event.id}" class="text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors">
                                                 View Sub Events (${event.childCount || 0}) →
                                             </a>
                                         ` : ''}
-
+                                        
                                         <a href="/Events/Details/${event.id}" class="text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors">
                                             View Details →
                                         </a>
