@@ -16,7 +16,6 @@
 
 <div class="bg-gradient-to-r from-blue-50 to-indigo-50 min-h-screen py-8 px-4 sm:px-6 lg:px-8">
     <div class="max-w-4xl mx-auto">
-        <!-- Header -->
         <div class="bg-white rounded-xl shadow-md overflow-hidden mb-8">
             <div class="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-8">
                 <h1 class="text-2xl md:text-3xl font-bold text-white">Edit Event</h1>
@@ -42,14 +41,12 @@
             </div>
         }
 
-        <!-- Form Card -->
         <div class="bg-white rounded-xl shadow-lg overflow-hidden">
             <div class="p-6">
                 <form method="post" id="editEventForm" enctype="multipart/form-data">
                     @Html.AntiForgeryToken()
                     <input type="hidden" asp-for="Id" />
                     <div class="space-y-6">
-                        <!-- Event Type Selection Section -->
                         <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
                             <div class="flex items-center mb-4">
                                 <div class="h-10 w-10 rounded-md bg-indigo-100 flex items-center justify-center text-indigo-600">
@@ -61,7 +58,6 @@
                             </div>
 
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <!-- Event Name -->
                                 <div>
                                     <label asp-for="Name" class="block text-sm font-medium text-gray-700 mb-1">Event Name</label>
                                     <div class="relative">
@@ -75,7 +71,6 @@
                                     <span asp-validation-for="Name" class="text-red-500 text-xs mt-1"></span>
                                 </div>
 
-                                <!-- Event Type Dropdown -->
                                 <div>
                                     <label asp-for="EventTypeId" class="block text-sm font-medium text-gray-700 mb-1">Event Type</label>
                                     <div class="relative">
@@ -90,10 +85,20 @@
                                     </div>
                                     <span asp-validation-for="EventTypeId" class="text-red-500 text-xs mt-1"></span>
                                 </div>
+
+                                @if (Model.ParentEventId == null)
+                                {
+                                    <div class="col-span-1 md:col-span-2">
+                                        <label asp-for="Description" class="block text-sm font-medium text-gray-700 mb-1">Event Description</label>
+                                        <div class="relative">
+                                            <textarea asp-for="Description" rows="5" placeholder="Enter event description..." class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"></textarea>
+                                        </div>
+                                        <span asp-validation-for="Description" class="text-red-500 text-xs mt-1"></span>
+                                    </div>
+                                }
                             </div>
                         </div>
 
-                        <!-- Schedule Section -->
                         <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
                             <div class="flex items-center mb-4">
                                 <div class="h-10 w-10 rounded-md bg-indigo-100 flex items-center justify-center text-indigo-600">
@@ -137,23 +142,39 @@
                             </div>
                         </div>
 
-                        <div class="mt-6">
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Event Poster</label>
-                            <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg bg-white">
-                                <div class="text-center">
-                                    <label for="imageFile" class="cursor-pointer font-medium text-indigo-600">
-                                        <span>Upload a file</span>
-                                        <input id="imageFile" name="imageFile" type="file" class="sr-only" accept="image/*" onchange="previewImage(this)">
-                                    </label>
-                                    <p id="childImageNote" class="hidden text-indigo-500 text-xs italic mt-1">Inherits Father's image if left empty</p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="mt-2">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Main Event Poster</label>
+                                <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg bg-white">
+                                    <div class="text-center">
+                                        <label for="imageFile" class="cursor-pointer font-medium text-indigo-600">
+                                            <span>Upload new poster</span>
+                                            <input id="imageFile" name="imageFile" type="file" class="sr-only" accept="image/*" onchange="previewImage(this)">
+                                        </label>
+                                        <p id="childImageNote" class="text-indigo-500 text-xs italic mt-1">Leaves existing image if empty</p>
+                                    </div>
+                                </div>
+                                <div id="imagePreviewContainer" class="hidden mt-4">
+                                    <img id="imagePreview" src="#" class="h-32 w-auto rounded-lg shadow-sm border object-cover">
                                 </div>
                             </div>
-                            <div id="imagePreviewContainer" class="hidden mt-4">
-                                <img id="imagePreview" src="#" class="h-32 w-auto rounded-lg shadow-sm border">
+
+                            <div class="mt-2">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Gallery Images (Multiple)</label>
+                                <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg bg-white">
+                                Ερωτηση για τις διαφανειες     <div class="text-center">
+                                        <label for="galleryFiles" class="cursor-pointer font-medium text-indigo-600">
+                                            <span>Upload gallery images</span>
+                                            <input id="galleryFiles" name="galleryFiles" type="file" multiple class="sr-only" accept="image/*" onchange="previewGallery(this)">
+                                        </label>
+                                        <p class="text-indigo-500 text-xs italic mt-1">Select multiple files at once</p>
+                                    </div>
+                                </div>
+                                <div id="galleryPreviewContainer" class="hidden mt-4 grid grid-cols-2 sm:grid-cols-3 gap-2">
+                                </div>
                             </div>
                         </div>
 
-                        <!-- Venue and Layout Section -->
                         <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
                             <div class="flex items-center mb-4">
                                 <div class="h-10 w-10 rounded-md bg-indigo-100 flex items-center justify-center text-indigo-600">
@@ -165,7 +186,6 @@
                             </div>
 
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <!-- Venue Selection -->
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-1">Venue</label>
                                     <div class="relative">
@@ -184,11 +204,10 @@
                                             <button class="px-4 py-2 bg-gray-200 rounded-md text-sm hidden" type="button" id="clearVenueSelection">Clear</button>
                                         </div>
                                         <ul id="venueSearchResults" class="absolute w-full bg-white border rounded-b-lg shadow-xl z-50 hidden max-h-60 overflow-y-auto mt-1"></ul>
-                                    </div>
+                                Ερωτηση για τις διαφανειες     </div>
                                     <span asp-validation-for="VenueId" class="text-red-500 text-xs mt-1"></span>
                                 </div>
 
-                                <!-- Layout Selection -->
                                 <div>
                                     <label asp-for="SubAreaId" class="block text-sm font-medium text-gray-700 mb-1">Layout</label>
                                     <div class="relative">
@@ -201,7 +220,7 @@
                                                 class="pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors appearance-none bg-white">
                                             <option value="">Select a Layout</option>
                                         </select>
-                                        <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                                Ερωτηση για τις διαφανειες         <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
                                             <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                                                 <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
                                             </svg>
@@ -212,7 +231,6 @@
                             </div>
                         </div>
 
-                        <!-- Submit Buttons -->
                         <div class="flex justify-end space-x-3 pt-5 border-t border-gray-200">
                             <a href="@Url.Action("VenueEvents", "Events", new { venueId = Model.VenueId })"
                                class="px-4 py-2 bg-white border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 shadow-sm">
@@ -232,7 +250,7 @@
         </div>
     </div>
 </div>
-
+Ερωτηση για τις διαφανειες 
 @section Scripts {
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
@@ -306,7 +324,7 @@
                 fetch(`/Events/GetSubAreas?venueId=${venueId}`)
                     .then(response => response.json())
                     .then(data => {
-                        subAreaSelect.innerHTML = '<option value="">Select a Layouts</option>';
+                        subAreaSelect.innerHTML = '<option value="">Select a Layout</option>';
                         data.forEach(subArea => {
                             const option = document.createElement('option');
                             option.value = subArea.id;
@@ -346,6 +364,7 @@
             });
         });
 
+        // Handles the single Main Poster Preview
         function previewImage(input) {
             if (input.files && input.files[0]) {
                 const reader = new FileReader();
@@ -354,6 +373,29 @@
                     document.getElementById('imagePreviewContainer').classList.remove('hidden');
                 };
                 reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        // Handles the dynamic grid for the Multi-File Gallery Preview
+        function previewGallery(input) {
+            const container = document.getElementById('galleryPreviewContainer');
+            container.innerHTML = ''; // Clear previous previews
+
+            if (input.files && input.files.length > 0) {
+                container.classList.remove('hidden');
+                
+                Array.from(input.files).forEach(file => {
+                    const reader = new FileReader();
+                    reader.onload = e => {
+                        const img = document.createElement('img');
+                        img.src = e.target.result;
+                        img.className = 'h-24 w-full object-cover rounded-lg shadow-sm border';
+                        container.appendChild(img);
+                    };
+                    reader.readAsDataURL(file);
+                });
+            } else {
+                container.classList.add('hidden');
             }
         }
     </script>
