@@ -8,6 +8,9 @@
     var currentUser = await UserManager.GetUserAsync(User);
     var userRoles = await UserManager.GetRolesAsync(currentUser);
     bool isAdmin = User.IsInRole("Admin");
+    bool isSuper = User.IsInRole("SuperOrganizer");
+    bool isEventManager = User.IsInRole("Event");
+
     int currentPage = ViewBag.CurrentPage ?? 1;
     int totalPages = ViewBag.TotalPages ?? 1;
     int pageSize = ViewBag.PageSize ?? 12;
@@ -149,6 +152,10 @@
 @section Scripts {
     <script>
         // Variables to store state
+        const currentUserId = '@UserManager.GetUserId(User)';
+        const userIsAdmin = @User.IsInRole("Admin").ToString().ToLower();
+        const userIsSuper = @User.IsInRole("SuperOrganizer").ToString().ToLower();
+        const userIsEventManager = @User.IsInRole("Event").ToString().ToLower();
         let allEvents = [];
         let filteredEvents = [];
         let userVenues = [];
@@ -440,26 +447,25 @@
             const formattedEndDate = endDate.toLocaleDateString(undefined, dateOptions);
             const formattedEndTime = endDate.toLocaleTimeString(undefined, timeOptions);
 
-            // Set modal title
+
             $("#modal-event-title").text(event.name);
 
             const editBtn = document.getElementById("modal-edit-btn");
-            
-            editBtn.onclick = null; 
-            
-    
-            editBtn.onclick = function(e) {
-                e.preventDefault(); // Stop any browser weirdness
-                
-                // If you see this alert, the button works!
-                console.log("Navigating to: /Events/Edit/" + event.id);
-                
-                // Force the browser to go to the Edit page
-                window.location.assign("/Events/Edit/" + event.id);
-            };
-            // -----------------------------------------
 
-            // Build details HTML
+            const isOwner = event.organizerId === currentUserId || event.organizerId === undefined; 
+            
+            const canEdit = userIsAdmin || ((userIsEventManager || userIsSuper) && isOwner);
+
+            if (canEdit) {
+                editBtn.classList.remove("hidden");
+                editBtn.onclick = function(e) {
+                    e.preventDefault(); 
+                    window.location.assign("/Events/Edit/" + event.id);
+                };
+            } else {
+                editBtn.classList.add("hidden");
+            }
+
             let detailsHtml = `
                 <div class="space-y-4">
                     <div>

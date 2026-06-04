@@ -2,8 +2,6 @@
 
 @{
     ViewData["Title"] = "Event Details";
-    
-    // Moved to the top so the navigation menu can use it!
     var displayDescription = Model.Description ?? Model.ParentEvent?.Description;
     var hasSchedules = Model.ParentEventId == null && Model.ChildEvents != null && Model.ChildEvents.Any();
 }
@@ -16,20 +14,20 @@
         </div>
 
         <div class="overflow-hidden">
-            @{
-                var finalPath = !string.IsNullOrEmpty(Model.DisplayImagePath) 
-                    ? Model.DisplayImagePath 
-                    : Model.ParentEvent?.DisplayImagePath;
+           @{
+            var finalPath = !string.IsNullOrEmpty(Model.DisplayImagePath) 
+                ? Model.DisplayImagePath 
+                : Model.ParentEvent?.DisplayImagePath;
             }
 
             @if (!string.IsNullOrEmpty(finalPath))
-            {
-                <img src="@finalPath" class="w-full h-full object-cover transform hover:scale-105 transition-transform duration-300" />
-            }
-            else
-            {
-                <div data-type="@Model.EventType.Name" class="event-icon flex items-center justify-center h-full text-gray-400"></div>
-            }
+                    {
+                        <img src="@finalPath" class="w-full h-full object-cover transform hover:scale-105 transition-transform duration-300" />
+                    }
+                    else
+                    {
+                        <div data-type="@Model.EventType.Name" class="event-icon flex items-center justify-center h-full text-gray-400"></div>
+                    }
         </div>
 
         <!-- STICKY ANIMATED MENU -->
@@ -67,7 +65,6 @@
         </div>
 
         <div class="p-6">
-            <!-- Added ID and scroll-mt-24 -->
             <div id="general-info" class="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-6 mb-8 scroll-mt-24">
                 
                 <!-- LEFT COLUMN - Blue Info Box -->
@@ -210,9 +207,33 @@
             {
             <div id="descriptionArea" class="mt-8 w-full scroll-mt-24">
                 <h3 class="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">Description</h3>
-                <p class="text-gray-600 mb-6 break-words leading-relaxed whitespace-pre-wrap">@displayDescription</p>
+                <div class="relative">
+                    <p id="event-description" class="text-gray-600 mb-2 break-words leading-relaxed whitespace-pre-wrap custom-line-clamp">@displayDescription</p>
+                    
+                    <button id="toggle-description-btn" class="hidden text-blue-600 hover:text-blue-800 font-medium text-sm focus:outline-none flex items-center transition-colors mt-2">
+                        <span>Read More</span>
+                        <svg class="w-4 h-4 ml-1 transform transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                </div>
             </div>
             }
+            
+            <div class="relative w-full h-[300px] md:h-[450px] lg:h-[600px] group overflow-hidden bg-gray-100 rounded-xl mt-8" id="gallery-container" data-event-id="@Model.Id" data-event-type="@Model.EventType?.Name">
+                
+                <div id="carousel-track" class="flex w-full h-full overflow-x-auto scroll-smooth snap-x snap-mandatory scrollbar-hide">
+                    <div id="gallery-fallback" class="w-full h-full flex-none flex items-center justify-center bg-gray-100">
+                        <div class="animate-pulse text-indigo-500 font-bold text-lg">Loading images...</div>
+                    </div>
+                </div>
+
+                <button id="btn-prev" type="button" class="hidden absolute left-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white p-2 rounded-full shadow-lg transition-all opacity-0 group-hover:opacity-100 z-10">
+                    <svg class="w-6 h-6 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                </button>
+                <button id="btn-next" type="button" class="hidden absolute right-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white p-2 rounded-full shadow-lg transition-all opacity-0 group-hover:opacity-100 z-10">
+                    <svg class="w-6 h-6 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                </button>
+            </div>
+           
 
             @if(Model.Organizer != null){
                 <div id="OrganizerInfo" class="mt-8 lg:w-1/2 rounded-xl border border-gray-200 bg-gray-50 shadow-sm p-6 scroll-mt-24">
@@ -372,25 +393,130 @@
 </div>
 
 <style>
-    html {
-        scroll-behavior: smooth;
+    html { scroll-behavior: smooth; }
+    .scrollbar-hide::-webkit-scrollbar { display: none; }
+
+    .custom-line-clamp {
+        display: -webkit-box;
+        -webkit-line-clamp: 6;
+        -webkit-box-orient: vertical;  
+        overflow: hidden;
     }
-    
-    .hide-scrollbar::-webkit-scrollbar {
-        display: none;
-    }
-    .hide-scrollbar {
-        -ms-overflow-style: none;
-        scrollbar-width: none;
-    }
+
 </style>
 
+@section Scripts {
 <script type="module">
     import { getEventSvg } from "/js/event-svg.js";
 
-    document.querySelectorAll(".event-icon").forEach(el => {
-        const type = el.dataset.type || "";
+    const track = document.getElementById('carousel-track');
+    const btnPrev = document.getElementById('btn-prev');
+    const btnNext = document.getElementById('btn-next');
+    if (btnPrev && btnNext && track) {
+        btnPrev.addEventListener('click', function() {
+            track.scrollBy({ left: -track.offsetWidth, behavior: 'smooth' });
+        });
+        btnNext.addEventListener('click', function() {
+            track.scrollBy({ left: track.offsetWidth, behavior: 'smooth' });
+        });
+    }
+ 
 
+    // 2. Main fetch logic
+    async function loadGallery() {
+        const container = document.getElementById('gallery-container');
+        if (!container) return;
+
+        const eventId = container.dataset.eventId;
+        const eventType = container.dataset.eventType || "";
+        const track = document.getElementById('carousel-track');
+        
+        const apiUrl = `@Url.Action("GetEventGallery", "Events")?eventId=${eventId}`;
+
+        try {
+            const response = await fetch(apiUrl);
+            if (!response.ok) throw new Error(`Server returned ${response.status}`);
+
+            const data = await response.json();
+
+            if (data.success && data.images && data.images.length > 0) {
+                track.innerHTML = ''; // Clear loading text
+                
+                data.images.forEach(path => {
+                    const slide = document.createElement('div');
+                    
+                    slide.className = 'w-full h-full flex-none snap-center flex items-center justify-center';
+                    
+                    slide.innerHTML = '<img src="' + path + '" class="max-w-full max-h-full object-contain drop-shadow-md" />';
+                    
+                    track.appendChild(slide);
+                });
+
+                if (data.images.length > 1) {
+                    document.getElementById('btn-prev').classList.remove('hidden');
+                    document.getElementById('btn-next').classList.remove('hidden');
+                }
+            } else {
+                track.innerHTML = `
+                    <div class="w-full h-full flex-none flex items-center justify-center bg-gray-100">
+                        <div class="event-icon h-24 w-24 text-gray-400">
+                            ${getEventSvg(eventType.toLowerCase())}
+                        </div>
+                    </div>`;
+            }
+        } catch (error) {
+            console.error("Gallery Load Failed:", error);
+            track.innerHTML = `
+                <div class="w-full h-full flex-none flex flex-col items-center justify-center bg-red-50 text-red-500 p-6 text-center">
+                    <span class="font-bold">Error loading gallery</span>
+                    <span class="text-sm mt-1 text-red-400">${error.message}</span>
+                </div>`;
+        }
+    }
+
+    // 3. Run the scripts
+    loadGallery();
+
+    document.querySelectorAll(".event-icon:not(#carousel-track .event-icon)").forEach(el => {
+        const type = el.dataset.type || "";
         el.innerHTML = getEventSvg(type.toLowerCase());
     });
+
+    const descEl = document.getElementById('event-description');
+    const toggleBtn = document.getElementById('toggle-description-btn');
+    
+    if (descEl && toggleBtn) {
+
+        setTimeout(() => {
+
+            descEl.classList.remove('custom-line-clamp');
+            const fullHeight = descEl.scrollHeight;
+            
+
+            descEl.classList.add('custom-line-clamp');
+            const clampedHeight = descEl.clientHeight;
+            
+
+            if (fullHeight > clampedHeight + 10) {
+                toggleBtn.classList.remove('hidden');
+            }
+        }, 100);
+
+        toggleBtn.addEventListener('click', function() {
+            const isClamped = descEl.classList.contains('custom-line-clamp');
+            const span = toggleBtn.querySelector('span');
+            const icon = toggleBtn.querySelector('svg');
+            
+            if (isClamped) {
+                descEl.classList.remove('custom-line-clamp');
+                span.innerText = 'Read Less';
+                icon.classList.add('rotate-180');
+            } else {
+                descEl.classList.add('custom-line-clamp');
+                span.innerText = 'Read More';
+                icon.classList.remove('rotate-180');
+            }
+        });
+    }
 </script>
+}

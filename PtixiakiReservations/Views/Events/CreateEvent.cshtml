@@ -72,7 +72,7 @@
                                 <div>
                                     <h3 class="text-indigo-800 font-bold text-sm">Sub-Events Created (<span id="subEventCountDisplay">0</span>)</h3>
                                     <p class="text-[10px] text-indigo-600">Instances tied to this Master Event</p>
-                                    <label for="MutliRenameCheckbox">Rename Multiple:</label>
+                                    <label for="MultiRenameCheckbox">Rename Multiple:</label>
                                     <input type="checkbox" id="MultiRenameCheckbox" onchange="showRenameCheckboxes()"/>
                                     <button type="button" onclick="showRenameModal()" id="ConfirmMultiRenameBtn"
                                         class="hidden bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded text-xs transition-colors shadow-sm">
@@ -138,19 +138,36 @@
                                 </div>
                             </div>
 
-                            <div class="mt-6">
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Event Poster</label>
-                                <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg bg-white">
-                                    <div class="text-center">
-                                        <label for="imageFile" class="cursor-pointer font-medium text-indigo-600">
-                                            <span>Upload a file</span>
-                                            <input id="imageFile" name="imageFile" type="file" class="sr-only" accept="image/*" onchange="previewImage(this)">
-                                        </label>
-                                        <p id="childImageNote" class="hidden text-indigo-500 text-xs italic mt-1">Inherits Father's image if left empty</p>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Event Poster</label>
+                                    <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg bg-white h-40 items-center">
+                                        <div class="text-center">
+                                            <label for="imageFile" class="cursor-pointer font-medium text-indigo-600 hover:text-indigo-500 transition-colors">
+                                                <span>Upload Poster Image</span>
+                                                <input id="imageFile" name="imageFile" type="file" class="sr-only" accept="image/*" onchange="previewImage(this)">
+                                            </label>
+                                            <p id="childImageNote" class="hidden text-indigo-500 text-xs italic mt-1">Inherits Father's image if left empty</p>
+                                        </div>
+                                    </div>
+                                    <div id="imagePreviewContainer" class="hidden mt-4">
+                                        <img id="imagePreview" src="#" class="h-32 w-auto rounded-lg shadow-sm border mx-auto object-cover">
                                     </div>
                                 </div>
-                                <div id="imagePreviewContainer" class="hidden mt-4">
-                                    <img id="imagePreview" src="#" class="h-32 w-auto rounded-lg shadow-sm border">
+
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Gallery Images</label>
+                                    <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg bg-white h-40 items-center">
+                                        <div class="text-center">
+                                            <label for="galleryFiles" class="cursor-pointer font-medium text-indigo-600 hover:text-indigo-500 transition-colors">
+                                                <span>Upload Gallery Collection</span>
+                                                <input id="galleryFiles" name="galleryFiles" type="file" class="sr-only" accept="image/*" multiple onchange="previewGalleryImages(this)">
+                                            </label>
+                                            <p class="text-[11px] text-gray-400 mt-1">Hold Ctrl/Shift to pick multiple items</p>
+                                        </div>
+                                    </div>
+                                    <div id="galleryPreviewContainer" class="hidden mt-4 grid grid-cols-3 gap-2 overflow-y-auto max-h-32 p-1 border border-gray-100 rounded-lg bg-gray-50/50">
+                                        </div>
                                 </div>
                             </div>
 
@@ -213,7 +230,6 @@
                                 </div>
                             </div>
 
-
                             <div class="flex justify-end space-x-3 pt-5 border-t">
                                 <a href="@Url.Action("EventsForToday", "Events")" class="px-4 py-2 text-gray-700 hover:text-gray-900 transition-colors">Exit</a>
 
@@ -245,7 +261,6 @@
     </div>
 </div>
     
-
 <div id="successMessage" class="hidden mb-6 bg-green-50 border-l-4 border-green-500 p-4 rounded-md shadow-sm">
     <div class="flex items-center">
         <div class="flex-shrink-0">
@@ -802,6 +817,10 @@
                         document.getElementById('imagePreviewContainer').classList.add('hidden');
                         document.getElementById('imagePreview').src = '#';
                         
+                        // FIX: Clear out gallery uploads dynamically too
+                        document.getElementById('galleryPreviewContainer').classList.add('hidden');
+                        document.getElementById('galleryPreviewContainer').innerHTML = '';
+
                         // Clear Custom Search UI logic
                         venueHiddenInput.value = '';
                         venueSearch.value = '';
@@ -836,9 +855,7 @@
                             newlyUnlockedRadio.checked = true;
                             toggleEventMode('child');
                             
-
                             hideChildEventForm(); 
-
 
                             hiddenIdInput.value = data.eventId;
                             searchInput.value = data.eventName;
@@ -868,7 +885,6 @@
                         } else {
                             alertText.textContent = "Sub-Event created successfully! Add another one if needed.";
                             
-
                             hideChildEventForm(); 
 
                             // Restore context for the next sub-event
@@ -894,7 +910,6 @@
                             eventPreviewList.innerHTML='';
                             multiDayContainer.classList.add("hidden");
                             singleDayContainer.classList.remove("hidden");
-
                         }
                         
                         setTimeout(() => {
@@ -1150,6 +1165,28 @@
                     document.getElementById('imagePreviewContainer').classList.remove('hidden');
                 };
                 reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        // FIX: Added function to handle multiple gallery image previews smoothly
+        function previewGalleryImages(input) {
+            const container = document.getElementById('galleryPreviewContainer');
+            container.innerHTML = ''; // Clear out past items
+            
+            if (input.files && input.files.length > 0) {
+                container.classList.remove('hidden');
+                Array.from(input.files).forEach(file => {
+                    const reader = new FileReader();
+                    reader.onload = e => {
+                        const div = document.createElement('div');
+                        div.className = 'relative aspect-square rounded-lg overflow-hidden border border-gray-200 shadow-sm bg-white';
+                        div.innerHTML = `<img src="${e.target.result}" class="w-full h-full object-cover">`;
+                        container.appendChild(div);
+                    };
+                    reader.readAsDataURL(file);
+                });
+            } else {
+                container.classList.add('hidden');
             }
         }
 
