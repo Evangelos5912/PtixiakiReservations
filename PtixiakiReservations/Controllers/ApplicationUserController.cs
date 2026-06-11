@@ -59,6 +59,8 @@ namespace PtixiakiReservations.Controllers
             return View(user);
         }
 
+        
+
         // GET: ApplicationUser/Edit/5
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> ChangeRole(String id)
