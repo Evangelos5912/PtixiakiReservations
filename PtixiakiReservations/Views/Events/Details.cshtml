@@ -398,7 +398,7 @@
 
     .custom-line-clamp {
         display: -webkit-box;
-        -webkit-line-clamp: 6;
+        -webkit-line-clamp: 10;
         -webkit-box-orient: vertical;  
         overflow: hidden;
     }
@@ -440,7 +440,7 @@
             const data = await response.json();
 
             if (data.success && data.images && data.images.length > 0) {
-                track.innerHTML = ''; // Clear loading text
+                track.innerHTML = ''; 
                 
                 data.images.forEach(path => {
                     const slide = document.createElement('div');
