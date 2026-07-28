@@ -225,6 +225,9 @@ public class EventsController(
             .Include(e => e.Venue)
             .ThenInclude(v => v.City)
             .Include(e => e.EventType) 
+            .Include(e => e.ChildEvents)
+            .ThenInclude(c => c.Venue)      // Needed to check the child event's venue
+            .ThenInclude(v => v.City)
             .Where(e => e.ParentEventId == null); 
 
         if (!string.IsNullOrWhiteSpace(searchTerm))
@@ -698,6 +701,9 @@ public class EventsController(
             var query = context.Event
                 .Include(e => e.Venue)
                 .ThenInclude(v => v.City)
+                .Include(e => e.ChildEvents)
+                .ThenInclude(c => c.Venue)
+                .ThenInclude(v => v.City)
                 .AsQueryable();
 
             if (!hasDateFilter) query = query.Where(e => e.ParentEventId == null);
@@ -718,10 +724,11 @@ public class EventsController(
                 );
             }
 
-            if (sort == "desc") query = query.OrderByDescending(e => e.StartDateTime);
+            if (sort == "desc") query = query.OrderByDescending(e => e.EndTime);
             else query = query.OrderBy(e => e.StartDateTime);
 
             var totalCount = await query.CountAsync();
+
             var events = await query
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
@@ -731,11 +738,25 @@ public class EventsController(
                     e.Name,
                     e.StartDateTime,
                     e.EndTime,
-                    ImagePath = e.ImagePath ?? e.ParentEvent.ImagePath,
-                    VenueName = e.Venue.Name,
-                    CityName = e.Venue.City != null ? e.Venue.City.Name : "N/A",
+                    ImagePath = e.ImagePath ?? (e.ParentEvent != null ? e.ParentEvent.ImagePath : null),
+                    VenueName = e.Venue != null ? e.Venue.Name : "No Venue",
+                    CityName = (e.Venue != null && e.Venue.City != null) ? e.Venue.City.Name : "N/A",
                     parentEventId = e.ParentEventId,
-                    childCount = context.Event.Count(c => c.ParentEventId == e.Id)
+                    childCount = context.Event.Count(c => c.ParentEventId == e.Id),
+                    
+                    hasMultipleVenues = e.ChildEvents.Any(c => c.VenueId != null && c.VenueId != e.VenueId),
+                    
+                    distinctCities = e.ChildEvents
+                        .Where(c => c.Venue != null && c.Venue.City != null)
+                        .Select(c => c.Venue.City.Id)
+                        .Distinct()
+                        .Count(),
+                        
+                    hasMultipleCities = e.ChildEvents
+                        .Where(c => c.Venue != null && c.Venue.City != null)
+                        .Select(c => c.Venue.City.Id)
+                        .Distinct()
+                        .Any(cid => e.Venue == null || e.Venue.City == null || cid != e.Venue.City.Id)
                 })
                 .ToListAsync();
 
