@@ -226,9 +226,9 @@ public class EventsController(
             .ThenInclude(v => v.City)
             .Include(e => e.EventType) 
             .Include(e => e.ChildEvents)
-            .ThenInclude(c => c.Venue)      // Needed to check the child event's venue
+            .ThenInclude(c => c.Venue)      
             .ThenInclude(v => v.City)
-            .Where(e => e.ParentEventId == null); 
+            .Where(e => e.ParentEventId == null && e.EndTime>=today); 
 
         if (!string.IsNullOrWhiteSpace(searchTerm))
         {
@@ -683,10 +683,12 @@ public class EventsController(
         string searchTerm = null,
         string sort = "asc",
         int page = 1,
-        int pageSize = 12)
+        int pageSize = 12,
+        bool archived = false)
     {
         try
         {
+            DateTime today = DateTime.Today;
             DateTime? parsedStartDate = null;
             DateTime? parsedEndDate = null;
 
@@ -705,6 +707,8 @@ public class EventsController(
                 .ThenInclude(c => c.Venue)
                 .ThenInclude(v => v.City)
                 .AsQueryable();
+
+            if (!archived) query = query.Where(e => e.EndTime >= today);
 
             if (!hasDateFilter) query = query.Where(e => e.ParentEventId == null);
 
@@ -756,7 +760,13 @@ public class EventsController(
                         .Where(c => c.Venue != null && c.Venue.City != null)
                         .Select(c => c.Venue.City.Id)
                         .Distinct()
-                        .Any(cid => e.Venue == null || e.Venue.City == null || cid != e.Venue.City.Id)
+                        .Any(cid => e.Venue == null || e.Venue.City == null || cid != e.Venue.City.Id),
+
+                    cityNames = e.ChildEvents
+                    .Where(c => c.Venue != null && c.Venue.City != null)
+                    .Select(c => c.Venue.City.Name)
+                    .Distinct()
+                    .ToList()
                 })
                 .ToListAsync();
 
