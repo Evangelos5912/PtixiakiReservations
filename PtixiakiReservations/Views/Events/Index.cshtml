@@ -59,6 +59,7 @@
                 <div class="flex gap-4">
                     <select id="status-filter" class="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors">
                         <option value="all">All Events</option>
+                        <option value="mine">My Events</option>
                         <option value="upcoming">Upcoming</option>
                         <option value="past">Past</option>
                         <option value="today">Today</option>
@@ -323,15 +324,17 @@
                 filteredEvents = filteredEvents.filter(function(event) {
                     const startDate = new Date(event.startDateTime);
 
-                    if (statusFilter === 'upcoming') {
-                        return startDate > today;
-                    } else if (statusFilter === 'past') {
-                        return startDate < today;
-                    } else if (statusFilter === 'today') {
-                        return startDate.getDate() === today.getDate() &&
-                            startDate.getMonth() === today.getMonth() &&
-                            startDate.getFullYear() === today.getFullYear();
-                    }
+                if (statusFilter === 'mine') {
+                            return event.organizerId === currentUserId;
+                } else if (statusFilter === 'upcoming') {
+                    return startDate > today;
+                } else if (statusFilter === 'past') {
+                    return startDate < today;
+                } else if (statusFilter === 'today') {
+                    return startDate.getDate() === today.getDate() &&
+                        startDate.getMonth() === today.getMonth() &&
+                        startDate.getFullYear() === today.getFullYear();
+                }
                     return true;
                 });
             }
