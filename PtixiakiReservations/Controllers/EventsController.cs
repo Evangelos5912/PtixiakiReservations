@@ -433,27 +433,30 @@ public class EventsController(
         string MultiEndTime = null,
         string SpecificDatesJson = null)
     {
-        // 1. ALWAYS VALIDATE FIRST! Reject bad data before touching the hard drive.
         if (!ModelState.IsValid)
         {
             var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
             return BadRequest(new { success = false, message = "Invalid form data.", errors });
         }
 
-        var venue = await context.Venue.FirstOrDefaultAsync(v => v.Id == newEvent.VenueId);
-        if (venue == null) return BadRequest(new { success = false, message = "Venue does not exist." });
+        
+        PtixiakiReservations.Models.Venue venue = null;
+        if (newEvent.VenueId.HasValue)
+        {
+            venue = await context.Venue.FirstOrDefaultAsync(v => v.Id == newEvent.VenueId);
+            if (venue == null) return BadRequest(new { success = false, message = "Venue does not exist." });
+        }
 
         bool isMultiDay = IsMultiDay == "on" || IsMultiDay == "true";
         var userId = userManager.GetUserId(User);
 
         newEvent.OrganizerId = userId;
 
-        // 2. NOW IT IS SAFE TO SAVE FILES
         if (imageFile != null && imageFile.Length > 0)
         {
             try
             {
-                string uploadsFolder = Path.Combine(environment.WebRootPath, "images/events");
+                string uploadsFolder = Path.Combine(environment.WebRootPath, "images", "events");
                 if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
 
                 string uniqueFileName = Guid.NewGuid().ToString() + "_" + Path.GetFileName(imageFile.FileName);
@@ -475,10 +478,10 @@ public class EventsController(
 
         if (galleryFiles != null && galleryFiles.Count > 0)
         {
-            string galleryFolder = Path.Combine(environment.WebRootPath, "images/events/gallery");
+            
+            string galleryFolder = Path.Combine(environment.WebRootPath, "images", "events", "gallery");
             if (!Directory.Exists(galleryFolder)) Directory.CreateDirectory(galleryFolder);
 
-            // Safety check to ensure the list is initialized
             newEvent.GalleryImages ??= new List<EventImage>();
 
             foreach (var file in galleryFiles)
@@ -501,7 +504,7 @@ public class EventsController(
             }
         }
 
-        // 3. HANDLE DATABASE SAVING
+       
         try
         {
             Event fatherEvent = null;
@@ -533,16 +536,15 @@ public class EventsController(
                     {
                         var eventForDay = new Event
                         {
-                            Name = newEvent.Name+" Day "+count,
+                            Name = newEvent.Name + " Day " + count,
                             Description = newEvent.Description,
-                            VenueId = newEvent.VenueId,
+                            VenueId = newEvent.VenueId, // This correctly passes null if it's a master multi-day
                             EventTypeId = newEvent.EventTypeId,
-                            SubAreaId = newEvent.SubAreaId,
+                            SubAreaId = newEvent.SubAreaId, // This correctly passes null if it's a master multi-day
                             StartDateTime = date.Date.Add(startTimeSpan),
                             EndTime = date.Date.Add(endTimeSpan),
                             ImagePath = newEvent.ImagePath,
                             OrganizerId = userId,
-                            // Properly assign the ParentId
                             ParentEventId = newEvent.ParentEventId ?? fatherEvent?.Id
                         };
 
@@ -572,7 +574,7 @@ public class EventsController(
                 eventId = returnedEventId, 
                 eventName = newEvent.Name,
                 venueId = newEvent.VenueId,
-                venueName = venue.Name,
+                venueName = venue?.Name, 
                 eventTypeId = newEvent.EventTypeId
             });
         }
@@ -1388,7 +1390,24 @@ public class EventsController(
                 venueName = e.Venue.Name,
                 cityName = e.Venue.City != null ? e.Venue.City.Name : "N/A",
                 imagePath = e.ImagePath,
-                eventType = e.EventType != null ? e.EventType.Name : "Default"
+                eventType = e.EventType != null ? e.EventType.Name : "Default",
+                distinctCities = e.ChildEvents
+                    .Where(c => c.Venue != null && c.Venue.City != null)
+                    .Select(c => c.Venue.City.Id)
+                    .Distinct()
+                    .Count(),
+                    
+                hasMultipleCities = e.ChildEvents
+                    .Where(c => c.Venue != null && c.Venue.City != null)
+                    .Select(c => c.Venue.City.Id)
+                    .Distinct()
+                    .Any(cid => e.Venue == null || e.Venue.City == null || cid != e.Venue.City.Id),
+
+                cityNames = e.ChildEvents
+                .Where(c => c.Venue != null && c.Venue.City != null)
+                .Select(c => c.Venue.City.Name)
+                .Distinct()
+                .ToList()
             })
             .ToListAsync();
             
@@ -1402,16 +1421,7 @@ public class EventsController(
         return View();
     }
 
-    [AllowAnonymous]
-    [HttpGet]
-    public async Task<IActionResult> GetCategories()
-    {
-        var categories = await context.EventType
-            .Select(c => new { id = c.Id, name = c.Name })
-            .ToListAsync();
-
-        return Json(categories);
-    }
+    
 
     [AllowAnonymous]
     [HttpGet]
@@ -1429,7 +1439,24 @@ public class EventsController(
                 venueName = e.Venue.Name,
                 cityName = e.Venue.City != null ? e.Venue.City.Name : "N/A",
                 imagePath = e.ImagePath,
-                eventType = e.EventType != null ? e.EventType.Name : "Default"
+                eventType = e.EventType != null ? e.EventType.Name : "Default",
+                distinctCities = e.ChildEvents
+                    .Where(c => c.Venue != null && c.Venue.City != null)
+                    .Select(c => c.Venue.City.Id)
+                    .Distinct()
+                    .Count(),
+                    
+                hasMultipleCities = e.ChildEvents
+                    .Where(c => c.Venue != null && c.Venue.City != null)
+                    .Select(c => c.Venue.City.Id)
+                    .Distinct()
+                    .Any(cid => e.Venue == null || e.Venue.City == null || cid != e.Venue.City.Id),
+
+                cityNames = e.ChildEvents
+                .Where(c => c.Venue != null && c.Venue.City != null)
+                .Select(c => c.Venue.City.Name)
+                .Distinct()
+                .ToList()
             })
             .ToListAsync();
             

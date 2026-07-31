@@ -7,15 +7,23 @@ using PtixiakiReservations.Data;
 using PtixiakiReservations.Models;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
+using System.IO;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Logging;
 
 namespace PtixiakiReservations.Controllers
 {
     [Authorize(Roles = "Admin")]
     public class EventTypeController : Controller
-    {        private readonly ApplicationDbContext _context;
+    {       private readonly ApplicationDbContext _context;
+            private readonly IWebHostEnvironment _environment;
+            private readonly ILogger<EventTypeController> _logger;
 
-        public EventTypeController(ApplicationDbContext context)
+        public EventTypeController(IWebHostEnvironment environment, ILogger<EventTypeController> logger, ApplicationDbContext context)
         {
+            _environment = environment;
+            _logger = logger;
             _context = context;
         }
 
@@ -34,14 +42,42 @@ namespace PtixiakiReservations.Controllers
         //POST: creatin event type
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> CreateEventType(string ETName)
+        public async Task<IActionResult> CreateEventType(string ETName, IFormFile? imageFile)
         {
-            if (!string.IsNullOrWhiteSpace(ETName))
+            if (string.IsNullOrWhiteSpace(ETName))
             {
-                _context.EventType.Add(new EventType {Name = ETName});
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(ManageEventType));}
-            return View();
+                ModelState.AddModelError("ETName", "Event Type Name is required.");
+                return View();
+            }
+
+            string imagePath = null;
+            if (imageFile != null && imageFile.Length > 0)
+            {
+                try
+                {
+                    string uploadsFolder = Path.Combine(_environment.WebRootPath, "images/eventTypes");
+                    if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
+
+                    string uniqueFileName = Guid.NewGuid().ToString() + "_" + Path.GetFileName(imageFile.FileName);
+                    string filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+                    using (var fileStream = new FileStream(filePath, FileMode.Create))
+                    {
+                        await imageFile.CopyToAsync(fileStream);
+                    }
+
+                    imagePath = "/images/eventTypes/" + uniqueFileName;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error saving event type image to disk.");
+                    return BadRequest(new { success = false, message = "Error saving image." });
+                }
+            }
+            
+            _context.EventType.Add(new EventType {Name = ETName, ImagePath = imagePath});
+            await _context.SaveChangesAsync();
+            return RedirectToAction(nameof(ManageEventType));
         }
 
         //POST: delete event type
@@ -77,14 +113,52 @@ namespace PtixiakiReservations.Controllers
         //POST: edit event type
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> EditEventType(int ETId, string ETName)
+        public async Task<IActionResult> EditEventType(int ETId, string ETName, IFormFile? imageFile)
         {
 
             var et = await _context.EventType.FindAsync(ETId);
 
-            if(et!=null && !string.IsNullOrWhiteSpace(ETName))
-            {
-                et.Name = ETName;
+            if(et!=null){
+
+
+                if (string.IsNullOrWhiteSpace(ETName))
+                {
+                    ModelState.AddModelError("ETName", "Event Type Name is required.");
+                    return View();
+                }
+                else
+                {
+                    et.Name = ETName;
+                }
+                
+
+                
+                if (imageFile != null && imageFile.Length > 0)
+                {
+                    try
+                    {
+                        string uploadsFolder = Path.Combine(_environment.WebRootPath, "images/eventTypes");
+                        if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
+
+                        string uniqueFileName = Guid.NewGuid().ToString() + "_" + Path.GetFileName(imageFile.FileName);
+                        string filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+                        using (var fileStream = new FileStream(filePath, FileMode.Create))
+                        {
+                            await imageFile.CopyToAsync(fileStream);
+                        }
+
+                        et.ImagePath = "/images/eventTypes/" + uniqueFileName;
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Error saving event type image to disk.");
+                        return BadRequest(new { success = false, message = "Error saving image." });
+                    }
+                }
+
+             
+            
                 _context.Update(et);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(ManageEventType));
@@ -93,6 +167,17 @@ namespace PtixiakiReservations.Controllers
             {
                 return NoContent();
             }
+        }
+
+        [AllowAnonymous]
+        [HttpGet]
+        public async Task<IActionResult> GetCategories()
+        {
+            var categories = await _context.EventType
+                .Select(c => new { id = c.Id, name = c.Name, imagePath = c.ImagePath})
+                .ToListAsync();
+
+            return Json(categories);
         }
 
     }

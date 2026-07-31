@@ -80,7 +80,7 @@
     }
 
     <div class="mb-10 overflow-hidden">
-        <div class="flex w-full max-w-6xl justify-between bg-white rounded-xl p-5">
+        <div class="flex w-full max-w-6xl justify-between rounded-xl p-5">
             <div>
                 <h3 class="text-2xl font-bold text-black mb-5">Recent Events</h3>
                 <p class="text-l text-black">Dont miss out on the most recent events.</p>
@@ -135,7 +135,7 @@
     </div>
 
     <div class="mb-10 overflow-hidden">
-        <div class="flex w-full max-w-6xl justify-between bg-white rounded-xl p-5">
+        <div class="flex w-full max-w-6xl justify-between  rounded-xl p-5">
             <div>
                 <h3 class="text-2xl font-bold text-black mb-5">New</h3>
                 <p class="text-l text-black">View some of our newest Events.</p>
@@ -162,10 +162,55 @@
             </button>
         </div>
     </div>
-
-
-
 </div>
+
+<style>
+
+    .tooltip-container {
+    position: relative;      
+    display: inline-block;   
+    cursor: help;            
+    }
+
+
+
+    .tooltip-text {
+    visibility: hidden;     
+    opacity: 0;              
+    background-color: #333;  
+    color: #fff;             
+    text-align: center;
+    padding: 8px 12px;
+    border-radius: 6px;
+    width: max-content;     
+    max-width: 200px;     
+    position: absolute;
+    z-index: 10;             
+    bottom: 130%;            
+    left: 50%;            
+    transform: translateX(-50%); 
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+    overflow: visible;
+    }
+
+   
+    .tooltip-text::after {
+    content: "";
+    position: absolute;
+    top: 100%;              
+    left: 50%;
+    margin-left: -6px;       
+    border-width: 6px;
+    border-style: solid;
+    border-color: #333 transparent transparent transparent; 
+    }
+
+
+    .tooltip-container:hover .tooltip-text {
+    visibility: visible;
+    opacity: 1;
+    }
+</style>
 
 <script>
     document.addEventListener('DOMContentLoaded', async function() {
@@ -182,19 +227,35 @@
         ];
 
         try {
-            const response = await fetch('/Events/GetCategories'); // Update with your actual route
+            const response = await fetch('/EventType/GetCategories'); // Update with your actual route
             const categories = await response.json();
 
             categories.forEach((category, index) => {
-                const colorClass = gradients[index % gradients.length];
+                let colorClass = '';
+                let cardHtml = '';
 
-                const cardHtml = `
+                if(category.imagePath==null){
+                colorClass = gradients[index % gradients.length];
+
+                cardHtml = `
                     <div class="w-full sm:w-1/2 lg:w-1/3 flex-shrink-0 px-3">
-                        <a href="/Events/EventsForToday?category=${category.id}" class="block bg-gradient-to-br ${colorClass} rounded-2xl p-8 h-48 flex flex-col justify-end text-white shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer">
-                            <h3 class="text-2xl font-bold">${category.name}</h3>
+                        <a href="/Events/EventsForToday?category=${category.id}" class="relative block bg-gradient-to-br ${colorClass} rounded-2xl p-8 h-48 flex flex-col justify-end text-white shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer">
+                            <h3 class="absolute bottom-8 left-8 text-2xl font-bold">${category.name}</h3>
                         </a>
                     </div>
                 `;
+
+                }
+                else{
+                    cardHtml = `
+                    <div class="w-full sm:w-1/2 lg:w-1/3 flex-shrink-0 px-3">
+                        <a href="/Events/EventsForToday?category=${category.id}" class="relative block rounded-2xl h-48 flex flex-col justify-end text-white shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer">
+                            <img src="${category.imagePath}" alt="${category.name}" class="w-full h-full object-cover rounded-2xl" />
+                            <h3 class="absolute bottom-8 left-8 text-2xl font-bold">${category.name}</h3>
+                        </a>
+                    </div>
+                `;
+                }
                 track.insertAdjacentHTML('beforeend', cardHtml);
             });
 
@@ -522,27 +583,43 @@
                 const formattedStartDate = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
                 const endDateObj = new Date(event.endTime);
                 const formattedEndDate = endDateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                const hasMultipleCities = event.hasMultipleCities || event.HasMultipleCities || false;
+                const distinctCities = event.distinctCities || event.DistinctCities || 0;
+                let cityName = event.cityNames || event.cityNames[0];
+                if (event.distinctCities ===0){
+                    cityName = event.cityName;
+                }
+            
 
+                const cityNamesList = event.cityNames ? event.cityNames.join(', ') : '';
+
+
+                let cityBadgeHtml = hasMultipleCities 
+                    ? `<p>${distinctCities} Cities</p>
+                    <span class="tooltip-text cursor-help" role="tooltip">${cityNamesList}</span>` 
+                    : `<p>${cityName}</p>`;
+
+                
                 const imageSection = event.imagePath 
-                    ? `<img src="${event.imagePath}" alt="${event.name}" class="w-full h-40 object-cover" />`
-                    : `<div class="w-full h-40 bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center text-gray-400">
-                           <svg class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                       </div>`;
+                    ? `<img src="${event.imagePath}" alt="${event.name}" class="w-full h-40 object-cover rounded-t-xl" />`
+                    : `<div class="w-full h-40 bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center text-gray-400 rounded-t-xl">
+                        <svg class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                    </div>`;
 
+              
                 const cardHtml = `
                     <div class="w-full sm:w-1/2 lg:w-1/3 flex-shrink-0 px-3">
-                        <a href="/Events/Details/${event.id}" class="block bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer h-full border border-gray-100">
+                        <a href="/Events/Details/${event.id}" class="block bg-white rounded-xl shadow-md hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer h-full border border-gray-100">
                             ${imageSection}
                             <div class="p-5">
-                                <p class="text-xs font-bold text-blue-600 mb-1 uppercase tracking-wider">${event.eventType?.name || 'Event'}</p>
+                                <p class="text-xs font-bold text-blue-600 mb-1 uppercase tracking-wider">${event.eventType || 'Event'}</p>
                                 <h3 class="text-lg font-bold text-gray-900 mb-2 line-clamp-2">${event.name}</h3>
                                 <div class="flex items-center text-sm text-gray-500 mb-1">
                                     <svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                                     ${formattedStartDate} - ${formattedEndDate}
                                 </div>
-                                <div class="flex items-center text-sm text-gray-500">
-                                    <svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                                    ${event.cityName || 'TBA'}
+                                <div class="tooltip-container relative inline-block mt-3 mr-3 bg-white text-blue-600 text-sm font-bold px-2 py-1 z-50">
+                                    ${cityBadgeHtml}
                                 </div>
                             </div>
                         </a>
@@ -619,27 +696,43 @@
                 const formattedStartDate = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
                 const endDateObj = new Date(event.endTime);
                 const formattedEndDate = endDateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                const hasMultipleCities = event.hasMultipleCities || event.HasMultipleCities || false;
+                const distinctCities = event.distinctCities || event.DistinctCities || 0;
+                let cityName = event.cityNames || event.cityNames[0];
+                if (event.distinctCities ===0){
+                    cityName = event.cityName;
+                }
+            
 
+                const cityNamesList = event.cityNames ? event.cityNames.join(', ') : '';
+
+
+                let cityBadgeHtml = hasMultipleCities 
+                    ? `<p>${distinctCities} Cities</p>
+                    <span class="tooltip-text cursor-help" role="tooltip">${cityNamesList}</span>` 
+                    : `<p>${cityName}</p>`;
+
+                
                 const imageSection = event.imagePath 
-                    ? `<img src="${event.imagePath}" alt="${event.name}" class="w-full h-40 object-cover" />`
-                    : `<div class="w-full h-40 bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center text-gray-400">
-                           <svg class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                       </div>`;
+                    ? `<img src="${event.imagePath}" alt="${event.name}" class="w-full h-40 object-cover rounded-t-xl" />`
+                    : `<div class="w-full h-40 bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center text-gray-400 rounded-t-xl">
+                        <svg class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                    </div>`;
 
+              
                 const cardHtml = `
                     <div class="w-full sm:w-1/2 lg:w-1/3 flex-shrink-0 px-3">
-                        <a href="/Events/Details/${event.id}" class="block bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer h-full border border-gray-100">
+                        <a href="/Events/Details/${event.id}" class="block bg-white rounded-xl shadow-md hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer h-full border border-gray-100">
                             ${imageSection}
                             <div class="p-5">
-                                <p class="text-xs font-bold text-blue-600 mb-1 uppercase tracking-wider">${event.eventType?.name || 'Event'}</p>
+                                <p class="text-xs font-bold text-blue-600 mb-1 uppercase tracking-wider">${event.eventType || 'Event'}</p>
                                 <h3 class="text-lg font-bold text-gray-900 mb-2 line-clamp-2">${event.name}</h3>
                                 <div class="flex items-center text-sm text-gray-500 mb-1">
                                     <svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                                     ${formattedStartDate} - ${formattedEndDate}
                                 </div>
-                                <div class="flex items-center text-sm text-gray-500">
-                                    <svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                                    ${event.cityName|| 'TBA'}
+                                <div class="tooltip-container relative inline-block mt-3 mr-3 bg-white text-blue-600 text-sm font-bold px-2 py-1 z-50">
+                                    ${cityBadgeHtml}
                                 </div>
                             </div>
                         </a>

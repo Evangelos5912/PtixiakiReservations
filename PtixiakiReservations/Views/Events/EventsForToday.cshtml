@@ -185,27 +185,36 @@
                         }
                         else
                         {
-                            <div data-type="@item.EventType?.Name" class="event-icon flex items-center justify-center h-full text-gray-400"></div>
+                            <img src="@item.EventType?.ImagePath" 
+                                alt="@item.Name" 
+                                class="w-full h-full object-cover transform hover:scale-105 transition-transform duration-300" />
                         }
                         
                         </div>
                         <div class="absolute top-3 right-3 mt-3 mr-3 bg-white text-indigo-800 text-xs font-bold px-2 py-1 z-50 rounded-full shadow-sm" id="tooltip-container2">
-                            @if(hasMultipleCities){
+                            @{
+                                var cityNames = item.ChildEvents
+                                    .Where(c => c.Venue != null && c.Venue.City != null)
+                                    .Select(c => c.Venue.City.Name)
+                                    .Distinct()
+                                    .ToList();
+                            }
+
+                            @if(hasMultipleCities) {
                                 <p>@distinctCities Cities</p>
                                 <span class="tooltip-text" id="my-tooltip" role="tooltip">
-                                    @{
-                                        var cityNames = item.ChildEvents
-                                            .Where(c => c.Venue != null && c.Venue.City != null)
-                                            .Select(c => c.Venue.City.Name)
-                                            .Distinct();
-                                    }
                                     @string.Join(", ", cityNames)
                                 </span>
                             }
-                            else{
+                            else {
+                                if(!cityNames.Any()){
+                                    <p>@(item.Venue?.City?.Name ?? "TBA")</p>
+                                }
+                                else{
                                 <p>
-                                    @item.Venue?.City?.Name
+                                    @cityNames.FirstOrDefault()
                                 </p> 
+                                }
                             }
                         </div>
                         @if(eventTimeClass == "event-today"){
@@ -481,16 +490,6 @@
 </style>
 
 @section Scripts {
-
-    <script type="module">
-        import { getEventSvg } from "/js/event-svg.js";
-
-        document.querySelectorAll(".event-icon").forEach(el => {
-            const type = el.dataset.type || "";;
-
-            el.innerHTML = getEventSvg(type.toLowerCase());
-        });
-    </script>
 
     <script>
         $(document).ready(function () {
@@ -990,7 +989,11 @@
 
                         const hasMultipleCities = event.hasMultipleCities || event.HasMultipleCities || false;
                         const distinctCities = event.distinctCities || event.DistinctCities || 0;
-                        const cityName = event.cityName || event.CityName || (event.venue && event.venue.city ? event.venue.city.name : 'No Location');
+                        
+                        let cityName = event.cityNames || event.cityNames[0];
+                        if (event.distinctCities ===0){
+                            cityName = event.cityName;
+                        }
                     
 
                         const cityNamesList = event.cityNames ? event.cityNames.join(', ') : '';

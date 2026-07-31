@@ -19,16 +19,31 @@
         <!-- Form Card -->
         <div class="bg-white rounded-xl shadow-lg overflow-hidden">
             <div class="p-6">
-                <form asp-controller="EventType" asp-action="EditEventType"  method="post">
+                <form asp-controller="EventType" asp-action="EditEventType"  method="post" enctype="multipart/form-data">
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="ETId" value="@Model.Id"/>
                     <div class="space-y-6">
                         <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div>
-                                    <label for="ETName" class="block text-sm font-medium text-gray-700 mb-1">Event Type Name</label>
+                            <div class="flex items-center justify-center mb-4">
+                                <div class="flex flex-col items-center w-full ">
+                                    <div class="w-full">
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Event Poster</label>
+                                        <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg bg-white h-48 w-100 items-center">
+                                            <div class="text-center">
+                                                <label for="imageFile" class="cursor-pointer font-medium text-indigo-600 hover:text-indigo-500 transition-colors">
+                                                    <span>Upload Event Type Poster</span>
+                                                    <input id="imageFile" name="imageFile" type="file" class="sr-only" accept="image/*" onchange="previewImage(this)">
+                                                </label>
+                                                
+                                            </div>
+                                        </div>
+                                        <div id="imagePreviewContainer" class="mt-4">
+                                            <img id="imagePreview" src="@Model?.ImagePath" class="h-32 w-auto rounded-lg shadow-sm border mx-auto object-cover">
+                                        </div>
+                                    </div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1 mt-4">Event Type Name</label>
                                     <div class="flex">
-                                        <input type="text" id="ETName" name="ETName" value="@Model.Name" placeholder="Event Type name" class="pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors" required/>
+                                        <input type="text" name="ETName" placeholder="Event Type name" value="@Model?.Name" class="pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors" required />
                                         <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 mx-5">Submit</button>
                                     </div>
                                 </div>
@@ -40,3 +55,22 @@
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            
+        });
+
+        function previewImage(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = e => { 
+                    document.getElementById('imagePreview').src = e.target.result;
+                    document.getElementById('imagePreviewContainer').classList.remove('hidden');
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+    </script>
+}
