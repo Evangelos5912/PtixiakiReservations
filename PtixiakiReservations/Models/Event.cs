@@ -12,13 +12,13 @@ public class Event
     public DateTime EndTime { get; set; }
     public int EventTypeId { get; set; }
     [ForeignKey("EventTypeId")] public EventType EventType { get; set; }
-    public int VenueId { get; set; }
+    public int? VenueId { get; set; }
     [ForeignKey("VenueId")] public Venue Venue { get; set; }
     public int? SubAreaId { get; set; }
+    [ForeignKey("SubAreaId")] public SubArea SubArea { get; set; }
     public string? Description { get; set; }
     public string? OrganizerId { get; set; }
     public ApplicationUser? Organizer { get; set; }
-    [ForeignKey("SubAreaId")] public SubArea SubArea { get; set; }
     public int? ParentEventId { get; set; }
     [ForeignKey("ParentEventId")] public Event ParentEvent { get; set; }
     public string? ImagePath { get; set; }

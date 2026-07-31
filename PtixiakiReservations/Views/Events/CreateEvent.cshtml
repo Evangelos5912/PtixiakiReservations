@@ -21,6 +21,7 @@
                     @Html.AntiForgeryToken()
                     <div class="space-y-6">
                         
+                        <!-- 1. EVENT MODE TOGGLE -->
                         <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
                             <div class="flex items-center mb-4">
                                 <div class="h-10 w-10 rounded-md bg-indigo-100 flex items-center justify-center text-indigo-600">
@@ -32,9 +33,9 @@
                             </div>
 
                             <div class="bg-indigo-600 rounded-lg p-1 mb-2 flex shadow-inner">
-                                <label class="flex-1 text-center py-2 cursor-pointer transition-all rounded-md bg-white shadow-sm" id="labelFather">
+                                <label class="flex-1 text-center py-2 cursor-pointer transition-all rounded-md bg-white shadow-sm font-bold text-indigo-700" id="labelFather">
                                     <input type="radio" id="radioFather" name="eventMode" value="father" class="sr-only" checked onchange="toggleEventMode('father')">
-                                    <span class="text-indigo-700 font-bold">Master Event</span>
+                                    <span>Master Event</span>
                                 </label>
 
                                 <label class="flex-1 text-center py-2 cursor-not-allowed transition-all rounded-md opacity-50 pointer-events-none" id="labelChild" title="You must create a Master Event first!">
@@ -53,6 +54,7 @@
                             </p>
                         </div>
 
+                        <!-- 2. PARENT EVENT SELECTION (Child Mode Only) -->
                         <div id="parentEventSection" class="hidden bg-gray-50 rounded-lg p-4 border border-gray-200">
                             <h2 class="text-lg font-medium text-gray-800 mb-4">Parent Event Selection</h2>
                             <input type="hidden" asp-for="ParentEventId" id="ParentEventId" name="ParentEventId" />
@@ -67,24 +69,24 @@
                             <p id="parentRequiredError" class="text-red-500 text-xs mt-2 hidden font-bold">You must select a father event to continue in child mode!</p>
                         </div>
 
+                        <!-- 3. SUB-EVENTS LIST -->
                         <div id="subEventsListContainer" class="hidden mt-6 bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden">
                             <div class="bg-indigo-50 px-6 py-4 border-b border-indigo-100 flex justify-between items-center">
                                 <div>
                                     <h3 class="text-indigo-800 font-bold text-sm">Sub-Events Created (<span id="subEventCountDisplay">0</span>)</h3>
                                     <p class="text-[10px] text-indigo-600">Instances tied to this Master Event</p>
-                                    <label for="MultiRenameCheckbox">Rename Multiple:</label>
-                                    <input type="checkbox" id="MultiRenameCheckbox" onchange="showRenameCheckboxes()"/>
-                                    <button type="button" onclick="showRenameModal()" id="ConfirmMultiRenameBtn"
-                                        class="hidden bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded text-xs transition-colors shadow-sm">
+                                    <label for="MultiRenameCheckbox" class="text-xs font-bold text-indigo-700 mt-1 cursor-pointer">Rename Multiple:</label>
+                                    <input type="checkbox" id="MultiRenameCheckbox" onchange="showRenameCheckboxes()" class="ml-1 cursor-pointer rounded border-indigo-300 text-indigo-600 focus:ring-indigo-500"/>
+                                    <button type="button" onclick="showRenameModal()" id="ConfirmMultiRenameBtn" class="hidden ml-2 bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded text-xs transition-colors shadow-sm">
                                         Confirm
                                     </button>
                                 </div>
 
-                                    <button type="button" onclick="showChildEventForm()" class="p-1.5 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 shadow-sm transition-transform hover:scale-110" title="Add another sub-event">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                                            <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v6h4a1 1 0 110 2h-4v6a1 1 0 11-2 0v-6H4a1 1 0 110-2h4V4a1 1 0 011-1z" clip-rule="evenodd" />
-                                        </svg>
-                                    </button>
+                                <button type="button" onclick="showChildEventForm()" class="p-1.5 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 shadow-sm transition-transform hover:scale-110" title="Add another sub-event">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v6h4a1 1 0 110 2h-4v6a1 1 0 11-2 0v-6H4a1 1 0 110-2h4V4a1 1 0 011-1z" clip-rule="evenodd" />
+                                    </svg>
+                                </button>
                             </div>
                             <div class="max-h-48 overflow-y-auto">
                                 <table class="min-w-full divide-y divide-gray-200">
@@ -96,13 +98,12 @@
                                             <th class="px-6 py-2 text-right">Actions</th>
                                         </tr>
                                     </thead>
-                                    <tbody id="subEventsTableBody" class="divide-y divide-gray-100 text-sm">
-
-                                    </tbody>
+                                    <tbody id="subEventsTableBody" class="divide-y divide-gray-100 text-sm"></tbody>
                                 </table>
                             </div>
                         </div>
 
+                        <!-- 4. EVENT DETAILS FORM -->
                         <div id="eventDetailsWrapper" class="space-y-6">
                             
                             <div class="bg-gray-50 rounded-lg p-4 border border-gray-200 mt-6">
@@ -122,7 +123,6 @@
                                 <div class="mt-4" id="descriptionContainer">
                                     <label asp-for="Description" class="block text-sm font-medium text-gray-700 mb-1">Description (Optional)</label>
                                     <textarea asp-for="Description" rows="4" placeholder="Enter event description..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"></textarea>
-                                    <span asp-validation-for="Description" class="text-red-500 text-xs mt-1"></span>
                                 </div>
 
                                 <div class="mt-4 hidden" id="childDescriptionNote">
@@ -138,6 +138,7 @@
                                 </div>
                             </div>
 
+                            <!-- 5. IMAGES -->
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-1">Event Poster</label>
@@ -166,13 +167,18 @@
                                             <p class="text-[11px] text-gray-400 mt-1">Hold Ctrl/Shift to pick multiple items</p>
                                         </div>
                                     </div>
-                                    <div id="galleryPreviewContainer" class="hidden mt-4 grid grid-cols-3 gap-2 overflow-y-auto max-h-32 p-1 border border-gray-100 rounded-lg bg-gray-50/50">
-                                        </div>
+                                    <div id="galleryPreviewContainer" class="hidden mt-4 grid grid-cols-3 gap-2 overflow-y-auto max-h-32 p-1 border border-gray-100 rounded-lg bg-gray-50/50"></div>
                                 </div>
                             </div>
 
-                            <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- 6. LOCATION / VENUE (Now Isolated) -->
+                            <div id="location-section" class="bg-gray-50 rounded-lg p-4 border border-gray-200 mt-6">
+                                <div id="single-checkbox-container" class="mb-6 items-center flex gap-4">
+                                    <input type="checkbox" id="single-checkbox" name="IsStandalone" value="true" class="h-5 w-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500" checked onchange="toggleStandaloneMode()" />
+                                    <label for="single-checkbox" class="block text-sm font-medium text-gray-700">One time event? (Includes Venue & Layout)</label>
+                                </div>
+                                
+                                <div id="venue-layout-fields" class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700 mb-1">Venue</label>
                                         <input type="hidden" asp-for="VenueId" id="VenueId" />
@@ -186,13 +192,14 @@
                                     </div>
                                     <div>
                                         <label asp-for="SubAreaId" class="block text-sm font-medium text-gray-700 mb-1">Layout</label>
-                                        <select asp-for="SubAreaId" id="subAreaSelect" class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white disabled:bg-gray-100" required>
+                                        <select asp-for="SubAreaId" id="subAreaSelect" class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white disabled:bg-gray-100">
                                             <option value="">Select a Layout</option>
                                         </select>
                                     </div>
                                 </div>
                             </div>
 
+                            <!-- 7. DATE & TIME SCHEDULE -->
                             <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
                                 <div id="multiDayToggleContainer" class="flex items-center mb-6">
                                     <input type="checkbox" id="isMultiDay" name="IsMultiDay" class="h-5 w-5 text-indigo-600 border-gray-300 rounded">
@@ -221,20 +228,20 @@
                                                     <th class="px-6 py-2 text-right">Actions</th>
                                                 </tr>
                                             </thead>
-                                            <tbody id="eventPreviewList" class="divide-y divide-gray-100 text-sm">
-
-                                            </tbody>
+                                            <tbody id="eventPreviewList" class="divide-y divide-gray-100 text-sm"></tbody>
                                         </table>
                                         <p class="text-xs mt-2"><span id="eventCount">0</span> events total</p>
                                     </div>
                                 </div>
                             </div>
 
-                            <div class="flex justify-end space-x-3 pt-5 border-t">
-                                <a href="@Url.Action("EventsForToday", "Events")" class="px-4 py-2 text-gray-700 hover:text-gray-900 transition-colors">Exit</a>
-
-                                <button type="button" id="cancelChildBtn" onclick="hideChildEventForm()" class="hidden px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors">Cancel</button>
-                                <button type="submit" class="px-6 py-2 bg-indigo-600 text-white rounded-md shadow hover:bg-indigo-700 transition-colors">Create Event</button>
+                            <div class="flex justify-between space-x-3 pt-5 border-t">
+                                <button type="button" id="doneChildBtn" onclick="finishChildCreation()" class="hidden px-4 py-2 text-white bg-green-600 rounded-md hover:bg-green-700 shadow transition-colors">Done Creating Sub-Events</button>
+                                <div>
+                                    <a href="@Url.Action("EventsForToday", "Events")" class="px-4 py-2 text-gray-700 hover:text-gray-900 transition-colors">Exit</a>
+                                    <button type="button" id="cancelChildBtn" onclick="hideChildEventForm()" class="hidden px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors">Cancel</button>
+                                    <button type="submit" class="px-6 py-2 bg-indigo-600 text-white rounded-md shadow hover:bg-indigo-700 transition-colors">Create Event</button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -244,43 +251,34 @@
     </div>
 </div>
 
+<!-- MODALS -->
 <div id="renameModal" tabindex="-1" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm transition-opacity">
     <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md relative transform transition-all">
         <h3 class="text-xl font-bold text-gray-900 mb-2">Choose a Name</h3>
         <input type="text" id="ModalField" placeholder="New Name..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 mb-4" />
 
         <div class="flex justify-end gap-3 mt-4">
-            <button type="button" onclick="closeRenameModal()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium text-sm">
-                Cancel
-            </button>
-            <button type="button" onclick="RenameMultiple(document.getElementById('ModalField').value)" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm">
-                Rename
-            </button>
+            <button type="button" onclick="closeRenameModal()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium text-sm">Cancel</button>
+            <button type="button" onclick="RenameMultiple(document.getElementById('ModalField').value)" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm">Rename</button>
         </div>
-        
     </div>
 </div>
     
 <div id="successMessage" class="hidden mb-6 bg-green-50 border-l-4 border-green-500 p-4 rounded-md shadow-sm">
     <div class="flex items-center">
         <div class="flex-shrink-0">
-            <svg class="h-5 w-5 text-green-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+            <svg class="h-5 w-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
             </svg>
         </div>
         <div class="ml-3">
             <p class="text-sm text-green-700 font-medium">Event created successfully!</p>
-            @if (ViewBag.HasMasterEvents == false)
-            {}
         </div>
     </div>
 </div>
 
 <style>
-    .highlight {
-        font-weight: 600;
-        color: #3b82f6;
-    }
+    .highlight { font-weight: 600; color: #3b82f6; }
 </style>
 
 @section Scripts {
@@ -288,57 +286,59 @@
 
     <script>
         document.addEventListener("DOMContentLoaded", function () {
-            // --- Elements ---
-            let namingIds = [];
-            let previewDates = [];
+            // --- Core Elements ---
             const form = document.getElementById('createEventForm');
-            const modeRadios = document.getElementsByName('eventMode');
-            const parentEventSection = document.getElementById('parentEventSection');
-            const multiDayToggleContainer = document.getElementById('multiDayToggleContainer');
-            const isMultiDay = document.getElementById('isMultiDay');
-            
-            // Container that wraps all input fields to easily show/hide them
             const eventDetailsWrapper = document.getElementById('eventDetailsWrapper');
+            const doneChildBtn = document.getElementById('doneChildBtn');
             const cancelChildBtn = document.getElementById('cancelChildBtn');
             const subEventsListContainer = document.getElementById('subEventsListContainer');
             
-            // Description Elements
+            // --- Mode & Feature Toggles ---
+            const multiDayToggleContainer = document.getElementById('multiDayToggleContainer');
+            const isMultiDay = document.getElementById('isMultiDay');
             const descriptionContainer = document.getElementById('descriptionContainer');
             const childDescriptionNote = document.getElementById('childDescriptionNote');
+            const childImageNote = document.getElementById('childImageNote');
+            const eventTypeSelect = document.getElementById('EventTypeId');
 
-            // Venue Elements
+            // --- Location & Venue Elements ---
+            const locationSection = document.getElementById('location-section');
+            const singleCheckboxContainer = document.getElementById('single-checkbox-container');
+            const singleCheckbox = document.getElementById('single-checkbox');
+            const venueLayoutFields = document.getElementById('venue-layout-fields');
             const venueSearch = document.getElementById('venueSearch');
             const venueResultsList = document.getElementById('venueSearchResults');
             const venueHiddenInput = document.getElementById('VenueId');
             const clearVenueBtn = document.getElementById('clearVenueSelection');
             const subAreaSelect = document.getElementById('subAreaSelect');
 
-            const childImageNote = document.getElementById('childImageNote');
+            // --- Parent Event Elements ---
             const parentError = document.getElementById('parentRequiredError'); 
             const searchInput = document.getElementById('parentEventSearch');
             const resultsList = document.getElementById('searchResults');
             const hiddenIdInput = document.getElementById('ParentEventId');
             const clearBtn = document.getElementById('clearParentSelection');
-            const eventTypeSelect = document.getElementById('EventTypeId');
 
+            // --- Timing Elements ---
             const startInput = document.querySelector('input[name="StartDateTime"]:not([type="hidden"])');
             const endInput = document.querySelector('input[name="EndTime"]:not([type="hidden"])');
             const multiStartDate = document.getElementById('StartDate');
             const multiEndDate = document.getElementById('EndDate');
             const multiStartTime = document.getElementById('StartTime');
             const multiDailyEndTime = document.getElementById('DailyEndTime');
-
             const singleDayContainer = document.getElementById('singleDayContainer');
             const multiDayContainer = document.getElementById('multiDayContainer');
-
-            const allScheduleInputs = [startInput, endInput, multiStartDate, multiEndDate, multiStartTime, multiDailyEndTime];
-
             const eventPreviewList = document.getElementById('eventPreviewList');
             const cont = document.getElementById('datePreviewContainer');
+            
+            const allScheduleInputs = [startInput, endInput, multiStartDate, multiEndDate, multiStartTime, multiDailyEndTime];
+            let namingIds = [];
+            let previewDates = [];
 
+            // --- UI Visibility Helpers ---
             window.showChildEventForm = function() {
                 eventDetailsWrapper.classList.remove('hidden');
-                cancelChildBtn.classList.remove('hidden'); // Show cancel button
+                cancelChildBtn.classList.remove('hidden'); 
                 document.getElementById('Name').focus();
                 window.scrollTo({top: eventDetailsWrapper.offsetTop - 50, behavior: 'smooth'});
             };
@@ -347,52 +347,66 @@
                 eventDetailsWrapper.classList.add('hidden');
             };
 
-            // --- 1. Mode Logic ---
+            // --- Mode Logic ---
+            window.toggleStandaloneMode = function() {
+                if (document.getElementById('radioFather').checked) {
+                    if (singleCheckbox.checked) {
+                        venueLayoutFields.classList.remove('hidden');
+                        venueSearch.disabled = false;
+                        subAreaSelect.disabled = false;
+                    } else {
+                        venueLayoutFields.classList.add('hidden');
+                        venueSearch.disabled = true;
+                        subAreaSelect.disabled = true;
+                    }
+                }
+            };
+
             window.toggleEventMode = function(mode) {
                 const isFather = (mode === 'father');
+                
                 multiDayToggleContainer.classList.toggle('hidden', isFather);
                 if(childImageNote) childImageNote.classList.toggle('hidden', isFather);
-
-                // Toggle Description Fields
                 if(descriptionContainer) descriptionContainer.classList.toggle('hidden', !isFather);
                 if(childDescriptionNote) childDescriptionNote.classList.toggle('hidden', isFather);
 
                 if (isFather) {
                     eventDetailsWrapper.classList.remove('hidden'); 
                     cancelChildBtn.classList.add('hidden'); 
+                    subEventsListContainer.classList.add('hidden');
                     
-                    // Hide the sub-events table when in Master Mode
-                    document.getElementById('subEventsListContainer').classList.add('hidden');
+                    locationSection.classList.remove('hidden');
+                    singleCheckboxContainer.classList.remove('hidden');
+                    doneChildBtn.classList.add('hidden'); // Always hide Done button in Father mode
+                    toggleStandaloneMode(); 
                     
-                    venueSearch.disabled = false;
                     if(venueHiddenInput.value) clearVenueBtn.classList.remove('hidden');
-                    subAreaSelect.disabled = false;
                     allScheduleInputs.forEach(i => i.disabled = false);
                     isMultiDay.checked = false;
                     singleDayContainer.classList.remove('hidden');
                     multiDayContainer.classList.add('hidden');
                     if(parentError) parentError.classList.add('hidden');
                     eventTypeSelect.disabled = false;
-                    resetDateConstraints();
                     
+                    resetDateConstraints();
                     isMultiDay.disabled = false;
                     document.querySelector('label[for="isMultiDay"]').classList.remove('text-gray-400');
                 } else {
                     hideChildEventForm(); 
+                    if (hiddenIdInput.value) subEventsListContainer.classList.remove('hidden');
                     
-                    // Show the table if we have a parent selected
-                    if (document.getElementById('ParentEventId').value) {
-                        document.getElementById('subEventsListContainer').classList.remove('hidden');
-                    }
+                    locationSection.classList.remove('hidden');
+                    singleCheckboxContainer.classList.add('hidden');
+                    venueLayoutFields.classList.remove('hidden'); 
                     
-                    // Allow searching for a different venue in child mode
+                    // Note: Done button visibility is now strictly handled by updateSubEventsList()
+                    
                     if(venueSearch) venueSearch.disabled = false;
                     if(clearVenueBtn && venueHiddenInput.value) clearVenueBtn.classList.remove('hidden');
                     subAreaSelect.disabled = true;
                     eventTypeSelect.disabled = true;
                     allScheduleInputs.forEach(i => { if(i) i.disabled = true; });
 
-                    // Clear out any description typed by accident
                     document.getElementById('Description').value = ""; 
                 }
                 updateRadioStyles();
@@ -404,36 +418,65 @@
                 const labelF = document.getElementById('labelFather');
                 const labelC = document.getElementById('labelChild');
 
-                // Reset styles
                 labelF.className = "flex-1 text-center py-2 transition-all rounded-md";
                 labelC.className = "flex-1 text-center py-2 transition-all rounded-md";
-                labelF.querySelector('span').className = "font-medium";
-                labelC.querySelector('span').className = "font-medium flex items-center justify-center";
 
-                // Master Radio Styles
                 if (masterRadio.disabled) {
                     labelF.classList.add('opacity-50', 'cursor-not-allowed', 'pointer-events-none');
-                    labelF.querySelector('span').classList.add('text-white');
+                    labelF.querySelector('span').className = "text-white font-medium";
                 } else if (masterRadio.checked) {
                     labelF.classList.add('cursor-pointer', 'bg-white', 'shadow-sm');
-                    labelF.querySelector('span').classList.add('text-indigo-700', 'font-bold');
+                    labelF.querySelector('span').className = "text-indigo-700 font-bold";
                 } else {
                     labelF.classList.add('cursor-pointer');
-                    labelF.querySelector('span').classList.add('text-white');
+                    labelF.querySelector('span').className = "text-white font-medium";
                 }
 
-                // Child Radio Styles
                 if (childRadio.disabled) {
-                    labelC.classList.add('cursor-not-allowed', 'transition-all', 'rounded-md', 'opacity-50', 'pointer-events-none');
-                    labelC.querySelector('span').classList.add('text-white');
+                    labelC.classList.add('cursor-not-allowed', 'opacity-50', 'pointer-events-none');
+                    labelC.querySelector('span').className = "text-white font-medium flex items-center justify-center";
                 } else if (childRadio.checked) {
                     labelC.classList.add('cursor-pointer', 'bg-white', 'shadow-sm');
-                    labelC.querySelector('span').classList.add('text-indigo-700', 'font-bold');
+                    labelC.querySelector('span').className = "text-indigo-700 font-bold flex items-center justify-center";
                 } else {
                     labelC.classList.add('cursor-pointer');
-                    labelC.querySelector('span').classList.add('text-white');
+                    labelC.querySelector('span').className = "text-white font-medium flex items-center justify-center";
                 }
             }
+
+            // --- Reset & Transition Helper ---
+            window.finishChildCreation = function() {
+                form.reset();
+                document.getElementById('imagePreviewContainer').classList.add('hidden');
+                document.getElementById('imagePreview').src = '#';
+                document.getElementById('galleryPreviewContainer').classList.add('hidden');
+                document.getElementById('galleryPreviewContainer').innerHTML = '';
+                
+                hiddenIdInput.value = '';
+                searchInput.value = '';
+                searchInput.disabled = false;
+                clearBtn.classList.add('hidden');
+                resultsList.classList.add('hidden');
+                subEventsListContainer.classList.add('hidden');
+                
+                // Re-lock Child Radio
+                const childLabel = document.getElementById('labelChild');
+                const childRadio = document.getElementById('radioChild');
+                childRadio.disabled = true;
+                childRadio.checked = false;
+                childLabel.setAttribute('title', 'You must create a Master Event first!');
+                
+                const helperText = document.getElementById('parentUnlockHelperText');
+                if (helperText) helperText.classList.remove('hidden');
+
+                // Re-activate Master Radio
+                const masterRadio = document.getElementById('radioFather');
+                masterRadio.disabled = false;
+                masterRadio.checked = true;
+                
+                toggleEventMode('father');
+                window.scrollTo({top: 0, behavior: 'smooth'});
+            };
 
             // --- Constraint Helper ---
             async function applyParentTimingConstraints(parentId) {
@@ -448,10 +491,10 @@
                     const minD = minISO.split('T')[0];
                     const maxD = maxISO.split('T')[0];
 
-                    startInput.min = minISO; startInput.max = maxISO;
-                    endInput.min = minISO; endInput.max = maxISO;
-                    multiStartDate.min = minD; multiStartDate.max = maxD;
-                    multiEndDate.min = minD; multiEndDate.max = maxD;
+                    startInput.min = endInput.min = minISO; 
+                    startInput.max = endInput.max = maxISO;
+                    multiStartDate.min = multiEndDate.min = minD; 
+                    multiStartDate.max = multiEndDate.max = maxD;
                     
                     multiStartTime.value = minISO.split('T')[1].substring(0, 5);
                     multiDailyEndTime.value = maxISO.split('T')[1].substring(0, 5);
@@ -470,7 +513,7 @@
                 } catch (err) { console.error("Error applying constraints:", err); }
             }
 
-            // --- 2. Parent Event Selection ---
+            // --- Parent Event Selection ---
             async function selectParent(ev) {
                 hiddenIdInput.value = ev.id;
                 searchInput.value = ev.name;
@@ -483,15 +526,16 @@
                 hideChildEventForm(); 
                 updateSubEventsList(ev.id);
 
-                // Auto-fill venue from parent, but keep it active for searching a new one!
-                venueHiddenInput.value = ev.venueId;
-                venueSearch.value = ev.venue || 'Inherited Venue'; 
-                venueSearch.disabled = false;
-                clearVenueBtn.classList.remove('hidden'); 
-                subAreaSelect.disabled = false;
                 eventTypeSelect.value = ev.eventTypeId;
                 eventTypeSelect.disabled = true;
-                fetchSubAreas(ev.venueId);
+                
+                // Clear venue fields so user selects a new one for the child
+                venueHiddenInput.value = '';
+                venueSearch.value = '';
+                venueSearch.disabled = false;
+                clearVenueBtn.classList.add('hidden');
+                subAreaSelect.innerHTML = '<option value="">Select a Layout</option>';
+                subAreaSelect.disabled = true;
 
                 allScheduleInputs.forEach(i => i.disabled = false);
                 resetDateConstraints();
@@ -531,7 +575,7 @@
                 resetDateConstraints();
             };
 
-            // --- 3. Venue Selection ---
+            // --- Venue Selection ---
             venueSearch.addEventListener('input', function(e) {
                 if (e.target.value.length < 1) { venueResultsList.classList.add('hidden'); return; }
                 fetch(`/Events/SearchVenues?query=${encodeURIComponent(e.target.value)}`)
@@ -540,11 +584,9 @@
                         const query = e.target.value;
                         venueResultsList.innerHTML = '';
                         data.forEach(v => {
-                            const highlightedNameText = highlightMatch(v.name, query);
-                            const highlightedCityText = highlightMatch(v.city || '', query);
                             const li = document.createElement('li');
                             li.className = 'p-3 hover:bg-indigo-50 cursor-pointer border-b text-sm';
-                            li.innerHTML = `<strong>${highlightedNameText}</strong><br><small>${highlightedCityText || ''}</small>`;
+                            li.innerHTML = `<strong>${highlightMatch(v.name, query)}</strong><br><small>${highlightMatch(v.city || '', query)}</small>`;
                             li.onclick = () => {
                                 venueHiddenInput.value = v.id;
                                 venueSearch.value = v.name + (v.city ? ', ' + v.city : '');
@@ -560,10 +602,8 @@
                     });
             });
 
-            // Highlight matching text
             function highlightMatch(text, query) {
                 if (!query) return text;
-
                 const regex = new RegExp('(' + query.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&') + ')', 'gi');
                 return text.replace(regex, '<span class="highlight">$1</span>');
             }
@@ -591,24 +631,19 @@
                     });
             }
 
+            // --- Date Scheduling ---
             function resetDateConstraints() {
-                allScheduleInputs.forEach(i => { 
-                    i.removeAttribute('min'); 
-                    i.removeAttribute('max'); 
-                });
-
+                allScheduleInputs.forEach(i => { i.removeAttribute('min'); i.removeAttribute('max'); });
                 const now = new Date();
                 const tzOffset = now.getTimezoneOffset() * 60000;
                 const localISOTime = (new Date(now - tzOffset)).toISOString().slice(0, 16);
-                const later = new Date(now.getTime() + (2 * 60 * 60 * 1000));
-                const localISOLater = (new Date(later - tzOffset)).toISOString().slice(0, 16);
+                const localISOLater = (new Date(now.getTime() + (2 * 3600000) - tzOffset)).toISOString().slice(0, 16);
 
                 startInput.value = localISOTime;
                 endInput.value = localISOLater;
                 
                 const todayDate = localISOTime.split('T')[0];
-                multiStartDate.value = todayDate;
-                multiEndDate.value = todayDate;
+                multiStartDate.value = multiEndDate.value = todayDate;
             }
 
             isMultiDay.onchange = function() {
@@ -623,28 +658,21 @@
                 const minISO = startInput.getAttribute('min');
                 const maxISO = startInput.getAttribute('max');
 
-                // 1. Correct Single Day (datetime-local)
                 if (minISO && startInput.value < minISO) startInput.value = minISO;
                 if (maxISO && startInput.value > maxISO) startInput.value = maxISO;
                 if (minISO && endInput.value < minISO) endInput.value = minISO;
                 if (maxISO && endInput.value > maxISO) endInput.value = maxISO;
 
-                // 2. Correct Multi Day Dates
                 if (multiStartDate.min && multiStartDate.value < multiStartDate.min) multiStartDate.value = multiStartDate.min;
                 if (multiStartDate.max && multiStartDate.value > multiStartDate.max) multiStartDate.value = multiStartDate.max;
                 if (multiEndDate.min && multiEndDate.value < multiEndDate.min) multiEndDate.value = multiEndDate.min;
                 if (multiEndDate.max && multiEndDate.value > multiEndDate.max) multiEndDate.value = multiEndDate.max;
 
-                // 3. Correct Multi Day Times (Only constrained on the edge days)
                 const pStartTime = minISO ? minISO.split('T')[1].substring(0, 5) : null;
                 const pEndTime = maxISO ? maxISO.split('T')[1].substring(0, 5) : null;
 
-                if (pStartTime && multiStartDate.value === multiStartDate.min) {
-                    if (multiStartTime.value < pStartTime) multiStartTime.value = pStartTime;
-                }
-                if (pEndTime && multiEndDate.value === multiEndDate.max) {
-                    if (multiDailyEndTime.value > pEndTime) multiDailyEndTime.value = pEndTime;
-                }
+                if (pStartTime && multiStartDate.value === multiStartDate.min && multiStartTime.value < pStartTime) multiStartTime.value = pStartTime;
+                if (pEndTime && multiEndDate.value === multiEndDate.max && multiDailyEndTime.value > pEndTime) multiDailyEndTime.value = pEndTime;
             }
 
             function updatePreview() {
@@ -660,24 +688,17 @@
             }
 
             function renderPreviewTable() {
-                
                 eventPreviewList.innerHTML = '';
-                
                 previewDates.forEach((date, index) => {
                     const row = document.createElement('tr');
-
                     row.setAttribute('data-date', date.toLocaleDateString('en-CA'));
-
                     row.innerHTML = `
                         <td class="px-6 py-3">${date.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}</td>
                         <td class="px-6 py-3 text-right">
-                            <button type="button" onclick="removeDate(${index})" class="text-red-500 hover:text-red-700">
-                                Delete
-                            </button>
+                            <button type="button" onclick="removeDate(${index})" class="text-red-500 hover:text-red-700">Delete</button>
                         </td>`;
                     eventPreviewList.appendChild(row);
                 });
-                
                 document.getElementById('eventCount').textContent = previewDates.length;
                 cont.classList.remove('hidden');
             }
@@ -686,8 +707,8 @@
                 previewDates.splice(index, 1); 
                 renderPreviewTable();
             };
+            
             [multiStartDate, multiEndDate, multiStartTime, multiDailyEndTime].forEach(i => i.oninput = updatePreview);
-
             [startInput, endInput].forEach(input => {
                 input.addEventListener('change', function() {
                     if (document.getElementById('radioChild').checked && hiddenIdInput.value) {
@@ -697,13 +718,12 @@
                 });
             });
 
+            // --- Form Submission ---
             form.addEventListener('submit', async function(e) {
                 e.preventDefault();
-
-                // Run one final enforcement check to clean up any "half-typed" or browser-autofilled data
                 enforceParentConstraints();
 
-                // Validation checks
+                // Validation
                 const eventNameInput = document.getElementById('Name');
                 if (!eventNameInput.value.trim()) {
                     alert("Please enter an Event Name.");
@@ -711,21 +731,25 @@
                     return;
                 }
 
-                if (document.getElementById('radioChild').checked && !hiddenIdInput.value) {
+                const isChild = document.getElementById('radioChild').checked;
+                const isMaster = document.getElementById('radioFather').checked;
+                
+                if (isChild && !hiddenIdInput.value) {
                     if(parentError) parentError.classList.remove('hidden');
                     return;
                 }
-                
-                if (!venueHiddenInput.value) {
-                    alert("Please search and select a Venue from the dropdown list.");
-                    venueSearch.focus();
-                    return;
-                }
 
-                if (!subAreaSelect.value) {
-                    alert("Please select a Layout.");
-                    subAreaSelect.focus();
-                    return;
+                if (isChild || (isMaster && singleCheckbox.checked)) {
+                    if (!venueHiddenInput.value) {
+                        alert("Please search and select a Venue from the dropdown list.");
+                        venueSearch.focus();
+                        return;
+                    }
+                    if (!subAreaSelect.value) {
+                        alert("Please select a Layout.");
+                        subAreaSelect.focus();
+                        return;
+                    } 
                 }
 
                 if (isMultiDay.checked) {
@@ -738,7 +762,7 @@
                     if (isNaN(s) || isNaN(e) || s >= e) { alert("Event must end after it starts."); return; }
                 }
 
-                if (document.getElementById('radioChild').checked && hiddenIdInput.value) {
+                if (isChild && hiddenIdInput.value) {
                     const parentMin = startInput.getAttribute('min');
                     const parentMax = startInput.getAttribute('max');
                     
@@ -747,26 +771,23 @@
                         const pEnd = new Date(parentMax);
                         
                         if (isMultiDay.checked) {
-                            const firstInstanceStart = new Date(`${multiStartDate.value}T${multiStartTime.value}`);
-                            const lastInstanceEnd = new Date(`${multiEndDate.value}T${multiDailyEndTime.value}`);
-                            if (firstInstanceStart < pStart || lastInstanceEnd > pEnd) {
-                                alert(`Sub-events must stay entirely within the Master Event's timeframe.\n\nMaster Event Limits:\nStarts: ${pStart.toLocaleString()}\nEnds: ${pEnd.toLocaleString()}`);
+                            const firstStart = new Date(`${multiStartDate.value}T${multiStartTime.value}`);
+                            const lastEnd = new Date(`${multiEndDate.value}T${multiDailyEndTime.value}`);
+                            if (firstStart < pStart || lastEnd > pEnd) {
+                                alert(`Sub-events must stay entirely within the Master Event's timeframe.\nStarts: ${pStart.toLocaleString()}\nEnds: ${pEnd.toLocaleString()}`);
                                 return;
                             }
                         } else {
-   
                             const childStart = new Date(startInput.value);
                             const childEnd = new Date(endInput.value);
-                            
                             if (childStart < pStart || childEnd > pEnd) {
-                                alert(`Sub-events must stay entirely within the Master Event's timeframe.\n\nMaster Event Limits:\nStarts: ${pStart.toLocaleString()}\nEnds: ${pEnd.toLocaleString()}`);
+                                alert(`Sub-events must stay entirely within the Master Event's timeframe.\nStarts: ${pStart.toLocaleString()}\nEnds: ${pEnd.toLocaleString()}`);
                                 return;
                             }
                         }
                     }
                 }
 
-                // Temporarily re-enable locked fields so FormData picks them up
                 allScheduleInputs.forEach(i => { if(i) i.disabled = false; });
                 if (eventTypeSelect) eventTypeSelect.disabled = false;
                 if (subAreaSelect) subAreaSelect.disabled = false;
@@ -781,6 +802,7 @@
                     eventPreviewList.innerHTML='';
                     cont.classList.add('hidden');
                 }
+
                 const submitBtn = form.querySelector('button[type="submit"]');
                 const originalBtnText = submitBtn.innerHTML;
 
@@ -788,47 +810,30 @@
                     submitBtn.innerHTML = 'Creating...';
                     submitBtn.disabled = true;
 
-                    const response = await fetch(form.action, {
-                        method: 'POST',
-                        body: formData,
-                    });
+                    const response = await fetch(form.action, { method: 'POST', body: formData });
 
                     if (!response.ok) {
                         const errorData = await response.json().catch(() => ({ message: "A server error occurred (500)." }));
                         throw new Error(errorData.message || "Failed to create event.");
                     }
 
-                    if (true) { 
-                        const data = await response.json(); 
-                        const successAlert = document.getElementById('successMessage');
-                        const alertText = successAlert.querySelector('p'); 
-                        successAlert.classList.remove('hidden');
-                        
-                        const wasMasterEvent = document.getElementById('radioFather').checked;
-                        
-                        // Capture context before reset
-                        const currentParentId = wasMasterEvent ? data.eventId : hiddenIdInput.value;
-                        const currentParentName = wasMasterEvent ? data.eventName : searchInput.value;
-                        const currentVenueId = wasMasterEvent ? data.venueId : venueHiddenInput.value;
-                        const currentVenueName = wasMasterEvent ? (data.venueName || venueSearch.value) : venueSearch.value;
-                        const currentEventTypeId = wasMasterEvent ? data.eventTypeId : eventTypeSelect.value;
-                        
-                        form.reset();
-                        document.getElementById('imagePreviewContainer').classList.add('hidden');
-                        document.getElementById('imagePreview').src = '#';
-                        
-                        // FIX: Clear out gallery uploads dynamically too
-                        document.getElementById('galleryPreviewContainer').classList.add('hidden');
-                        document.getElementById('galleryPreviewContainer').innerHTML = '';
-
-                        // Clear Custom Search UI logic
-                        venueHiddenInput.value = '';
-                        venueSearch.value = '';
-                        venueSearch.disabled = false;
-                        clearVenueBtn.classList.add('hidden');
-                        subAreaSelect.innerHTML = '<option value="">Select a Layout</option>';
-                        
-                        if (wasMasterEvent) {
+                    const data = await response.json(); 
+                    const successAlert = document.getElementById('successMessage');
+                    const alertText = successAlert.querySelector('p'); 
+                    successAlert.classList.remove('hidden');
+                    
+                    const wasStandalone = isMaster && singleCheckbox.checked;
+                    
+                    // Capture context before reset
+                    const currentParentId = isMaster ? data.eventId : hiddenIdInput.value;
+                    const currentParentName = isMaster ? data.eventName : searchInput.value;
+                    const currentEventTypeId = isMaster ? data.eventTypeId : eventTypeSelect.value;
+                    
+                    if (isMaster) {
+                        if (wasStandalone) {
+                            alertText.textContent = "Standalone Event created successfully!";
+                            finishChildCreation(); 
+                        } else {
                             alertText.textContent = "Master Event created! You can now quickly add Sub-Events for it.";
                             
                             const childLabel = document.getElementById('labelChild');
@@ -837,24 +842,21 @@
                             if (childRadio && childRadio.disabled) {
                                 childRadio.disabled = false;
                                 childLabel.removeAttribute('title');
-
                                 childLabel.innerHTML = `
                                     <input type="radio" id="radioChild" name="eventMode" value="child" class="sr-only" onchange="toggleEventMode('child')">
-                                    <span class="text-white font-medium">Sub-Event (Child)</span>
-                                `;
+                                    <span class="text-white font-medium flex items-center justify-center">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                                        Sub-Event (Child)
+                                    </span>`;
                                 const helperText = document.getElementById('parentUnlockHelperText');
                                 if (helperText) helperText.classList.add('hidden');
                             }
                             
-                            // Lock the master radio button
-                            const masterRadio = document.getElementById('radioFather');
-                            masterRadio.disabled = true;
-                            masterRadio.checked = false;
+                            document.getElementById('radioFather').disabled = true;
+                            document.getElementById('radioFather').checked = false;
                             
-                            const newlyUnlockedRadio = document.getElementById('radioChild');
-                            newlyUnlockedRadio.checked = true;
+                            childRadio.checked = true;
                             toggleEventMode('child');
-                            
                             hideChildEventForm(); 
 
                             hiddenIdInput.value = data.eventId;
@@ -863,15 +865,14 @@
                             clearBtn.classList.remove('hidden');  
                             resultsList.classList.add('hidden');  
                             
-                            // Auto-fill Venue in Child Mode
-                            venueHiddenInput.value = data.venueId;
-                            venueSearch.value = data.venueName || 'Inherited Venue';
+                            // Explicitly clear venue fields so they are ready for the child input
+                            venueHiddenInput.value = '';
+                            venueSearch.value = '';
                             venueSearch.disabled = false;
-                            clearVenueBtn.classList.remove('hidden');
-                            subAreaSelect.disabled = false;
-                            fetchSubAreas(data.venueId);
+                            clearVenueBtn.classList.add('hidden');
+                            subAreaSelect.innerHTML = '<option value="">Select a Layout</option>';
+                            subAreaSelect.disabled = true;
 
-                            // Lock Event Type in Child Mode
                             if (eventTypeSelect) {
                                 eventTypeSelect.value = data.eventTypeId;
                                 eventTypeSelect.disabled = true;
@@ -881,57 +882,58 @@
                             resetDateConstraints();
                             await applyParentTimingConstraints(data.eventId);
                             updateSubEventsList(currentParentId);
-                            
-                        } else {
-                            alertText.textContent = "Sub-Event created successfully! Add another one if needed.";
-                            
-                            hideChildEventForm(); 
+                        }
+                    } else {
+                        alertText.textContent = "Sub-Event created successfully! Add another one if needed.";
+                        hideChildEventForm(); 
+                        
+                        form.reset(); // This completely empties Name, Dates, Venue, Layout etc.
+                        document.getElementById('imagePreviewContainer').classList.add('hidden');
+                        document.getElementById('galleryPreviewContainer').classList.add('hidden');
+                        document.getElementById('galleryPreviewContainer').innerHTML = '';
 
-                            // Restore context for the next sub-event
-                            hiddenIdInput.value = currentParentId;
-                            searchInput.value = currentParentName;
-                            searchInput.disabled = true;
-                            clearBtn.classList.remove('hidden');
-                            
-                            venueHiddenInput.value = currentVenueId;
-                            venueSearch.value = currentVenueName;
-                            venueSearch.disabled = false;
-                            if(currentVenueId) clearVenueBtn.classList.remove('hidden');
-                            
-                            if (eventTypeSelect) {
-                                eventTypeSelect.value = currentEventTypeId;
-                                eventTypeSelect.disabled = true;
-                            }
-                            
-                            subAreaSelect.disabled = false;
-                            fetchSubAreas(currentVenueId);
-                            updateSubEventsList(currentParentId);
-                            resetDateConstraints();
-                            eventPreviewList.innerHTML='';
-                            multiDayContainer.classList.add("hidden");
-                            singleDayContainer.classList.remove("hidden");
+                        hiddenIdInput.value = currentParentId;
+                        searchInput.value = currentParentName;
+                        searchInput.disabled = true;
+                        clearBtn.classList.remove('hidden');
+                        
+                        // Ensure Venue inputs stay empty for the next child creation
+                        venueHiddenInput.value = '';
+                        venueSearch.value = '';
+                        venueSearch.disabled = false;
+                        clearVenueBtn.classList.add('hidden');
+                        subAreaSelect.innerHTML = '<option value="">Select a Layout</option>';
+                        subAreaSelect.disabled = true;
+                        
+                        if (eventTypeSelect) {
+                            eventTypeSelect.value = currentEventTypeId;
+                            eventTypeSelect.disabled = true;
                         }
                         
-                        setTimeout(() => {
-                            successAlert.classList.add('hidden');
-                        }, 5000);
+                        updateSubEventsList(currentParentId);
+                        resetDateConstraints();
+                        multiDayContainer.classList.add("hidden");
+                        singleDayContainer.classList.remove("hidden");
                     }
+                    
+                    setTimeout(() => successAlert.classList.add('hidden'), 5000);
+
                 } catch (error) {
                     console.error("Submission failed:", error);
-                    alert(error.message || "A network error occurred. Please check your connection.");
+                    alert(error.message || "A network error occurred.");
                 } finally {
                     submitBtn.innerHTML = originalBtnText;
                     submitBtn.disabled = false;
-                    
-                    if (document.getElementById('radioChild').checked && !hiddenIdInput.value) {
+                    if (isChild && !hiddenIdInput.value) {
                         allScheduleInputs.forEach(i => { if(i) i.disabled = true; });
                     }
                 }
             });
 
-            toggleEventMode('father');
+            toggleEventMode('father'); // Init form state
         });
 
+        // --- Sub-Events & Renaming ---
         async function updateSubEventsList(parentId) {
             if (!parentId) return;
             try {
@@ -939,225 +941,142 @@
                 const data = await res.json();
                 
                 const tbody = document.getElementById('subEventsTableBody');
-                const counter = document.getElementById('subEventCountDisplay');
-                const container = document.getElementById('subEventsListContainer');
+                document.getElementById('subEventCountDisplay').textContent = data.length;
+                document.getElementById('subEventsListContainer').classList.remove('hidden'); 
                 
-                tbody.innerHTML = '';
-                counter.textContent = data.length;
-
-                container.classList.remove('hidden'); 
+                // Show 'Done' button only if there is at least one sub-event
+                const doneBtn = document.getElementById('doneChildBtn');
+                if (data.length > 0) {
+                    doneBtn.classList.remove('hidden');
+                } else {
+                    doneBtn.classList.add('hidden');
+                }
                 
                 if (data.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="3" class="px-6 py-4 text-center text-sm text-gray-500 italic">No sub-events created yet. Click the + button above to add one.</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="4" class="px-6 py-4 text-center text-sm text-gray-500 italic">No sub-events created yet.</td></tr>`;
                     return;
                 }
 
+                tbody.innerHTML = '';
                 data.forEach(ev => {
                     const row = document.createElement('tr');
                     row.className = 'hover:bg-gray-50 transition-colors';
-                    
                     row.innerHTML = `
                         <td class="namingData px-6 py-3 whitespace-nowrap flex items-center space-x-2">
                             <label class="hidden SubIdLabels">${ev.id}</label>
                             <input type="checkbox" class="h-5 w-5 hidden renameCheckboxes"/>
-                            <input type="text" id="edit-input-${ev.id}" 
-                                value="${ev.name}" 
-                                data-original-value="${ev.name}" 
-                                onkeydown="if(event.key === 'Enter') { event.preventDefault(); saveEditName(${ev.id}); }"
-                                onfocus="showEditButtons(${ev.id})"
-                                class="renameField font-bold text-gray-900 border border-transparent hover:border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full max-w-[200px] transition-colors">
-                            
-                            <button type="button" 
-                                    id="save-btn-${ev.id}" 
-                                    onclick="saveEditName(${ev.id})"
-                                    class="hidden bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded text-xs transition-colors shadow-sm">
-                                Save
-                            </button>
-                            <button type="button" 
-                                    id="cancel-btn-${ev.id}" 
-                                    onclick="cancelEditName(${ev.id})"
-                                    class="hidden text-gray-500 hover:text-gray-700 px-2 py-1 text-xs transition-colors">
-                                Cancel
-                            </button>
+                            <input type="text" id="edit-input-${ev.id}" value="${ev.name}" data-original-value="${ev.name}" onkeydown="if(event.key === 'Enter') { event.preventDefault(); saveEditName(${ev.id}); }" onfocus="showEditButtons(${ev.id})" class="renameField font-bold text-gray-900 border border-transparent hover:border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full max-w-[200px] transition-colors">
+                            <button type="button" id="save-btn-${ev.id}" onclick="saveEditName(${ev.id})" class="hidden bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded text-xs transition-colors shadow-sm">Save</button>
+                            <button type="button" id="cancel-btn-${ev.id}" onclick="cancelEditName(${ev.id})" class="hidden text-gray-500 hover:text-gray-700 px-2 py-1 text-xs transition-colors">Cancel</button>
                         </td>
                         <td class="px-6 py-3 whitespace-nowrap">
                             <div class="font-medium text-gray-700">${ev.date}</div>
                             <div class="text-xs text-indigo-600 font-medium mt-0.5">${ev.time}</div>
                         </td>
-                        <td class="px-6 py-3 whitespace-nowrap">
-                            <div class="font-bold text-gray-900">${ev.layout}</div>
-                        </td>
+                        <td class="px-6 py-3 whitespace-nowrap"><div class="font-bold text-gray-900">${ev.layout}</div></td>
                         <td class="px-6 py-3 whitespace-nowrap text-right text-sm font-medium flex justify-end items-center gap-2">
-                            <button type="button" onclick="deleteSubEvent(${ev.id})" class="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-50 transition-colors" title="Delete this instance">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
-                                </svg>
-                            </button>
-                            <button type="button" onclick="DuplicateSubEvent(${ev.id})" class="text-indigo-600 hover:text-indigo-900 p-1 rounded-full hover:bg-indigo-50 transition-colors" title="Duplicate this instance">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v6h4a1 1 0 110 2h-4v6a1 1 0 11-2 0v-6H4a1 1 0 110-2h4V4a1 1 0 011-1z" clip-rule="evenodd" />
-                                </svg>
-                            </button>
+                            <button type="button" onclick="deleteSubEvent(${ev.id})" class="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-50 transition-colors" title="Delete"><svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" /></svg></button>
+                            <button type="button" onclick="DuplicateSubEvent(${ev.id})" class="text-indigo-600 hover:text-indigo-900 p-1 rounded-full hover:bg-indigo-50 transition-colors" title="Duplicate"><svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v6h4a1 1 0 110 2h-4v6a1 1 0 11-2 0v-6H4a1 1 0 110-2h4V4a1 1 0 011-1z" clip-rule="evenodd" /></svg></button>
                         </td>`;
                     tbody.appendChild(row);
                 });
-            } catch (e) { 
-                console.error("Error updating list", e); 
-            }
+            } catch (e) { console.error("Error updating list", e); }
         }
 
-        function showRenameCheckboxes(){
-            const checkboxes = document.querySelectorAll('.renameCheckboxes');
-            const renameFields = document.querySelectorAll('.renameField');
-            const SubIdLabels = document.querySelectorAll('.SubIdLabels');
-            const MultiRenameCheckbox = document.getElementById('MultiRenameCheckbox');
-            const ConfirmMultiRenameBtn = document.getElementById('ConfirmMultiRenameBtn');
+        window.showRenameCheckboxes = function(){
+            const checked = document.getElementById('MultiRenameCheckbox').checked;
+            document.getElementById('ConfirmMultiRenameBtn').classList.toggle('hidden', !checked);
+            document.querySelectorAll('.renameCheckboxes').forEach(cb => cb.classList.toggle('hidden', !checked));
+            document.querySelectorAll('.renameField').forEach(f => f.disabled = checked);
+            if (checked) { document.querySelectorAll('.SubIdLabels').forEach(lbl => cancelEditName(lbl.textContent)); }
+        };
 
-            if(MultiRenameCheckbox.checked){
-                ConfirmMultiRenameBtn.classList.remove('hidden');
-                SubIdLabels.forEach(label => {
-                    cancelEditName(label.textContent);
-                });
-                checkboxes.forEach(checkbox => {
-                    checkbox.classList.remove('hidden');
-                });
-                renameFields.forEach(field => {
-                    field.disabled=true;
-
-                });
-
-            } else {
-                ConfirmMultiRenameBtn.classList.add('hidden');
-                checkboxes.forEach(checkbox => {
-                    checkbox.classList.add('hidden');
-                });
-                renameFields.forEach(field => {
-                        field.disabled=false;
-                });
-            }
-        }
-
-        // Open the modal
-        function showRenameModal() {
-            const modal = document.getElementById("renameModal");
-            modal.classList.remove('hidden');
-            
+        window.showRenameModal = function() {
+            document.getElementById("renameModal").classList.remove('hidden');
             document.body.classList.add('overflow-hidden');
-        }
+        };
 
-        // Close the modal
-        function closeRenameModal() {
+        window.closeRenameModal = function() {
             namingIds = [];
-            const modal = document.getElementById("renameModal");
-            modal.classList.add('hidden');
-            
+            document.getElementById("renameModal").classList.add('hidden');
             document.body.classList.remove('overflow-hidden');
-        }
+        };
 
-        async function RenameMultiple(NewName){
+        window.RenameMultiple = async function(NewName){
             const Name = NewName.trim();
-
-            if (!Name) {
-                alert("Name cannot be empty.");
-                return;
-            }
-
+            if (!Name) { alert("Name cannot be empty."); return; }
             closeRenameModal();
 
-            const namingData = document.querySelectorAll('.namingData');
-            namingData.forEach(data => {
-                if (data.children[1].checked){
-                    namingIds.push(data.children[0].textContent);
-                }
+            document.querySelectorAll('.namingData').forEach(data => {
+                if (data.children[1].checked) namingIds.push(data.children[0].textContent);
             });
-
-            if (namingIds.length === 0) {
-                alert("Please select at least one event to rename.");
-                return;
-            }
+            if (namingIds.length === 0) { alert("Select at least one event to rename."); return; }
 
             const formData = new FormData();
             formData.append("NewName", Name);
-            
-            namingIds.forEach(id => {
-                formData.append("ids", id); 
-            });
+            namingIds.forEach(id => formData.append("ids", id));
 
             try {
-                const res = await fetch('/Events/MultiSubRename', {
-                    method: 'POST',
-                    body: formData
-                });
-
+                const res = await fetch('/Events/MultiSubRename', { method: 'POST', body: formData });
                 if (res.ok) {
                     updateSubEventsList(document.getElementById('ParentEventId').value);
-
                     document.getElementById('MultiRenameCheckbox').checked = false;
                     showRenameCheckboxes(); 
-
                     document.getElementById('ModalField').value = '';
-                } else {
-                    alert("Failed to rename events.");
-                }
-            } catch (e) { 
-                console.error("Error with bulk rename", e); 
-            }
-        }
+                } else alert("Failed to rename events.");
+            } catch (e) { console.error("Error bulk rename", e); }
+        };
 
-        function showEditButtons(id) {
+        window.showEditButtons = function(id) {
             document.getElementById(`save-btn-${id}`).classList.remove('hidden');
             document.getElementById(`cancel-btn-${id}`).classList.remove('hidden');
-            }
+        };
 
-        async function saveEditName(id) {
+        window.saveEditName = async function(id) {
             const inputField = document.getElementById(`edit-input-${id}`);
             const newName = inputField.value.trim();
-
-            if (!newName) {
-                alert("Name cannot be empty.");
-                return;
-            }
-
-            if (!confirm("Are you sure you want to rename this specific sub-event?")) {
-                cancelEditName(id); 
-                return;
-            }
+            if (!newName) { alert("Name cannot be empty."); return; }
+            if (!confirm("Rename this specific sub-event?")) { cancelEditName(id); return; }
 
             try {
-                const res = await fetch(`/Events/EditSubSelectedName?id=${id}&NewName=${encodeURIComponent(newName)}`, {
-                    method: 'POST'
-                });
-                
+                const res = await fetch(`/Events/EditSubSelectedName?id=${id}&NewName=${encodeURIComponent(newName)}`, { method: 'POST' });
                 if (res.ok) {
                     inputField.setAttribute('data-original-value', newName);
                     document.getElementById(`save-btn-${id}`).classList.add('hidden');
                     document.getElementById(`cancel-btn-${id}`).classList.add('hidden');
                     inputField.blur();
-                } else {
-                    alert("Failed to rename the event.");
-                }
-            } catch (e) { 
-                console.error("Error renaming", e); 
+                } else alert("Failed to rename the event.");
+            } catch (e) { console.error("Error renaming", e); }
+        };
+
+        window.cancelEditName = function(id) {
+            const inputField = document.getElementById(`edit-input-${id}`);
+            if(inputField) {
+                inputField.value = inputField.getAttribute('data-original-value');
+                document.getElementById(`save-btn-${id}`).classList.add('hidden');
+                document.getElementById(`cancel-btn-${id}`).classList.add('hidden');
+                inputField.blur();
             }
-        }
+        };
 
-        function cancelEditName(id) {
-            const inputField = document.getElementById(`edit-input-${id}`);           
-            inputField.value = inputField.getAttribute('data-original-value');
-            document.getElementById(`save-btn-${id}`).classList.add('hidden');
-            document.getElementById(`cancel-btn-${id}`).classList.add('hidden');
-            inputField.blur();
-        }
-
-        async function deleteSubEvent(id) {
+        window.deleteSubEvent = async function(id) {
             if (!confirm("Are you sure you want to delete this specific sub-event?")) return;
             try {
                 const res = await fetch(`/Events/Delete?id=${id}&dAll=false`);
                 if (res.ok) updateSubEventsList(document.getElementById('ParentEventId').value);
             } catch (e) { console.error("Error deleting", e); }
-        }
+        };
 
-        function previewImage(input) {
+        window.DuplicateSubEvent = async function(id) {
+            if (!confirm("Are you sure you want to duplicate this specific sub-event?")) return;
+            try {
+                const res = await fetch(`/Events/DuplicateSubEvent?id=${id}`, { method: 'POST' });
+                if (res.ok) updateSubEventsList(document.getElementById('ParentEventId').value);
+            } catch (e) { console.error("Error duplicating", e); }
+        };
+
+        // --- Image Previews ---
+        window.previewImage = function(input) {
             if (input.files && input.files[0]) {
                 const reader = new FileReader();
                 reader.onload = e => { 
@@ -1166,13 +1085,11 @@
                 };
                 reader.readAsDataURL(input.files[0]);
             }
-        }
+        };
 
-        // FIX: Added function to handle multiple gallery image previews smoothly
-        function previewGalleryImages(input) {
+        window.previewGalleryImages = function(input) {
             const container = document.getElementById('galleryPreviewContainer');
-            container.innerHTML = ''; // Clear out past items
-            
+            container.innerHTML = ''; 
             if (input.files && input.files.length > 0) {
                 container.classList.remove('hidden');
                 Array.from(input.files).forEach(file => {
@@ -1188,17 +1105,6 @@
             } else {
                 container.classList.add('hidden');
             }
-        }
-
-        async function DuplicateSubEvent(id) {
-            if (!confirm("Are you sure you want to duplicate this specific sub-event?")) return;
-            try {
-                const res = await fetch(`/Events/DuplicateSubEvent?id=${id}`, {
-                    method: 'POST'
-                });
-                if (res.ok) updateSubEventsList(document.getElementById('ParentEventId').value);
-            } catch (e) { console.error("Error duplicating", e);        
-        }
-        }
+        };
     </script>
 }
