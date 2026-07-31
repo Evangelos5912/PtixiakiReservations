@@ -905,7 +905,8 @@ public class EventsController(
                     endTime = e.EndTime,
                     venueId = e.VenueId,
                     venue = e.Venue != null ? new { name = e.Venue.Name } : null,
-                    eventType = e.EventType != null ? new { name = e.EventType.Name } : null
+                    eventType = e.EventType != null ? new { name = e.EventType.Name } : null,
+                    organizerId = e.OrganizerId
                 })
                 .ToListAsync();
 
