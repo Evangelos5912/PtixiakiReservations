@@ -340,10 +340,182 @@ public class SeatController(ApplicationDbContext context, UserManager<Applicatio
     {
         return context.Seat.Any(e => e.Id == id);
     }
-}
 
-public class DeleteMultipleSeatsRequest
-{
-    public List<string> seatNames { get; set; }
-    public int subAreaId { get; set; }
+    public class DeleteMultipleSeatsRequest
+    {
+        public List<string> seatNames { get; set; }
+        public int subAreaId { get; set; }
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Route("Seat/SaveCompleteLayout")]
+    public async Task<IActionResult> SaveCompleteLayout(int subAreaId, [FromBody] LayoutPayloadViewModel payload)
+    {
+        if (payload == null) return BadRequest("Invalid layout data.");
+
+        using var transaction = await context.Database.BeginTransactionAsync();
+        try
+        {
+            // 1. Wipe old data for this layout
+            var existingSeats = context.Seat.Where(s => s.SubAreaId == subAreaId);
+            var existingShapes = context.NonSelectable.Where(s => s.SubAreaId == subAreaId);
+            var existingGroups = context.UnitGroup.Where(g => g.SubAreaId == subAreaId);
+
+            context.Seat.RemoveRange(existingSeats);
+            context.NonSelectable.RemoveRange(existingShapes);
+            context.UnitGroup.RemoveRange(existingGroups);
+            await context.SaveChangesAsync();
+
+            // 2. Add Standalone Seats
+            foreach (var seatVm in payload.Seats)
+            {
+                context.Seat.Add(new Seat
+                {
+                    Name = seatVm.Name,
+                    X = seatVm.X,
+                    Y = seatVm.Y,
+                    Width = seatVm.Width,
+                    Height = seatVm.Height,
+                    SubAreaId = subAreaId,
+                    Available = true
+                });
+            }
+
+            // 3. Add Standalone Shapes
+            foreach (var shapeVm in payload.Shapes)
+            {
+                context.NonSelectable.Add(new NonSelectable
+                {
+                    Name = shapeVm.Name,
+                    X = shapeVm.X,
+                    Y = shapeVm.Y,
+                    Width = shapeVm.Width,
+                    Height = shapeVm.Height,
+                    SubAreaId = subAreaId,
+                    ShapeType = shapeVm.ShapeType
+                });
+            }
+
+            // 4. Add Groups and their children
+            foreach (var groupVm in payload.Groups)
+            {
+                var newGroup = new UnitGroup
+                {
+                    Name = groupVm.Name,
+                    Top = groupVm.Top,
+                    Left = groupVm.Left,
+                    SubAreaId = subAreaId,
+                    
+                    SelectableUnits = groupVm.SelectableUnits.Select(s => new Seat
+                    {
+                        Name = s.Name,
+                        X = s.X, // Relative coordinate
+                        Y = s.Y,
+                        Width = s.Width,
+                        Height = s.Height,
+                        SubAreaId = subAreaId,
+                        Available = true
+                    }).ToList(),
+                    
+                    NonSelectableUnits = groupVm.NonSelectableUnits.Select(s => new NonSelectable
+                    {
+                        Name = s.Name,
+                        X = s.X, // Relative coordinate
+                        Y = s.Y,
+                        Width = s.Width,
+                        Height = s.Height,
+                        SubAreaId = subAreaId,
+                        ShapeType = s.ShapeType // <-- Added ShapeType here
+                    }).ToList()
+                };
+                
+                context.UnitGroup.Add(newGroup);
+            }
+
+            await context.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+            return Ok(new { success = true, message = "Layout saved successfully" });
+        }
+        catch (Exception ex)
+        {
+            await transaction.RollbackAsync();
+            return StatusCode(500, new { success = false, message = "Error saving layout: " + ex.Message });
+        }
+    }
+
+    [HttpGet]
+    [Route("Seat/GetCompleteLayout")]
+    public async Task<IActionResult> GetCompleteLayout(int subAreaId)
+    {
+        // 1. Find the exact IDs of all units that belong to a group
+        var groupedSeatIds = await context.UnitGroup
+            .Where(g => g.SubAreaId == subAreaId)
+            .SelectMany(g => g.SelectableUnits.Select(s => s.Id))
+            .ToListAsync();
+
+        var groupedShapeIds = await context.UnitGroup
+            .Where(g => g.SubAreaId == subAreaId)
+            .SelectMany(g => g.NonSelectableUnits.Select(s => s.Id))
+            .ToListAsync();
+
+        // 2. Fetch standalone seats (strictly excluding those inside a group)
+        var standaloneSeats = await context.Seat
+            .Where(s => s.SubAreaId == subAreaId && !groupedSeatIds.Contains(s.Id))
+            .Select(s => new {
+                id = s.Id,
+                name = s.Name,
+                x = s.X,
+                y = s.Y,
+                width = s.Width,
+                height = s.Height,
+                available = s.Available
+            }).ToListAsync();
+
+        // 3. Fetch standalone shapes (strictly excluding those inside a group)
+        var standaloneShapes = await context.NonSelectable
+            .Where(s => s.SubAreaId == subAreaId && !groupedShapeIds.Contains(s.Id))
+            .Select(s => new {
+                id = s.Id,
+                name = s.Name,
+                x = s.X,
+                y = s.Y,
+                width = s.Width,
+                height = s.Height,
+                shapeType = s.ShapeType
+            }).ToListAsync();
+
+        // 4. Fetch groups and their children
+        var groups = await context.UnitGroup
+            .Include(g => g.SelectableUnits)
+            .Include(g => g.NonSelectableUnits)
+            .Where(g => g.SubAreaId == subAreaId)
+            .Select(g => new {
+                id = g.Id,
+                name = g.Name,
+                top = g.Top,
+                left = g.Left,
+                selectableUnits = g.SelectableUnits.Select(s => new {
+                    id = s.Id,
+                    name = s.Name,
+                    x = s.X, 
+                    y = s.Y,
+                    width = s.Width,
+                    height = s.Height,
+                    available = s.Available
+                }),
+                nonSelectableUnits = g.NonSelectableUnits.Select(s => new {
+                    id = s.Id,
+                    name = s.Name,
+                    x = s.X,
+                    y = s.Y,
+                    width = s.Width,
+                    height = s.Height,
+                    shapeType = s.ShapeType 
+                })
+            }).ToListAsync();
+
+        return Json(new { seats = standaloneSeats, shapes = standaloneShapes, groups = groups });
+    }
 }

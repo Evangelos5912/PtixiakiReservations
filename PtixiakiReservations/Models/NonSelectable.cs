@@ -16,4 +16,6 @@ public int Id { get; set; }
     public bool Scene { get; set; } 
     [ForeignKey("SubAreaId")] 
     public SubArea SubArea { get; set; }
+    public int? UnitGroupId { get; set; }
+    [ForeignKey("UnitGrouId")] public UnitGroup UnitGroup { get; set; }
 }

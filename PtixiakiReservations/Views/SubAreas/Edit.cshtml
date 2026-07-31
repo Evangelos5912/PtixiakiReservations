@@ -81,7 +81,7 @@
                                 <div class="relative">
                                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5"/>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l-5-5m11 5v-4m0 4h-4m4 0l-5-5"/>
                                         </svg>
                                     </div>
                                     <input asp-for="Width" type="number" min="0" class="pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"/>
@@ -93,7 +93,7 @@
                                 <div class="relative">
                                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l-5-5m11 5v-4m0 4h-4m4 0l-5-5"/>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5-5m11 5v-4m0 4h-4m4 0l-5-5"/>
                                         </svg>
                                     </div>
                                     <input asp-for="Height" type="number" min="0" class="pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"/>
@@ -142,10 +142,28 @@
                         </div>
                     </form>
                 </div>
+                
 
                 <div id="seats-content" class="tab-content hidden">
                     
-                    <div class="grid grid-cols-1 bg-gray-50 rounded-t-lg border border-b-0 border-gray-200 px-6 py-4 gap-4">
+                    <div id="seat-status" class="hidden mb-4 font-medium text-sm transition-all duration-300"></div>
+
+                    <div class="flex flex-col w-full">
+                        <h4 class="text-sm font-bold text-blue-800 flex items-center border-b border-blue-200 pb-2 mb-3">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            Editor Tips
+                        </h4>
+                        <ul class="text-sm text-blue-700 space-y-2 pl-4 list-disc">
+                            <li><b>Click</b> an item to select and edit its properties.</li>
+                            <li><b>Drag</b> seats and tables to position them.</li>
+                            <li><b>Shift + Click</b> or <b>Click and Drag</b> the map to select multiple items.</li>
+                            <li><b>Ctrl + Scroll</b> or use the buttons below to Zoom in and out.</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 bg-gray-50 rounded-t-lg border border-b-0 border-gray-200 px-6 py-4 gap-4 mt-5">
                         <div class="flex flex-wrap gap-4 items-center w-full justify-between">
                             
                             <div class="flex gap-2">
@@ -155,6 +173,15 @@
                             </div>
 
                             <div class="flex gap-4">
+                                <button type="button" onclick="groupSelectedItems()" class="flex items-center px-4 py-2 border border-blue-300 rounded-md shadow-sm text-sm font-medium text-blue-700 bg-white hover:bg-blue-50 focus:outline-none transition-colors">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                                    </svg>
+                                    Group
+                                </button>
+                                <button type="button" onclick="ungroupSelectedItems()" class="flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none transition-colors">
+                                    Ungroup
+                                </button>
                                 <button type="button" id="save-seats" class="flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/>
@@ -187,24 +214,7 @@
                     </div>
                     
                     <div class="bg-white border border-gray-200 p-4 shadow-md w-full flex flex-col items-center z-10 relative">
-                        <div class="flex bg-blue-50 border border-blue-200 rounded-lg p-5 w-full">
-                            <div id="optionsPanel" class="flex w-full hidden gap-5">
-                            </div>
-                            
-                            <div id="tipsPanel" class="flex flex-col w-full">
-                                <h4 class="text-sm font-bold text-blue-800 flex items-center border-b border-blue-200 pb-2 mb-3">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                    </svg>
-                                    Editor Tips
-                                </h4>
-                                <ul class="text-sm text-blue-700 space-y-2 pl-4 list-disc">
-                                    <li><b>Click</b> an item to select and edit its properties.</li>
-                                    <li><b>Drag</b> seats and tables to position them.</li>
-                                    <li><b>Shift + Click</b> or <b>Click and Drag</b> the map to select multiple items.</li>
-                                    <li><b>Ctrl + Scroll</b> or use the buttons below to Zoom in and out.</li>
-                                </ul>
-                            </div>
+                        <div class="hidden flex bg-blue-50 border border-blue-200 rounded-lg p-5 w-full gap-5" id="optionsPanel">
                         </div>
                     </div>
 
@@ -254,6 +264,7 @@
     document.addEventListener('DOMContentLoaded', function() {
         let currentSeats = [];
         let currentShapes = [];
+        let currentGroups = [];
         let selectedItems = new Set();
         window.seatsInitialized = false;
 
@@ -261,7 +272,7 @@
         const seatMap = document.getElementById('seat-map');
         const zoomContainer = document.getElementById('zoom-container');
         const optionsPanel = document.getElementById("optionsPanel");
-        const tipsPanel = document.getElementById("tipsPanel");
+        
 
         // --- ZOOM LOGIC ---
         let currentScale = 1;
@@ -289,21 +300,33 @@
         window.hideAllOptions = function() {
             optionsPanel.classList.add("hidden");
             optionsPanel.innerHTML = "";
-            if (selectedItems.size === 0) tipsPanel.classList.remove("hidden");
+            
         };
 
         window.updateStatus = function(message, type = "info") {
             const statusBar = document.getElementById('seat-status');
             if (!statusBar) return;
             statusBar.textContent = message;
-            statusBar.className = 'mt-4 p-3 rounded-md w-full text-center ' + 
-                (type === 'success' ? 'bg-green-100 text-green-800' : 
-                 type === 'error' ? 'bg-red-100 text-red-800' : 
-                 type === 'warning' ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-700');
+            statusBar.classList.remove("hidden");
+            
+            // Format styling correctly
+            statusBar.className = 'mt-4 p-3 rounded-md w-full text-center border font-medium ' + 
+                (type === 'success' ? 'bg-green-100 text-green-800 border-green-200' : 
+                 type === 'error' ? 'bg-red-100 text-red-800 border-red-200' : 
+                 type === 'warning' ? 'bg-yellow-100 text-yellow-800 border-yellow-200' : 
+                 'bg-blue-100 text-blue-800 border-blue-200');
+                 
+            // Auto-hide success messages after 3 seconds
+            if(type === 'success') {
+                setTimeout(() => {
+                    statusBar.classList.add("hidden");
+                }, 3000);
+            }
         };
 
         function updateSelectionVisuals() {
-            zoomContainer.querySelectorAll('div[data-id]:not([data-type="shape"])').forEach(el => {
+            // Exclude group boundaries so they don't turn into solid blue/red seats
+            zoomContainer.querySelectorAll('div[data-id]:not([data-type="shape"]):not([data-type="group"])').forEach(el => {
                 if (selectedItems.has(el.dataset.name)) {
                     el.classList.remove('bg-blue-500', 'hover:bg-blue-600');
                     el.classList.add('bg-red-500', 'hover:bg-red-600');
@@ -380,7 +403,7 @@
 
         // --- SHOW OPTIONS MENU ---
         window.showOptions = function(data, type) {
-            tipsPanel.classList.add("hidden"); 
+            
             optionsPanel.classList.remove("hidden");
             
             const isTemp = String(data.id).startsWith('temp-');
@@ -439,13 +462,22 @@
             }
 
             document.getElementById('opt-confirm').addEventListener('click', async () => {
-                data.name = document.getElementById('opt-name').value;
-                data.x = parseInt(document.getElementById('opt-x').value);
-                data.y = parseInt(document.getElementById('opt-y').value);
+                const oldName = data.name;
+                const newName = document.getElementById('opt-name').value;
+                
+                data.name = newName;
+                data.x = parseInt(document.getElementById('opt-x').value) || 0;
+                data.y = parseInt(document.getElementById('opt-y').value) || 0;
 
                 if (type === 'shape') {
-                    data.width = parseInt(document.getElementById('opt-w').value);
-                    data.height = parseInt(document.getElementById('opt-h').value);
+                    data.width = Math.max(40, parseInt(document.getElementById('opt-w').value) || 100);
+                    data.height = Math.max(40, parseInt(document.getElementById('opt-h').value) || 100);
+                }
+
+                // If the name changed, we MUST update selectedItems or it loses its red highlight!
+                if (oldName !== newName && selectedItems.has(oldName)) {
+                    selectedItems.delete(oldName);
+                    selectedItems.add(newName);
                 }
 
                 renderAll(); 
@@ -478,7 +510,7 @@
                 for (let col = 0; col < numCols; col++) {
                     currentSeats.push({
                         id: `temp-${Date.now()}-${Math.random().toString(36).slice(2,5)}`,
-                        name: `Seat ${currentSeats.length + 1}`,
+                        name: `S${currentSeats.length + 1}`,
                         x: col * 70, y: lastRowY + (row * 70), available: true
                     });
                 }
@@ -486,6 +518,55 @@
             renderAll();
             updateStatus(`Added ${numCols * numRows} seat(s).`, 'success');
         }
+
+        // --- GROUPING LOGIC ---
+        window.groupSelectedItems = function() {
+            if (selectedItems.size < 2) {
+                return updateStatus("Select at least 2 items to group (Use Shift+Click or click-and-drag).", "warning");
+            }
+
+            const itemsToGroup = currentSeats.concat(currentShapes).filter(s => selectedItems.has(s.name));
+            
+            // Prevent grouping items that are already in a group
+            if (itemsToGroup.some(s => s.groupId)) {
+                return updateStatus("Some items are already grouped. Ungroup them first.", "error");
+            }
+
+            const groupId = `group-temp-${Date.now()}`;
+            
+            // Calculate the bounding box for the new group
+            const minX = Math.min(...itemsToGroup.map(s => s.x));
+            const minY = Math.min(...itemsToGroup.map(s => s.y));
+
+            currentGroups.push({
+                id: groupId,
+                name: `Group ${currentGroups.length + 1}`,
+                x: minX,
+                y: minY
+            });
+
+            // Tag the children
+            itemsToGroup.forEach(s => s.groupId = groupId);
+
+            updateStatus("Items grouped successfully.", "success");
+            renderAll();
+        };
+
+        window.ungroupSelectedItems = function() {
+            const itemsToUngroup = currentSeats.concat(currentShapes).filter(s => selectedItems.has(s.name) && s.groupId);
+            if (itemsToUngroup.length === 0) return updateStatus("No grouped items selected.", "warning");
+
+            const groupIdsToRemove = new Set(itemsToUngroup.map(s => s.groupId));
+            
+            // Remove from array and untag children
+            currentGroups = currentGroups.filter(g => !groupIdsToRemove.has(g.id));
+            currentSeats.concat(currentShapes).forEach(s => {
+                if (groupIdsToRemove.has(s.groupId)) delete s.groupId;
+            });
+
+            updateStatus("Items ungrouped.", "success");
+            renderAll();
+        };
 
         document.getElementById('add-seat-hline').addEventListener('click', () => {
             let input = prompt('How many seats in this horizontal line?');
@@ -528,7 +609,7 @@
             if (itemType === 'single') {
                 currentSeats.push({
                     id: `temp-${Date.now()}`,
-                    name: `Seat ${currentSeats.length + 1}`,
+                    name: `S${currentSeats.length + 1}`,
                     x: dropX, y: dropY, available: true
                 });
                 updateStatus('Dropped new seat', 'success');
@@ -558,6 +639,36 @@
         // --- RENDERING MAIN ---
         function renderAll() {
             zoomContainer.querySelectorAll('div[data-id]').forEach(el => el.remove());
+
+            currentGroups.forEach(group => {
+                const children = currentSeats.concat(currentShapes).filter(s => s.groupId === group.id);
+                if (children.length === 0) return;
+
+                let minX = Math.min(...children.map(s => s.x));
+                let minY = Math.min(...children.map(s => s.y));
+                let maxX = Math.max(...children.map(s => s.x + (s.width || 60)));
+                let maxY = Math.max(...children.map(s => s.y + (s.height || 60)));
+
+                group.x = minX;
+                group.y = minY;
+
+                const el = document.createElement('div');
+                
+                // --- ADDED IDENTIFIERS FOR CLEANUP ---
+                el.dataset.id = group.id;
+                el.dataset.type = 'group';
+                
+                const isSelected = Array.from(selectedItems).some(name => children.find(c => c.name === name));
+                
+                el.className = `absolute border-2 border-dashed rounded pointer-events-none z-0 transition-colors ${isSelected ? 'border-indigo-500 bg-indigo-500/10' : 'border-gray-400 bg-gray-400/10'}`;
+                
+                el.style.left = `${minX - 10}px`;
+                el.style.top = `${minY - 10}px`;
+                el.style.width = `${(maxX - minX) + 20}px`;
+                el.style.height = `${(maxY - minY) + 20}px`;
+
+                zoomContainer.appendChild(el);
+            });
 
             // Render Seats
             currentSeats.forEach(seat => {
@@ -627,16 +738,22 @@
                 if (e.target.closest('.cursor-nwse-resize')) return; 
                 e.preventDefault(); e.stopPropagation();
 
-                if (!selectedItems.has(dataObj.name)) {
-                    if (!e.shiftKey) selectedItems.clear();
-                    selectedItems.add(dataObj.name);
-                    updateSelectionVisuals();
-                } else if (e.shiftKey) {
-                    selectedItems.delete(dataObj.name);
-                    updateSelectionVisuals();
-                    hideAllOptions(); 
-                    return; 
+                const groupId = dataObj.groupId;
+
+                if (!e.shiftKey && (!selectedItems.has(dataObj.name) || !groupId)) {
+                    selectedItems.clear();
                 }
+
+                if (groupId) {
+                    
+                    currentSeats.concat(currentShapes).forEach(s => {
+                        if (s.groupId === groupId) selectedItems.add(s.name);
+                    });
+                } else {
+                    selectedItems.add(dataObj.name);
+                }
+
+                updateSelectionVisuals();
 
                 if (selectedItems.size === 1) showOptions(dataObj, type);
                 else hideAllOptions();
@@ -672,6 +789,21 @@
                                 }
                             }
                         });
+
+                        // --- LIVE UPDATE GROUP OUTLINE WHILE DRAGGING ---
+                        currentGroups.forEach(g => {
+                            const children = currentSeats.concat(currentShapes).filter(s => s.groupId === g.id);
+                            if (children.length > 0 && selectedItems.has(children[0].name)) {
+                                let minX = Math.min(...children.map(s => s.x));
+                                let minY = Math.min(...children.map(s => s.y));
+                                const groupEl = document.querySelector(`div[data-id="${g.id}"]`);
+                                if (groupEl) {
+                                    groupEl.style.left = `${minX - 10}px`;
+                                    groupEl.style.top = `${minY - 10}px`;
+                                }
+                            }
+                        });
+                        // ------------------------------------------------
                     }
                 };
 
@@ -698,6 +830,8 @@
                                 }
                             }
                         });
+
+                        
                         
                         if (selectedItems.size > 1) {
                             updateStatus(`Repositioned ${selectedItems.size} item(s)`, 'success');
@@ -706,6 +840,7 @@
                             updateStatus(`Repositioned item`, 'success');
                             showOptions(dataObj, type); 
                         }
+                        renderAll();
 
                     } else if (!eUp.shiftKey) {
                         selectedItems.clear();
@@ -766,7 +901,6 @@
         let startBoxX, startBoxY;
 
         seatMap.addEventListener('mousedown', function(e) {
-            // FIX 1: Allow clicking on either the map wrapper OR the zoom container background
             if (e.target !== seatMap && e.target !== zoomContainer) return; 
 
             if (!e.shiftKey) {
@@ -778,8 +912,6 @@
 
             isBoxSelecting = true;
             
-            // FIX 2: Use the zoom container's bounds. This automatically calculates 
-            // the exact scroll position, meaning we just divide by scale!
             const rect = zoomContainer.getBoundingClientRect();
             startBoxX = (e.clientX - rect.left) / currentScale;
             startBoxY = (e.clientY - rect.top) / currentScale;
@@ -859,26 +991,48 @@
         // --- SAVE MAP ---
         document.getElementById('save-seats').addEventListener('click', async () => {
             updateStatus("Saving layout...", "loading");
-            
-            const seatsData = currentSeats.map(seat => ({
+
+            const standaloneSeats = currentSeats.filter(s => !s.groupId).map(seat => ({
                 name: seat.name, X: seat.x, Y: seat.y, available: true, subAreaId: parseInt(subAreaId), width: 60, height: 60
             }));
-            const shapesData = currentShapes.map(shape => ({
-                name: shape.name, X: shape.x, Y: shape.y, available: true, subAreaId: parseInt(subAreaId), shapeType: shape.shapeType, width: shape.width, height: shape.height, backgroundColor: shape.backgroundColor
+
+            const standaloneShapes = currentShapes.filter(s => !s.groupId).map(shape => ({
+                name: shape.name, X: shape.x, Y: shape.y, subAreaId: parseInt(subAreaId), shapeType: shape.shapeType, width: shape.width, height: shape.height, backgroundColor: shape.backgroundColor
             }));
+
+            const unitGroupsData = currentGroups.map(g => {
+                const groupChildren = currentSeats.concat(currentShapes).filter(s => s.groupId === g.id);
+                
+                return {
+                    name: g.name,
+                    top: g.y,
+                    left: g.x,
+                    subAreaId: parseInt(subAreaId),
+                    selectableUnits: groupChildren.filter(c => currentSeats.includes(c)).map(c => ({
+                        name: c.name, X: c.x - g.x, Y: c.y - g.y, available: true, width: 60, height: 60
+                    })),
+                    nonSelectableUnits: groupChildren.filter(c => currentShapes.includes(c)).map(c => ({
+                        name: c.name, X: c.x - g.x, Y: c.y - g.y, shapeType: c.shapeType, width: c.width, height: c.height, backgroundColor: c.backgroundColor
+                    }))
+                };
+            });
+
+            const layoutPayload = {
+                seats: standaloneSeats,
+                shapes: standaloneShapes,
+                groups: unitGroupsData
+            };
 
             try {
                 const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
-                const reqOptions = (data) => ({
+                
+                const response = await fetch(`/Seat/SaveCompleteLayout?subAreaId=${subAreaId}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': token },
-                    body: JSON.stringify(data)
+                    body: JSON.stringify(layoutPayload)
                 });
 
-                const seatRes = await fetch(`/Seat/CreateTableMap?subAreaId=${subAreaId}`, reqOptions(seatsData));
-                const shapeRes = await fetch(`/NonSelectable/SaveElements?subAreaId=${subAreaId}`, reqOptions(shapesData));
-
-                if (seatRes.ok && shapeRes.ok) {
+                if (response.ok) {
                     updateStatus("Layout saved successfully!", "success");
                     loadSeats(subAreaId); 
                 } else {
@@ -888,32 +1042,80 @@
                 updateStatus("Error saving layout", "error");
             }
         });
-
+        
         // --- INITIAL LOAD ---
         async function loadSeats(id) {
             updateStatus("Loading layout...", "loading");
             try {
-                const [seatRes, shapeRes] = await Promise.all([
-                    fetch(`/Seat/get_data?SubAreaId=${id}`),
-                    fetch(`/NonSelectable/GetElements?subAreaId=${id}`)
-                ]);
 
-                const seatData = await seatRes.json();
-                const shapeData = shapeRes.ok ? await shapeRes.json() : [];
+                const response = await fetch(`/Seat/GetCompleteLayout?subAreaId=${id}`);
+                if (!response.ok) throw new Error("Failed to fetch layout");
+                
+                const data = await response.json();
+                
+                currentSeats = [];
+                currentShapes = [];
+                currentGroups = [];
 
-                currentSeats = Array.isArray(seatData) ? seatData.map(s => ({...s, x: s.x ?? s.X ?? 0, y: s.y ?? s.Y ?? 0})) : [];
-                currentShapes = Array.isArray(shapeData) ? shapeData.map(s => ({...s, x: s.x ?? s.X ?? 0, y: s.y ?? s.Y ?? 0})) : [];
+
+                if (data.seats) {
+                    data.seats.forEach(s => currentSeats.push({...s, x: s.x ?? s.X ?? 0, y: s.y ?? s.Y ?? 0}));
+                }
+                if (data.shapes) {
+                    data.shapes.forEach(s => currentShapes.push({...s, x: s.x ?? s.X ?? 0, y: s.y ?? s.Y ?? 0}));
+                }
+
+
+                if (data.groups) {
+                    data.groups.forEach(g => {
+                        const groupId = `group-${g.id}`;
+                        currentGroups.push({
+                            id: groupId,
+                            name: g.name,
+                            x: g.left,
+                            y: g.top
+                        });
+
+                        if (g.selectableUnits) {
+                            g.selectableUnits.forEach(c => {
+                                // Destroy any standalone duplicate
+                                currentSeats = currentSeats.filter(s => s.id !== c.id);
+                                
+                                currentSeats.push({
+                                    ...c,
+                                    x: (c.x ?? c.X ?? 0) + g.left,
+                                    y: (c.y ?? c.Y ?? 0) + g.top,
+                                    groupId: groupId
+                                });
+                            });
+                        }
+
+                        if (g.nonSelectableUnits) {
+                            g.nonSelectableUnits.forEach(c => {
+                                // Destroy any standalone duplicate
+                                currentShapes = currentShapes.filter(s => s.id !== c.id);
+                                
+                                currentShapes.push({
+                                    ...c,
+                                    x: (c.x ?? c.X ?? 0) + g.left,
+                                    y: (c.y ?? c.Y ?? 0) + g.top,
+                                    groupId: groupId
+                                });
+                            });
+                        }
+                    });
+                }
                 
                 selectedItems.clear();
                 renderAll();
                 hideAllOptions(); 
-                updateStatus(`Loaded ${currentSeats.length} seats and ${currentShapes.length} shapes.`, "success");
+                updateStatus(`Loaded ${currentSeats.length} seats, ${currentShapes.length} shapes, and ${currentGroups.length} groups.`, "success");
             } catch (error) {
+                console.error(error);
                 updateStatus("Error loading layout", "error");
             }
         }
 
-        // Tab and Initial Load Triggers
         document.getElementById('tab-details').addEventListener('click', function() {
             this.classList.add('border-indigo-500', 'text-indigo-600');
             this.classList.remove('border-transparent', 'text-gray-500');
