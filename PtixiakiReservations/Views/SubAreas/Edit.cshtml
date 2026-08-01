@@ -148,7 +148,7 @@
                     
                     <div id="seat-status" class="hidden mb-4 font-medium text-sm transition-all duration-300"></div>
 
-                    <div class="flex flex-col w-full mt-5">
+                    <div class="flex flex-col w-full">
                         <h4 class="text-sm font-bold text-blue-800 flex items-center border-b border-blue-200 pb-2 mb-3">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -750,36 +750,19 @@
 
                 const el = document.createElement('div');
                 
-                // --- ADDED IDENTIFIERS FOR CLEANUP ---
                 el.dataset.id = group.id;
                 el.dataset.type = 'group';
                 
                 const isSelected = Array.from(selectedItems).some(name => children.find(c => c.name === name));
                 
-                // Added cursor-pointer so it can be clicked
-                el.className = `absolute border-2 border-dashed rounded z-0 transition-colors cursor-pointer ${isSelected ? 'border-indigo-500 bg-indigo-500/10' : 'border-gray-400 bg-gray-400/10'}`;
+                el.className = `absolute border-2 border-dashed rounded z-0 transition-colors cursor-move ${isSelected ? 'border-indigo-500 bg-indigo-500/10' : 'border-gray-400 bg-gray-400/10'}`;
                 
                 el.style.left = `${minX - 10}px`;
                 el.style.top = `${minY - 10}px`;
                 el.style.width = `${(maxX - minX) + 20}px`;
                 el.style.height = `${(maxY - minY) + 20}px`;
 
-                // Add mousedown specifically to the group box to trigger the mass rename menu
-                el.addEventListener('mousedown', function(e) {
-                    e.preventDefault(); 
-                    e.stopPropagation();
-
-                    if (!e.shiftKey) {
-                        selectedItems.clear();
-                    }
-
-                    // Select all children when the background is clicked
-                    children.forEach(c => selectedItems.add(c.name));
-                    updateSelectionVisuals();
-
-                    // Open the newly created group mass-rename menu
-                    showOptions(group, 'group');
-                });
+                setupDragAndSelect(el, group, 'group');
 
                 zoomContainer.appendChild(el);
             });
@@ -789,6 +772,7 @@
                 const el = document.createElement('div');
                 el.dataset.id = seat.id;
                 el.dataset.name = seat.name;
+                el.title = seat.name; 
                 el.className = `absolute text-white rounded-md flex flex-col items-center justify-center cursor-move shadow-md select-none ${selectedItems.has(seat.name) ? 'bg-red-500 hover:bg-red-600' : 'bg-blue-500 hover:bg-blue-600'}`;
                 el.style.width = '60px'; el.style.height = '60px';
                 el.style.left = `${seat.x}px`; el.style.top = `${seat.y}px`;
@@ -808,6 +792,7 @@
                 el.dataset.type = "shape";
                 el.dataset.id = shape.id;
                 el.dataset.name = shape.name;
+                el.title = shape.name; 
                 el.className = 'absolute flex flex-col items-center justify-center text-sm font-medium group z-10 hover:z-20 select-none';
                 el.style.left = `${shape.x}px`; el.style.top = `${shape.y}px`;
                 el.style.width = `${shape.width}px`; el.style.height = `${shape.height}px`;
@@ -852,14 +837,18 @@
                 if (e.target.closest('.cursor-nwse-resize')) return; 
                 e.preventDefault(); e.stopPropagation();
 
-                const groupId = dataObj.groupId;
+                const isGroup = (type === 'group');
+                const groupId = isGroup ? dataObj.id : dataObj.groupId;
 
-                if (!e.shiftKey && (!selectedItems.has(dataObj.name) || !groupId)) {
-                    selectedItems.clear();
+                if (!e.shiftKey) {
+                    if (isGroup) {
+                        selectedItems.clear();
+                    } else if (!selectedItems.has(dataObj.name) || !groupId) {
+                        selectedItems.clear();
+                    }
                 }
 
                 if (groupId) {
-                    
                     currentSeats.concat(currentShapes).forEach(s => {
                         if (s.groupId === groupId) selectedItems.add(s.name);
                     });
@@ -869,8 +858,13 @@
 
                 updateSelectionVisuals();
 
-                if (selectedItems.size === 1) showOptions(dataObj, type);
-                else hideAllOptions();
+                if (isGroup) {
+                    showOptions(dataObj, 'group');
+                } else if (selectedItems.size === 1) {
+                    showOptions(dataObj, type);
+                } else {
+                    hideAllOptions();
+                }
 
                 startX = e.clientX; startY = e.clientY;
                 
@@ -878,13 +872,14 @@
                 currentSeats.concat(currentShapes).forEach(s => {
                     if (selectedItems.has(s.name)) {
                         startingPositions.set(s.name, { x: s.x, y: s.y });
-                        const el = document.querySelector(`[data-name="${s.name}"]`);
-                        if(el) el.classList.add('opacity-70', 'z-50');
+                        const childEl = document.querySelector(`[data-name="${s.name}"]`);
+                        if(childEl) childEl.classList.add('opacity-70', 'z-50');
                     }
                 });
+                
+                if (isGroup) element.classList.add('opacity-70', 'z-50');
 
                 const onMouseMove = function(moveEvent) {
-                    // DIVIDED BY SCALE FOR ACCURATE DRAG
                     const dx = (moveEvent.clientX - startX) / currentScale;
                     const dy = (moveEvent.clientY - startY) / currentScale;
                     
@@ -894,17 +889,18 @@
                         currentSeats.concat(currentShapes).forEach(s => {
                             if (selectedItems.has(s.name)) {
                                 const startPos = startingPositions.get(s.name);
-                                s.x = Math.max(0, startPos.x + dx);
-                                s.y = Math.max(0, startPos.y + dy);
-                                const el = document.querySelector(`[data-name="${s.name}"]`);
-                                if (el) {
-                                    el.style.left = `${s.x}px`;
-                                    el.style.top = `${s.y}px`;
+                                if(startPos) {
+                                    s.x = Math.max(0, startPos.x + dx);
+                                    s.y = Math.max(0, startPos.y + dy);
+                                    const childEl = document.querySelector(`[data-name="${s.name}"]`);
+                                    if (childEl) {
+                                        childEl.style.left = `${s.x}px`;
+                                        childEl.style.top = `${s.y}px`;
+                                    }
                                 }
                             }
                         });
 
-                        // --- LIVE UPDATE GROUP OUTLINE WHILE DRAGGING ---
                         currentGroups.forEach(g => {
                             const children = currentSeats.concat(currentShapes).filter(s => s.groupId === g.id);
                             if (children.length > 0 && selectedItems.has(children[0].name)) {
@@ -917,7 +913,6 @@
                                 }
                             }
                         });
-                        // ------------------------------------------------
                     }
                 };
 
@@ -927,27 +922,29 @@
 
                     currentSeats.concat(currentShapes).forEach(s => {
                         if (selectedItems.has(s.name)) {
-                            const el = document.querySelector(`[data-name="${s.name}"]`);
-                            if(el) el.classList.remove('opacity-70', 'z-50');
+                            const childEl = document.querySelector(`[data-name="${s.name}"]`);
+                            if(childEl) childEl.classList.remove('opacity-70', 'z-50');
                         }
                     });
+                    if (isGroup) element.classList.remove('opacity-70', 'z-50');
 
                     if (isDragging) {
                         currentSeats.concat(currentShapes).forEach(s => {
                             if (selectedItems.has(s.name)) {
                                 s.x = Math.round(s.x / 10) * 10;
                                 s.y = Math.round(s.y / 10) * 10;
-                                const el = document.querySelector(`[data-name="${s.name}"]`);
-                                if(el) {
-                                    el.style.left = `${s.x}px`;
-                                    el.style.top = `${s.y}px`;
+                                const childEl = document.querySelector(`[data-name="${s.name}"]`);
+                                if(childEl) {
+                                    childEl.style.left = `${s.x}px`;
+                                    childEl.style.top = `${s.y}px`;
                                 }
                             }
                         });
 
-                        
-                        
-                        if (selectedItems.size > 1) {
+                        if (isGroup) {
+                            updateStatus(`Repositioned group items`, 'success');
+                            showOptions(dataObj, 'group'); 
+                        } else if (selectedItems.size > 1) {
                             updateStatus(`Repositioned ${selectedItems.size} item(s)`, 'success');
                             hideAllOptions(); 
                         } else if (selectedItems.size === 1) {
@@ -956,7 +953,7 @@
                         }
                         renderAll();
 
-                    } else if (!eUp.shiftKey) {
+                    } else if (!eUp.shiftKey && !isGroup) {
                         selectedItems.clear();
                         selectedItems.add(dataObj.name);
                         updateSelectionVisuals();
@@ -981,7 +978,7 @@
 
                 const onMouseMove = function(moveEvent) {
                     if (!isResizing) return;
-                    // DIVIDED BY SCALE FOR ACCURATE RESIZE
+                    
                     const dx = (moveEvent.clientX - startX) / currentScale;
                     const dy = (moveEvent.clientY - startY) / currentScale;
 
@@ -990,6 +987,26 @@
 
                     parentElement.style.width = `${shapeData.width}px`;
                     parentElement.style.height = `${shapeData.height}px`;
+
+                    // --- LIVE UPDATE GROUP OUTLINE WHILE RESIZING ---
+                    if (shapeData.groupId) {
+                        const gId = shapeData.groupId;
+                        const children = currentSeats.concat(currentShapes).filter(s => s.groupId === gId);
+                        if (children.length > 0) {
+                            let minX = Math.min(...children.map(s => s.x));
+                            let minY = Math.min(...children.map(s => s.y));
+                            let maxX = Math.max(...children.map(s => s.x + (s.width || 60)));
+                            let maxY = Math.max(...children.map(s => s.y + (s.height || 60)));
+                            
+                            const groupEl = document.querySelector(`div[data-id="${gId}"]`);
+                            if (groupEl) {
+                                groupEl.style.left = `${minX - 10}px`;
+                                groupEl.style.top = `${minY - 10}px`;
+                                groupEl.style.width = `${(maxX - minX) + 20}px`;
+                                groupEl.style.height = `${(maxY - minY) + 20}px`;
+                            }
+                        }
+                    }
                 };
 
                 const onMouseUp = function() {
@@ -998,10 +1015,22 @@
                     document.removeEventListener('mouseup', onMouseUp);
                     
                     selectedItems.clear();
-                    selectedItems.add(shapeData.name);
-                    updateSelectionVisuals();
-                    showOptions(shapeData, 'shape');
+                    
+                    if (shapeData.groupId) {
+                        const group = currentGroups.find(g => g.id === shapeData.groupId);
+                        currentSeats.concat(currentShapes).forEach(s => {
+                            if (s.groupId === shapeData.groupId) selectedItems.add(s.name);
+                        });
+                        updateSelectionVisuals();
+                        if (group) showOptions(group, 'group');
+                    } else {
+                        selectedItems.add(shapeData.name);
+                        updateSelectionVisuals();
+                        showOptions(shapeData, 'shape');
+                    }
+                    
                     updateStatus(`Resized shape to ${shapeData.width}x${shapeData.height}`, 'success');
+                    renderAll(); 
                 };
 
                 document.addEventListener('mousemove', onMouseMove);
