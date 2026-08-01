@@ -94,8 +94,45 @@
                         </div>
                     </div>
 
+                    @{
+                        bool hasMultipleVenues = false;
+                        PtixiakiReservations.Models.Venue displayVenue = null; 
+                        
+                        // Check if it has child events
+                        if (Model.ChildEvents != null && Model.ChildEvents.Any())
+                        {
+                            // Since it's a parent event, Model.Venue is null. We look at the children's venues.
+                            var childVenues = Model.ChildEvents
+                                .Where(c => c.Venue != null)
+                                .Select(c => c.Venue)
+                                .ToList();
+
+                            if (childVenues.Any())
+                            {
+                                // Count how many unique locations the children have
+                                var distinctVenueIds = childVenues.Select(v => v.Id).Distinct().ToList();
+                                
+                                if (distinctVenueIds.Count > 1)
+                                {
+                                    // Multiple different locations
+                                    hasMultipleVenues = true;
+                                }
+                                else
+                                {
+                                    // Only the same location across all children
+                                    displayVenue = childVenues.First();
+                                }
+                            }
+                        }
+                        else
+                        {
+                            // It doesn't have child events, so it displays its own venue
+                            displayVenue = Model.Venue;
+                        }
+                    }
+
                     <!-- Location -->
-                    @if (Model.Venue != null)
+                    @if (hasMultipleVenues || displayVenue != null)
                     {
                         <div class="border-t border-blue-200/70"></div>
 
@@ -105,24 +142,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                             </svg>
                             <div>
-                                @{
-                                    bool hasMultipleLocations = false;
-                                    bool differsFromParentLocation = false; 
-                                    
-                                    if (Model.ChildEvents != null && Model.ChildEvents.Any())
-                                    {
-                                        var childVenueIds = Model.ChildEvents
-                                            .Where(c => c.VenueId != null)
-                                            .Select(c => c.VenueId)
-                                            .Distinct()
-                                            .ToList();
-                                            
-                                        hasMultipleLocations = childVenueIds.Count > 1;
-                                        differsFromParentLocation = childVenueIds.Any(vid => vid != Model.VenueId);
-                                    }
-                                }
-
-                                @if (hasMultipleLocations || differsFromParentLocation)
+                                @if (hasMultipleVenues)
                                 {
                                     <h3 class="text-lg font-semibold text-gray-900">Multiple Locations</h3>
                                     <p class="text-gray-700 mt-1">This event takes place across several venues.</p>
@@ -130,18 +150,17 @@
                                         Check schedule below ↓
                                     </a>
                                 }
-                                else
+                                else if (displayVenue != null)
                                 {
                                     <h3 class="text-lg font-semibold text-gray-900">Location</h3>
-                                    <p class="text-gray-800 mt-1 font-medium">@Model.Venue.Name</p>
-                                    
-                                    @if (Model.Venue.Address != null && Model.Venue.City != null)
+                                    <p class="text-gray-800 mt-1 font-medium">@displayVenue.Name</p>
+                                
+                                    @if (displayVenue.Address != null && displayVenue.City != null)
                                     {
-                                        <p class="text-gray-600">@Model.Venue.Address, @Model.Venue.City.Name</p>
-                                        <!-- FIX: Added explicit Razor parentheses () around the Uri string to prevent VSC parser errors -->
-                                        <a href="https://maps.google.com/?q=@(Uri.EscapeDataString($"{Model.Venue.Name}, {Model.Venue.Address}, {Model.Venue.City.Name}"))" 
-                                        target="_blank" 
-                                        rel="noopener noreferrer"
+                                        <p class="text-gray-600">@displayVenue.Address, @displayVenue.City.Name</p>
+                                        
+                                        <a href="https://maps.google.com/?q=@(Uri.EscapeDataString($"{displayVenue.Name}, {displayVenue.Address}, {displayVenue.City.Name}"))" 
+                                        target="_blank" rel="noopener noreferrer"
                                         class="inline-flex items-center mt-3 text-blue-700 hover:text-blue-900 font-medium transition-colors">
                                             View on Google Maps
                                             <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
