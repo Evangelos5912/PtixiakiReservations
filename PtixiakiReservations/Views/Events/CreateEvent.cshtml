@@ -888,6 +888,13 @@
                         hideChildEventForm(); 
                         
                         form.reset(); // This completely empties Name, Dates, Venue, Layout etc.
+
+                        // --- BUG FIX: Restore Child Mode ---
+                        // form.reset() defaults the radio back to Master. We must force it back to Child!
+                        document.getElementById('radioFather').checked = false;
+                        document.getElementById('radioChild').checked = true;
+                        // -----------------------------------
+
                         document.getElementById('imagePreviewContainer').classList.add('hidden');
                         document.getElementById('galleryPreviewContainer').classList.add('hidden');
                         document.getElementById('galleryPreviewContainer').innerHTML = '';
