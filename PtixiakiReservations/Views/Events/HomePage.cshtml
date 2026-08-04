@@ -340,13 +340,29 @@
                         } else {
                             slide.classList.add('bg-gray-800'); // Fallback color if no image
                         }
+
+                        const hasMultipleCities = event.hasMultipleCities || event.HasMultipleCities || false;
+                        const distinctCities = event.distinctCities || event.DistinctCities || 0;
+                        let cityName = event.cityNames || event.cityNames[0];
+                        if (event.distinctCities ===0){
+                            cityName = event.cityName;
+                        }
+                    
+
+                        const cityNamesList = event.cityNames ? event.cityNames.join(', ') : '';
+
+
+                        let cityBadgeHtml = hasMultipleCities 
+                            ? `<p>${distinctCities} Cities</p>` 
+                            : `<p>${cityName}</p>`;
+
                         
                         slide.innerHTML = `
                             <div class="absolute inset-0 bg-black bg-opacity-40"></div>
                             <div class="relative z-10 text-white">
                                 <h3 class="text-3xl font-bold">${event.name}</h3>
                                 <div class="flex gap-4 text-sm mt-2 opacity-90">
-                                    <span>${event.cityName || 'Unknown City'}</span>
+                                    <span>${cityBadgeHtml || 'Unknown City'}</span>
                                     <span>${formattedStartDate} - ${formattedEndDate}</span>
                                     <span>${event.eventType || 'Unknown Type'}</span>
                                 </div>

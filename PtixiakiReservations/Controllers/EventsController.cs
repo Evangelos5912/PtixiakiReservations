@@ -762,7 +762,7 @@ public class EventsController(
                         .Where(c => c.Venue != null && c.Venue.City != null)
                         .Select(c => c.Venue.City.Id)
                         .Distinct()
-                        .Any(cid => e.Venue == null || e.Venue.City == null || cid != e.Venue.City.Id),
+                        .Count() > 1,
 
                     cityNames = e.ChildEvents
                     .Where(c => c.Venue != null && c.Venue.City != null)
@@ -1380,7 +1380,7 @@ public class EventsController(
     public async Task<IActionResult> getNewestEvents()
     {
         var ev = await context.Event
-            .Where(e => e.ParentEventId == null)
+            .Where(e => e.ParentEventId == null && e.EndTime > DateTime.Now)
             .OrderByDescending(e => e.Id)
             .Take(5)
             .Select(e => new {
@@ -1402,7 +1402,7 @@ public class EventsController(
                     .Where(c => c.Venue != null && c.Venue.City != null)
                     .Select(c => c.Venue.City.Id)
                     .Distinct()
-                    .Any(cid => e.Venue == null || e.Venue.City == null || cid != e.Venue.City.Id),
+                    .Count() > 1,
 
                 cityNames = e.ChildEvents
                 .Where(c => c.Venue != null && c.Venue.City != null)
@@ -1451,7 +1451,7 @@ public class EventsController(
                     .Where(c => c.Venue != null && c.Venue.City != null)
                     .Select(c => c.Venue.City.Id)
                     .Distinct()
-                    .Any(cid => e.Venue == null || e.Venue.City == null || cid != e.Venue.City.Id),
+                    .Count() > 1,
 
                 cityNames = e.ChildEvents
                 .Where(c => c.Venue != null && c.Venue.City != null)
