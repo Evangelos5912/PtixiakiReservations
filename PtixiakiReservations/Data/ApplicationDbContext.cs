@@ -15,6 +15,7 @@ namespace PtixiakiReservations.Data
           : base(options)
         {
         }
+		public DbSet<Wishlist> Wishlist { get; set; }
 		public DbSet<UnitGroup> UnitGroup { get; set; }
         public DbSet<Venue> Venue { get; set; }
         public DbSet<Reservation> Reservation { get; set; }
