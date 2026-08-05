@@ -1,0 +1,881 @@
+@using Microsoft.AspNetCore.Identity
+@inject SignInManager<ApplicationUser> SignInManager
+@inject UserManager<ApplicationUser> UserManager
+@model IEnumerable<PtixiakiReservations.Models.Event>
+
+@{
+    ViewData["Title"] = "My Wishlist";
+    var currentUser = SignInManager.IsSignedIn(User) ? await UserManager.GetUserAsync(User) : null;
+    var userRoles = currentUser != null ? await UserManager.GetRolesAsync(currentUser) : new List<string>();
+    var isAdmin = userRoles.Contains("Admin");
+    var isSuper = userRoles.Contains("SuperOrganizer");
+    var isEventManager = userRoles.Contains("Event");
+}
+
+<div class="container mx-auto px-4 py-8 max-w-7xl">
+    @Html.AntiForgeryToken()
+    <!-- Search Panel -->
+    <div class="bg-white rounded-xl shadow-lg mb-10 overflow-hidden">
+        <div class="bg-gradient-to-r from-blue-600 to-indigo-700 px-6 py-4 flex flex-row items-center justify-between">
+            <h3 class="text-xl font-bold text-white">Search Wishlist</h3>
+            <button id="panel-button" class="text-xl font-bold text-white">X</button>
+        </div>
+
+        <div id="panel-body" class="p-6">
+            <!-- Search Term with Autocomplete -->
+            <div class="mb-6">
+                <label for="search-term" class="block text-sm font-medium text-gray-700 mb-2">Event Name, Venue, or Location</label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </div>
+                    <input type="text" id="search-term" placeholder="Search your wishlisted events..."
+                        class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                        autocomplete="off">
+                </div>
+                <div id="autocomplete-dropdown" class="absolute left-0 top-full z-50 bg-white shadow-xl rounded-md border border-gray-200 hidden max-h-60 overflow-y-auto w-96"></div>
+            </div>
+
+            <div class="flex justify-end items-center">
+                <button id="search-button"
+                        class="px-6 py-3 bg-blue-600 text-white font-medium rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors">
+                    <span class="flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                        Search Wishlist
+                    </span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Events Count Display -->
+    <div id="events-count" class="flex items-center justify-between mb-8">
+        <h2 class="text-xl font-semibold text-gray-800">
+            Results: Wishlisted Events <span class="text-blue-600 font-bold">(<span id="filtered-count">0</span>)</span>
+        </h2>
+        <div class="flex items-center gap-3">
+            <div class="relative"> 
+                <select id="variable-view" class="appearance-none bg-white border border-gray-300 rounded-lg py-3 px-4 pr-8 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors w-[180px]">
+                    <option value="asc" selected>Ascending by Date</option>
+                    <option value="desc">Descending by Date</option>
+                </select>
+                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                    <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                        <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                    </svg>
+                </div>
+            </div>
+            <div class="relative"> 
+                <select id="variable-pagination" class="appearance-none bg-white border border-gray-300 rounded-lg py-3 px-4 pr-8 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors w-[150px]">
+                    <option value="12" selected>12 per page</option>
+                    <option value="24">24 per page</option>
+                    <option value="48">48 per page</option>
+                </select>
+                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                    <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                        <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                    </svg>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Events Grid -->
+    <div id="events-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        
+    </div>
+
+    <!-- Loading Indicator - Hidden by default -->
+    <div id="loading-indicator" class="text-center py-16 hidden">
+        <div class="inline-block h-12 w-12 rounded-full border-4 border-gray-200 border-t-blue-600 animate-spin"></div>
+        <p class="mt-4 text-lg font-medium text-gray-600">Loading wishlist...</p>
+    </div>
+
+    <!-- No Results Message -->
+    <div id="no-results" class="hidden text-center py-16">
+        <div class="max-w-md mx-auto">
+            <svg class="mx-auto h-16 w-16 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <h3 class="mt-4 text-xl font-medium text-gray-700">No events found in wishlist</h3>
+            <p class="mt-2 text-gray-500">Try adjusting your search criteria or add new events to your wishlist.</p>
+            <button id="reset-search" class="mt-6 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                Clear Search
+            </button>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    <div class="mt-12 flex justify-center">
+        <nav id="pagination" class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px @(ViewBag.TotalPages > 1 ? "" : "hidden")" aria-label="Pagination">
+            <button id="prev-page" class="pagination-prev relative inline-flex items-center px-4 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                <svg class="h-5 w-5 mr-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                    <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                </svg>
+                Previous
+            </button>
+
+            <div id="page-numbers" class="flex flex-wrap justify-center">
+            </div>
+
+            <button id="next-page" class="pagination-next relative inline-flex items-center px-4 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                Next
+                <svg class="h-5 w-5 ml-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                    <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                </svg>
+            </button>
+        </nav>
+    </div>
+</div>
+
+<style>
+    .tooltip-container {
+        position: relative;      
+        display: inline-block;   
+        cursor: help;            
+    }
+
+    .tooltip-text {
+        visibility: hidden;     
+        opacity: 0;              
+        background-color: #333;  
+        color: #fff;             
+        text-align: center;
+        padding: 8px 12px;
+        border-radius: 6px;
+        width: max-content;     
+        max-width: 200px;     
+        position: absolute;
+        z-index: 10;             
+        bottom: 130%;            
+        left: 50%;            
+        transform: translateX(-50%); 
+        transition: opacity 0.3s ease, visibility 0.3s ease;
+        overflow: visible;
+    }
+
+    .tooltip-text::after {
+        content: "";
+        position: absolute;
+        top: 100%;              
+        left: 50%;
+        margin-left: -6px;       
+        border-width: 6px;
+        border-style: solid;
+        border-color: #333 transparent transparent transparent; 
+    }
+
+    .tooltip-container:hover .tooltip-text,
+    .tooltip-container2:hover .tooltip-text {
+        visibility: visible;
+        opacity: 1;
+    }
+
+    .event-card {
+        position: relative;
+        display: flex;
+        flex-direction: column; 
+        height: 100%;          
+        transition: all 0.3s ease;
+        border-left: 4px solid #e2e8f0;
+        z-index: 1;
+        min-height: 300px; 
+        background-color: white;
+    }
+
+    .event-card:hover {
+        transform: scale(1.02) translate(10px, -10px); 
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        z-index: 10;
+    }
+
+    .wishlist-badge {
+        visibility: hidden;
+        opacity: 0;
+        transition: all 0.3s ease;
+    }
+
+    .event-card:hover .wishlist-badge {
+        visibility: visible;
+        opacity: 1;
+    }
+
+    .event-content {
+        flex-grow: 1;          
+        display: flex;
+        flex-direction: column;
+    }
+
+    .event-footer {
+        margin-top: auto;      
+    }
+
+    /* Today events - green accent */
+    .event-today {
+        background-color: #f0fff4;
+        border-left-color: #10b981;
+    }
+    .event-today:hover {
+        box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.1), 0 4px 6px -2px rgba(16, 185, 129, 0.05);
+    }
+
+    /* Upcoming events - blue accent */
+    .event-upcoming {
+        background-color: #eff6ff;
+        border-left-color: #3b82f6;
+    }
+    .event-upcoming:hover {
+        box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.1), 0 4px 6px -2px rgba(59, 130, 246, 0.05);
+    }
+
+    /* Past events - gray accent */
+    .event-past {
+        background-color: #f8fafc;
+        border-left-color: #94a3b8;
+        opacity: 0.85;
+    }
+    .event-past:hover {
+        box-shadow: 0 10px 15px -3px rgba(148, 163, 184, 0.1), 0 4px 6px -2px rgba(148, 163, 184, 0.05);
+    }
+
+    /* Autocomplete dropdown styling */
+    #autocomplete-dropdown {
+        box-shadow: 0 4px 10px -2px rgba(0, 0, 0, 0.2);
+        border-radius: 0.5rem;
+        border: 1px solid #e5e7eb;
+    }
+
+    .autocomplete-item {
+        padding: 0.75rem 1rem;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+    }
+
+    .autocomplete-item:hover, .autocomplete-item.active {
+        background-color: #f3f4f6;
+    }
+
+    .highlight {
+        font-weight: 600;
+        color: #3b82f6;
+    }
+</style>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            const currentUserId = '@UserManager.GetUserId(User)';
+            let currentPage = 1;
+            let pageSize = 12;
+            let sortOrder = 'asc';
+            
+            // Initialize total records from server-side ViewBag
+            let totalRecords = @(ViewBag.TotalWishlistEvents ?? 0);
+            let totalPages = Math.max(1, Math.ceil(totalRecords / pageSize));
+            
+            let searchParams = {};
+            let autocompleteTimeout;
+            let autocompleteResults = [];
+            let currentAutocompleteIndex = -1;
+            let maxAutocompleteResults = 8;
+
+            $('#filtered-count').text(totalRecords);
+            updatePagination(totalPages > 1);
+
+            // Clear search filters and reload the default wishlist view
+            $('#reset-search').click(function() {
+                $('#search-term').val('');
+                $('#events-container').addClass('hidden');
+                $('#loading-indicator').removeClass('hidden');
+                performSearch();
+            });
+
+            // Fetch and display initial wishlist items on page load
+            $('#events-container').addClass('hidden');
+            $('#loading-indicator').removeClass('hidden');
+            performSearch();
+
+            // Trigger autocomplete suggestions with debounce to prevent excessive API calls
+            $('#search-term').on('input', function() {
+                const query = $(this).val().trim();
+
+                if (autocompleteTimeout) {
+                    clearTimeout(autocompleteTimeout);
+                }
+
+                if (query.length < 1) {
+                    $('#autocomplete-dropdown').addClass('hidden').empty();
+                    return;
+                }
+
+                autocompleteTimeout = setTimeout(function() {
+                    fetchAutocompleteResults(query);
+                }, 300);
+            });
+
+            // Reload events when sorting order changes
+            $('#variable-view').on('change', function() {
+                sortOrder = $(this).val();
+                currentPage = 1;
+                $('#events-container').addClass('hidden');
+                $('#loading-indicator').removeClass('hidden');
+                performSearch();
+            });
+
+            // Reload events when pagination size changes
+            $('#variable-pagination').on('change', function() {
+                pageSize = parseInt($(this).val()) || 12;
+                currentPage = 1;
+                $('#events-container').addClass('hidden');
+                $('#loading-indicator').removeClass('hidden');
+                performSearch();
+            });
+
+            // Execute explicit search query
+            $('#search-button').click(function() {
+                currentPage = 1;
+                $('#events-container').addClass('hidden');
+                $('#loading-indicator').removeClass('hidden');
+                $('#no-results').addClass('hidden');
+                performSearch();
+            });
+
+            // Keyboard accessibility for autocomplete dropdown (Up/Down/Enter/Escape)
+            $('#search-term').on('keydown', function(e) {
+                const dropdown = $('#autocomplete-dropdown');
+                const isVisible = !dropdown.hasClass('hidden');
+
+                if (!isVisible && e.keyCode === 13) {
+                    e.preventDefault();
+                    $('#search-button').click();
+                    return;
+                }
+
+                if (!isVisible) return;
+
+                if (e.keyCode === 40) { // Down
+                    e.preventDefault();
+                    navigateAutocomplete(1);
+                } else if (e.keyCode === 38) { // Up
+                    e.preventDefault();
+                    navigateAutocomplete(-1);
+                } else if (e.keyCode === 13 && currentAutocompleteIndex >= 0) { // Enter
+                    e.preventDefault();
+                    selectAutocompleteItem(currentAutocompleteIndex);
+                } else if (e.keyCode === 27) { // Escape
+                    dropdown.addClass('hidden');
+                    currentAutocompleteIndex = -1;
+                }
+            });
+
+            // Dismiss autocomplete dropdown when clicking outside
+            $(document).on('click', function(e) {
+                if (!$(e.target).closest('#search-term, #autocomplete-dropdown').length) {
+                    $('#autocomplete-dropdown').addClass('hidden');
+                }
+            });
+
+            // Fetch autocomplete suggestions scoped to the user's wishlisted items
+            function fetchAutocompleteResults(query) {
+                $.ajax({
+                    url: '/Wishlist/GetAutocompleteResults',
+                    data: { query: query, userId: currentUserId },
+                    success: function(data) {
+                        displayAutocompleteResults(data, query);
+                    },
+                    error: function() {
+                        const mockResults = getMockAutocompleteResults(query);
+                        displayAutocompleteResults(mockResults, query);
+                    }
+                });
+            }
+
+            function positionAutocompleteDropdown() {
+                const searchInput = $('#search-term');
+                const dropdown = $('#autocomplete-dropdown');
+                const inputPosition = searchInput.offset();
+                const inputWidth = searchInput.outerWidth();
+                const inputHeight = searchInput.outerHeight();
+
+                dropdown.css({
+                    top: inputPosition.top + inputHeight + 5 + 'px',
+                    left: inputPosition.left + 'px',
+                    width: inputWidth + 'px'
+                });
+            }
+
+            function displayAutocompleteResults(results, query) {
+                const dropdown = $('#autocomplete-dropdown');
+                dropdown.empty();
+
+                if (!results || results.length === 0) {
+                    dropdown.addClass('hidden');
+                    return;
+                }
+
+                autocompleteResults = results.slice(0, maxAutocompleteResults);
+                currentAutocompleteIndex = -1;
+
+                autocompleteResults.forEach(function(result, index) {
+                    const highlightedText = highlightMatch(result.text, query);
+                    const item = $('<div class="autocomplete-item flex items-center">')
+                        .html(`
+                            <div class="mr-2 text-gray-400">
+                                ${result.type === 'event' ?
+                                    '<svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>' :
+                                    '<svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>'
+                                }
+                            </div>
+                            <div>
+                                <div class="text-sm">${highlightedText}</div>
+                                <div class="text-xs text-gray-500">${result.subtext || ''}</div>
+                            </div>
+                        `)
+                        .data('index', index)
+                        .on('click', function() {
+                            selectAutocompleteItem(index);
+                        });
+
+                    dropdown.append(item);
+                });
+
+                if (results.length > maxAutocompleteResults) {
+                    const moreResults = $('<div class="py-2 px-3 text-xs text-center text-gray-500 border-t">')
+                        .text(`${results.length - maxAutocompleteResults} more results available...`);
+                    dropdown.append(moreResults);
+                }
+
+                positionAutocompleteDropdown();
+                dropdown.removeClass('hidden');
+
+                $(window).on('resize', function() {
+                    if (!dropdown.hasClass('hidden')) {
+                        positionAutocompleteDropdown();
+                    }
+                });
+            }
+
+            function navigateAutocomplete(direction) {
+                const items = $('.autocomplete-item');
+                if (items.length === 0) return;
+
+                items.removeClass('active');
+                currentAutocompleteIndex += direction;
+
+                if (currentAutocompleteIndex >= items.length) {
+                    currentAutocompleteIndex = 0;
+                } else if (currentAutocompleteIndex < 0) {
+                    currentAutocompleteIndex = items.length - 1;
+                }
+
+                const activeItem = items.eq(currentAutocompleteIndex).addClass('active');
+                const dropdown = $('#autocomplete-dropdown');
+
+                const itemPosition = activeItem.position().top;
+                const itemHeight = activeItem.outerHeight();
+                const dropdownHeight = dropdown.height();
+
+                if (itemPosition < 0) {
+                    dropdown.scrollTop(dropdown.scrollTop() + itemPosition);
+                } else if (itemPosition + itemHeight > dropdownHeight) {
+                    dropdown.scrollTop(dropdown.scrollTop() + itemPosition + itemHeight - dropdownHeight);
+                }
+            }
+
+            function selectAutocompleteItem(index) {
+                const result = autocompleteResults[index];
+                if (!result) return;
+
+                $('#search-term').val(result.text);
+                $('#autocomplete-dropdown').addClass('hidden');
+                $('#search-button').click();
+            }
+
+            function highlightMatch(text, query) {
+                if (!query) return text;
+                const regex = new RegExp('(' + query.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&') + ')', 'gi');
+                return text.replace(regex, '<span class="highlight">$1</span>');
+            }
+
+            function getMockAutocompleteResults(query) {
+                query = query.toLowerCase();
+                const cities = ['Athens', 'Thessaloniki', 'Patras', 'Heraklion'];
+                const venues = ['Megaron Concert Hall', 'Stavros Niarchos Foundation'];
+                const events = ['Greek Food Festival', 'Music Concert Series'];
+
+                let results = [];
+                cities.filter(city => city.toLowerCase().includes(query)).forEach(city => { results.push({ text: city, type: 'location', subtext: 'City' }); });
+                venues.filter(venue => venue.toLowerCase().includes(query)).forEach(venue => { results.push({ text: venue, type: 'location', subtext: 'Venue' }); });
+                events.filter(event => event.toLowerCase().includes(query)).forEach(event => { results.push({ text: event, type: 'event', subtext: 'Event' }); });
+                return results;
+            }
+
+            // Pagination handlers for previous and next operations
+            $('#prev-page').click(function() {
+                if (currentPage > 1) {
+                    currentPage--;
+                    $('#events-container').addClass('hidden');
+                    $('#loading-indicator').removeClass('hidden');
+                    performSearch();
+                }
+            });
+
+            $('#next-page').click(function() {
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    $('#events-container').addClass('hidden');
+                    $('#loading-indicator').removeClass('hidden');
+                    performSearch();
+                }
+            });
+
+            $('#page-numbers').on('click', '.page-button', function(e) {
+                e.preventDefault();
+                currentPage = parseInt($(this).data('page'));
+                $('#events-container').addClass('hidden');
+                $('#loading-indicator').removeClass('hidden');
+                performSearch();
+            });
+
+            // Fetch paginated and filtered wishlist events from the server
+            function performSearch() {
+                searchParams = {
+                    userId: currentUserId,
+                    searchTerm: $('#search-term').val(),
+                    sort: sortOrder,
+                    page: currentPage,
+                    pageSize: pageSize
+                };
+
+                $.getJSON('/Wishlist/SearchWishlist', searchParams)
+                    .done(function(data) {
+                        totalPages = data.totalPages;
+                        currentPage = data.currentPage;
+
+                        const container = $('#events-container');
+                        container.empty();
+                        $('#loading-indicator').addClass('hidden');
+                        $('#no-results').addClass('hidden');
+                        $('#filtered-count').text(data.totalCount || 0);
+
+                        if (!data.events || data.events.length === 0) {
+                            $('#no-results').removeClass('hidden');
+                            $('#pagination').addClass('hidden');
+                            return;
+                        }
+
+                        data.events.forEach(function(event) {
+                            const timeClass = getEventTimeClass(new Date(event.startDateTime), new Date(event.endTime));
+                            const cardHtml = buildEventCard(event, timeClass);
+                            container.append(cardHtml);
+                        });
+
+                        function buildEventCard(event, timeClass) {
+                            const startDate = new Date(event.startDateTime || event.StartDateTime);
+                            const endDate = new Date(event.endTime || event.EndTime);
+                            
+                            const isMultiDay = startDate.toDateString() !== endDate.toDateString();
+                            let dateDisplayHtml = "";
+
+                            if (isMultiDay) {
+                                const startStr = startDate.toLocaleDateString('en-US', {month: 'short', day: 'numeric', year: 'numeric' });
+                                const endStr = endDate.toLocaleDateString('en-US', {month: 'short', day: 'numeric', year: 'numeric' });
+                                dateDisplayHtml = `<p class="text-sm text-blue-600"><b>${startStr} - ${endStr}</b></p>`;
+                            } else {
+                                const dateStr = startDate.toLocaleDateString('en-US', {month: 'long', day: 'numeric', year: 'numeric' });
+                                const timeStr = `${startDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })} - ${endDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`;
+                                dateDisplayHtml = `<p class="text-sm text-blue-600"><b>${dateStr}</b></p><p class="text-sm text-blue-500">${timeStr}</p>`;
+                            }
+
+                            const imgPath = event.displayImagePath || event.imagePath || '';
+                            const hasImage = imgPath.trim() !== "";
+                            const eventName = event.name || event.Name || 'Unnamed Event';
+                            const eventId = event.id || event.Id;
+
+                            const isMasterEvent = event.parentEventId == null && event.ParentEventId == null;
+                            const canViewSubEvents = @((isSuper || isAdmin || isEventManager).ToString().ToLower());
+                            const showSubEventsLink = isMasterEvent && canViewSubEvents;
+                            const childCount = event.childCount || event.ChildCount || 0;
+
+                            // Render the active wishlist badge (items here are wishlisted by default)
+                            let wishlistBadge = `
+                            <div class="wishlist-badge cursor-help absolute top-3 left-6 mt-3 mr-3 bg-white text-indigo-800 text-xs font-bold px-2 py-1 z-50 rounded-full shadow-sm" id="wishlist-id-${eventId}">
+                                <button type="button" onclick="window.wishlistAction(event, ${eventId})">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="#eab308" stroke="#eab308" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                    </svg>
+                                </button>
+                            </div>`;
+
+                            let statusBadgeHtml = "";
+                            if (timeClass === "event-today") {
+                                statusBadgeHtml = `<div class="absolute top-10 right-3 mt-3 mr-3 bg-green-500 text-white text-xs font-bold px-2 py-1 z-50 rounded-full shadow-sm">Today</div>`;
+                            } else if (timeClass === "event-upcoming") {
+                                statusBadgeHtml = `<div class="absolute top-10 right-3 mt-3 mr-3 bg-blue-500 text-white text-xs font-bold px-2 py-1 z-50 rounded-full shadow-sm">Upcoming</div>`;
+                            } else {
+                                statusBadgeHtml = `<div class="absolute top-10 right-3 mt-3 mr-3 bg-gray-500 text-white text-xs font-bold px-2 py-1 z-50 rounded-full shadow-sm">Ended</div>`;
+                            }
+
+                            const hasMultipleCities = event.hasMultipleCities || event.HasMultipleCities || false;
+                            const distinctCities = event.distinctCities || event.DistinctCities || 0;
+                            
+                            let cityName = event.cityNames || event.cityNames[0];
+                            if (event.distinctCities === 0){
+                                cityName = event.cityName;
+                            }
+
+                            const cityNamesList = event.cityNames ? event.cityNames.join(', ') : '';
+        
+                            let cityBadgeHtml = hasMultipleCities 
+                                ? `<p>${distinctCities} Cities</p>
+                                <span class="tooltip-text" role="tooltip">${cityNamesList}</span>` 
+                                : `<p>${cityName}</p>`;
+
+                            const hasMultipleVenues = event.hasMultipleVenues || event.HasMultipleVenues || false;
+                            const venueName = event.venueName || event.VenueName || (event.venue ? event.venue.name : 'No Venue');
+                            
+                            let venueDisplayHtml = hasMultipleVenues 
+                                ? `<p class="text-sm text-gray-600">Multiple Locations</p>` 
+                                : `<p class="text-sm text-gray-600">${venueName}</p>`;
+
+                            return `
+                            <div class="event-card ${timeClass} rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300" id="event-card-${eventId}">
+                                <a href="/Events/Details/${eventId}">
+                                    <div class="p-5 flex flex-col h-full">
+                                        
+                                        <div class="h-40 w-full overflow-hidden mb-4 rounded-md bg-gray-100 relative">
+                                            ${hasImage ? 
+                                                `<img src="${imgPath}" alt="${eventName}" class="w-full h-full object-cover transform hover:scale-105 transition-transform duration-300" />` : 
+                                                `<div class="flex items-center justify-center h-full text-gray-400"><svg class="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg></div>`
+                                            }
+                                        </div>
+                                        
+                                        <div class="tooltip-container2 cursor-help absolute top-3 right-3 mt-3 mr-3 bg-white text-indigo-800 text-xs font-bold px-2 py-1 z-50 rounded-full shadow-sm">
+                                            ${cityBadgeHtml}
+                                        </div>
+
+                                        ${wishlistBadge}
+                                        
+                                        ${statusBadgeHtml}
+                                        
+                                        <div class="event-content flex-grow">
+                                            <div class="flex items-center justify-between mb-3">
+                                                <h3 class="text-lg font-semibold text-gray-900 mb-2 line-clamp-2">${eventName}</h3>
+                                                ${isMasterEvent ? 
+                                                `<div class="tooltip-container flex items-center cursor-help">
+                                                    <svg class="h-5 w-5 text-indigo-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                                        <path d="M12 11V5" />          
+                                                        <path d="M12 11L6 18" />      
+                                                        <path d="M12 11L18 18" />     
+                                                        <circle cx="12" cy="4" r="2.5" fill="currentColor" stroke="none" />
+                                                        <circle cx="6" cy="19" r="2.5" fill="currentColor" stroke="none" /> 
+                                                        <circle cx="18" cy="19" r="2.5" fill="currentColor" stroke="none" /> 
+                                                    </svg>
+                                                    <span class="tooltip-text" role="tooltip">This Symbol Means that you are viewing a Master event</span>
+                                                </div>` : ''}
+                                            </div>
+
+                                            <div class="flex items-start mb-3">
+                                                <svg class="h-5 w-5 text-gray-500 mr-2 mt-0.5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                </svg>
+                                                <div>
+                                                    ${dateDisplayHtml}
+                                                </div>
+                                            </div>
+
+                                            <div class="flex items-start mb-4">
+                                                <svg class="h-5 w-5 text-gray-500 mr-2 mt-0.5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                </svg>
+                                                <div>
+                                                    ${venueDisplayHtml}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="event-footer flex ${showSubEventsLink ? 'justify-between' : 'justify-end'} items-center border-t pt-4">
+                                            ${showSubEventsLink ? `
+                                                <a href="/Events/ChildEvents/${eventId}" class="text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors">
+                                                    Multiple Events (${childCount}) →
+                                                </a>
+                                                <a href="/Events/Edit/${eventId}" class="text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors">
+                                                    Edit Details →
+                                                </a>
+                                            ` : ''}
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>`;
+                        }
+
+                        container.removeClass('hidden');
+                        updatePagination(data.totalPages > 1);
+                    })
+                    .fail(function() {
+                        console.error('Search failed');
+                        $('#loading-indicator').addClass('hidden');
+                        $('#no-results').removeClass('hidden');
+                    });
+            }
+
+            // Handle adding/removing events from the user's wishlist
+            window.wishlistAction = function(e, eventId) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                if (!currentUserId || currentUserId === '') {
+                    alert("You must be logged in to use this feature.");
+                    return;
+                }
+
+                let token = $('input[name="__RequestVerificationToken"]').val();
+
+                let wParams = {
+                    eventId: eventId,
+                    userId: currentUserId
+                };
+
+                // Verify current wishlist status before toggling
+                $.getJSON('/Wishlist/returnItem', wParams)
+                    .done(function(isWishlisted) {
+                        if (!isWishlisted) {
+                            // Event is not in wishlist, send POST request to add it
+                            $.ajax({
+                                url: '/Wishlist/addWishlistEvent',
+                                type: 'POST',
+                                data: wParams,
+                                headers: { "RequestVerificationToken": token },
+                                success: function(success) {
+                                    if (success === true) {
+                                        $('#wishlist-id-' + eventId).html(`
+                                        <button type="button" onclick="window.wishlistAction(event, ${eventId})">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="#eab308" stroke="#eab308" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                            </svg>
+                                        </button>`);
+                                    }
+                                }
+                            });
+                        } else {
+                            // Event is already in wishlist, send DELETE request to remove it
+                            $.ajax({
+                                url: '/Wishlist/deleteWishlistEvent',
+                                type: 'DELETE',
+                                data: wParams,
+                                headers: { "RequestVerificationToken": token },
+                                success: function(success) {
+                                    if (success === true) {
+                                        // Smoothly remove the event card from the UI
+                                        $('#event-card-' + eventId).fadeOut(300, function() {
+                                            $(this).remove();
+                                            
+                                            // Update the results counter
+                                            let currentCount = parseInt($('#filtered-count').text()) || 0;
+                                            if (currentCount > 0) {
+                                                $('#filtered-count').text(currentCount - 1);
+                                            }
+                                            
+                                            // Display empty state if the wishlist becomes empty
+                                            if ($('#events-container').children().length === 0) {
+                                                $('#no-results').removeClass('hidden');
+                                                $('#pagination').addClass('hidden');
+                                            }
+                                        });
+                                    }
+                                }
+                            });
+                        }
+                    });
+            };
+            
+            function getEventTimeClass(startDate, endDate) {
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+
+                const startDay = new Date(startDate);
+                startDay.setHours(0, 0, 0, 0);
+                const endDay = new Date(endDate);
+                endDay.setHours(0, 0, 0, 0);
+
+                if (startDay.getTime() <= today.getTime() && endDay.getTime() >= today.getTime()){
+                    return 'event-today';
+                } else if (endDay.getTime() > today.getTime()) {
+                    return 'event-upcoming';
+                } else {
+                    return 'event-past';
+                }
+            }
+
+            function updatePagination(show = true) {
+                const paginationContainer = $('#pagination');
+                const pageNumbersContainer = $('#page-numbers');
+
+                if (!show || totalPages <= 1) {
+                    paginationContainer.addClass('hidden');
+                    return;
+                }
+
+                paginationContainer.removeClass('hidden');
+                pageNumbersContainer.empty();
+
+                $('#prev-page').prop('disabled', currentPage === 1);
+                $('#next-page').prop('disabled', currentPage === totalPages);
+
+                let startPage = Math.max(1, currentPage - 2);
+                let endPage = Math.min(totalPages, startPage + 4);
+
+                if (endPage - startPage < 4) {
+                    startPage = Math.max(1, endPage - 4);
+                }
+
+                if (startPage > 1) {
+                    pageNumbersContainer.append(createPageButton(1));
+                    if (startPage > 2) {
+                        pageNumbersContainer.append('<span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">...</span>');
+                    }
+                }
+
+                for (let i = startPage; i <= endPage; i++) {
+                    pageNumbersContainer.append(createPageButton(i));
+                }
+
+                if (endPage < totalPages) {
+                    if (endPage < totalPages - 1) {
+                        pageNumbersContainer.append('<span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">...</span>');
+                    }
+                    pageNumbersContainer.append(createPageButton(totalPages));
+                }
+            }
+
+            function createPageButton(pageNumber) {
+                const isActive = pageNumber === currentPage;
+                return $('<button>', {
+                    class: `page-number pagination-link page-button relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                        isActive 
+                        ? 'active current-page z-10 bg-indigo-50 border-indigo-500 text-indigo-600' 
+                        : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
+                    }`,
+                    'data-page': pageNumber,
+                    text: pageNumber
+                });
+            }
+        });
+    </script>
+    <script>
+        document.getElementById("panel-button").addEventListener("click", function () {
+            const panel = document.getElementById("panel-body");
+            panel.classList.toggle("hidden");
+        });
+
+        const btn = document.getElementById("panel-button");
+        btn.addEventListener("click", () => {
+            btn.textContent = btn.textContent === "X" ? "V" : "X";
+        });
+    </script>
+}

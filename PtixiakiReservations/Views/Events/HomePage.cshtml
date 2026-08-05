@@ -10,9 +10,12 @@
 }
 
 <div class="container mx-auto px-4 py-8 max-w-7xl">
-    <!-- Search Panel -->
+    <!-- Anti-forgery token required for secure POST/DELETE AJAX operations -->
+    @Html.AntiForgeryToken()
+
+    <!-- Search Panel Section -->
     <div class="bg-white rounded-xl shadow-lg mb-10">
-        <div class="bg-gradient-to-r from-blue-600 to-indigo-700 px-6 py-4 flex flex-row items-center justify-between">
+        <div class="bg-gradient-to-r from-blue-600 to-indigo-700 px-6 py-4 flex flex-row items-center justify-between border-b">
             <h3 class="text-xl font-bold text-white">Explore Events</h3>
         </div>
 
@@ -20,7 +23,8 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6 w-full justify-between">
                 <div class="flex justify-center w-full flex-col">
                     <h1 class="text-2xl font-bold text-blue-700 mb-5">Get Started with your next Experiences</h1>
-                    <!-- Search Term with Autocomplete -->
+                    
+                    <!-- Search Input with Autocomplete Integration -->
                     <div class="mb-6">
                         <label for="search-term" class="block text-sm font-medium text-gray-700 mb-2">Event Name or Venue or Location</label>
                         
@@ -39,6 +43,7 @@
                             <div id="autocomplete-dropdown" class="absolute left-0 top-full mt-1 z-50 bg-white shadow-xl rounded-md border border-gray-200 hidden max-h-60 overflow-y-auto w-full"></div>
                         </div>
                     </div>
+                    
                     <div class="flex justify-between items-center w-full">
                         <button id="search-button"
                                 class="px-6 py-3 bg-blue-600 text-white font-medium rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors">
@@ -52,49 +57,50 @@
                         <p id="search-validation-message" class="text-red-500 text-sm hidden">*Please type to search</p>
                     </div>
                 </div>
+                
+                <!-- Hero Banner Carousel -->
                 <div class="flex items-center w-full">
-                    <!-- Recent Event Carousel -->
                     <div id="carousel-container" class="hidden sm:block relative w-full max-w-lg mx-auto h-64 overflow-hidden rounded-xl shadow-lg">
                     </div>
                 </div>
-                    
             </div>
         </div>
     </div>
 
-    @if (!SignInManager.IsSignedIn(User)){
-    <div class="bg-white rounded-xl shadow-lg mb-10 overflow-hidden">
-        <div class="grid grid-cols-1 bg-gradient-to-r from-blue-600 to-indigo-700 px-6 py-4 flex flex-row items-center justify-between p-5">
-            <h3 class="text-2xl font-bold text-white mb-5">Create an Account or Log in</h3>
-            <p class="text-l font-bold text-white mb-5">Make sure to Create or Log in with an account to get access to the features of the app and your personal profile where you can request for higher role privilages.</p>
-            <div class="mb-5">
-                <a class="mr-5 px-6 py-3 bg-white text-blue-600 font-medium rounded-lg shadow-md hover:bg-grey-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors w-25" asp-area="Identity" asp-page="/Account/Login">
-                    Log in
-                </a>
-                <a class="px-6 py-3 bg-white text-blue-600 font-medium rounded-lg shadow-md hover:bg-grey-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors w-25" asp-area="Identity" asp-page="/Account/Register">
-                    Register
-                </a>
-            </div>
-        </div>        
-    </div>
+    <!-- Authentication Prompt (Guest Users Only) -->
+    @if (!SignInManager.IsSignedIn(User))
+    {
+        <div class="bg-white rounded-xl shadow-lg mb-10 overflow-hidden">
+            <div class="grid grid-cols-1 bg-gradient-to-r from-blue-600 to-indigo-700 px-6 py-4 flex flex-row items-center justify-between p-5">
+                <h3 class="text-2xl font-bold text-white mb-5">Create an Account or Log in</h3>
+                <p class="text-lg font-bold text-white mb-5">Make sure to Create or Log in with an account to get access to the features of the app and your personal profile where you can request higher role privileges.</p>
+                <div class="mb-5">
+                    <a class="mr-5 px-6 py-3 bg-white text-blue-600 font-medium rounded-lg shadow-md hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors inline-block" asp-area="Identity" asp-page="/Account/Login">
+                        Log in
+                    </a>
+                    <a class="px-6 py-3 bg-white text-blue-600 font-medium rounded-lg shadow-md hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors inline-block" asp-area="Identity" asp-page="/Account/Register">
+                        Register
+                    </a>
+                </div>
+            </div>        
+        </div>
     }
 
+    <!-- Recent Events Horizontal Slider -->
     <div class="mb-10 overflow-hidden">
         <div class="flex w-full max-w-6xl justify-between rounded-xl p-5">
             <div>
-                <h3 class="text-2xl font-bold text-black mb-5">Recent Events</h3>
-                <p class="text-l text-black">Dont miss out on the most recent events.</p>
+                <h3 class="text-2xl font-bold text-black mb-2">Recent Events</h3>
+                <p class="text-lg text-black">Don't miss out on the most recent events.</p>
             </div>
             <div>
-                <a class="text-blue-600 font-bold" href="@Url.Action("EventsForToday", "Events")">View all Events</a>
+                <a class="text-blue-600 font-bold hover:underline" href="@Url.Action("EventsForToday", "Events")">View all Events</a>
             </div>
         </div>
         <div class="relative w-full max-w-6xl mx-auto px-12 py-5">
-
-            <div class="overflow-hidden rounded-xl py-4"> <div id="recent-events-track" class="flex transition-transform duration-500 ease-out" style="transform: translateX(0%);">
-                    </div>
+            <div class="overflow-hidden rounded-xl py-4"> 
+                <div id="recent-events-track" class="flex transition-transform duration-500 ease-out" style="transform: translateX(0%);"></div>
             </div>
-
             <button id="recent-prev-btn" class="absolute left-0 top-1/2 -translate-y-1/2 bg-white text-gray-800 p-3 rounded-full shadow-md hover:bg-gray-50 focus:outline-none transition-colors z-10 disabled:opacity-50 disabled:cursor-not-allowed">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
@@ -108,18 +114,16 @@
         </div>
     </div>
 
+    <!-- Category Discovery Slider -->
     <div class="mb-10 overflow-hidden">
-        <div class="relative w-full max-w-6xl px-15">
-            <h3 class="text-2xl font-bold text-black mb-5">Event Categories</h3>
-            <p class="text-l text-black px-30">Choose one of our many Categories, we must have something you like.</p>
+        <div class="relative w-full max-w-6xl px-5">
+            <h3 class="text-2xl font-bold text-black mb-2">Event Categories</h3>
+            <p class="text-lg text-black">Choose one of our many Categories, we must have something you like.</p>
         </div>
         <div class="relative w-full max-w-6xl mx-auto px-12 py-5">
-
             <div class="overflow-hidden rounded-xl">
-                <div id="category-track" class="flex transition-transform duration-500 ease-out" style="transform: translateX(0%);">
-                    </div>
+                <div id="category-track" class="flex transition-transform duration-500 ease-out" style="transform: translateX(0%);"></div>
             </div>
-
             <button id="prev-btn" class="absolute left-0 top-1/2 -translate-y-1/2 bg-white text-gray-800 p-3 rounded-full shadow-md hover:bg-gray-50 focus:outline-none transition-colors z-10 disabled:opacity-50 disabled:cursor-not-allowed">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
@@ -131,25 +135,23 @@
                 </svg>
             </button>
         </div>
-    
     </div>
 
+    <!-- New Events Horizontal Slider -->
     <div class="mb-10 overflow-hidden">
-        <div class="flex w-full max-w-6xl justify-between  rounded-xl p-5">
+        <div class="flex w-full max-w-6xl justify-between rounded-xl p-5">
             <div>
-                <h3 class="text-2xl font-bold text-black mb-5">New</h3>
-                <p class="text-l text-black">View some of our newest Events.</p>
+                <h3 class="text-2xl font-bold text-black mb-2">New Arrivals</h3>
+                <p class="text-lg text-black">View some of our newest Events.</p>
             </div>
             <div>
-                <a class="text-blue-600 font-bold" href="@Url.Action("EventsForToday", "Events")">View all Events</a>
+                <a class="text-blue-600 font-bold hover:underline" href="@Url.Action("EventsForToday", "Events")">View all Events</a>
             </div>
         </div>
         <div class="relative w-full max-w-6xl mx-auto px-12 py-5">
-
-            <div class="overflow-hidden rounded-xl py-4"> <div id="new-events-track" class="flex transition-transform duration-500 ease-out" style="transform: translateX(0%);">
-                    </div>
+            <div class="overflow-hidden rounded-xl py-4"> 
+                <div id="new-events-track" class="flex transition-transform duration-500 ease-out" style="transform: translateX(0%);"></div>
             </div>
-
             <button id="new-prev-btn" class="absolute left-0 top-1/2 -translate-y-1/2 bg-white text-gray-800 p-3 rounded-full shadow-md hover:bg-gray-50 focus:outline-none transition-colors z-10 disabled:opacity-50 disabled:cursor-not-allowed">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
@@ -165,53 +167,128 @@
 </div>
 
 <style>
-
+    /* Tooltip Utilities */
     .tooltip-container {
-    position: relative;      
-    display: inline-block;   
-    cursor: help;            
+        position: relative;      
+        display: inline-block;   
+        cursor: help;            
     }
-
-
 
     .tooltip-text {
-    visibility: hidden;     
-    opacity: 0;              
-    background-color: #333;  
-    color: #fff;             
-    text-align: center;
-    padding: 8px 12px;
-    border-radius: 6px;
-    width: max-content;     
-    max-width: 200px;     
-    position: absolute;
-    z-index: 10;             
-    bottom: 130%;            
-    left: 50%;            
-    transform: translateX(-50%); 
-    transition: opacity 0.3s ease, visibility 0.3s ease;
-    overflow: visible;
+        visibility: hidden;     
+        opacity: 0;              
+        background-color: #333;  
+        color: #fff;             
+        text-align: center;
+        padding: 8px 12px;
+        border-radius: 6px;
+        width: max-content;     
+        max-width: 200px;     
+        position: absolute;
+        z-index: 10;             
+        bottom: 130%;            
+        left: 50%;            
+        transform: translateX(-50%); 
+        transition: opacity 0.3s ease, visibility 0.3s ease;
+        overflow: visible;
     }
 
-   
     .tooltip-text::after {
-    content: "";
-    position: absolute;
-    top: 100%;              
-    left: 50%;
-    margin-left: -6px;       
-    border-width: 6px;
-    border-style: solid;
-    border-color: #333 transparent transparent transparent; 
+        content: "";
+        position: absolute;
+        top: 100%;              
+        left: 50%;
+        margin-left: -6px;       
+        border-width: 6px;
+        border-style: solid;
+        border-color: #333 transparent transparent transparent; 
     }
-
 
     .tooltip-container:hover .tooltip-text {
-    visibility: visible;
-    opacity: 1;
+        visibility: visible;
+        opacity: 1;
+    }
+
+    /* Custom CSS Hover Logic to bypass Tailwind compiler limitations on dynamic JS strings */
+    .wishlist-hover-badge {
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.2s ease-in-out, visibility 0.2s ease-in-out;
+    }
+    
+    .event-card-link:hover .wishlist-hover-badge {
+        opacity: 1;
+        visibility: visible;
     }
 </style>
 
+<!-- Shared Application State -->
+<script>
+    // Expose current user ID securely for client-side API requests
+    const currentUserId = '@UserManager.GetUserId(User)';
+</script>
+
+<!-- Global Wishlist Handler -->
+<script>
+    /**
+     * Handles the global interaction for adding or removing an event from a user's wishlist.
+     * Evaluates the current state via a GET request, and issues the corresponding POST or DELETE.
+     */
+    window.wishlistAction = function(e, eventId) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (!currentUserId || currentUserId === '') {
+            alert("You must be logged in to use this feature.");
+            return;
+        }
+
+        const token = $('input[name="__RequestVerificationToken"]').val();
+        const wParams = { eventId: eventId, userId: currentUserId };
+
+        $.getJSON('/Wishlist/returnItem', wParams).done(function(isWishlisted) {
+            if (!isWishlisted) {
+                // Attach event to wishlist
+                $.ajax({
+                    url: '/Wishlist/addWishlistEvent',
+                    type: 'POST',
+                    data: wParams,
+                    headers: { "RequestVerificationToken": token },
+                    success: function(success) {
+                        if (success) {
+                            $(`.wishlist-id-${eventId}`).html(`
+                                <button type="button" onclick="window.wishlistAction(event, ${eventId})">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="#eab308" stroke="#eab308" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                    </svg>
+                                </button>`);
+                        }
+                    }
+                });
+            } else {
+                // Detach event from wishlist
+                $.ajax({
+                    url: '/Wishlist/deleteWishlistEvent',
+                    type: 'DELETE',
+                    data: wParams,
+                    headers: { "RequestVerificationToken": token },
+                    success: function(success) {
+                        if (success) {
+                            $(`.wishlist-id-${eventId}`).html(`
+                                <button type="button" onclick="window.wishlistAction(event, ${eventId})">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#eab308" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                    </svg>
+                                </button>`);
+                        }
+                    }
+                });
+            }
+        });
+    }
+</script>
+
+<!-- Category Slider Module -->
 <script>
     document.addEventListener('DOMContentLoaded', async function() {
         const track = document.getElementById('category-track');
@@ -227,190 +304,168 @@
         ];
 
         try {
-            const response = await fetch('/EventType/GetCategories'); // Update with your actual route
+            const response = await fetch('/EventType/GetCategories'); 
             const categories = await response.json();
 
             categories.forEach((category, index) => {
-                let colorClass = '';
                 let cardHtml = '';
 
-                if(category.imagePath==null){
-                colorClass = gradients[index % gradients.length];
-
-                cardHtml = `
-                    <div class="w-full sm:w-1/2 lg:w-1/3 flex-shrink-0 px-3">
-                        <a href="/Events/EventsForToday?category=${category.id}" class="relative block bg-gradient-to-br ${colorClass} rounded-2xl p-8 h-48 flex flex-col justify-end text-white shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer">
-                            <h3 class="absolute bottom-8 left-8 text-2xl font-bold">${category.name}</h3>
-                        </a>
-                    </div>
-                `;
-
-                }
-                else{
+                // Fallback to gradient if no category image is provided
+                if (!category.imagePath) {
+                    const colorClass = gradients[index % gradients.length];
                     cardHtml = `
-                    <div class="w-full sm:w-1/2 lg:w-1/3 flex-shrink-0 px-3">
-                        <a href="/Events/EventsForToday?category=${category.id}" class="relative block rounded-2xl h-48 flex flex-col justify-end text-white shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer">
-                            <img src="${category.imagePath}" alt="${category.name}" class="w-full h-full object-cover rounded-2xl" />
-                            <h3 class="absolute bottom-8 left-8 text-2xl font-bold">${category.name}</h3>
-                        </a>
-                    </div>
-                `;
+                        <div class="w-full sm:w-1/2 lg:w-1/3 flex-shrink-0 px-3">
+                            <a href="/Events/EventsForToday?category=${category.id}" class="relative block bg-gradient-to-br ${colorClass} rounded-2xl p-8 h-48 flex flex-col justify-end text-white shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer">
+                                <h3 class="absolute bottom-8 left-8 text-2xl font-bold">${category.name}</h3>
+                            </a>
+                        </div>
+                    `;
+                } else {
+                    cardHtml = `
+                        <div class="w-full sm:w-1/2 lg:w-1/3 flex-shrink-0 px-3">
+                            <a href="/Events/EventsForToday?category=${category.id}" class="relative block rounded-2xl h-48 flex flex-col justify-end text-white shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer">
+                                <img src="${category.imagePath}" alt="${category.name}" class="w-full h-full object-cover rounded-2xl" />
+                                <h3 class="absolute bottom-8 left-8 text-2xl font-bold">${category.name}</h3>
+                            </a>
+                        </div>
+                    `;
                 }
                 track.insertAdjacentHTML('beforeend', cardHtml);
             });
 
-            initializeSlider();
-
+            initializeSlider(track, prevBtn, nextBtn);
         } catch (error) {
             console.error("Failed to load categories:", error);
             track.innerHTML = '<p class="text-red-500 px-3">Failed to load categories.</p>';
         }
-
-
-        function initializeSlider() {
-            const cards = track.children;
-            if (cards.length === 0) return;
-
-            let currentIndex = 0;
-
-            function updateSlider() {
-                let visibleCards = 1;
-                if (window.innerWidth >= 1024) visibleCards = 3; 
-                else if (window.innerWidth >= 640) visibleCards = 2; 
-
-                const maxIndex = Math.max(0, cards.length - visibleCards);
-                
-                if (currentIndex < 0) currentIndex = 0;
-                if (currentIndex > maxIndex) currentIndex = maxIndex;
-
-                const cardWidth = cards[0].offsetWidth;
-                track.style.transform = `translateX(-${currentIndex * cardWidth}px)`;
-
-                prevBtn.disabled = currentIndex === 0;
-                nextBtn.disabled = currentIndex >= maxIndex || maxIndex === 0;
-            }
-
-            nextBtn.addEventListener('click', () => {
-                currentIndex++;
-                updateSlider();
-            });
-
-            prevBtn.addEventListener('click', () => {
-                currentIndex--;
-                updateSlider();
-            });
-
-            window.addEventListener('resize', updateSlider);
-            updateSlider(); // Set initial state
-        }
     });
+
+    /**
+     * Initializes generic slider behavior based on visible cards and viewport width
+     */
+    function initializeSlider(trackElement, prevButton, nextButton) {
+        const cards = trackElement.children;
+        if (cards.length === 0) return;
+
+        let currentIndex = 0;
+
+        function updateSlider() {
+            let visibleCards = 1;
+            if (window.innerWidth >= 1024) visibleCards = 3; 
+            else if (window.innerWidth >= 640) visibleCards = 2; 
+
+            const maxIndex = Math.max(0, cards.length - visibleCards);
+            
+            if (currentIndex < 0) currentIndex = 0;
+            if (currentIndex > maxIndex) currentIndex = maxIndex;
+
+            const cardWidth = cards[0].offsetWidth;
+            trackElement.style.transform = `translateX(-${currentIndex * cardWidth}px)`;
+
+            prevButton.disabled = currentIndex === 0;
+            nextButton.disabled = currentIndex >= maxIndex || maxIndex === 0;
+        }
+
+        nextButton.addEventListener('click', () => { currentIndex++; updateSlider(); });
+        prevButton.addEventListener('click', () => { currentIndex--; updateSlider(); });
+        window.addEventListener('resize', updateSlider);
+        
+        updateSlider(); 
+    }
 </script>
+
+<!-- Hero Carousel Module -->
 <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            const slides = document.querySelectorAll('.carousel-slide');
-            let currentIndex = 0;
+    document.addEventListener("DOMContentLoaded", function () {
+        async function populateCarousel() {
+            try {
+                const response = await fetch('/Events/getNewestEvents');
+                const events = await response.json();
+                const container = document.getElementById('carousel-container');
 
-            async function populateCarousel() {
-                try {
-                    const response = await fetch('/Events/getNewestEvents');
-                    const events = await response.json();
-                    const container = document.getElementById('carousel-container');
+                if (events.length === 0) {
+                    container.innerHTML = '<div class="absolute inset-0 flex items-center justify-center text-gray-500">No events found</div>';
+                    return;
+                }
 
-                    if (events.length === 0) {
-                        container.innerHTML = '<div class="absolute inset-0 flex items-center justify-center text-gray-500">No events found</div>';
-                        return;
+                container.innerHTML = ''; 
+
+                events.forEach((event, index) => {
+                    const visibilityClass = index === 0 ? 'opacity-100' : 'opacity-0 pointer-events-none';
+
+                    const formattedStartDate = new Date(event.startDateTime).toLocaleDateString();
+                    const formattedEndDate = new Date(event.endTime).toLocaleDateString();
+
+                    const slide = document.createElement('a');
+                    slide.href = `/Events/Details/${event.id}`;
+                    slide.className = `carousel-slide absolute inset-0 transition-opacity duration-1000 ease-in-out ${visibilityClass} bg-cover bg-center flex flex-col justify-end p-6 cursor-pointer`;
+                    
+                    if (event.imagePath) {
+                        slide.style.backgroundImage = `url('${event.imagePath}')`;
+                    } else {
+                        slide.classList.add('bg-gray-800'); 
                     }
 
-                    container.innerHTML = ''; 
+                    const hasMultipleCities = event.hasMultipleCities || false;
+                    const distinctCities = event.distinctCities || 0;
+                    const cityName = event.distinctCities === 0 ? event.cityName : (event.cityNames ? event.cityNames[0] : 'Unknown');
 
-                    events.forEach((event, index) => {
-                        const visibilityClass = index === 0 ? 'opacity-100' : 'opacity-0 pointer-events-none';
-
-                        const dateObj = new Date(event.startDateTime);
-                        const formattedStartDate = dateObj.toLocaleDateString();
-                        const endDateObj = new Date(event.endTime);
-                        const formattedEndDate = endDateObj.toLocaleDateString();
-
-                        const slide = document.createElement('a');
-                        slide.href = `/Events/Details/${event.id}`;
-                        slide.className = `carousel-slide absolute inset-0 transition-opacity duration-1000 ease-in-out ${visibilityClass} bg-cover bg-center flex flex-col justify-end p-6 cursor-pointer`;
-                        
-                        if (event.imagePath) {
-                            slide.style.backgroundImage = `url('${event.imagePath}')`;
-                        } else {
-                            slide.classList.add('bg-gray-800'); // Fallback color if no image
-                        }
-
-                        const hasMultipleCities = event.hasMultipleCities || event.HasMultipleCities || false;
-                        const distinctCities = event.distinctCities || event.DistinctCities || 0;
-                        let cityName = event.cityNames || event.cityNames[0];
-                        if (event.distinctCities ===0){
-                            cityName = event.cityName;
-                        }
+                    let cityBadgeHtml = hasMultipleCities ? `<p>${distinctCities} Cities</p>` : `<p>${cityName}</p>`;
                     
-
-                        const cityNamesList = event.cityNames ? event.cityNames.join(', ') : '';
-
-
-                        let cityBadgeHtml = hasMultipleCities 
-                            ? `<p>${distinctCities} Cities</p>` 
-                            : `<p>${cityName}</p>`;
-
-                        
-                        slide.innerHTML = `
-                            <div class="absolute inset-0 bg-black bg-opacity-40"></div>
-                            <div class="relative z-10 text-white">
-                                <h3 class="text-3xl font-bold">${event.name}</h3>
-                                <div class="flex gap-4 text-sm mt-2 opacity-90">
-                                    <span>${cityBadgeHtml || 'Unknown City'}</span>
-                                    <span>${formattedStartDate} - ${formattedEndDate}</span>
-                                    <span>${event.eventType || 'Unknown Type'}</span>
-                                </div>
+                    slide.innerHTML = `
+                        <div class="absolute inset-0 bg-black bg-opacity-40"></div>
+                        <div class="relative z-10 text-white">
+                            <h3 class="text-3xl font-bold">${event.name}</h3>
+                            <div class="flex gap-4 text-sm mt-2 opacity-90">
+                                <span>${cityBadgeHtml}</span>
+                                <span>${formattedStartDate} - ${formattedEndDate}</span>
+                                <span>${event.eventType || 'Unknown Type'}</span>
                             </div>
-                        `;
-                        
-                        container.appendChild(slide);
-                    });
+                        </div>
+                    `;
+                    
+                    container.appendChild(slide);
+                });
 
-                    startCarouselLogic();
-
-                } catch (err) {
-                    console.error("Carousel fetch error:", err);
-                }
+                startCarouselLogic();
+            } catch (err) {
+                console.error("Carousel fetch error:", err);
             }
+        }
 
-            function startCarouselLogic() {
-                const slides = document.querySelectorAll('.carousel-slide');
-                if (slides.length <= 1) return; 
+        function startCarouselLogic() {
+            const slides = document.querySelectorAll('.carousel-slide');
+            if (slides.length <= 1) return; 
 
-                let currentIndex = 0;
-                setInterval(() => {
-                    slides[currentIndex].classList.remove('opacity-100');
-                    slides[currentIndex].classList.add('opacity-0', 'pointer-events-none');
+            let currentIndex = 0;
+            setInterval(() => {
+                slides[currentIndex].classList.remove('opacity-100');
+                slides[currentIndex].classList.add('opacity-0', 'pointer-events-none');
 
-                    currentIndex = (currentIndex + 1) % slides.length;
+                currentIndex = (currentIndex + 1) % slides.length;
 
-                    slides[currentIndex].classList.remove('opacity-0', 'pointer-events-none');
-                    slides[currentIndex].classList.add('opacity-100');
-                }, 4000);
-            }
+                slides[currentIndex].classList.remove('opacity-0', 'pointer-events-none');
+                slides[currentIndex].classList.add('opacity-100');
+            }, 4000);
+        }
 
-            populateCarousel();
+        populateCarousel();
+    });
+</script>
 
-        });
-    </script>
-    <script>
+<!-- Autocomplete Search Module -->
+<script>
     $(document).ready(function () {
         let autocompleteTimeout;
         let autocompleteResults = [];
         let currentAutocompleteIndex = -1;
-        let maxAutocompleteResults = 8;
+        const maxAutocompleteResults = 8;
 
+        // Perform standard routing search on explicit submit
         $('#search-button').click(function() {
             const searchTerm = $('#search-term').val().trim();
             
             if (searchTerm.length > 0) {
-                // Redirect to the main search page passing the search term in the query string
                 window.location.href = '/Events/EventsForToday?searchTerm=' + encodeURIComponent(searchTerm);
             } else {
                 $('#search-validation-message').removeClass('hidden');
@@ -418,7 +473,7 @@
         });
 
         $('#search-term').on('input', function() {
-            $('#search-validation-message').addClass('hidden'); // Hide error on type
+            $('#search-validation-message').addClass('hidden'); 
             const query = $(this).val().trim();
 
             if (autocompleteTimeout) clearTimeout(autocompleteTimeout);
@@ -428,16 +483,15 @@
                 return;
             }
 
-            autocompleteTimeout = setTimeout(function() {
-                fetchAutocompleteResults(query);
-            }, 300);
+            // Debounce network requests
+            autocompleteTimeout = setTimeout(() => { fetchAutocompleteResults(query); }, 300);
         });
 
+        // Keyboard accessibility
         $('#search-term').on('keydown', function(e) {
             const dropdown = $('#autocomplete-dropdown');
             const isVisible = !dropdown.hasClass('hidden');
 
-            // Enter key: If dropdown isn't active or no item selected, perform search
             if (e.keyCode === 13) {
                 e.preventDefault();
                 if (currentAutocompleteIndex >= 0 && isVisible) {
@@ -450,20 +504,9 @@
 
             if (!isVisible) return;
 
-            if (e.keyCode === 40) {
-                e.preventDefault();
-                navigateAutocomplete(1);
-            }
-            // Up arrow
-            else if (e.keyCode === 38) {
-                e.preventDefault();
-                navigateAutocomplete(-1);
-            }
-            // Escape
-            else if (e.keyCode === 27) {
-                dropdown.addClass('hidden');
-                currentAutocompleteIndex = -1;
-            }
+            if (e.keyCode === 40) { e.preventDefault(); navigateAutocomplete(1); } // Down
+            else if (e.keyCode === 38) { e.preventDefault(); navigateAutocomplete(-1); } // Up
+            else if (e.keyCode === 27) { dropdown.addClass('hidden'); currentAutocompleteIndex = -1; } // Esc
         });
 
         $(document).on('click', function(e) {
@@ -472,16 +515,12 @@
             }
         });
 
-
         function fetchAutocompleteResults(query) {
             $.ajax({
-                url: '/Events/GetAutocompleteResults', // Make sure this endpoint exists!
+                url: '/Events/GetAutocompleteResults', 
                 data: { query: query },
-                success: function(data) {
-                    displayAutocompleteResults(data, query);
-                },
+                success: function(data) { displayAutocompleteResults(data, query); },
                 error: function() {
-                    // Fallback mock data if endpoint fails
                     const mockResults = getMockAutocompleteResults(query);
                     displayAutocompleteResults(mockResults, query);
                 }
@@ -516,16 +555,13 @@
                         </div>
                     `)
                     .data('index', index)
-                    .on('click', function() {
-                        selectAutocompleteItem(index);
-                    });
+                    .on('click', function() { selectAutocompleteItem(index); });
 
                 dropdown.append(item);
             });
 
             dropdown.removeClass('hidden');
         }
-
 
         function navigateAutocomplete(direction) {
             const items = $('.autocomplete-item');
@@ -534,11 +570,8 @@
             items.removeClass('bg-gray-100');
             currentAutocompleteIndex += direction;
 
-            if (currentAutocompleteIndex >= items.length) {
-                currentAutocompleteIndex = 0;
-            } else if (currentAutocompleteIndex < 0) {
-                currentAutocompleteIndex = items.length - 1;
-            }
+            if (currentAutocompleteIndex >= items.length) currentAutocompleteIndex = 0;
+            else if (currentAutocompleteIndex < 0) currentAutocompleteIndex = items.length - 1;
 
             items.eq(currentAutocompleteIndex).addClass('bg-gray-100');
         }
@@ -549,8 +582,6 @@
 
             $('#search-term').val(result.text);
             $('#autocomplete-dropdown').addClass('hidden');
-
-            // Immediately trigger the search redirect
             $('#search-button').click();
         }
 
@@ -566,17 +597,15 @@
             const events = ['Music Concert Series', 'Comedy Night', 'Art Exhibition'];
             let results = [];
 
-            cities.filter(city => city.toLowerCase().includes(query)).forEach(city => {
-                results.push({ text: city, type: 'location', subtext: 'City' });
-            });
-            events.filter(event => event.toLowerCase().includes(query)).forEach(event => {
-                results.push({ text: event, type: 'event', subtext: 'Event' });
-            });
-
+            cities.filter(c => c.toLowerCase().includes(query)).forEach(c => { results.push({ text: c, type: 'location', subtext: 'City' }); });
+            events.filter(e => e.toLowerCase().includes(query)).forEach(e => { results.push({ text: e, type: 'event', subtext: 'Event' }); });
+            
             return results;
         }
     });
 </script>
+
+<!-- New Arrivals Slider Module -->
 <script>
     document.addEventListener('DOMContentLoaded', async function() {
         const newTrack = document.getElementById('new-events-track');
@@ -584,7 +613,6 @@
         const newNextBtn = document.getElementById('new-next-btn');
 
         try {
-            // Fetch the newest events using your existing endpoint
             const response = await fetch('/Events/getNewestEvents'); 
             const events = await response.json();
 
@@ -594,27 +622,40 @@
             }
 
             events.forEach((event) => {
+                const formattedStartDate = new Date(event.startDateTime).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                const formattedEndDate = new Date(event.endTime).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                const hasMultipleCities = event.hasMultipleCities || false;
+                const distinctCities = event.distinctCities || 0;
+                const cityName = event.distinctCities === 0 ? event.cityName : (event.cityNames ? event.cityNames[0] : 'Unknown');
 
-                const dateObj = new Date(event.startDateTime);
-                const formattedStartDate = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-                const endDateObj = new Date(event.endTime);
-                const formattedEndDate = endDateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-                const hasMultipleCities = event.hasMultipleCities || event.HasMultipleCities || false;
-                const distinctCities = event.distinctCities || event.DistinctCities || 0;
-                let cityName = event.cityNames || event.cityNames[0];
-                if (event.distinctCities ===0){
-                    cityName = event.cityName;
+                // Using standard CSS hover classes defined in the style block above
+                let wishlistBadge = `
+                <div class="wishlist-hover-badge cursor-help absolute top-3 left-6 mt-3 mr-3 bg-white text-indigo-800 text-xs font-bold px-2 py-1 z-50 rounded-full shadow-sm wishlist-id-${event.id}">
+                    <button type="button" onclick="window.wishlistAction(event, ${event.id})">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#eab308" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                        </svg>
+                    </button>
+                </div>`;
+
+                if (currentUserId !== '') {
+                    $.getJSON('/Wishlist/returnItem', { eventId: event.id, userId: currentUserId }).done(function(isWishlisted) {
+                        if (isWishlisted) {
+                            $(`.wishlist-id-${event.id}`).html(`
+                                <button type="button" onclick="window.wishlistAction(event, ${event.id})">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="#eab308" stroke="#eab308" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                    </svg>
+                                </button>
+                            `);
+                        }
+                    });
                 }
             
-
                 const cityNamesList = event.cityNames ? event.cityNames.join(', ') : '';
-
-
-                let cityBadgeHtml = hasMultipleCities 
-                    ? `<p>${distinctCities} Cities</p>
-                    <span class="tooltip-text cursor-help" role="tooltip">${cityNamesList}</span>` 
+                const cityBadgeHtml = hasMultipleCities 
+                    ? `<p>${distinctCities} Cities</p><span class="tooltip-text cursor-help" role="tooltip">${cityNamesList}</span>` 
                     : `<p>${cityName}</p>`;
-
                 
                 const imageSection = event.imagePath 
                     ? `<img src="${event.imagePath}" alt="${event.name}" class="w-full h-40 object-cover rounded-t-xl" />`
@@ -622,11 +663,12 @@
                         <svg class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                     </div>`;
 
-              
+                // Uses the event-card-link class to trigger the CSS hover effect
                 const cardHtml = `
                     <div class="w-full sm:w-1/2 lg:w-1/3 flex-shrink-0 px-3">
-                        <a href="/Events/Details/${event.id}" class="block bg-white rounded-xl shadow-md hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer h-full border border-gray-100">
+                        <a href="/Events/Details/${event.id}" class="event-card-link block bg-white rounded-xl shadow-md hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer h-full border border-gray-100 relative">
                             ${imageSection}
+                            ${wishlistBadge}
                             <div class="p-5">
                                 <p class="text-xs font-bold text-blue-600 mb-1 uppercase tracking-wider">${event.eventType || 'Event'}</p>
                                 <h3 class="text-lg font-bold text-gray-900 mb-2 line-clamp-2">${event.name}</h3>
@@ -644,90 +686,66 @@
                 newTrack.insertAdjacentHTML('beforeend', cardHtml);
             });
 
-            initializeNewSlider();
-
+            // Delegate slider logic to shared generic initializer
+            initializeSlider(newTrack, newPrevBtn, newNextBtn);
         } catch (error) {
             console.error("Failed to load new events:", error);
             newTrack.innerHTML = '<p class="text-red-500 px-3">Failed to load newest events.</p>';
-        }
-
-        function initializeNewSlider() {
-            const cards = newTrack.children;
-            if (cards.length === 0) return;
-
-            let currentIndex = 0;
-
-            function updateNewSlider() {
-                let visibleCards = 1;
-                if (window.innerWidth >= 1024) visibleCards = 3; 
-                else if (window.innerWidth >= 640) visibleCards = 2; 
-
-                const maxIndex = Math.max(0, cards.length - visibleCards);
-                
-                if (currentIndex < 0) currentIndex = 0;
-                if (currentIndex > maxIndex) currentIndex = maxIndex;
-
-                const cardWidth = cards[0].offsetWidth;
-                newTrack.style.transform = `translateX(-${currentIndex * cardWidth}px)`;
-
-                newPrevBtn.disabled = currentIndex === 0;
-                newNextBtn.disabled = currentIndex >= maxIndex || maxIndex === 0;
-            }
-
-            newNextBtn.addEventListener('click', () => {
-                currentIndex++;
-                updateNewSlider();
-            });
-
-            newPrevBtn.addEventListener('click', () => {
-                currentIndex--;
-                updateNewSlider();
-            });
-
-            window.addEventListener('resize', updateNewSlider);
-            updateNewSlider(); // Set initial state
         }
     });
 </script>
 
+<!-- Recent Events Slider Module -->
 <script>
     document.addEventListener('DOMContentLoaded', async function() {
-        const newTrack = document.getElementById('recent-events-track');
-        const newPrevBtn = document.getElementById('recent-prev-btn');
-        const newNextBtn = document.getElementById('recent-next-btn');
+        const recentTrack = document.getElementById('recent-events-track');
+        const recentPrevBtn = document.getElementById('recent-prev-btn');
+        const recentNextBtn = document.getElementById('recent-next-btn');
 
         try {
-            // Fetch the newest events using your existing endpoint
             const response = await fetch('/Events/getRecentEvents'); 
             const events = await response.json();
 
             if (events.length === 0) {
-                newTrack.innerHTML = '<p class="text-gray-500 px-3">No new events found.</p>';
+                recentTrack.innerHTML = '<p class="text-gray-500 px-3">No recent events found.</p>';
                 return;
             }
 
             events.forEach((event) => {
+                const formattedStartDate = new Date(event.startDateTime).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                const formattedEndDate = new Date(event.endTime).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                const hasMultipleCities = event.hasMultipleCities || false;
+                const distinctCities = event.distinctCities || 0;
+                const cityName = event.distinctCities === 0 ? event.cityName : (event.cityNames ? event.cityNames[0] : 'Unknown');
                 
-                const dateObj = new Date(event.startDateTime);
-                const formattedStartDate = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-                const endDateObj = new Date(event.endTime);
-                const formattedEndDate = endDateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-                const hasMultipleCities = event.hasMultipleCities || event.HasMultipleCities || false;
-                const distinctCities = event.distinctCities || event.DistinctCities || 0;
-                let cityName = event.cityNames || event.cityNames[0];
-                if (event.distinctCities ===0){
-                    cityName = event.cityName;
+                // Using standard CSS hover classes defined in the style block above
+                let wishlistBadge = `
+                <div class="wishlist-hover-badge cursor-help absolute top-3 left-6 mt-3 mr-3 bg-white text-indigo-800 text-xs font-bold px-2 py-1 z-50 rounded-full shadow-sm wishlist-id-${event.id}">
+                    <button type="button" onclick="window.wishlistAction(event, ${event.id})">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#eab308" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                        </svg>
+                    </button>
+                </div>`;
+
+                if (currentUserId !== '') {
+                    $.getJSON('/Wishlist/returnItem', { eventId: event.id, userId: currentUserId }).done(function(isWishlisted) {
+                        if (isWishlisted) {
+                            $(`.wishlist-id-${event.id}`).html(`
+                                <button type="button" onclick="window.wishlistAction(event, ${event.id})">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="#eab308" stroke="#eab308" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                    </svg>
+                                </button>
+                            `);
+                        }
+                    });
                 }
-            
-
+                
                 const cityNamesList = event.cityNames ? event.cityNames.join(', ') : '';
-
-
-                let cityBadgeHtml = hasMultipleCities 
-                    ? `<p>${distinctCities} Cities</p>
-                    <span class="tooltip-text cursor-help" role="tooltip">${cityNamesList}</span>` 
+                const cityBadgeHtml = hasMultipleCities 
+                    ? `<p>${distinctCities} Cities</p><span class="tooltip-text cursor-help" role="tooltip">${cityNamesList}</span>` 
                     : `<p>${cityName}</p>`;
-
                 
                 const imageSection = event.imagePath 
                     ? `<img src="${event.imagePath}" alt="${event.name}" class="w-full h-40 object-cover rounded-t-xl" />`
@@ -735,11 +753,12 @@
                         <svg class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                     </div>`;
 
-              
+                // Uses the event-card-link class to trigger the CSS hover effect
                 const cardHtml = `
                     <div class="w-full sm:w-1/2 lg:w-1/3 flex-shrink-0 px-3">
-                        <a href="/Events/Details/${event.id}" class="block bg-white rounded-xl shadow-md hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer h-full border border-gray-100">
+                        <a href="/Events/Details/${event.id}" class="event-card-link block bg-white rounded-xl shadow-md hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer h-full border border-gray-100 relative">
                             ${imageSection}
+                            ${wishlistBadge}
                             <div class="p-5">
                                 <p class="text-xs font-bold text-blue-600 mb-1 uppercase tracking-wider">${event.eventType || 'Event'}</p>
                                 <h3 class="text-lg font-bold text-gray-900 mb-2 line-clamp-2">${event.name}</h3>
@@ -754,51 +773,14 @@
                         </a>
                     </div>
                 `;
-                newTrack.insertAdjacentHTML('beforeend', cardHtml);
+                recentTrack.insertAdjacentHTML('beforeend', cardHtml);
             });
 
-            initializeNewSlider();
-
+            // Delegate slider logic to shared generic initializer
+            initializeSlider(recentTrack, recentPrevBtn, recentNextBtn);
         } catch (error) {
-            console.error("Failed to load new events:", error);
-            newTrack.innerHTML = '<p class="text-red-500 px-3">Failed to load newest events.</p>';
-        }
-
-        function initializeNewSlider() {
-            const cards = newTrack.children;
-            if (cards.length === 0) return;
-
-            let currentIndex = 0;
-
-            function updateNewSlider() {
-                let visibleCards = 1;
-                if (window.innerWidth >= 1024) visibleCards = 3; 
-                else if (window.innerWidth >= 640) visibleCards = 2; 
-
-                const maxIndex = Math.max(0, cards.length - visibleCards);
-                
-                if (currentIndex < 0) currentIndex = 0;
-                if (currentIndex > maxIndex) currentIndex = maxIndex;
-
-                const cardWidth = cards[0].offsetWidth;
-                newTrack.style.transform = `translateX(-${currentIndex * cardWidth}px)`;
-
-                newPrevBtn.disabled = currentIndex === 0;
-                newNextBtn.disabled = currentIndex >= maxIndex || maxIndex === 0;
-            }
-
-            newNextBtn.addEventListener('click', () => {
-                currentIndex++;
-                updateNewSlider();
-            });
-
-            newPrevBtn.addEventListener('click', () => {
-                currentIndex--;
-                updateNewSlider();
-            });
-
-            window.addEventListener('resize', updateNewSlider);
-            updateNewSlider(); 
+            console.error("Failed to load recent events:", error);
+            recentTrack.innerHTML = '<p class="text-red-500 px-3">Failed to load recent events.</p>';
         }
     });
 </script>

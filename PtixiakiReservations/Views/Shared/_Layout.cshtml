@@ -143,6 +143,7 @@
                             <!-- Reservations Link -->
                             <a href="@Url.Action("Index", "Reservation")" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600">My Reservations</a>
 
+                            <a href="@Url.Action("Index", "Wishlist")" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600">My Wishlist</a>
 
                             <!-- Admin Panel Link - Only visible to admins -->
                             @if (User.IsInRole("Admin"))
@@ -204,14 +205,14 @@
                 <!-- Home link - visible to all users -->
                 <a href="@Url.Action("HomePage", "Events")"
                    class="text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium">Home</a>
-                @*
+                
                 <!-- Reservations link - visible to all logged-in users -->
                 @if (SignInManager.IsSignedIn(User))
                 {
                     <a href="@Url.Action("Index", "Reservation")"
                        class="text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium">Reservations</a>
                 }
-                *@
+                
                 <!-- Venue manager links - only visible to venue managers -->
                 @if (isMobileEventManager|| isMobileAdmin || isMobileSuper)
                 {
