@@ -1,36 +1,45 @@
+@using Microsoft.AspNetCore.Identity
 @model PtixiakiReservations.Models.Event
+@inject UserManager<ApplicationUser> UserManager
 
 @{
     ViewData["Title"] = "Event Details";
     var displayDescription = Model.Description ?? Model.ParentEvent?.Description;
+    
+    // Determine if this event acts as a master container for multiple sub-schedules
     var hasSchedules = Model.ParentEventId == null && Model.ChildEvents != null && Model.ChildEvents.Any();
 }
 
-<div class="container mx-auto px-4 py-8 max-w-9xl">
+<div class="container mx-auto px-4 py-8 max-w-7xl">
+    
+    <!-- Security token required for state-mutating AJAX operations -->
+    @Html.AntiForgeryToken()
+    
     <div class="bg-white rounded-xl shadow-lg overflow-hidden relative">
-        <!-- Header with gradient background -->
+        <!-- Event Header Banner -->
         <div class="bg-gradient-to-r from-blue-600 to-indigo-700 py-6 px-8">
             <h1 class="text-3xl font-bold text-white">@Model.Name</h1>
         </div>
 
-        <div class="overflow-hidden">
+        <!-- Event Hero Image -->
+        <div class="overflow-hidden h-64 md:h-96">
            @{
-            var finalPath = !string.IsNullOrEmpty(Model.DisplayImagePath) 
-                ? Model.DisplayImagePath 
-                : Model.ParentEvent?.DisplayImagePath;
+                var finalPath = !string.IsNullOrEmpty(Model.DisplayImagePath) 
+                    ? Model.DisplayImagePath 
+                    : Model.ParentEvent?.DisplayImagePath;
             }
 
             @if (!string.IsNullOrEmpty(finalPath))
-                    {
-                        <img src="@finalPath" class="w-full h-full object-cover transform hover:scale-105 transition-transform duration-300" />
-                    }
-                    else
-                    {
-                        <img src="@Model.EventType?.ImagePath" alt="@Model.EventType?.Name" class="w-full h-full object-cover transform hover:scale-105 transition-transform duration-300" />
-                    }
+            {
+                <img src="@finalPath" class="w-full h-full object-cover transform hover:scale-105 transition-transform duration-300" />
+            }
+            else
+            {
+                <img src="@Model.EventType?.ImagePath" alt="@Model.EventType?.Name" class="w-full h-full object-cover transform hover:scale-105 transition-transform duration-300" />
+            }
         </div>
 
-        <!-- STICKY ANIMATED MENU -->
+        <!-- Sticky Navigation Menu -->
         <div class="sticky top-0 z-40 bg-white/95 backdrop-blur-sm border-b border-gray-200 shadow-sm w-full">
             <nav class="flex px-8 py-4 space-x-8 overflow-x-auto hide-scrollbar">
                 <a href="#general-info" class="text-sm font-bold text-gray-600 hover:text-blue-600 uppercase tracking-wider transition-colors relative group py-1">
@@ -67,7 +76,7 @@
         <div class="p-6">
             <div id="general-info" class="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-6 mb-8 scroll-mt-24">
                 
-                <!-- LEFT COLUMN - Blue Info Box -->
+                <!-- General Information Panel -->
                 <div class="bg-blue-50 p-8 rounded-xl flex flex-col gap-6 border border-blue-100 shadow-sm h-full">
                     
                     <!-- Date & Time -->
@@ -95,13 +104,12 @@
                     </div>
 
                     @{
+                        // Venue resolution logic: Inherit from children if master event lacks dedicated venue
                         bool hasMultipleVenues = false;
                         PtixiakiReservations.Models.Venue displayVenue = null; 
                         
-                        // Check if it has child events
                         if (Model.ChildEvents != null && Model.ChildEvents.Any())
                         {
-                            // Since it's a parent event, Model.Venue is null. We look at the children's venues.
                             var childVenues = Model.ChildEvents
                                 .Where(c => c.Venue != null)
                                 .Select(c => c.Venue)
@@ -109,29 +117,19 @@
 
                             if (childVenues.Any())
                             {
-                                // Count how many unique locations the children have
                                 var distinctVenueIds = childVenues.Select(v => v.Id).Distinct().ToList();
                                 
-                                if (distinctVenueIds.Count > 1)
-                                {
-                                    // Multiple different locations
-                                    hasMultipleVenues = true;
-                                }
-                                else
-                                {
-                                    // Only the same location across all children
-                                    displayVenue = childVenues.First();
-                                }
+                                if (distinctVenueIds.Count > 1) hasMultipleVenues = true;
+                                else displayVenue = childVenues.First();
                             }
                         }
                         else
                         {
-                            // It doesn't have child events, so it displays its own venue
                             displayVenue = Model.Venue;
                         }
                     }
 
-                    <!-- Location -->
+                    <!-- Location details -->
                     @if (hasMultipleVenues || displayVenue != null)
                     {
                         <div class="border-t border-blue-200/70"></div>
@@ -171,7 +169,7 @@
                         </div>
                     }
 
-                    <!-- Event Type -->
+                    <!-- Event Category -->
                     @if (Model.EventType != null)
                     {
                         <div class="border-t border-blue-200/70"></div>
@@ -188,9 +186,8 @@
                     }
                 </div>
 
-                <!-- RIGHT COLUMN - Action Card -->
+                <!-- Call to Action Panel -->
                 <div>
-                    <!-- sticky top-24 keeps the reservation box visible below the nav menu -->
                     <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-8 sticky top-24">
                         @if(Model.ParentEventId != null || Model.ChildEvents == null || !Model.ChildEvents.Any()){
                             <div class="text-center">
@@ -211,17 +208,20 @@
                         else{
                             <div class="text-center">
                                 <h3 class="text-2xl font-bold text-gray-900 mb-2">Reserve Your Spot</h3>
-                                
                                 <a href="#available-schedules"
                                 class="w-full block text-center px-6 py-4 bg-blue-600 text-white font-semibold text-lg rounded-lg shadow-md hover:bg-blue-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 transform hover:-translate-y-1">
                                     Select a Schedule
                                 </a>
                             </div>
                         }
+                        
+                        <!-- Dynamic Wishlist Container injected via JS -->
+                        <div class="mt-6 text-center wishlist-container"></div>
                     </div>
                 </div>
             </div>
 
+            <!-- Description Section -->
             @if (displayDescription != null)
             {
             <div id="descriptionArea" class="mt-8 w-full scroll-mt-24">
@@ -237,8 +237,8 @@
             </div>
             }
             
+            <!-- Dynamic Image Gallery -->
             <div class="relative w-full h-[300px] md:h-[450px] lg:h-[600px] group overflow-hidden bg-gray-100 rounded-xl mt-8" id="gallery-container" data-event-id="@Model.Id" data-event-type="@Model.EventType?.Name">
-                
                 <div id="carousel-track" class="flex w-full h-full overflow-x-auto scroll-smooth snap-x snap-mandatory scrollbar-hide">
                     <div id="gallery-fallback" class="w-full h-full flex-none flex items-center justify-center bg-gray-100">
                         <div class="animate-pulse text-indigo-500 font-bold text-lg">Loading images...</div>
@@ -253,7 +253,7 @@
                 </button>
             </div>
            
-
+            <!-- Organizer Details -->
             @if(Model.Organizer != null){
                 <div id="OrganizerInfo" class="mt-8 lg:w-1/2 rounded-xl border border-gray-200 bg-gray-50 shadow-sm p-6 scroll-mt-24">
                     <div class="flex items-center mb-4 border-b border-gray-200 pb-3">
@@ -290,7 +290,7 @@
         </div>
     </div>
     
-    <!-- Sub Events -->
+    <!-- Sub-Schedules Pagination Table (For Master Events) -->
     @if(hasSchedules){
         var schedulePageSize = 10;
         var schedulePage = 1;
@@ -312,7 +312,7 @@
         <div id="available-schedules" class="overflow-x-auto mt-10 rounded-xl shadow-lg scroll-mt-24">
             <div class="bg-gray-50 px-8 py-5 border-b border-gray-200 flex justify-between items-center">
                 <h2 class="text-xl font-bold text-gray-800">Available Schedules</h2>
-                <span class="bg-blue-100 text-blue-800 text-l font-semibold px-3 py-1 rounded-full">
+                <span class="bg-blue-100 text-blue-800 text-lg font-semibold px-3 py-1 rounded-full">
                     @Model.ChildEvents.Count
                 </span>
             </div>
@@ -360,6 +360,7 @@
                     }
                 </tbody>
             </table>
+            
             @if (totalSchedulePages > 1)
             {
                 <div class="bg-white px-8 py-5 border-t border-gray-200 flex items-center justify-center gap-2">
@@ -400,7 +401,7 @@
         </div>
     }
 
-    <!-- Back Button -->
+    <!-- Navigation Utility -->
     <div class="mt-8">
         <a href="@Url.Action("EventsForToday", "Events")" class="inline-flex items-center text-blue-600 hover:text-blue-800 transition-colors font-medium">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -421,13 +422,19 @@
         -webkit-box-orient: vertical;  
         overflow: hidden;
     }
-
 </style>
+
+<!-- Shared Client State -->
+<script>
+    // Required to bind the global wishlist function cleanly
+    const currentUserId = '@UserManager.GetUserId(User)' || '';
+</script>
 
 @section Scripts {
 <script type="module">
     import { getEventSvg } from "/js/event-svg.js";
 
+    // 1. Gallery Slider Logic
     const track = document.getElementById('carousel-track');
     const btnPrev = document.getElementById('btn-prev');
     const btnNext = document.getElementById('btn-next');
@@ -439,9 +446,108 @@
             track.scrollBy({ left: track.offsetWidth, behavior: 'smooth' });
         });
     }
- 
 
-    // 2. Main fetch logic
+    // 2. DOM Initialization
+    $(document).ready(function () {
+        const eventId = '@Model.Id';
+        const wishlistContainer = $('.wishlist-container');
+
+        // Setup the default un-wishlisted state structure 
+        let defaultWishlistState = `
+        <div class="flex items-center justify-center space-x-3 mt-2">
+            <h4 class="text-gray-600 text-sm font-bold uppercase tracking-wider">Add to Wishlist</h4>
+            
+            <div id="wishlist-id-${eventId}" class="cursor-pointer flex justify-center items-center bg-white p-2 rounded-full shadow-sm border border-gray-200 hover:shadow-md hover:bg-gray-50 transition-all">
+                <button type="button" onclick="window.wishlistAction(event, ${eventId})" class="focus:outline-none flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#eab308" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        `;
+
+        wishlistContainer.html(defaultWishlistState);
+
+        // Asynchronously check database state and override if already wishlisted
+        if (currentUserId !== '') {
+            let wParams = { eventId: eventId, userId: currentUserId };
+            $.getJSON('/Wishlist/returnItem', wParams)
+                .done(function(isWishlisted) {
+                    if (isWishlisted === true) {
+                        $('#wishlist-id-' + eventId).html(`
+                            <button type="button" onclick="window.wishlistAction(event, ${eventId})" class="focus:outline-none">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#eab308" stroke="#eab308" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                </svg>
+                            </button>
+                        `);
+                    }
+                });
+        }
+    });
+
+    /**
+     * Handles state toggle for the Wishlist feature.
+     * Triggers POST/DELETE operations to the backend dynamically.
+     */
+    window.wishlistAction = function(e, eventId) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (!currentUserId || currentUserId === '') {
+            alert("You must be logged in to use this feature.");
+            return;
+        }
+
+        let token = $('input[name="__RequestVerificationToken"]').val();
+        let wParams = { eventId: eventId, userId: currentUserId };
+
+        $.getJSON('/Wishlist/returnItem', wParams)
+            .done(function(isWishlisted) {
+                if (!isWishlisted) {
+                    // Item is currently NOT wishlisted -> Submit POST to Add
+                    $.ajax({
+                        url: '/Wishlist/addWishlistEvent',
+                        type: 'POST',
+                        data: wParams,
+                        headers: { "RequestVerificationToken": token },
+                        success: function(success) {
+                            if (success === true) {
+                                $('#wishlist-id-' + eventId).html(`
+                                <button type="button" onclick="window.wishlistAction(event, ${eventId})" class="focus:outline-none">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#eab308" stroke="#eab308" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                    </svg>
+                                </button>`);
+                            }
+                        },
+                        error: function() { console.error("Failed to add to wishlist."); }
+                    });
+                } else {
+                    // Item IS wishlisted -> Submit DELETE to Remove
+                    $.ajax({
+                        url: '/Wishlist/deleteWishlistEvent',
+                        type: 'DELETE',
+                        data: wParams,
+                        headers: { "RequestVerificationToken": token },
+                        success: function(success) {
+                            if (success === true) {
+                                $('#wishlist-id-' + eventId).html(`
+                                <button type="button" onclick="window.wishlistAction(event, ${eventId})" class="focus:outline-none">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#eab308" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                    </svg>
+                                </button>`);
+                            }
+                        },
+                        error: function() { console.error("Failed to remove from wishlist."); }
+                    });
+                }
+            });
+    }
+
+    // 3. Dynamic UI Loading (Gallery & Visuals)
     async function loadGallery() {
         const container = document.getElementById('gallery-container');
         if (!container) return;
@@ -463,11 +569,8 @@
                 
                 data.images.forEach(path => {
                     const slide = document.createElement('div');
-                    
                     slide.className = 'w-full h-full flex-none snap-center flex items-center justify-center';
-                    
                     slide.innerHTML = '<img src="' + path + '" class="max-w-full max-h-full object-contain drop-shadow-md" />';
-                    
                     track.appendChild(slide);
                 });
 
@@ -493,7 +596,6 @@
         }
     }
 
-    // 3. Run the scripts
     loadGallery();
 
     document.querySelectorAll(".event-icon:not(#carousel-track .event-icon)").forEach(el => {
@@ -501,24 +603,20 @@
         el.innerHTML = getEventSvg(type.toLowerCase());
     });
 
+    // 4. Content truncation toggle system
     const descEl = document.getElementById('event-description');
     const toggleBtn = document.getElementById('toggle-description-btn');
     
     if (descEl && toggleBtn) {
 
         setTimeout(() => {
-
             descEl.classList.remove('custom-line-clamp');
             const fullHeight = descEl.scrollHeight;
             
-
             descEl.classList.add('custom-line-clamp');
             const clampedHeight = descEl.clientHeight;
             
-
-            if (fullHeight > clampedHeight + 10) {
-                toggleBtn.classList.remove('hidden');
-            }
+            if (fullHeight > clampedHeight + 10) toggleBtn.classList.remove('hidden');
         }, 100);
 
         toggleBtn.addEventListener('click', function() {
