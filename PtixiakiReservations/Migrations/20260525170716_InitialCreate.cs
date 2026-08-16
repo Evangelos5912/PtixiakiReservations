@@ -242,7 +242,7 @@ namespace PtixiakiReservations.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "SubArea",
+                name: "Layout",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
@@ -258,9 +258,9 @@ namespace PtixiakiReservations.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_SubArea", x => x.Id);
+                    table.PrimaryKey("PK_Layout", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_SubArea_Venue_VenueId",
+                        name: "FK_Layout_Venue_VenueId",
                         column: x => x.VenueId,
                         principalTable: "Venue",
                         principalColumn: "Id",
@@ -304,7 +304,7 @@ namespace PtixiakiReservations.Migrations
                     EndTime = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
                     EventTypeId = table.Column<int>(type: "integer", nullable: false),
                     VenueId = table.Column<int>(type: "integer", nullable: false),
-                    SubAreaId = table.Column<int>(type: "integer", nullable: true),
+                    LayoutId = table.Column<int>(type: "integer", nullable: true),
                     ParentEventId = table.Column<int>(type: "integer", nullable: true),
                     ImagePath = table.Column<string>(type: "text", nullable: true)
                 },
@@ -324,9 +324,9 @@ namespace PtixiakiReservations.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_Event_SubArea_SubAreaId",
-                        column: x => x.SubAreaId,
-                        principalTable: "SubArea",
+                        name: "FK_Event_Layout_LayoutId",
+                        column: x => x.LayoutId,
+                        principalTable: "Layout",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
@@ -347,15 +347,15 @@ namespace PtixiakiReservations.Migrations
                     Y = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
                     Name = table.Column<string>(type: "text", nullable: true),
                     Available = table.Column<bool>(type: "boolean", nullable: false),
-                    SubAreaId = table.Column<int>(type: "integer", nullable: false)
+                    LayoutId = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Seat", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Seat_SubArea_SubAreaId",
-                        column: x => x.SubAreaId,
-                        principalTable: "SubArea",
+                        name: "FK_Seat_Layout_LayoutId",
+                        column: x => x.LayoutId,
+                        principalTable: "Layout",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 });
@@ -452,9 +452,9 @@ namespace PtixiakiReservations.Migrations
                 column: "ParentEventId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Event_SubAreaId",
+                name: "IX_Event_LayoutId",
                 table: "Event",
-                column: "SubAreaId");
+                column: "LayoutId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Event_VenueId",
@@ -477,13 +477,13 @@ namespace PtixiakiReservations.Migrations
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Seat_SubAreaId",
+                name: "IX_Seat_LayoutId",
                 table: "Seat",
-                column: "SubAreaId");
+                column: "LayoutId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_SubArea_VenueId",
-                table: "SubArea",
+                name: "IX_Layout_VenueId",
+                table: "Layout",
                 column: "VenueId");
 
             migrationBuilder.CreateIndex(
@@ -544,7 +544,7 @@ namespace PtixiakiReservations.Migrations
                 name: "EventType");
 
             migrationBuilder.DropTable(
-                name: "SubArea");
+                name: "Layout");
 
             migrationBuilder.DropTable(
                 name: "Venue");

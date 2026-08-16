@@ -13,11 +13,11 @@ using PtixiakiReservations.Models.ViewModels;
 
 namespace PtixiakiReservations.Controllers
 {
-    public class SubAreasController : Controller
+    public class LayoutsController : Controller
     {
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _usermanager;
-        public SubAreasController(ApplicationDbContext context, UserManager<ApplicationUser> usermanager)
+        public LayoutsController(ApplicationDbContext context, UserManager<ApplicationUser> usermanager)
         {
             _context = context;
             _usermanager = usermanager;
@@ -26,21 +26,21 @@ namespace PtixiakiReservations.Controllers
         [Authorize(Roles = "Venue,Admin,SuperOrganizer")]
         public async Task<IActionResult> Index()
         {
-            var subAreas = await _context.SubArea
+            var layouts = await _context.Layout
                 .Select(sa => new
                 {
                     sa.Id,
                     sa.AreaName,
                     sa.Desc,
-                    HasSeats = _context.Seat.Any(seat => seat.SubAreaId == sa.Id)
+                    HasSeats = _context.Seat.Any(seat => seat.LayoutId == sa.Id)
                 })
                 .ToListAsync();
 
-            ViewBag.SubAreas = subAreas;
+            ViewBag.Layouts = layouts;
             return View();
         }
 
-        public async Task<IActionResult> ChooseSubArea(int venueId, int eventId, string duration, string resDate)
+        public async Task<IActionResult> ChooseLayout(int venueId, int eventId, string duration, string resDate)
         {
             var venue = await _context.Venue.FindAsync(venueId);
             if (venue == null)
@@ -56,7 +56,7 @@ namespace PtixiakiReservations.Controllers
             return View(venue);
         }
         
-        // GET: SubAreas/Details/5
+        // GET: Layouts/Details/5
         public async Task<IActionResult> Details(int? id, int? venueId)
         {
             if (id == null)
@@ -64,27 +64,27 @@ namespace PtixiakiReservations.Controllers
                 return NotFound();
             }
 
-            var subArea = await _context.SubArea
+            var layout = await _context.Layout
                 .Include(s => s.Venue)
                 .FirstOrDefaultAsync(m => m.Id == id);
-            if (subArea == null)
+            if (layout == null)
             {
                 return NotFound();
             }
 
             // Pass venueId to the view for proper back navigation
-            ViewBag.VenueId = venueId ?? subArea.VenueId;
-            ViewBag.VenueName = subArea.Venue?.Name;
+            ViewBag.VenueId = venueId ?? layout.VenueId;
+            ViewBag.VenueName = layout.Venue?.Name;
 
-            return View(subArea);
+            return View(layout);
         }
 
-        // GET: SubAreas/Create
+        // GET: Layouts/Create
         [Authorize(Roles = "Venue,Admin,SuperOrganizer")]
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] JsonSubAreaModel[] subareas)
+        public async Task<IActionResult> Create([FromBody] JsonLayoutModel[] layouts)
         {
-            if (subareas == null || !subareas.Any())
+            if (layouts == null || !layouts.Any())
             {
                 return BadRequest(new { error = "No sub-areas provided" });
             }
@@ -97,26 +97,26 @@ namespace PtixiakiReservations.Controllers
                 .Select(v => v.Id)
                 .ToListAsync();
 
-            foreach (var subarea in subareas)
+            foreach (var layout in layouts)
             {
-                if (!userVenueIds.Contains(subarea.VenueId))
+                if (!userVenueIds.Contains(layout.VenueId))
                 {
                     return Forbid(); // User trying to add areas to someone else's venue
                 }
 
-                SubArea newSubArea = new SubArea
+                Layout newLayout = new Layout
                 {
-                    AreaName = subarea.AreaName,
-                    Height = subarea.Height,
-                    Width = subarea.Width,
-                    Rotate = subarea.Rotate,
-                    Top = subarea.Top,
-                    Left = subarea.Left,
-                    VenueId = subarea.VenueId 
+                    AreaName = layout.AreaName,
+                    Height = layout.Height,
+                    Width = layout.Width,
+                    Rotate = layout.Rotate,
+                    Top = layout.Top,
+                    Left = layout.Left,
+                    VenueId = layout.VenueId 
                     // NOTE: If you migrate to Layouts, this would be: 
-                    // VenueLayoutId = subarea.LayoutId
+                    // VenueLayoutId = layout.LayoutId
                 };
-                _context.Add(newSubArea);
+                _context.Add(newLayout);
             }
 
             await _context.SaveChangesAsync();
@@ -124,27 +124,27 @@ namespace PtixiakiReservations.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreateFromVenue([FromBody]JsonSubAreaModel[] subareas)
+        public async Task<IActionResult> CreateFromVenue([FromBody]JsonLayoutModel[] layouts)
         {
-            if(subareas == null)
+            if(layouts == null)
             {
                 ViewBag.Error = "Something went wrong";
                 return View("Error");
             }
             var venue = await _context.Venue.FirstOrDefaultAsync(v => v.ApplicationUser.Id == _usermanager.GetUserId(HttpContext.User));
-            foreach (var subarea in subareas)
+            foreach (var layout in layouts)
             {
-                SubArea newSubArea = new SubArea
+                Layout newLayout = new Layout
                 {
-                    AreaName = subarea.AreaName,
-                    Height = subarea.Height,
-                    Width = subarea.Width,
-                    Rotate = subarea.Rotate,
-                    Top = subarea.Top,
-                    Left = subarea.Left,
+                    AreaName = layout.AreaName,
+                    Height = layout.Height,
+                    Width = layout.Width,
+                    Rotate = layout.Rotate,
+                    Top = layout.Top,
+                    Left = layout.Left,
                     VenueId = venue.Id
                 };
-                _context.Add(newSubArea);
+                _context.Add(newLayout);
             }
             await _context.SaveChangesAsync();
 
@@ -152,7 +152,7 @@ namespace PtixiakiReservations.Controllers
             return Json(Response.StatusCode);
         }
 
-        // GET: SubAreas/Edit/5
+        // GET: Layouts/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -160,57 +160,57 @@ namespace PtixiakiReservations.Controllers
                 return NotFound();
             }
 
-            var subArea = await _context.SubArea.FindAsync(id);
-            if (subArea == null)
+            var layout = await _context.Layout.FindAsync(id);
+            if (layout == null)
             {
                 return NotFound();
             }
-            ViewData["VenueId"] = new SelectList(_context.Venue, "Id", "Id", subArea.VenueId);
-            return View(subArea);
+            ViewData["VenueId"] = new SelectList(_context.Venue, "Id", "Id", layout.VenueId);
+            return View(layout);
         }
 
-        // POST: SubAreas/Edit/5
+        // POST: Layouts/Edit/5
         // To protect from overposting attacks, please enable the specific properties you want to bind to, for 
         // more details see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
-        public async Task<IActionResult> Edit(int id,SubArea subAreaEdit)
+        public async Task<IActionResult> Edit(int id,Layout layoutEdit)
         {
-            var subArea = _context.SubArea.SingleOrDefault(s => s.Id == id);
-            if (id != subArea.Id)
+            var layout = _context.Layout.SingleOrDefault(s => s.Id == id);
+            if (id != layout.Id)
             {
                 return NotFound();
             }
            
             if (ModelState.IsValid)
             {
-                subArea.AreaName = subAreaEdit.AreaName;
-                subArea.Desc = subAreaEdit.Desc;
-                subArea.Height = subAreaEdit.Height;
-                subArea.Width = subAreaEdit.Width;
-                subArea.Top = subAreaEdit.Top;
-                subArea.Left = subAreaEdit.Left;
+                layout.AreaName = layoutEdit.AreaName;
+                layout.Desc = layoutEdit.Desc;
+                layout.Height = layoutEdit.Height;
+                layout.Width = layoutEdit.Width;
+                layout.Top = layoutEdit.Top;
+                layout.Left = layoutEdit.Left;
 
 
 
                 try
                 {                   
-                    _context.Update(subArea);
+                    _context.Update(layout);
                     await _context.SaveChangesAsync();
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!SubAreaExists(subArea.Id)) return NotFound();
+                    if (!LayoutExists(layout.Id)) return NotFound();
 
                     throw;
                 }
                 
-                return RedirectToAction("VenueSubAreas", "SubAreas", new { venueId = subArea.VenueId });
+                return RedirectToAction("VenueLayouts", "Layouts", new { venueId = layout.VenueId });
             }
-            ViewData["VenueId"] = new SelectList(_context.Venue, "Id", "Id", subArea.VenueId);
-            return View(subArea);
+            ViewData["VenueId"] = new SelectList(_context.Venue, "Id", "Id", layout.VenueId);
+            return View(layout);
         }
 
-        // GET: SubAreas/Delete/5
+        // GET: Layouts/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
@@ -218,23 +218,23 @@ namespace PtixiakiReservations.Controllers
                 return NotFound();
             }
 
-            var subArea = await _context.SubArea
+            var layout = await _context.Layout
                 .Include(s => s.Venue)
                 .FirstOrDefaultAsync(m => m.Id == id);
-            if (subArea == null)
+            if (layout == null)
             {
                 return NotFound();
             }
 
-            return View(subArea);
+            return View(layout);
         }
 
-        // POST: SubAreas/Delete/5
+        // POST: Layouts/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var seats = _context.Seat.Where(s => s.SubAreaId == id).ToList();
+            var seats = _context.Seat.Where(s => s.LayoutId == id).ToList();
             if (seats != null)
             {
                 foreach (var s in seats)
@@ -242,14 +242,14 @@ namespace PtixiakiReservations.Controllers
                     var result = new SeatController(_context, _usermanager).DeleteConfirmed(s.Id);
                 }
             }
-            var subArea = await _context.SubArea.FindAsync(id);
-            _context.SubArea.Remove(subArea);
+            var layout = await _context.Layout.FindAsync(id);
+            _context.Layout.Remove(layout);
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 
-        // GET: SubAreas/VenueSubAreas/5
-        public async Task<IActionResult> VenueSubAreas(int venueId)
+        // GET: Layouts/VenueLayouts/5
+        public async Task<IActionResult> VenueLayouts(int venueId)
         {
             if (venueId == 0)
             {
@@ -262,66 +262,66 @@ namespace PtixiakiReservations.Controllers
                 return NotFound();
             }
 
-            var subAreas = await _context.SubArea
+            var layouts = await _context.Layout
                 .Where(sa => sa.VenueId == venueId)
                 .ToListAsync();
 
             ViewBag.VenueName = venue.Name;
             ViewBag.VenueId = venueId;
 
-            return View(subAreas);
+            return View(layouts);
         }
 
         [HttpGet]
-        public JsonResult GetSubAreas(int venueId)
+        public JsonResult GetLayouts(int venueId)
         {
-            var subAreas = _context.SubArea
+            var layouts = _context.Layout
                 .Where(sa => sa.VenueId == venueId)
                 .Select(sa => new { id = sa.Id, areaName = sa.AreaName, desc = sa.Desc })
                 .ToList();
 
-            return Json(subAreas);
+            return Json(layouts);
         }
 
-        private bool SubAreaExists(int id)
+        private bool LayoutExists(int id)
         {
-            return _context.SubArea.Any(e => e.Id == id);
+            return _context.Layout.Any(e => e.Id == id);
         }
 
         [HttpPost]
         [Authorize(Roles = "Venue,Admin,SuperOrganizer")]
-        public async Task<IActionResult> Duplicate([FromBody] DuplicateSubAreaRequest request)
+        public async Task<IActionResult> Duplicate([FromBody] DuplicateLayoutRequest request)
         {
             // Βρίσκουμε το original layout
-            var originalSubArea = await _context.SubArea
+            var originalLayout = await _context.Layout
                 .FirstOrDefaultAsync(sa => sa.Id == request.Id);
 
-            if (originalSubArea == null)
+            if (originalLayout == null)
             {
                 return NotFound();
             }
 
             // Δημιουργούμε νέο layout
-            var duplicatedSubArea = new SubArea
+            var duplicatedLayout = new Layout
             {
                 AreaName = request.Name,
-                Desc = originalSubArea.Desc,
-                Width = originalSubArea.Width,
-                Height = originalSubArea.Height,
-                Top = originalSubArea.Top,
-                Left = originalSubArea.Left,
-                Rotate = originalSubArea.Rotate,
-                VenueId = originalSubArea.VenueId
+                Desc = originalLayout.Desc,
+                Width = originalLayout.Width,
+                Height = originalLayout.Height,
+                Top = originalLayout.Top,
+                Left = originalLayout.Left,
+                Rotate = originalLayout.Rotate,
+                VenueId = originalLayout.VenueId
             };
 
-            _context.SubArea.Add(duplicatedSubArea);
+            _context.Layout.Add(duplicatedLayout);
 
             // Save για να πάρει νέο ID
             await _context.SaveChangesAsync();
 
             // Παίρνουμε όλα τα seats
             var originalSeats = await _context.Seat
-                .Where(s => s.SubAreaId == originalSubArea.Id)
+                .Where(s => s.LayoutId == originalLayout.Id)
                 .ToListAsync();
 
             // Κάνουμε duplicate τα seats
@@ -333,7 +333,7 @@ namespace PtixiakiReservations.Controllers
                     X = seat.X,
                     Y = seat.Y,
                     Available = seat.Available,
-                    SubAreaId = duplicatedSubArea.Id
+                    LayoutId = duplicatedLayout.Id
                 };
 
                 _context.Seat.Add(duplicatedSeat);

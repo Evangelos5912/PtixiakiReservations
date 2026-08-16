@@ -68,7 +68,7 @@ public class ReservationController(
             .Include(r => r.Event)
             .Include(r => r.ApplicationUser)
             .Include(r => r.Seat)
-            .ThenInclude(s => s.SubArea)
+            .ThenInclude(s => s.Layout)
             .ThenInclude(sa => sa.Venue)
             .Where(r => r.UserId == id)
             .ToListAsync();
@@ -93,10 +93,10 @@ public class ReservationController(
                 res = res.OrderBy(s => s.Event.Name).ToList();
                 break;
             case "Venue":
-                res = res.OrderBy(s => s.Seat.SubArea.Venue.Name).ToList();
+                res = res.OrderBy(s => s.Seat.Layout.Venue.Name).ToList();
                 break;
             case "AreaName":
-                res = res.OrderBy(s => s.Seat.SubArea.AreaName).ToList();
+                res = res.OrderBy(s => s.Seat.Layout.AreaName).ToList();
                 break;
             case "LastName_desc":
                 res = res.OrderByDescending(r => r.ApplicationUser.LastName).ToList();
@@ -108,10 +108,10 @@ public class ReservationController(
                 res = res.OrderByDescending(s => s.Event.Name).ToList();
                 break;
             case "Venue_desc":
-                res = res.OrderByDescending(s => s.Seat.SubArea.Venue.Name).ToList();
+                res = res.OrderByDescending(s => s.Seat.Layout.Venue.Name).ToList();
                 break;
             case "AreaName_desc":
-                res = res.OrderByDescending(s => s.Seat.SubArea.AreaName).ToList();
+                res = res.OrderByDescending(s => s.Seat.Layout.AreaName).ToList();
                 break;
             default:
                 res = res.OrderBy(s => s.Date).ToList();
@@ -120,10 +120,10 @@ public class ReservationController(
         return res;
     }
 
-    public JsonResult isFree(int EventId, int SubAreaId, DateTime ResDate, TimeSpan Duration)
+    public JsonResult isFree(int EventId, int LayoutId, DateTime ResDate, TimeSpan Duration)
     {
-        var subArea = _context.SubArea.SingleOrDefault(s => s.Id == SubAreaId);
-        int numOfSeats = _context.Seat.Where(s => s.SubAreaId == SubAreaId).Count();
+        var layout = _context.Layout.SingleOrDefault(s => s.Id == LayoutId);
+        int numOfSeats = _context.Seat.Where(s => s.LayoutId == LayoutId).Count();
 
         int[] seatIds = new int[numOfSeats * 2];
 
@@ -131,8 +131,8 @@ public class ReservationController(
 
         // First filter reservations by the specific date and event
         var reservations = _context.Reservation.Include(r => r.Event).Include(r => r.Seat)
-            .Include(r => r.Seat.SubArea.Venue)
-            .Where(r => r.Seat.SubArea.Id == subArea.Id && r.EventId == EventId)
+            .Include(r => r.Seat.Layout.Venue)
+            .Where(r => r.Seat.Layout.Id == layout.Id && r.EventId == EventId)
             .Where(r => r.Date.Date == ResDate.Date) // Filter by specific date for multi-day events
             .ToList();
 
@@ -140,7 +140,7 @@ public class ReservationController(
         if (NowDateTime.Date == ResDate.Date)
         {
             var seatsUnAvailable =
-                _context.Seat.Where(s => s.SubAreaId == subArea.Id && s.Available == false).ToList();
+                _context.Seat.Where(s => s.LayoutId == layout.Id && s.Available == false).ToList();
             foreach (var s in seatsUnAvailable)
             {
                 seatIds[i++] = s.Id;
@@ -171,8 +171,8 @@ public class ReservationController(
             .Include(r => r.ApplicationUser)
             .Include(r => r.Event)
             .Include(r => r.Seat)
-            .Include(r => r.Seat.SubArea)
-            .Include(r => r.Seat.SubArea.Venue)
+            .Include(r => r.Seat.Layout)
+            .Include(r => r.Seat.Layout.Venue)
             .FirstOrDefaultAsync(m => m.ID == id);
         
         if (reservations is null) return NotFound();
@@ -267,7 +267,7 @@ public class ReservationController(
                 .AsNoTracking()
                 .Include(e => e.Venue)
                 .ThenInclude(v => v.City)
-                .Include(e => e.SubArea)
+                .Include(e => e.Layout)
                 .FirstOrDefaultAsync(e => e.Id == model.EventId);
 
             var subject = "Reservation Confirmation";
@@ -289,7 +289,7 @@ public class ReservationController(
                     <p><strong>Event:</strong> {eventEntity?.Name}</p>
                     <p><strong>Venue:</strong> {eventEntity?.Venue?.Name}</p>
                     <p><strong>City:</strong> {eventEntity?.Venue?.City?.Name}</p>
-                    <p><strong>Area:</strong> {eventEntity?.SubArea?.AreaName}</p>
+                    <p><strong>Area:</strong> {eventEntity?.Layout?.AreaName}</p>
 
                     <p><strong>Date:</strong> {model.ResDate:dd/MM/yyyy}</p>
                     <p><strong>Time:</strong> {model.ResDate:HH:mm}</p>
@@ -433,7 +433,7 @@ public class ReservationController(
             .Include(e => e.Venue)
             .Include(e => e.Venue.City)
             .Include(e => e.EventType)
-            .Include(e => e.SubArea)
+            .Include(e => e.Layout)
             .FirstOrDefaultAsync(m => m.Id == eventId);
 
         if (eventDetails == null)
@@ -447,13 +447,13 @@ public class ReservationController(
         return View(eventDetails);
     }
 
-    public async Task<IActionResult> SelectSeats(int eventId, int subAreaId, string duration, string resDate)
+    public async Task<IActionResult> SelectSeats(int eventId, int layoutId, string duration, string resDate)
     {
-        var subArea = await _context.SubArea
+        var layout = await _context.Layout
             .Include(s => s.Venue)
-            .FirstOrDefaultAsync(s => s.Id == subAreaId);
+            .FirstOrDefaultAsync(s => s.Id == layoutId);
 
-        if (subArea == null)
+        if (layout == null)
         {
             return NotFound();
         }
@@ -465,11 +465,11 @@ public class ReservationController(
         }
 
         ViewData["EventId"] = eventId;
-        ViewData["SubAreaId"] = subAreaId;
+        ViewData["LayoutId"] = layoutId;
         ViewData["Duration"] = duration;
         ViewData["ResDate"] = resDate;
-        ViewData["VenueName"] = subArea.Venue.Name;
-        ViewData["SubAreaName"] = subArea.AreaName;
+        ViewData["VenueName"] = layout.Venue.Name;
+        ViewData["LayoutName"] = layout.AreaName;
 
         return View();
     }

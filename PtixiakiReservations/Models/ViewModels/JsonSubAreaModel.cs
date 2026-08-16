@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace PtixiakiReservations.Models.ViewModels
 {
-    public class JsonSubAreaModel
+    public class JsonLayoutModel
     {
         public decimal Top { get; set; }
         public decimal Left { get; set; }

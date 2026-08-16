@@ -8,8 +8,8 @@ namespace PtixiakiReservations.Models
         public string Name { get; set; }
         public decimal Top { get; set; }
         public decimal Left { get; set; }
-        public int SubAreaId { get; set; }
-        public SubArea SubArea { get; set; }
+        public int LayoutId { get; set; }
+        public Layout Layout { get; set; }
 
         public ICollection<Seat> SelectableUnits { get; set; } = new List<Seat>();
         public ICollection<NonSelectable> NonSelectableUnits { get; set; } = new List<NonSelectable>();

@@ -14,8 +14,8 @@ public class Event
     [ForeignKey("EventTypeId")] public EventType EventType { get; set; }
     public int? VenueId { get; set; }
     [ForeignKey("VenueId")] public Venue Venue { get; set; }
-    public int? SubAreaId { get; set; }
-    [ForeignKey("SubAreaId")] public SubArea SubArea { get; set; }
+    public int? LayoutId { get; set; }
+    [ForeignKey("LayoutId")] public Layout Layout { get; set; }
     public string? Description { get; set; }
     public string? OrganizerId { get; set; }
     public ApplicationUser? Organizer { get; set; }

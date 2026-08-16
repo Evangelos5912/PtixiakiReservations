@@ -44,15 +44,15 @@ namespace PtixiakiReservations.Migrations
                     Name = table.Column<string>(type: "text", nullable: true),
                     Top = table.Column<decimal>(type: "numeric", nullable: false),
                     Left = table.Column<decimal>(type: "numeric", nullable: false),
-                    SubAreaId = table.Column<int>(type: "integer", nullable: false)
+                    LayoutId = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_UnitGroup", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_UnitGroup_SubArea_SubAreaId",
-                        column: x => x.SubAreaId,
-                        principalTable: "SubArea",
+                        name: "FK_UnitGroup_Layout_LayoutId",
+                        column: x => x.LayoutId,
+                        principalTable: "Layout",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 });
@@ -68,9 +68,9 @@ namespace PtixiakiReservations.Migrations
                 column: "UnitGrouId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_UnitGroup_SubAreaId",
+                name: "IX_UnitGroup_LayoutId",
                 table: "UnitGroup",
-                column: "SubAreaId");
+                column: "LayoutId");
 
             migrationBuilder.AddForeignKey(
                 name: "FK_NonSelectable_UnitGroup_UnitGrouId",

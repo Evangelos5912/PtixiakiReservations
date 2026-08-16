@@ -4,7 +4,7 @@
     ViewData["Title"] = "Reserve Seats";
     var venueId = Model.Venue.Id;
     var eventId = Model.Id;
-    var subAreaId = Model.SubAreaId;
+    var layoutId = Model.LayoutId;
 }
 
 <div class="container mx-auto px-4 py-8 max-w-6xl">
@@ -13,9 +13,9 @@
         <div class="bg-gradient-to-r from-blue-600 to-indigo-700 py-6 px-8">
             <h1 class="text-3xl font-bold text-white">Reserve Seats</h1>
             <p class="text-blue-100 mt-2">@Model.Name</p>
-            @if (Model.SubArea != null)
+            @if (Model.Layout != null)
             {
-                <p class="text-blue-200 text-sm mt-1">Layout: @Model.SubArea.AreaName</p>
+                <p class="text-blue-200 text-sm mt-1">Layout: @Model.Layout.AreaName</p>
             }
         </div>
 
@@ -52,9 +52,9 @@
                                 {
                                     <p class="text-sm text-gray-600">@Model.Venue.City.Name</p>
                                 }
-                                @if (Model.SubArea != null)
+                                @if (Model.Layout != null)
                                 {
-                                    <p class="text-sm text-gray-600">Area: @Model.SubArea.AreaName</p>
+                                    <p class="text-sm text-gray-600">Area: @Model.Layout.AreaName</p>
                                 }
                             </div>
                         </div>
@@ -81,7 +81,7 @@
                             <input type="hidden" id="startTime" value="@Model.StartDateTime.TimeOfDay" />
                             <input type="hidden" id="endTime" value="@Model.EndTime.TimeOfDay" />
                             <input type="hidden" id="eventDate" value="@Model.StartDateTime.ToString("yyyy-MM-dd")" />
-                            <input type="hidden" id="subAreaId" value="@subAreaId" />
+                            <input type="hidden" id="layoutId" value="@layoutId" />
                             <input type="hidden" id="eventId" value="@eventId" />
                         </div>
 
@@ -115,7 +115,7 @@
             </div>
 
             <!-- Only show Layout message if no Layout is set -->
-            @if (subAreaId == null || subAreaId == 0)
+            @if (layoutId == null || layoutId == 0)
             {
                 <div class="mb-8 bg-yellow-50 border border-yellow-200 rounded-lg p-6">
                     <div class="flex items-center">
@@ -227,7 +227,7 @@
     <script>
         const eventId = @eventId;
         const venueId = @venueId;
-        const subAreaId = @(subAreaId ?? 0);
+        const layoutId = @(layoutId ?? 0);
         let selectedSeats = [];
         let seatNames = {};
         let fabricCanvas;
@@ -328,18 +328,18 @@
                 updateZoomText();
             });
 
-            if (subAreaId && subAreaId !== 0) {
-                loadSeatMap(subAreaId, eventId);
+            if (layoutId && layoutId !== 0) {
+                loadSeatMap(layoutId, eventId);
             }
         });
 
-        async function loadSeatMap(subAreaId, eventId) {
+        async function loadSeatMap(layoutId, eventId) {
             showLoadingOnFabric(fabricCanvas);
 
             try {
                 const [seatRes, shapeRes] = await Promise.all([
-                    fetch(`/Seat/get_data?SubAreaId=${subAreaId}&eventId=${eventId}`),
-                    fetch(`/NonSelectable/GetElements?subAreaId=${subAreaId}`)
+                    fetch(`/Seat/get_data?LayoutId=${layoutId}&eventId=${eventId}`),
+                    fetch(`/NonSelectable/GetElements?layoutId=${layoutId}`)
                 ]);
 
                 const seatData = seatRes.ok ? await seatRes.json() : [];
@@ -385,7 +385,7 @@
 
             $("#confirm-reservation").on("click", function () {
                 if (selectedSeats.length > 0) {
-                    if (!subAreaId || subAreaId === 0) {
+                    if (!layoutId || layoutId === 0) {
                         showNotification('No Layout assigned to this event.', 'warning');
                         return;
                     }
@@ -416,7 +416,7 @@
                         data: JSON.stringify({
                             seatIds: selectedSeats,
                             eventId: eventId,
-                            subAreaId: subAreaId,
+                            layoutId: layoutId,
                             duration: duration,
                             resDate: reservationDate
                         }),

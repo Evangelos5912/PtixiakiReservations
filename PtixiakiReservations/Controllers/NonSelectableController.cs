@@ -15,17 +15,17 @@ public class NonSelectableController(ApplicationDbContext context, UserManager<A
 {
     // 1. MASTER SAVE (Matches: fetch('/NonSelectable/SaveElements'))
     [HttpPost]
-    public async Task<IActionResult> SaveElements(int subAreaId, [FromBody] List<NonSelectable> elements)
+    public async Task<IActionResult> SaveElements(int layoutId, [FromBody] List<NonSelectable> elements)
     {
         var existing = await context.NonSelectable
-            .Where(e => e.SubAreaId == subAreaId)
+            .Where(e => e.LayoutId == layoutId)
             .ToListAsync();
 
         context.NonSelectable.RemoveRange(existing);
         
         foreach (var el in elements)
         {
-            el.SubAreaId = subAreaId;
+            el.LayoutId = layoutId;
             context.NonSelectable.Add(el);
         }
 
@@ -35,10 +35,10 @@ public class NonSelectableController(ApplicationDbContext context, UserManager<A
 
     // 2. GET ELEMENTS (Matches: fetch('/NonSelectable/GetElements'))
     [HttpGet]
-    public async Task<IActionResult> GetElements(int subAreaId)
+    public async Task<IActionResult> GetElements(int layoutId)
     {
         var elements = await context.NonSelectable
-            .Where(e => e.SubAreaId == subAreaId)
+            .Where(e => e.LayoutId == layoutId)
             .ToListAsync();
         return Ok(elements);
     }
@@ -93,7 +93,7 @@ public class NonSelectableController(ApplicationDbContext context, UserManager<A
     public class DeleteMultipleElementsRequest
     {
         public List<string> Names { get; set; }
-        public int SubAreaId { get; set; }
+        public int LayoutId { get; set; }
     }
 
     // 4. DELETE MULTIPLE SHAPES (Added to match: fetch('/NonSelectable/DeleteElements'))
@@ -106,7 +106,7 @@ public class NonSelectableController(ApplicationDbContext context, UserManager<A
         }
 
         var shapesToRemove = await context.NonSelectable
-            .Where(s => request.Names.Contains(s.Name) && s.SubAreaId == request.SubAreaId)
+            .Where(s => request.Names.Contains(s.Name) && s.LayoutId == request.LayoutId)
             .ToListAsync();
 
         if (!shapesToRemove.Any())

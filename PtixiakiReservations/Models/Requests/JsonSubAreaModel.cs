@@ -1,6 +1,6 @@
 ﻿namespace PtixiakiReservations.Models.Requests;
 
-public class JsonSubAreaModel
+public class JsonLayoutModel
 {
     public string AreaName { get; set; }
     public int VenueId { get; set; }

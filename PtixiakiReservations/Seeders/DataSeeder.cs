@@ -64,8 +64,8 @@ public class DataSeeder
             context.SaveChanges();
         }
 
-        if (!context.SubArea.Any()){
-            SeedSubAreas(context);
+        if (!context.Layout.Any()){
+            SeedLayouts(context);
             context.SaveChanges();
         }
 
@@ -276,20 +276,20 @@ public class DataSeeder
     }
 
 
-    private static void SeedSubAreas(ApplicationDbContext context)
+    private static void SeedLayouts(ApplicationDbContext context)
     {
         var venues = context.Venue.ToList();
-        var existingSubAreas = context.SubArea.ToList();
-        var subAreas = new List<SubArea>();
+        var existingLayouts = context.Layout.ToList();
+        var layouts = new List<Layout>();
 
         foreach (var venue in venues)
         {
-            void AddSubAreaIfMissing(string areaName, decimal width, decimal height, decimal top, decimal left, string desc)
+            void AddLayoutIfMissing(string areaName, decimal width, decimal height, decimal top, decimal left, string desc)
             {
-                if (existingSubAreas.Any(sa => sa.VenueId == venue.Id && sa.AreaName == areaName))
+                if (existingLayouts.Any(sa => sa.VenueId == venue.Id && sa.AreaName == areaName))
                     return;
 
-                var subArea = new SubArea
+                var layout = new Layout
                 {
                     AreaName = areaName,
                     Width = width,
@@ -301,15 +301,15 @@ public class DataSeeder
                     VenueId = venue.Id
                 };
 
-                subAreas.Add(subArea);
-                existingSubAreas.Add(subArea);
+                layouts.Add(layout);
+                existingLayouts.Add(layout);
             }
 
-            AddSubAreaIfMissing("Main Hall", 500, 300, 0, 0, "Primary area in venue");
-            AddSubAreaIfMissing("Balcony", 400, 150, 310, 0, "Balcony area in venue");
+            AddLayoutIfMissing("Main Hall", 500, 300, 0, 0, "Primary area in venue");
+            AddLayoutIfMissing("Balcony", 400, 150, 310, 0, "Balcony area in venue");
         }
 
-        context.SubArea.AddRange(subAreas);
+        context.Layout.AddRange(layouts);
     }
 
     private static void SeedEvents(ApplicationDbContext context)
@@ -332,7 +332,7 @@ public class DataSeeder
 
         var venues = context.Venue.ToList();
         var types = context.EventType.ToList();
-        var subAreas = context.SubArea.ToList();
+        var layouts = context.Layout.ToList();
 
         if (!venues.Any() || !types.Any())
             return;
@@ -374,7 +374,7 @@ public class DataSeeder
                 EndTime = end,
                 EventTypeId = type.Id,
                 VenueId = venue.Id,
-                SubAreaId = null,
+                LayoutId = null,
                 ImagePath = $"/images/events/event{random.Next(1, 5)}.jpg"
             });
         }
@@ -425,7 +425,7 @@ public class DataSeeder
                 childDaysByParentId[parentEvent.Id] = existingChildDays;
             }
 
-            var venueSubAreas = subAreas
+            var venueLayouts = layouts
                 .Where(s => s.VenueId == parentEvent.VenueId)
                 .ToList();
 
@@ -445,8 +445,8 @@ public class DataSeeder
                     childEnd = day.AddHours(23);
 
                 var childEventName = eventNamesByType[typeKey][random.Next(eventNamesByType[typeKey].Count)];
-                var subArea = venueSubAreas.Any()
-                    ? venueSubAreas[random.Next(venueSubAreas.Count)]
+                var layout = venueLayouts.Any()
+                    ? venueLayouts[random.Next(venueLayouts.Count)]
                     : null;
 
                 childEventsToCreate.Add(new Event
@@ -456,7 +456,7 @@ public class DataSeeder
                     EndTime = childEnd,
                     EventTypeId = parentEvent.EventTypeId,
                     VenueId = parentEvent.VenueId,
-                    SubAreaId = subArea?.Id,
+                    LayoutId = layout?.Id,
                     ParentEventId = parentEvent.Id,
                     ImagePath = null
                 });
@@ -527,16 +527,16 @@ public class DataSeeder
 
     private static void SeedSeats(ApplicationDbContext context)
     {
-        var subAreas = context.SubArea.ToList();
-        var subAreaIdsWithSeats = context.Seat
-            .Select(s => s.SubAreaId)
+        var layouts = context.Layout.ToList();
+        var layoutIdsWithSeats = context.Seat
+            .Select(s => s.LayoutId)
             .Distinct()
             .ToHashSet();
         var seats = new List<Seat>();
 
-        foreach (var area in subAreas)
+        foreach (var area in layouts)
         {
-            if (subAreaIdsWithSeats.Contains(area.Id))
+            if (layoutIdsWithSeats.Contains(area.Id))
                 continue;
 
             // Define proper spacing between seats
@@ -554,7 +554,7 @@ public class DataSeeder
                         Name = $"{(char)('A' + row)}{col + 1:D2}",
                         X = startX + (col * seatSpacingX),
                         Y = startY + (row * seatSpacingY),
-                        SubAreaId = area.Id,
+                        LayoutId = area.Id,
                         Available = true,
                     });
                 }
