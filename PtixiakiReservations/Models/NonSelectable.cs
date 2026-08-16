@@ -5,7 +5,7 @@ namespace PtixiakiReservations.Models;
 public class NonSelectable
 {
 public int Id { get; set; }
-    public int SubAreaId { get; set; } 
+    public int LayoutId { get; set; } 
     public decimal X { get; set; }
     public decimal Y { get; set; }
     public decimal Width { get; set; } 
@@ -14,8 +14,8 @@ public int Id { get; set; }
     public string BackgroundColor { get; set; } = "#E5E7EB"; 
     public string Name { get; set; }
     public bool Scene { get; set; } 
-    [ForeignKey("SubAreaId")] 
-    public SubArea SubArea { get; set; }
+    [ForeignKey("LayoutId")] 
+    public Layout Layout { get; set; }
     public int? UnitGroupId { get; set; }
     [ForeignKey("UnitGrouId")] public UnitGroup UnitGroup { get; set; }
 }

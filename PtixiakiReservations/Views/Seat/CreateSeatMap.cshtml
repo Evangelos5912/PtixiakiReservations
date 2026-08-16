@@ -4,10 +4,10 @@
     ViewData["Title"] = "Create Seat Map";
 }
 @{
-    int subAreaId = (int)ViewData["SubAreaId"];
+    int layoutId = (int)ViewData["LayoutId"];
     bool existingSeats = (bool)ViewData["HasExistingSeats"];
     ViewData["Title"] = existingSeats ? "Edit Seat Map" : "Create Seat Map";
-    var subAreaName = ViewData["SubAreaName"] as string ?? "Layout";
+    var layoutName = ViewData["LayoutName"] as string ?? "Layout";
 }
 
 <div class="bg-gradient-to-r from-blue-50 to-indigo-50 min-h-screen py-8 px-4 sm:px-6 lg:px-8">
@@ -19,11 +19,11 @@
                     <div>
                         <h1 class="text-2xl md:text-3xl font-bold text-white">@ViewData["Title"]</h1>
                         <p class="mt-2 text-indigo-100 max-w-3xl">
-                            Design and manage the seating layout for <span class="font-semibold">@subAreaName</span>
+                            Design and manage the seating layout for <span class="font-semibold">@layoutName</span>
                         </p>
                     </div>
                     <div class="mt-4 md:mt-0">
-                        <a href="@Url.Action("Index", "SubAreas")"
+                        <a href="@Url.Action("Index", "Layouts")"
                            class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-indigo-700 bg-white hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -269,7 +269,7 @@
 
             // Seat map functionality
             const INITIAL_POSITION_X = 50, INITIAL_POSITION_Y = 50;
-            var subAreaId = @subAreaId;
+            var layoutId = @layoutId;
             var zoomLevel = 1;
 
             // Zoom Controls
@@ -294,7 +294,7 @@
             function loadExistingSeats() {
                 showStatus("Loading existing seats...");
 
-                $.getJSON('/Seat/get_data', { SubAreaId: subAreaId })
+                $.getJSON('/Seat/get_data', { LayoutId: layoutId })
                     .done(function (data) {
                         if (data && data.length > 0) {
                             console.log("Loading existing seats:", data);
@@ -458,7 +458,7 @@
                         url: '/Seat/DeleteMultipleSeats',
                         type: 'POST',
                         contentType: "application/json",
-                        data: JSON.stringify({seatNames: seatNames, subAreaId: subAreaId}),
+                        data: JSON.stringify({seatNames: seatNames, layoutId: layoutId}),
                         success: function (response) {
                             if (response.success) {
                                 activeObjects.forEach(obj => canvas.remove(obj));
@@ -509,7 +509,7 @@
 
                 // Send the data to the server
                 $.ajax({
-                    url: `/Seat/CreateTableMap?subAreaId=${subAreaId}`,
+                    url: `/Seat/CreateTableMap?layoutId=${layoutId}`,
                     type: "POST",
                     contentType: "application/json",
                     data: JSON.stringify(seatsToSave),
@@ -518,7 +518,7 @@
 
                         // Optional: Add a delay before redirecting
                         setTimeout(function() {
-                            window.location.href = `/SubAreas/Details/${subAreaId}`;
+                            window.location.href = `/Layouts/Details/${layoutId}`;
                         }, 1500);
                     },
                     error: function(error) {

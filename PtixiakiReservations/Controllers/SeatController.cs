@@ -23,13 +23,13 @@ public class SeatController(ApplicationDbContext context, UserManager<Applicatio
     }
 
     [HttpGet]
-    public JsonResult get_data(int? SubAreaId, int? eventId)
+    public JsonResult get_data(int? LayoutId, int? eventId)
     {
-        if (SubAreaId == null) return Json(new { });
+        if (LayoutId == null) return Json(new { });
 
-        // First get all seats for this subarea
+        // First get all seats for this layout
         var seats = context.Seat
-            .Where(s => s.SubAreaId == SubAreaId)
+            .Where(s => s.LayoutId == LayoutId)
             .ToList(); // Get the seat entities first
 
         // If eventId is provided, get all seat IDs that are already reserved for this event
@@ -105,7 +105,7 @@ public class SeatController(ApplicationDbContext context, UserManager<Applicatio
         }
 
         var seat = await context.Seat
-            .Include(t => t.SubArea.Venue)
+            .Include(t => t.Layout.Venue)
             .FirstOrDefaultAsync(m => m.Id == id);
         if (seat == null)
         {
@@ -133,14 +133,14 @@ public class SeatController(ApplicationDbContext context, UserManager<Applicatio
     }
 
     // GET: Table/Create
-    public IActionResult Create(int? subAreaId)
+    public IActionResult Create(int? layoutId)
     {
-        if (subAreaId == null)
+        if (layoutId == null)
             return NotFound();
 
-        var existingSeats = context.Seat.Any(s => s.SubAreaId == subAreaId);
+        var existingSeats = context.Seat.Any(s => s.LayoutId == layoutId);
 
-        ViewData["SubAreaId"] = subAreaId.Value;
+        ViewData["LayoutId"] = layoutId.Value;
         ViewData["HasExistingSeats"] = existingSeats;
 
         return View("CreateSeatMap");
@@ -148,7 +148,7 @@ public class SeatController(ApplicationDbContext context, UserManager<Applicatio
 
     [HttpPost]     
     [Route("Seat/CreateTableMap")]
-    public async Task<IActionResult> CreateTableMap(int subAreaId, [FromBody] List<Seat> layoutElements)
+    public async Task<IActionResult> CreateTableMap(int layoutId, [FromBody] List<Seat> layoutElements)
     {
         try
         {
@@ -157,19 +157,19 @@ public class SeatController(ApplicationDbContext context, UserManager<Applicatio
                 return BadRequest("No seat data provided");
             }
 
-            if (subAreaId <= 0)
+            if (layoutId <= 0)
             {
                 return BadRequest("Invalid layout ID");
             }
 
-            var subArea = await context.SubArea.FindAsync(subAreaId);
-            if (subArea == null)
+            var layout = await context.Layout.FindAsync(layoutId);
+            if (layout == null)
             {
                 return NotFound("Layout not found");
             }
 
             var existingSeats = await context.Seat
-                .Where(s => s.SubAreaId == subAreaId)
+                .Where(s => s.LayoutId == layoutId)
                 .ToListAsync();
 
             if (existingSeats.Any())
@@ -187,7 +187,7 @@ public class SeatController(ApplicationDbContext context, UserManager<Applicatio
                     Y = s.Y,            
                     Width = s.Width,   
                     Height = s.Height,  
-                    SubAreaId = subAreaId,
+                    LayoutId = layoutId,
                     Available = true
                 };
                 context.Add(seat);
@@ -215,7 +215,7 @@ public class SeatController(ApplicationDbContext context, UserManager<Applicatio
         {
             return NotFound();
         }
-        ViewData["shopID"] = new SelectList(context.Venue, "ID", "ID", seat.SubAreaId);
+        ViewData["shopID"] = new SelectList(context.Venue, "ID", "ID", seat.LayoutId);
         return View(seat);
     }
 
@@ -249,7 +249,7 @@ public class SeatController(ApplicationDbContext context, UserManager<Applicatio
             }
             return RedirectToAction(nameof(Index));
         }
-        ViewData["VenueId"] = new SelectList(context.Venue, "ID", "ID", Seat.SubAreaId);
+        ViewData["VenueId"] = new SelectList(context.Venue, "ID", "ID", Seat.LayoutId);
         return View(Seat);
     }
 
@@ -279,14 +279,14 @@ public class SeatController(ApplicationDbContext context, UserManager<Applicatio
                 }
             }
         }
-        return RedirectToAction("ListOfMySeats", "Seat", new { subAreaId = Seat.SubAreaId });
+        return RedirectToAction("ListOfMySeats", "Seat", new { layoutId = Seat.LayoutId });
     }
 
     [HttpPost]
     public async Task<IActionResult> DeleteMultipleSeats([FromBody] DeleteMultipleSeatsRequest request)
     {
         var seatsToRemove = await context.Seat
-            .Where(s => request.seatNames.Contains(s.Name) && s.SubAreaId == request.subAreaId)
+            .Where(s => request.seatNames.Contains(s.Name) && s.LayoutId == request.layoutId)
             .ToListAsync();
 
         if (!seatsToRemove.Any())
@@ -344,13 +344,13 @@ public class SeatController(ApplicationDbContext context, UserManager<Applicatio
     public class DeleteMultipleSeatsRequest
     {
         public List<string> seatNames { get; set; }
-        public int subAreaId { get; set; }
+        public int layoutId { get; set; }
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
     [Route("Seat/SaveCompleteLayout")]
-    public async Task<IActionResult> SaveCompleteLayout(int subAreaId, [FromBody] LayoutPayloadViewModel payload)
+    public async Task<IActionResult> SaveCompleteLayout(int layoutId, [FromBody] LayoutPayloadViewModel payload)
     {
         if (payload == null) return BadRequest("Invalid layout data.");
 
@@ -358,9 +358,9 @@ public class SeatController(ApplicationDbContext context, UserManager<Applicatio
         try
         {
             // 1. Wipe old data for this layout
-            var existingSeats = context.Seat.Where(s => s.SubAreaId == subAreaId);
-            var existingShapes = context.NonSelectable.Where(s => s.SubAreaId == subAreaId);
-            var existingGroups = context.UnitGroup.Where(g => g.SubAreaId == subAreaId);
+            var existingSeats = context.Seat.Where(s => s.LayoutId == layoutId);
+            var existingShapes = context.NonSelectable.Where(s => s.LayoutId == layoutId);
+            var existingGroups = context.UnitGroup.Where(g => g.LayoutId == layoutId);
 
             context.Seat.RemoveRange(existingSeats);
             context.NonSelectable.RemoveRange(existingShapes);
@@ -377,7 +377,7 @@ public class SeatController(ApplicationDbContext context, UserManager<Applicatio
                     Y = seatVm.Y,
                     Width = seatVm.Width,
                     Height = seatVm.Height,
-                    SubAreaId = subAreaId,
+                    LayoutId = layoutId,
                     Available = true
                 });
             }
@@ -392,7 +392,7 @@ public class SeatController(ApplicationDbContext context, UserManager<Applicatio
                     Y = shapeVm.Y,
                     Width = shapeVm.Width,
                     Height = shapeVm.Height,
-                    SubAreaId = subAreaId,
+                    LayoutId = layoutId,
                     ShapeType = shapeVm.ShapeType
                 });
             }
@@ -405,7 +405,7 @@ public class SeatController(ApplicationDbContext context, UserManager<Applicatio
                     Name = groupVm.Name,
                     Top = groupVm.Top,
                     Left = groupVm.Left,
-                    SubAreaId = subAreaId,
+                    LayoutId = layoutId,
                     
                     SelectableUnits = groupVm.SelectableUnits.Select(s => new Seat
                     {
@@ -414,7 +414,7 @@ public class SeatController(ApplicationDbContext context, UserManager<Applicatio
                         Y = s.Y,
                         Width = s.Width,
                         Height = s.Height,
-                        SubAreaId = subAreaId,
+                        LayoutId = layoutId,
                         Available = true
                     }).ToList(),
                     
@@ -425,7 +425,7 @@ public class SeatController(ApplicationDbContext context, UserManager<Applicatio
                         Y = s.Y,
                         Width = s.Width,
                         Height = s.Height,
-                        SubAreaId = subAreaId,
+                        LayoutId = layoutId,
                         ShapeType = s.ShapeType // <-- Added ShapeType here
                     }).ToList()
                 };
@@ -447,22 +447,22 @@ public class SeatController(ApplicationDbContext context, UserManager<Applicatio
 
     [HttpGet]
     [Route("Seat/GetCompleteLayout")]
-    public async Task<IActionResult> GetCompleteLayout(int subAreaId)
+    public async Task<IActionResult> GetCompleteLayout(int layoutId)
     {
         // 1. Find the exact IDs of all units that belong to a group
         var groupedSeatIds = await context.UnitGroup
-            .Where(g => g.SubAreaId == subAreaId)
+            .Where(g => g.LayoutId == layoutId)
             .SelectMany(g => g.SelectableUnits.Select(s => s.Id))
             .ToListAsync();
 
         var groupedShapeIds = await context.UnitGroup
-            .Where(g => g.SubAreaId == subAreaId)
+            .Where(g => g.LayoutId == layoutId)
             .SelectMany(g => g.NonSelectableUnits.Select(s => s.Id))
             .ToListAsync();
 
         // 2. Fetch standalone seats (strictly excluding those inside a group)
         var standaloneSeats = await context.Seat
-            .Where(s => s.SubAreaId == subAreaId && !groupedSeatIds.Contains(s.Id))
+            .Where(s => s.LayoutId == layoutId && !groupedSeatIds.Contains(s.Id))
             .Select(s => new {
                 id = s.Id,
                 name = s.Name,
@@ -475,7 +475,7 @@ public class SeatController(ApplicationDbContext context, UserManager<Applicatio
 
         // 3. Fetch standalone shapes (strictly excluding those inside a group)
         var standaloneShapes = await context.NonSelectable
-            .Where(s => s.SubAreaId == subAreaId && !groupedShapeIds.Contains(s.Id))
+            .Where(s => s.LayoutId == layoutId && !groupedShapeIds.Contains(s.Id))
             .Select(s => new {
                 id = s.Id,
                 name = s.Name,
@@ -490,7 +490,7 @@ public class SeatController(ApplicationDbContext context, UserManager<Applicatio
         var groups = await context.UnitGroup
             .Include(g => g.SelectableUnits)
             .Include(g => g.NonSelectableUnits)
-            .Where(g => g.SubAreaId == subAreaId)
+            .Where(g => g.LayoutId == layoutId)
             .Select(g => new {
                 id = g.Id,
                 name = g.Name,

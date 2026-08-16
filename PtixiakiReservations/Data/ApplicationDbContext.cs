@@ -19,7 +19,7 @@ namespace PtixiakiReservations.Data
 		public DbSet<UnitGroup> UnitGroup { get; set; }
         public DbSet<Venue> Venue { get; set; }
         public DbSet<Reservation> Reservation { get; set; }
-        public DbSet<SubArea> SubArea { get; set; }
+        public DbSet<Layout> Layout { get; set; }
         public DbSet<Event> Event { get; set; }
         public DbSet<Seat> Seat { get; set; }
         public DbSet<City> City { get; set; }
@@ -45,11 +45,11 @@ namespace PtixiakiReservations.Data
  	       );
 
 	    // FIX: decimal precision for PostgreSQL
-	    modelbuilder.Entity<SubArea>().Property(s => s.Width).HasPrecision(18, 2);
-	    modelbuilder.Entity<SubArea>().Property(s => s.Height).HasPrecision(18, 2);
-	    modelbuilder.Entity<SubArea>().Property(s => s.Top).HasPrecision(18, 2);
-	    modelbuilder.Entity<SubArea>().Property(s => s.Left).HasPrecision(18, 2);
-	    modelbuilder.Entity<SubArea>().Property(s => s.Rotate).HasPrecision(18, 2);
+	    modelbuilder.Entity<Layout>().Property(s => s.Width).HasPrecision(18, 2);
+	    modelbuilder.Entity<Layout>().Property(s => s.Height).HasPrecision(18, 2);
+	    modelbuilder.Entity<Layout>().Property(s => s.Top).HasPrecision(18, 2);
+	    modelbuilder.Entity<Layout>().Property(s => s.Left).HasPrecision(18, 2);
+	    modelbuilder.Entity<Layout>().Property(s => s.Rotate).HasPrecision(18, 2);
 
 	    modelbuilder.Entity<Seat>().Property(s => s.X).HasPrecision(18, 2);
 	    modelbuilder.Entity<Seat>().Property(s => s.Y).HasPrecision(18, 2);

@@ -78,18 +78,18 @@ namespace PtixiakiReservations.Controllers
                 .Take(pageSize)
                 .ToListAsync();
 
-            var subAreaCounts = new Dictionary<int, int>();
+            var layoutCounts = new Dictionary<int, int>();
             var imagePaths = new Dictionary<int, string>();
             
             foreach (var venue in venues)
             {
-                var count = await _context.SubArea.CountAsync(sa => sa.VenueId == venue.Id);
-                subAreaCounts[venue.Id] = count;
+                var count = await _context.Layout.CountAsync(sa => sa.VenueId == venue.Id);
+                layoutCounts[venue.Id] = count;
 
                 imagePaths[venue.Id] = GetImagePath(venue.imgUrl);
             }
 
-            ViewBag.SubAreaCounts = subAreaCounts;
+            ViewBag.LayoutCounts = layoutCounts;
             ViewBag.ImagePaths = imagePaths;
 
             // Global event count for this specific filter

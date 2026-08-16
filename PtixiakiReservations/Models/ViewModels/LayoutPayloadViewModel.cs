@@ -14,7 +14,7 @@ namespace PtixiakiReservations.Models.ViewModels
         public string Name { get; set; }
         public decimal Top { get; set; }
         public decimal Left { get; set; }
-        public int SubAreaId { get; set; }
+        public int LayoutId { get; set; }
         public List<SeatViewModel> SelectableUnits { get; set; } = new List<SeatViewModel>();
         public List<ShapeViewModel> NonSelectableUnits { get; set; } = new List<ShapeViewModel>();
     }
@@ -24,7 +24,7 @@ namespace PtixiakiReservations.Models.ViewModels
         public string Name { get; set; }
         public decimal X { get; set; }
         public decimal Y { get; set; }
-        public int SubAreaId { get; set; }
+        public int LayoutId { get; set; }
         public bool Available { get; set; }
         public decimal Width { get; set; }
         public decimal Height { get; set; }
@@ -35,7 +35,7 @@ namespace PtixiakiReservations.Models.ViewModels
         public string Name { get; set; }
         public decimal X { get; set; }
         public decimal Y { get; set; }
-        public int SubAreaId { get; set; }
+        public int LayoutId { get; set; }
         public string ShapeType { get; set; }
         public decimal Width { get; set; }
         public decimal Height { get; set; }

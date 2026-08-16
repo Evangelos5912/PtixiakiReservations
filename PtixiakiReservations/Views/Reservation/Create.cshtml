@@ -117,7 +117,7 @@
                     alert("End time must be greater than start time");
                 } else {
                     var reservationDate = '@Model.StartDateTime.ToString("yyyy-MM-dd")' + "T" + StartTime;
-                    var url = `/SubAreas/ChooseSubArea?VenueId=${venueId}&EventId=@Model.Id&Duration=${Duration}&ResDate=${reservationDate}`;
+                    var url = `/Layouts/ChooseLayout?VenueId=${venueId}&EventId=@Model.Id&Duration=${Duration}&ResDate=${reservationDate}`;
                     window.location.href = url;
                 }
             }

@@ -29,7 +29,7 @@
         const qstr = window.location.search;
 
         const urlParams = new URLSearchParams(qstr);
-        const SubAreaId = urlParams.get('SubAreaId');
+        const LayoutId = urlParams.get('LayoutId');
         const EventId = urlParams.get('EventId');
         const Duration = urlParams.get('Duration');
         const date = urlParams.get('ResDate');
@@ -59,7 +59,7 @@
                 type: "get",
                 url: '@Url.Action("get_data", "Seat")',
                 dataType: 'json',
-                data: { "SubAreaId": SubAreaId },
+                data: { "LayoutId": LayoutId },
                 contentType: 'application/json; charset=utf-8',
                 success: function (data) {
                     var seats = jQuery.parseJSON(JSON.stringify(data));
@@ -89,7 +89,7 @@
                 type: "get",
                 url: '@Url.Action("isFree", "Reservation")',
                 dataType: 'json',
-                data: { "EventId": EventId, "SubAreaId": SubAreaId, "ResDate": date, "Duration": Duration },
+                data: { "EventId": EventId, "LayoutId": LayoutId, "ResDate": date, "Duration": Duration },
                 contentType: 'application/json; charset=utf-8',
                 success: function (data) {
                     var res = jQuery.parseJSON(JSON.stringify(data));

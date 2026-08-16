@@ -61,30 +61,30 @@ public class EventGeneratorService : IEventGeneratorService
                 var venue = await GenerateVenueAsync(userId, cities);
                 result.GeneratedVenues.Add(venue);
 
-                // Generate subareas for this venue
-                var subAreaCount = _random.Next(options.MinSubAreasPerVenue, options.MaxSubAreasPerVenue + 1);
-                for (int j = 0; j < subAreaCount; j++)
+                // Generate layouts for this venue
+                var layoutCount = _random.Next(options.MinLayoutsPerVenue, options.MaxLayoutsPerVenue + 1);
+                for (int j = 0; j < layoutCount; j++)
                 {
-                    var subArea = await GenerateSubAreaAsync(venue.Id);
-                    result.GeneratedSubAreas.Add(subArea);
+                    var layout = await GenerateLayoutAsync(venue.Id);
+                    result.GeneratedLayouts.Add(layout);
 
-                    // Generate seats for this subarea
+                    // Generate seats for this layout
                     if (options.GenerateSeats)
                     {
-                        var seats = await GenerateSeatsAsync(subArea, options.MinSeatsPerSubArea, options.MaxSeatsPerSubArea);
+                        var seats = await GenerateSeatsAsync(layout, options.MinSeatsPerLayout, options.MaxSeatsPerLayout);
                         result.GeneratedSeats.AddRange(seats);
                     }
                 }
 
-                // Generate events for this venue only if it has SubAreas
-                var venueSubAreas = result.GeneratedSubAreas.Where(sa => sa.VenueId == venue.Id).ToList();
+                // Generate events for this venue only if it has Layouts
+                var venueLayouts = result.GeneratedLayouts.Where(sa => sa.VenueId == venue.Id).ToList();
 
-                if (venueSubAreas.Any())
+                if (venueLayouts.Any())
                 {
                     var eventCount = _random.Next(options.MinEventsPerVenue, options.MaxEventsPerVenue + 1);
                     for (int k = 0; k < eventCount; k++)
                     {
-                        var eventItem = await GenerateEventAsync(venue, venueSubAreas, eventTypes, options);
+                        var eventItem = await GenerateEventAsync(venue, venueLayouts, eventTypes, options);
                         result.GeneratedEvents.Add(eventItem);
                     }
                 }
@@ -172,7 +172,7 @@ public class EventGeneratorService : IEventGeneratorService
         return venue;
     }
 
-    private async Task<SubArea> GenerateSubAreaAsync(int venueId)
+    private async Task<Layout> GenerateLayoutAsync(int venueId)
     {
         var areaNames = new[] { "Orchestra", "Balcony", "Mezzanine", "Gallery", "Box Seats", "VIP Section", "General Admission", "Standing Area" };
         var areaName = areaNames[_random.Next(areaNames.Length)];
@@ -181,7 +181,7 @@ public class EventGeneratorService : IEventGeneratorService
         var width = _random.Next(100, 500);
         var height = _random.Next(50, 300);
         
-        var subArea = new SubArea
+        var layout = new Layout
         {
             AreaName = areaName,
             Width = width,
@@ -193,11 +193,11 @@ public class EventGeneratorService : IEventGeneratorService
             VenueId = venueId
         };
 
-        await _context.SubArea.AddAsync(subArea);
-        return subArea;
+        await _context.Layout.AddAsync(layout);
+        return layout;
     }
 
-    private async Task<List<Seat>> GenerateSeatsAsync(SubArea subArea, int minSeats, int maxSeats)
+    private async Task<List<Seat>> GenerateSeatsAsync(Layout layout, int minSeats, int maxSeats)
     {
         var seats = new List<Seat>();
         var seatCount = _random.Next(minSeats, maxSeats + 1);
@@ -215,8 +215,8 @@ public class EventGeneratorService : IEventGeneratorService
         // Calculate starting positions to center the seating layout
         var totalWidth = (seatsPerRow * seatWidth) + ((seatsPerRow - 1) * horizontalSpacing);
         var totalHeight = (rowCount * seatHeight) + ((rowCount - 1) * verticalSpacing);
-        var startX = Math.Max(20m, (subArea.Width - totalWidth) / 2);
-        var startY = Math.Max(20m, (subArea.Height - totalHeight) / 2);
+        var startX = Math.Max(20m, (layout.Width - totalWidth) / 2);
+        var startY = Math.Max(20m, (layout.Height - totalHeight) / 2);
 
         var seatCounter = 0;
         for (int row = 0; row < rowCount && seatCounter < seatCount; row++)
@@ -229,7 +229,7 @@ public class EventGeneratorService : IEventGeneratorService
                     X = startX + (col * (seatWidth + horizontalSpacing)),
                     Y = startY + (row * (seatHeight + verticalSpacing)),
                     Available = _random.NextDouble() > 0.1, // 90% available, 10% unavailable
-                    SubAreaId = subArea.Id
+                    LayoutId = layout.Id
                 };
 
                 seats.Add(seat);
@@ -241,7 +241,7 @@ public class EventGeneratorService : IEventGeneratorService
         return seats;
     }
 
-    private async Task<Event> GenerateEventAsync(Venue venue, List<SubArea> venueSubAreas, List<EventType> eventTypes, EventGenerationOptions options)
+    private async Task<Event> GenerateEventAsync(Venue venue, List<Layout> venueLayouts, List<EventType> eventTypes, EventGenerationOptions options)
     {
         var eventType = eventTypes[_random.Next(eventTypes.Count)];
         var eventName = _eventNames[_random.Next(_eventNames.Length)];
@@ -268,11 +268,11 @@ public class EventGeneratorService : IEventGeneratorService
             .AddHours(durationHours)
             .AddMinutes(durationMinutes);
 
-        int? subAreaId = null;
+        int? layoutId = null;
 
-        if (venueSubAreas.Any())
+        if (venueLayouts.Any())
         {
-            subAreaId = venueSubAreas[_random.Next(venueSubAreas.Count)].Id;
+            layoutId = venueLayouts[_random.Next(venueLayouts.Count)].Id;
         }
 
         var eventItem = new Event
@@ -282,7 +282,7 @@ public class EventGeneratorService : IEventGeneratorService
             EndTime = endDate,
             EventTypeId = eventType.Id,
             VenueId = venue.Id,
-            SubAreaId = subAreaId
+            LayoutId = layoutId
         };
 
         await _context.Event.AddAsync(eventItem);
@@ -301,15 +301,15 @@ public class EventGeneratorService : IEventGeneratorService
 
             // Remove generated seats
             var generatedSeats = await _context.Seat
-                .Where(s => s.SubArea.Venue.UserId == "event-generator-user")
+                .Where(s => s.Layout.Venue.UserId == "event-generator-user")
                 .ToListAsync();
             _context.Seat.RemoveRange(generatedSeats);
 
-            // Remove generated subareas
-            var generatedSubAreas = await _context.SubArea
+            // Remove generated layouts
+            var generatedLayouts = await _context.Layout
                 .Where(sa => sa.Venue.UserId == "event-generator-user")
                 .ToListAsync();
-            _context.SubArea.RemoveRange(generatedSubAreas);
+            _context.Layout.RemoveRange(generatedLayouts);
 
             // Remove generated venues
             var generatedVenues = await _context.Venue
@@ -358,13 +358,13 @@ public class EventGeneratorService : IEventGeneratorService
 public class EventGenerationOptions
 {
     public int VenueCount { get; set; } = 5;
-    public int MinSubAreasPerVenue { get; set; } = 2;
-    public int MaxSubAreasPerVenue { get; set; } = 5;
+    public int MinLayoutsPerVenue { get; set; } = 2;
+    public int MaxLayoutsPerVenue { get; set; } = 5;
     public int MinEventsPerVenue { get; set; } = 3;
     public int MaxEventsPerVenue { get; set; } = 8;
     public bool GenerateSeats { get; set; } = true;
-    public int MinSeatsPerSubArea { get; set; } = 20;
-    public int MaxSeatsPerSubArea { get; set; } = 100;
+    public int MinSeatsPerLayout { get; set; } = 20;
+    public int MaxSeatsPerLayout { get; set; } = 100;
     public int MinDaysInFuture { get; set; } = 1;
     public int MaxDaysInFuture { get; set; } = 90;
 }
@@ -374,9 +374,9 @@ public class EventGenerationResult
     public bool Success { get; set; } = true;
     public string ErrorMessage { get; set; } = string.Empty;
     public List<Venue> GeneratedVenues { get; set; } = new();
-    public List<SubArea> GeneratedSubAreas { get; set; } = new();
+    public List<Layout> GeneratedLayouts { get; set; } = new();
     public List<Seat> GeneratedSeats { get; set; } = new();
     public List<Event> GeneratedEvents { get; set; } = new();
     
-    public int TotalItemsGenerated => GeneratedVenues.Count + GeneratedSubAreas.Count + GeneratedSeats.Count + GeneratedEvents.Count;
+    public int TotalItemsGenerated => GeneratedVenues.Count + GeneratedLayouts.Count + GeneratedSeats.Count + GeneratedEvents.Count;
 }

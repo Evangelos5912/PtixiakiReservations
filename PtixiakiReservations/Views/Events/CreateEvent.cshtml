@@ -191,8 +191,8 @@
                                         </div>
                                     </div>
                                     <div>
-                                        <label asp-for="SubAreaId" class="block text-sm font-medium text-gray-700 mb-1">Layout</label>
-                                        <select asp-for="SubAreaId" id="subAreaSelect" class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white disabled:bg-gray-100">
+                                        <label asp-for="LayoutId" class="block text-sm font-medium text-gray-700 mb-1">Layout</label>
+                                        <select asp-for="LayoutId" id="subAreaSelect" class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white disabled:bg-gray-100">
                                             <option value="">Select a Layout</option>
                                         </select>
                                     </div>
@@ -593,7 +593,7 @@
                                 venueSearch.disabled = false;
                                 clearVenueBtn.classList.remove('hidden');
                                 venueResultsList.classList.add('hidden');
-                                fetchSubAreas(v.id);
+                                fetchLayouts(v.id);
                                 subAreaSelect.disabled = false;
                             };
                             venueResultsList.appendChild(li);
@@ -617,9 +617,9 @@
                 subAreaSelect.disabled = true;
             };
 
-            function fetchSubAreas(vId) {
+            function fetchLayouts(vId) {
                 if(!vId) return;
-                fetch(`/Events/GetSubAreas?venueId=${vId}`)
+                fetch(`/Events/GetLayouts?venueId=${vId}`)
                     .then(res => res.json())
                     .then(data => {
                         subAreaSelect.innerHTML = '<option value="">Select a Layout</option>';

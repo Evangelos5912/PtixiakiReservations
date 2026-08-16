@@ -40,11 +40,11 @@ public static class TestDataSeeder
         // Seed Venues (15-20 venues)
         var venues = await SeedVenuesAsync(context, adminUser.Id, cities);
 
-        // Seed SubAreas for each venue (2-5 per venue)
-        var subAreas = await SeedSubAreasAsync(context, venues);
+        // Seed Layouts for each venue (2-5 per venue)
+        var layouts = await SeedLayoutsAsync(context, venues);
 
-        // Seed Seats for each SubArea
-        await SeedSeatsAsync(context, subAreas);
+        // Seed Seats for each Layout
+        await SeedSeatsAsync(context, layouts);
         
         // ADD THIS LINE: Seed Events
         var events = await SeedEventsAsync(context, venues);
@@ -166,35 +166,35 @@ public static class TestDataSeeder
         return venues;
     }
 
-    private static async Task<List<SubArea>> SeedSubAreasAsync(ApplicationDbContext context, List<Venue> venues)
+    private static async Task<List<Layout>> SeedLayoutsAsync(ApplicationDbContext context, List<Venue> venues)
     {
-        if (await context.SubArea.CountAsync() > venues.Count * 2)
-            return await context.SubArea.ToListAsync();
+        if (await context.Layout.CountAsync() > venues.Count * 2)
+            return await context.Layout.ToListAsync();
 
-        var subAreaNames = new List<string>
+        var layoutNames = new List<string>
         {
             "Main Floor", "Balcony", "VIP Section", "Orchestra", "Mezzanine",
             "Terrace", "Box Seats", "Front Section", "Middle Section", "Back Section",
             "Stage Left", "Stage Right", "Upper Level", "Lower Level", "Reserved Section"
         };
 
-        var subAreas = new List<SubArea>();
+        var layouts = new List<Layout>();
 
         foreach (var venue in venues)
         {
             // Each venue gets 2-5 sub-areas
-            var numSubAreas = _random.Next(2, 6);
+            var numLayouts = _random.Next(2, 6);
 
-            for (int i = 0; i < numSubAreas; i++)
+            for (int i = 0; i < numLayouts; i++)
             {
-                var nameIndex = _random.Next(subAreaNames.Count);
-                var subAreaName = i == 0
+                var nameIndex = _random.Next(layoutNames.Count);
+                var layoutName = i == 0
                     ? "Main Floor" // Always have at least one "Main Floor"
-                    : subAreaNames[nameIndex];
+                    : layoutNames[nameIndex];
 
-                var subArea = new SubArea
+                var layout = new Layout
                 {
-                    AreaName = $"{subAreaName} {(i > 0 ? i.ToString() : "")}".Trim(),
+                    AreaName = $"{layoutName} {(i > 0 ? i.ToString() : "")}".Trim(),
                     Desc = $"Seating area in {venue.Name}",
                     VenueId = venue.Id,
                     Width = (decimal)_random.Next(300, 601),
@@ -204,29 +204,29 @@ public static class TestDataSeeder
                     Rotate = 0
                 };
 
-                subAreas.Add(subArea);
+                layouts.Add(layout);
             }
         }
 
-        await context.SubArea.AddRangeAsync(subAreas);
+        await context.Layout.AddRangeAsync(layouts);
         await context.SaveChangesAsync();
 
-        Console.WriteLine($"Added {subAreas.Count} sub-areas across {venues.Count} venues.");
-        return subAreas;
+        Console.WriteLine($"Added {layouts.Count} sub-areas across {venues.Count} venues.");
+        return layouts;
     }
 
-    private static async Task SeedSeatsAsync(ApplicationDbContext context, List<SubArea> subAreas)
+    private static async Task SeedSeatsAsync(ApplicationDbContext context, List<Layout> layouts)
     {
         // Check if we already have a good number of seats
-        if (await context.Seat.CountAsync() > subAreas.Count * 20)
+        if (await context.Seat.CountAsync() > layouts.Count * 20)
             return;
 
         var seats = new List<Seat>();
 
-        foreach (var subArea in subAreas)
+        foreach (var layout in layouts)
         {
-            // Create a grid of seats for each subarea
-            // Number of rows and columns based on the subarea size
+            // Create a grid of seats for each layout
+            // Number of rows and columns based on the layout size
             var rows = _random.Next(3, 8);
             var columns = _random.Next(5, 11);
 
@@ -248,7 +248,7 @@ public static class TestDataSeeder
                         X = (decimal)x,
                         Y = (decimal)y,
                         Available = true,
-                        SubAreaId = subArea.Id
+                        LayoutId = layout.Id
                     };
 
                     seats.Add(seat);
@@ -259,7 +259,7 @@ public static class TestDataSeeder
         await context.Seat.AddRangeAsync(seats);
         await context.SaveChangesAsync();
 
-        Console.WriteLine($"Added {seats.Count} seats across {subAreas.Count} sub-areas.");
+        Console.WriteLine($"Added {seats.Count} seats across {layouts.Count} sub-areas.");
     }
 
     private static async Task<List<Event>> SeedEventsAsync(ApplicationDbContext context, List<Venue> venues)

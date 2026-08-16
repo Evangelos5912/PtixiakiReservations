@@ -17,7 +17,7 @@ namespace PtixiakiReservations.Migrations
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    SubAreaId = table.Column<int>(type: "integer", nullable: false),
+                    LayoutId = table.Column<int>(type: "integer", nullable: false),
                     X = table.Column<decimal>(type: "numeric", nullable: false),
                     Y = table.Column<decimal>(type: "numeric", nullable: false),
                     Width = table.Column<decimal>(type: "numeric", nullable: false),
@@ -31,17 +31,17 @@ namespace PtixiakiReservations.Migrations
                 {
                     table.PrimaryKey("PK_NonSelectable", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_NonSelectable_SubArea_SubAreaId",
-                        column: x => x.SubAreaId,
-                        principalTable: "SubArea",
+                        name: "FK_NonSelectable_Layout_LayoutId",
+                        column: x => x.LayoutId,
+                        principalTable: "Layout",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_NonSelectable_SubAreaId",
+                name: "IX_NonSelectable_LayoutId",
                 table: "NonSelectable",
-                column: "SubAreaId");
+                column: "LayoutId");
         }
 
         /// <inheritdoc />

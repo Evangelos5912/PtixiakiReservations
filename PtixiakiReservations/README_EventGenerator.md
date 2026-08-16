@@ -51,13 +51,13 @@ private readonly IEventGeneratorService _eventGenerator;
 var options = new EventGenerationOptions
 {
     VenueCount = 3,
-    MinSubAreasPerVenue = 2,
-    MaxSubAreasPerVenue = 4,
+    MinLayoutsPerVenue = 2,
+    MaxLayoutsPerVenue = 4,
     MinEventsPerVenue = 5,
     MaxEventsPerVenue = 10,
     GenerateSeats = true,
-    MinSeatsPerSubArea = 30,
-    MaxSeatsPerSubArea = 150,
+    MinSeatsPerLayout = 30,
+    MaxSeatsPerLayout = 150,
     MinDaysInFuture = 1,
     MaxDaysInFuture = 60
 };
@@ -69,7 +69,7 @@ if (result.Success)
 {
     Console.WriteLine($"Generated {result.TotalItemsGenerated} items:");
     Console.WriteLine($"- {result.GeneratedVenues.Count} venues");
-    Console.WriteLine($"- {result.GeneratedSubAreas.Count} sub-areas");
+    Console.WriteLine($"- {result.GeneratedLayouts.Count} sub-areas");
     Console.WriteLine($"- {result.GeneratedSeats.Count} seats");  
     Console.WriteLine($"- {result.GeneratedEvents.Count} events");
 }
@@ -80,13 +80,13 @@ if (result.Success)
 | Option | Description | Default | Range |
 |--------|-------------|---------|-------|
 | `VenueCount` | Number of venues to create | 5 | 1-20 |
-| `MinSubAreasPerVenue` | Minimum sub-areas per venue | 2 | 1-10 |
-| `MaxSubAreasPerVenue` | Maximum sub-areas per venue | 5 | 1-10 |
+| `MinLayoutsPerVenue` | Minimum sub-areas per venue | 2 | 1-10 |
+| `MaxLayoutsPerVenue` | Maximum sub-areas per venue | 5 | 1-10 |
 | `MinEventsPerVenue` | Minimum events per venue | 3 | 1-20 |
 | `MaxEventsPerVenue` | Maximum events per venue | 8 | 1-20 |
 | `GenerateSeats` | Whether to generate seats | true | true/false |
-| `MinSeatsPerSubArea` | Minimum seats per sub-area | 20 | 5-500 |
-| `MaxSeatsPerSubArea` | Maximum seats per sub-area | 100 | 5-500 |
+| `MinSeatsPerLayout` | Minimum seats per sub-area | 20 | 5-500 |
+| `MaxSeatsPerLayout` | Maximum seats per sub-area | 100 | 5-500 |
 | `MinDaysInFuture` | Minimum days ahead for events | 1 | 1-365 |
 | `MaxDaysInFuture` | Maximum days ahead for events | 90 | 1-365 |
 

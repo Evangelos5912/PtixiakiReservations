@@ -43,8 +43,8 @@ namespace PtixiakiReservations.Controllers
             var reservations = await _context.Reservation
                 .Include(r => r.Event)
                 .Include(r => r.Seat)
-                .Include(r => r.Seat.SubArea)
-                .Include(r => r.Seat.SubArea.Venue)
+                .Include(r => r.Seat.Layout)
+                .Include(r => r.Seat.Layout.Venue)
                 .Where(r => r.UserId == user.Id)
                 .OrderByDescending(r => r.Date)
                 .Take(5)
@@ -151,8 +151,8 @@ namespace PtixiakiReservations.Controllers
             var reservations = await _context.Reservation
                 .Include(r => r.Event)
                 .Include(r => r.Seat)
-                .Include(r => r.Seat.SubArea)
-                .Include(r => r.Seat.SubArea.Venue)
+                .Include(r => r.Seat.Layout)
+                .Include(r => r.Seat.Layout.Venue)
                 .Where(r => r.UserId == user.Id)
                 .OrderByDescending(r => r.Date)
                 .ToListAsync();

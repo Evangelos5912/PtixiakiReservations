@@ -290,7 +290,7 @@ public class EventsController(
             .Include(e => e.ParentEvent)
                 .ThenInclude(p => p.GalleryImages)
             .Include(e => e.ChildEvents) 
-                .ThenInclude(c => c.SubArea)
+                .ThenInclude(c => c.Layout)
             .Include(e => e.ChildEvents) 
                 .ThenInclude(c => c.Venue)
             .AsSplitQuery() 
@@ -540,7 +540,7 @@ public class EventsController(
                             Description = newEvent.Description,
                             VenueId = newEvent.VenueId, // This correctly passes null if it's a master multi-day
                             EventTypeId = newEvent.EventTypeId,
-                            SubAreaId = newEvent.SubAreaId, // This correctly passes null if it's a master multi-day
+                            LayoutId = newEvent.LayoutId, // This correctly passes null if it's a master multi-day
                             StartDateTime = date.Date.Add(startTimeSpan),
                             EndTime = date.Date.Add(endTimeSpan),
                             ImagePath = newEvent.ImagePath,
@@ -986,14 +986,14 @@ public class EventsController(
     }
 
     [HttpGet]
-    public JsonResult GetSubAreas(int venueId)
+    public JsonResult GetLayouts(int venueId)
     {
-        var subAreas = context.SubArea
+        var layouts = context.Layout
             .Where(sa => sa.VenueId == venueId)
             .Select(sa => new { id = sa.Id, areaName = sa.AreaName })
             .ToList();
 
-        return Json(subAreas);
+        return Json(layouts);
     }
 
     [Authorize]
@@ -1006,7 +1006,7 @@ public class EventsController(
         var eventToEdit = await context.Event
             .Include(e => e.Venue)
             .Include(e => e.EventType)
-            .Include(e => e.SubArea)
+            .Include(e => e.Layout)
             .FirstOrDefaultAsync(e => e.Id == id);
 
         if (eventToEdit == null) return NotFound();
@@ -1030,12 +1030,12 @@ public class EventsController(
         ViewBag.VenueList = venues;
         ViewBag.EventTypeList = new SelectList(await context.EventType.ToListAsync(), "Id", "Name", eventToEdit.EventTypeId);
 
-        var subAreas = await context.SubArea
+        var layouts = await context.Layout
             .Where(sa => sa.VenueId == eventToEdit.VenueId)
             .Select(sa => new SelectListItem { Value = sa.Id.ToString(), Text = sa.AreaName })
             .ToListAsync();
 
-        ViewBag.SubAreaList = subAreas;
+        ViewBag.LayoutList = layouts;
         return View(eventToEdit);
     }
 
@@ -1049,7 +1049,7 @@ public class EventsController(
         // Re-populate ViewBags in case we need to return the view due to an error
         ViewBag.VenueList = await context.Venue.Select(v => new SelectListItem { Value = v.Id.ToString(), Text = v.Name }).ToListAsync();
         ViewBag.EventTypeList = new SelectList(await context.EventType.ToListAsync(), "Id", "Name");
-        ViewBag.SubAreaList = await context.SubArea.Where(sa => sa.VenueId == updatedEvent.VenueId).Select(sa => new SelectListItem { Value = sa.Id.ToString(), Text = sa.AreaName }).ToListAsync();
+        ViewBag.LayoutList = await context.Layout.Where(sa => sa.VenueId == updatedEvent.VenueId).Select(sa => new SelectListItem { Value = sa.Id.ToString(), Text = sa.AreaName }).ToListAsync();
 
         if (ModelState.IsValid)
         {
@@ -1131,7 +1131,7 @@ public class EventsController(
                 originalEvent.EndTime = updatedEvent.EndTime;
                 originalEvent.EventTypeId = updatedEvent.EventTypeId;
                 originalEvent.VenueId = updatedEvent.VenueId;
-                originalEvent.SubAreaId = updatedEvent.SubAreaId;
+                originalEvent.LayoutId = updatedEvent.LayoutId;
 
                 // 4. PARENT-ONLY FIELD ENFORCEMENT
                 if (originalEvent.ParentEventId == null)
@@ -1208,7 +1208,7 @@ public class EventsController(
     public async Task<IActionResult> GetSubEvents(int parentId)
     {
         var subEvents = await context.Event
-            .Include(e => e.SubArea)
+            .Include(e => e.Layout)
             .Where(e => e.ParentEventId == parentId)
             .OrderBy(e => e.StartDateTime)
             .Select(e => new {
@@ -1216,7 +1216,7 @@ public class EventsController(
                 name = e.Name, 
                 date = e.StartDateTime.ToString("dddd, MMM d, yyyy"),
                 time = e.StartDateTime.ToString("h:mm tt") + " - " + e.EndTime.ToString("h:mm tt"),
-                layout= e.SubArea.AreaName
+                layout= e.Layout.AreaName
             })
             .ToListAsync();
             
@@ -1307,7 +1307,7 @@ public class EventsController(
             EndTime = ev.EndTime,
             EventTypeId = ev.EventTypeId,
             VenueId = ev.VenueId,
-            SubAreaId = ev.SubAreaId,
+            LayoutId = ev.LayoutId,
             ParentEventId = ev.ParentEventId,
             ImagePath = ev.ImagePath
         };

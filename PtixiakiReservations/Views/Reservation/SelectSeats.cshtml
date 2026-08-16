@@ -94,7 +94,7 @@
             showLoading(canvas);
 
             // Fetch seat data
-            $.getJSON(`/Seat/get_data?SubAreaId=${venueId}&eventId=${eventId}`, function (data) {
+            $.getJSON(`/Seat/get_data?LayoutId=${venueId}&eventId=${eventId}`, function (data) {
                 console.log("Seat data received:", data);
                 canvas.clear(); // Clear loading indicator
 
@@ -152,7 +152,7 @@
                         data: JSON.stringify({
                             seatIds: selectedSeats,
                             eventId: eventId,
-                            subAreaId: venueId,
+                            layoutId: venueId,
                             duration: "00:00:00",
                             resDate: reservationDate.toISOString()
                         }),

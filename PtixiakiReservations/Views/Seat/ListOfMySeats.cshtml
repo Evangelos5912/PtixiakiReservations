@@ -14,7 +14,7 @@
                 @Html.DisplayNameFor(model => model.Name)
             </th>
             <th class="px-6 py-3 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">
-                @Html.DisplayNameFor(model => model.SubArea)
+                @Html.DisplayNameFor(model => model.Layout)
             </th>
             <th class="px-6 py-3 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">
                 @Html.DisplayNameFor(model => model.Available)
@@ -32,7 +32,7 @@
                     @Html.DisplayFor(modelItem => item.Name)
                 </td>
                 <td class="px-6 py-4 text-sm text-gray-800">
-                    @Html.DisplayFor(modelItem => item.SubArea.AreaName)
+                    @Html.DisplayFor(modelItem => item.Layout.AreaName)
                 </td>
                 <td class="px-6 py-4 text-sm">
                     @if (item.Available == true)

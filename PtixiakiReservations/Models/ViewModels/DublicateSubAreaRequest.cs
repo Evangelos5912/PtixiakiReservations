@@ -1,6 +1,6 @@
 namespace PtixiakiReservations.Models.ViewModels
 {
-    public class DuplicateSubAreaRequest
+    public class DuplicateLayoutRequest
     {
         public int Id { get; set; }
         public string Name { get; set; }

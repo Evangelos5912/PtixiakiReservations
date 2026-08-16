@@ -1,4 +1,4 @@
-﻿@model PtixiakiReservations.Models.SubArea
+﻿@model PtixiakiReservations.Models.Layout
 
 @{
     ViewData["Title"] = "Create";
@@ -9,7 +9,7 @@
 
     <div asp-validation-summary="ModelOnly" class="text-red-500 mb-4"></div>
 
-    <form id="createSubAreaForm">
+    <form id="createLayoutForm">
         <!-- Venue Dropdown -->
         <div class="mb-4">
             <label for="VenueId" class="block text-sm font-medium text-gray-700 mb-1">Venue</label>
@@ -80,7 +80,7 @@
                 });
         }
 
-        document.getElementById("createSubAreaForm").addEventListener("submit", async (e) => {
+        document.getElementById("createLayoutForm").addEventListener("submit", async (e) => {
             e.preventDefault();
 
             // Get form values
@@ -97,7 +97,7 @@
                 document.getElementById("venueIdError").classList.add("hidden");
             }
 
-            const subAreaData = [
+            const layoutData = [
                 {
                     areaName: areaName,
                     rows: parseInt(rows),
@@ -107,20 +107,20 @@
             ];
 
             try {
-                const response = await fetch('@Url.Action("Create", "SubAreas")', {
+                const response = await fetch('@Url.Action("Create", "Layouts")', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify(subAreaData)
+                    body: JSON.stringify(layoutData)
                 });
 
                 if (response.ok) {
                     // Redirect to index after successful creation
-                    window.location.href = '@Url.Action("Index", "SubAreas")';
+                    window.location.href = '@Url.Action("Index", "Layouts")';
                 } else {
                     // Handle failure
-                    alert("Error creating SubArea");
+                    alert("Error creating Layout");
                 }
             } catch (error) {
                 alert("An unexpected error occurred.");

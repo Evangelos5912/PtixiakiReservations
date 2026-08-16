@@ -1,5 +1,5 @@
 ﻿@using System.Linq
-@model PtixiakiReservations.Models.SubArea
+@model PtixiakiReservations.Models.Layout
 
 @{
     ViewData["Title"] = "Edit Layout";
@@ -17,7 +17,7 @@
                         </p>
                     </div>
                     <div class="mt-4 md:mt-0">
-                        <a href="@Url.Action("VenueSubAreas", new { venueId = Model.VenueId })"
+                        <a href="@Url.Action("VenueLayouts", new { venueId = Model.VenueId })"
                            class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-indigo-700 bg-white hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
@@ -43,7 +43,7 @@
 
             <div class="p-6">
                 <div id="details-content" class="tab-content">
-                    <form asp-action="Edit" id="editSubAreaForm" class="space-y-6 max-w-xl mx-auto">
+                    <form asp-action="Edit" id="editLayoutForm" class="space-y-6 max-w-xl mx-auto">
                         @Html.AntiForgeryToken()
                         <div asp-validation-summary="ModelOnly" class="text-red-500"></div>
                         <input type="hidden" asp-for="Id"/>
@@ -136,7 +136,7 @@
                                 </svg>
                                 Save Changes
                             </button>
-                            <a href="@Url.Action("VenueSubAreas", new { venueId = Model.VenueId })" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                            <a href="@Url.Action("VenueLayouts", new { venueId = Model.VenueId })" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
                                 Cancel
                             </a>
                         </div>
@@ -272,7 +272,7 @@
         let selectedItems = new Set();
         window.seatsInitialized = false;
 
-        const subAreaId = document.querySelector('input[name="Id"]').value;
+        const layoutId = document.querySelector('input[name="Id"]').value;
         const seatMap = document.getElementById('seat-map');
         const zoomContainer = document.getElementById('zoom-container');
         const optionsPanel = document.getElementById("optionsPanel");
@@ -397,13 +397,13 @@
                                 'Content-Type': 'application/json',
                                 'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
                             },
-                            body: JSON.stringify({ seatNames: dbItemsToDelete, subAreaId: subAreaId })
+                            body: JSON.stringify({ seatNames: dbItemsToDelete, layoutId: layoutId })
                         });
                         
                         await fetch('/NonSelectable/DeleteElements', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ names: dbItemsToDelete, subAreaId: subAreaId })
+                            body: JSON.stringify({ names: dbItemsToDelete, layoutId: layoutId })
                         });
 
                         updateStatus("Items removed successfully from database.", "success");
@@ -1140,11 +1140,11 @@
             updateStatus("Saving layout...", "loading");
 
             const standaloneSeats = currentSeats.filter(s => !s.groupId).map(seat => ({
-                name: seat.name, X: seat.x, Y: seat.y, available: true, subAreaId: parseInt(subAreaId), width: 60, height: 60
+                name: seat.name, X: seat.x, Y: seat.y, available: true, layoutId: parseInt(layoutId), width: 60, height: 60
             }));
 
             const standaloneShapes = currentShapes.filter(s => !s.groupId).map(shape => ({
-                name: shape.name, X: shape.x, Y: shape.y, subAreaId: parseInt(subAreaId), shapeType: shape.shapeType, width: shape.width, height: shape.height, backgroundColor: shape.backgroundColor
+                name: shape.name, X: shape.x, Y: shape.y, layoutId: parseInt(layoutId), shapeType: shape.shapeType, width: shape.width, height: shape.height, backgroundColor: shape.backgroundColor
             }));
 
             const unitGroupsData = currentGroups.map(g => {
@@ -1154,7 +1154,7 @@
                     name: g.name,
                     top: g.y,
                     left: g.x,
-                    subAreaId: parseInt(subAreaId),
+                    layoutId: parseInt(layoutId),
                     selectableUnits: groupChildren.filter(c => currentSeats.includes(c)).map(c => ({
                         name: c.name, X: c.x - g.x, Y: c.y - g.y, available: true, width: 60, height: 60
                     })),
@@ -1173,7 +1173,7 @@
             try {
                 const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
                 
-                const response = await fetch(`/Seat/SaveCompleteLayout?subAreaId=${subAreaId}`, {
+                const response = await fetch(`/Seat/SaveCompleteLayout?layoutId=${layoutId}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': token },
                     body: JSON.stringify(layoutPayload)
@@ -1181,7 +1181,7 @@
 
                 if (response.ok) {
                     updateStatus("Layout saved successfully!", "success");
-                    loadSeats(subAreaId); 
+                    loadSeats(layoutId); 
                 } else {
                     throw new Error("Save failed");
                 }
@@ -1195,7 +1195,7 @@
             updateStatus("Loading layout...", "loading");
             try {
 
-                const response = await fetch(`/Seat/GetCompleteLayout?subAreaId=${id}`);
+                const response = await fetch(`/Seat/GetCompleteLayout?layoutId=${id}`);
                 if (!response.ok) throw new Error("Failed to fetch layout");
                 
                 const data = await response.json();
@@ -1280,7 +1280,7 @@
             
             if (!window.seatsInitialized) {
                 window.seatsInitialized = true;
-                loadSeats(subAreaId);
+                loadSeats(layoutId);
             }
         });
 

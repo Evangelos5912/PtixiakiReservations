@@ -128,17 +128,17 @@
                         <div class="space-y-3">
                             <div>
                                 <p class="text-xs text-gray-500 uppercase tracking-wider">Venue Name</p>
-                                <a href="@Url.Action("Details", "Venue", new { id = Model.Seat.SubArea.Venue.Id })"
+                                <a href="@Url.Action("Details", "Venue", new { id = Model.Seat.Layout.Venue.Id })"
                                    class="text-blue-600 hover:text-blue-700 hover:underline font-medium">
-                                    @Model.Seat.SubArea.Venue.Name
+                                    @Model.Seat.Layout.Venue.Name
                                 </a>
                             </div>
                             <div>
                                 <p class="text-xs text-gray-500 uppercase tracking-wider">Location</p>
-                                <p class="text-gray-800 font-medium">@Model.Seat.SubArea.Venue.Address</p>
-                                @if (Model.Seat.SubArea.Venue.City != null)
+                                <p class="text-gray-800 font-medium">@Model.Seat.Layout.Venue.Address</p>
+                                @if (Model.Seat.Layout.Venue.City != null)
                                 {
-                                    <p class="text-gray-600 text-sm">@Model.Seat.SubArea.Venue.City.Name</p>
+                                    <p class="text-gray-600 text-sm">@Model.Seat.Layout.Venue.City.Name</p>
                                 }
                             </div>
                         </div>
@@ -157,7 +157,7 @@
                         <div class="space-y-3">
                             <div>
                                 <p class="text-xs text-gray-500 uppercase tracking-wider">Section</p>
-                                <p class="text-gray-800 font-medium">@Model.Seat.SubArea.AreaName</p>
+                                <p class="text-gray-800 font-medium">@Model.Seat.Layout.AreaName</p>
                             </div>
                             <div>
                                 <p class="text-xs text-gray-500 uppercase tracking-wider">Seat Number</p>

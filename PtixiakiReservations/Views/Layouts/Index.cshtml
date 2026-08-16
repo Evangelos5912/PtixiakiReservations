@@ -1,19 +1,19 @@
-﻿@model IEnumerable<PtixiakiReservations.Models.SubArea>
+﻿@model IEnumerable<PtixiakiReservations.Models.Layout>
 @using System.Linq
 
 @{
     ViewData["Title"] = "Layouts";
-    var subAreas = ViewBag.SubAreas as System.Collections.Generic.List<dynamic>;
+    var layouts = ViewBag.Layouts as System.Collections.Generic.List<dynamic>;
 
     // Manual counting of layouts with seats
-    int subAreasWithSeats = 0;
-    if (subAreas != null)
+    int layoutsWithSeats = 0;
+    if (layouts != null)
     {
-        foreach (var item in subAreas)
+        foreach (var item in layouts)
         {
             if (item.HasSeats)
             {
-                subAreasWithSeats++;
+                layoutsWithSeats++;
             }
         }
     }
@@ -56,7 +56,7 @@
                         </div>
                         <div class="ml-3">
                             <p class="text-sm font-medium text-gray-500">Total Areas</p>
-                            <p class="text-lg font-semibold text-gray-900">@(subAreas != null ? subAreas.Count : 0)</p>
+                            <p class="text-lg font-semibold text-gray-900">@(layouts != null ? layouts.Count : 0)</p>
                         </div>
                     </div>
 
@@ -69,7 +69,7 @@
                         </div>
                         <div class="ml-3">
                             <p class="text-sm font-medium text-gray-500">With Seat Maps</p>
-                            <p class="text-lg font-semibold text-gray-900">@subAreasWithSeats</p>
+                            <p class="text-lg font-semibold text-gray-900">@layoutsWithSeats</p>
                         </div>
                     </div>
                 </div>
@@ -96,9 +96,9 @@
 
         <!-- Card View -->
         <div id="cardView" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-            @if (subAreas != null && subAreas.Any())
+            @if (layouts != null && layouts.Any())
             {
-                @foreach (var item in subAreas)
+                @foreach (var item in layouts)
                 {
                     var photopath = "~/images/" + (item.ImgUrl ?? "noimage.jpg");
 
@@ -134,7 +134,7 @@
                                     Edit
                                 </a>
 
-                                <a asp-controller="Seat" asp-action="Create" asp-route-subAreaId="@item.Id"
+                                <a asp-controller="Seat" asp-action="Create" asp-route-layoutId="@item.Id"
                                    class="inline-flex items-center px-3 py-1.5 rounded-md @(item.HasSeats ? "bg-indigo-50 text-indigo-600" : "bg-green-50 text-green-600") text-sm font-medium hover:bg-opacity-80 transition-colors">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
@@ -142,7 +142,7 @@
                                     @(item.HasSeats ? "Edit Seat Map" : "Create Seat Map")
                                 </a>
 
-                                <a asp-controller="Seat" asp-action="ListOfMySeats" asp-route-subAreaId="@item.Id"
+                                <a asp-controller="Seat" asp-action="ListOfMySeats" asp-route-layoutId="@item.Id"
                                    class="inline-flex items-center px-3 py-1.5 rounded-md bg-purple-50 text-purple-600 text-sm font-medium hover:bg-purple-100 transition-colors">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
@@ -200,9 +200,9 @@
                         </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-200">
-                        @if (subAreas != null && subAreas.Any())
+                        @if (layouts != null && layouts.Any())
                         {
-                            @foreach (var item in subAreas)
+                            @foreach (var item in layouts)
                             {
                                 <tr class="hover:bg-gray-50 transition-colors">
                                     <td class="px-6 py-4 whitespace-nowrap">
@@ -230,11 +230,11 @@
                                         <div class="flex space-x-3">
                                             <a asp-action="Edit" asp-route-id="@item.Id"
                                                class="text-blue-600 hover:text-blue-900">Edit</a>
-                                            <a asp-controller="Seat" asp-action="Create" asp-route-subAreaId="@item.Id"
+                                            <a asp-controller="Seat" asp-action="Create" asp-route-layoutId="@item.Id"
                                                class="@(item.HasSeats ? "text-indigo-600 hover:text-indigo-900" : "text-green-600 hover:text-green-900")">
                                                 @(item.HasSeats ? "Edit Seat Map" : "Create Seat Map")
                                             </a>
-                                            <a asp-controller="Seat" asp-action="ListOfMySeats" asp-route-subAreaId="@item.Id"
+                                            <a asp-controller="Seat" asp-action="ListOfMySeats" asp-route-layoutId="@item.Id"
                                                class="text-purple-600 hover:text-purple-900">Seats List</a>
                                             <a asp-action="Delete" asp-route-id="@item.Id"
                                                class="text-red-600 hover:text-red-900">Delete</a>
@@ -268,7 +268,7 @@
             const tableView = document.getElementById('tableView');
 
             // Set default view from localStorage or use card view
-            const currentView = localStorage.getItem('subAreaViewPreference') || 'card';
+            const currentView = localStorage.getItem('layoutViewPreference') || 'card';
 
             function setView(view) {
                 if (view === 'table') {
@@ -278,7 +278,7 @@
                     cardViewBtn.classList.add('bg-white', 'text-indigo-600');
                     tableViewBtn.classList.remove('bg-white', 'text-indigo-600');
                     tableViewBtn.classList.add('bg-indigo-600', 'text-white');
-                    localStorage.setItem('subAreaViewPreference', 'table');
+                    localStorage.setItem('layoutViewPreference', 'table');
                 } else {
                     tableView.classList.add('hidden');
                     cardView.classList.remove('hidden');
@@ -286,7 +286,7 @@
                     tableViewBtn.classList.add('bg-white', 'text-indigo-600');
                     cardViewBtn.classList.remove('bg-white', 'text-indigo-600');
                     cardViewBtn.classList.add('bg-indigo-600', 'text-white');
-                    localStorage.setItem('subAreaViewPreference', 'card');
+                    localStorage.setItem('layoutViewPreference', 'card');
                 }
             }
 

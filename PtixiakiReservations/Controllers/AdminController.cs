@@ -31,7 +31,7 @@ namespace PtixiakiReservations.Controllers
             {
                 VenueCount = await _context.Venue.CountAsync(),
                 EventCount = await _context.Event.CountAsync(),
-                SubAreaCount = await _context.SubArea.CountAsync(),
+                LayoutCount = await _context.Layout.CountAsync(),
                 ReservationCount = await _context.Reservation.CountAsync(),
                 PendingRequests = await _context.Users
                     .Where(u => (u.HasRequestedVenueManagerRole && u.VenueManagerRequestStatus == "Pending") ||

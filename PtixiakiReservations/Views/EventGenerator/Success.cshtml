@@ -26,7 +26,7 @@
             
             <div class="bg-white rounded-lg shadow-sm p-6 text-center">
                 <div class="text-3xl mb-2">📍</div>
-                <div class="text-2xl font-bold text-gray-900">@Model.GeneratedSubAreas.Count</div>
+                <div class="text-2xl font-bold text-gray-900">@Model.GeneratedLayouts.Count</div>
                 <div class="text-sm text-gray-600">Sub-Areas</div>
             </div>
             
@@ -58,7 +58,7 @@
                                 <div class="font-medium text-gray-900">@venue.Name</div>
                                 <div class="text-sm text-gray-600">@venue.Address</div>
                                 <div class="text-xs text-gray-500">
-                                    Sub-areas: @Model.GeneratedSubAreas.Count(sa => sa.VenueId == venue.Id) | 
+                                    Sub-areas: @Model.GeneratedLayouts.Count(sa => sa.VenueId == venue.Id) | 
                                     Events: @Model.GeneratedEvents.Count(e => e.VenueId == venue.Id)
                                 </div>
                             </div>

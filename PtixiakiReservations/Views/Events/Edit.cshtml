@@ -209,14 +209,14 @@
                                 </div>
 
                                 <div>
-                                    <label asp-for="SubAreaId" class="block text-sm font-medium text-gray-700 mb-1">Layout</label>
+                                    <label asp-for="LayoutId" class="block text-sm font-medium text-gray-700 mb-1">Layout</label>
                                     <div class="relative">
                                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
                                             </svg>
                                         </div>
-                                        <select asp-for="SubAreaId" asp-items="ViewBag.SubAreaList" id="SubAreaId"
+                                        <select asp-for="LayoutId" asp-items="ViewBag.LayoutList" id="LayoutId"
                                                 class="pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors appearance-none bg-white">
                                             <option value="">Select a Layout</option>
                                         </select>
@@ -226,7 +226,7 @@
                                             </svg>
                                         </div>
                                     </div>
-                                    <span asp-validation-for="SubAreaId" class="text-red-500 text-xs mt-1"></span>
+                                    <span asp-validation-for="LayoutId" class="text-red-500 text-xs mt-1"></span>
                                 </div>
                             </div>
                         </div>
@@ -262,7 +262,7 @@
             const venueSearch = document.getElementById('venueSearch');
             const venueResultsList = document.getElementById('venueSearchResults');
             const clearVenueBtn = document.getElementById('clearVenueSelection');
-            const subAreaSelect = document.getElementById('SubAreaId');
+            const subAreaSelect = document.getElementById('LayoutId');
             
             // --- 1. Venue Search Logic ---
             venueSearch.addEventListener('input', function(e) {
@@ -285,7 +285,7 @@
                                 venueSearch.disabled = true;
                                 clearVenueBtn.classList.remove('hidden');
                                 venueResultsList.classList.add('hidden');
-                                fetchSubAreas(v.id);
+                                fetchLayouts(v.id);
                             };
                             venueResultsList.appendChild(li);
                         });
@@ -312,7 +312,7 @@
             };
 
             // --- 3. Layout Fetching Logic ---
-            function fetchSubAreas(venueId, preselectId = null) {
+            function fetchLayouts(venueId, preselectId = null) {
                 if (!venueId) {
                     subAreaSelect.innerHTML = '<option value="">Select a Layout</option>';
                     return;
@@ -321,7 +321,7 @@
                 subAreaSelect.disabled = true;
                 subAreaSelect.innerHTML = '<option value="">Loading Layouts...</option>';
                 
-                fetch(`/Events/GetSubAreas?venueId=${venueId}`)
+                fetch(`/Events/GetLayouts?venueId=${venueId}`)
                     .then(response => response.json())
                     .then(data => {
                         subAreaSelect.innerHTML = '<option value="">Select a Layout</option>';
@@ -352,8 +352,8 @@
                 venueSearch.disabled = true;
                 clearVenueBtn.classList.remove('hidden');
                 
-                const currentSubAreaId = subAreaSelect.value;
-                fetchSubAreas(venueHiddenInput.value, currentSubAreaId);
+                const currentLayoutId = subAreaSelect.value;
+                fetchLayouts(venueHiddenInput.value, currentLayoutId);
             }
             
             // Prevent Enter key from submitting form while searching

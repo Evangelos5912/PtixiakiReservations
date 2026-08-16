@@ -47,7 +47,7 @@ public class EventGeneratorController : Controller
             {
                 TempData["SuccessMessage"] = $"Successfully generated {result.TotalItemsGenerated} items: " +
                     $"{result.GeneratedVenues.Count} venues, " +
-                    $"{result.GeneratedSubAreas.Count} sub-areas, " +
+                    $"{result.GeneratedLayouts.Count} sub-areas, " +
                     $"{result.GeneratedSeats.Count} seats, " +
                     $"{result.GeneratedEvents.Count} events";
                     
@@ -108,10 +108,10 @@ public class EventGeneratorController : Controller
         var preview = new EventGenerationPreview
         {
             EstimatedVenues = options.VenueCount,
-            EstimatedSubAreas = options.VenueCount * ((options.MinSubAreasPerVenue + options.MaxSubAreasPerVenue) / 2),
+            EstimatedLayouts = options.VenueCount * ((options.MinLayoutsPerVenue + options.MaxLayoutsPerVenue) / 2),
             EstimatedEvents = options.VenueCount * ((options.MinEventsPerVenue + options.MaxEventsPerVenue) / 2),
             EstimatedSeats = options.GenerateSeats ? 
-                options.VenueCount * ((options.MinSubAreasPerVenue + options.MaxSubAreasPerVenue) / 2) * ((options.MinSeatsPerSubArea + options.MaxSeatsPerSubArea) / 2) : 0,
+                options.VenueCount * ((options.MinLayoutsPerVenue + options.MaxLayoutsPerVenue) / 2) * ((options.MinSeatsPerLayout + options.MaxSeatsPerLayout) / 2) : 0,
             DateRange = $"{DateTime.Now.AddDays(options.MinDaysInFuture):yyyy-MM-dd} to {DateTime.Now.AddDays(options.MaxDaysInFuture):yyyy-MM-dd}"
         };
 
@@ -122,9 +122,9 @@ public class EventGeneratorController : Controller
 public class EventGenerationPreview
 {
     public int EstimatedVenues { get; set; }
-    public int EstimatedSubAreas { get; set; }
+    public int EstimatedLayouts { get; set; }
     public int EstimatedEvents { get; set; }
     public int EstimatedSeats { get; set; }
     public string DateRange { get; set; } = string.Empty;
-    public int TotalEstimatedItems => EstimatedVenues + EstimatedSubAreas + EstimatedEvents + EstimatedSeats;
+    public int TotalEstimatedItems => EstimatedVenues + EstimatedLayouts + EstimatedEvents + EstimatedSeats;
 }
