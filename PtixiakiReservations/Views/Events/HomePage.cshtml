@@ -8,166 +8,174 @@
     var currentUser = SignInManager.IsSignedIn(User) ? await UserManager.GetUserAsync(User) : null;
     var userRoles = currentUser != null ? await UserManager.GetRolesAsync(currentUser) : new List<string>();
 }
+<div class="w-full">
 
-<div class="container mx-auto px-4 py-8 max-w-7xl">
-    <!-- Anti-forgery token required for secure POST/DELETE AJAX operations -->
-    @Html.AntiForgeryToken()
-
-    <!-- Search Panel Section -->
-    <div class="bg-white rounded-xl shadow-lg mb-10">
-        <div class="bg-gradient-to-r from-blue-600 to-indigo-700 px-6 py-4 flex flex-row items-center justify-between border-b">
-            <h3 class="text-xl font-bold text-white">Explore Events</h3>
+    <div class="bg-white shadow-sm mb-10 w-full border-b border-gray-200">
+        
+        <div class="w-full bg-gradient-to-r from-blue-600 to-indigo-700">
+            <div class="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
+                <h3 class="text-xl font-bold text-white tracking-wide">Explore Events</h3>
+            </div>
         </div>
 
-        <div id="panel-body" class="p-6">
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6 w-full justify-between">
-                <div class="flex justify-center w-full flex-col">
-                    <h1 class="text-2xl font-bold text-blue-700 mb-5">Get Started with your next Experiences</h1>
+        <div id="panel-body" class="w-full">
+            <div class="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-10 items-center w-full">
                     
-                    <!-- Search Input with Autocomplete Integration -->
-                    <div class="mb-6">
-                        <label for="search-term" class="block text-sm font-medium text-gray-700 mb-2">Event Name or Venue or Location</label>
+                    <div class="flex flex-col w-full">
+                        <h1 class="text-3xl lg:text-4xl font-extrabold text-blue-700 mb-6">Get Started with your next Experiences</h1>
                         
-                        <div class="relative w-full">
-                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                                </svg>
-                            </div>
+                        <div class="mb-6 w-full">
+                            <label for="search-term" class="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wide">Event Name, Venue, or Location</label>
                             
-                            <input type="text" id="search-term" 
-                                placeholder="Enter event name, venue, or city"
-                                class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                                autocomplete="off">
+                            <div class="relative w-full">
+                                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                    <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                    </svg>
+                                </div>
                                 
-                            <div id="autocomplete-dropdown" class="absolute left-0 top-full mt-1 z-50 bg-white shadow-xl rounded-md border border-gray-200 hidden max-h-60 overflow-y-auto w-full"></div>
+                                <input type="text" id="search-term" 
+                                    placeholder="Enter event name, venue, or city..."
+                                    class="block w-full pl-12 pr-4 py-4 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow shadow-sm"
+                                    autocomplete="off">
+                                    
+                                <div id="autocomplete-dropdown" class="absolute left-0 top-full mt-2 z-50 bg-white shadow-xl rounded-xl border border-gray-100 hidden max-h-60 overflow-y-auto w-full"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center w-full gap-4">
+                            <button id="search-button"
+                                    class="w-full sm:w-auto px-8 py-4 bg-blue-600 text-white font-bold rounded-xl shadow-md hover:bg-blue-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all transform hover:-translate-y-0.5">
+                                <span class="flex items-center justify-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                    </svg>
+                                    Search For Results
+                                </span>
+                            </button>
+                            <p id="search-validation-message" class="text-red-500 text-sm font-medium hidden">*Please type to search</p>
                         </div>
                     </div>
                     
-                    <div class="flex justify-between items-center w-full">
-                        <button id="search-button"
-                                class="px-6 py-3 bg-blue-600 text-white font-medium rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors">
-                            <span class="flex items-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                                </svg>
-                                Search For Results
-                            </span>
-                        </button>
-                        <p id="search-validation-message" class="text-red-500 text-sm hidden">*Please type to search</p>
+                    <div class="hidden sm:block w-full">
+                        <!-- Changed h-[320px] to h-80 to ensure standard Tailwind compilation -->
+                        <div id="carousel-container" class="relative w-full h-80 overflow-hidden rounded-2xl shadow-xl bg-gray-800 border border-gray-100">
+                        </div>
                     </div>
+
                 </div>
-                
-                <!-- Hero Banner Carousel -->
-                <div class="flex items-center w-full">
-                    <div id="carousel-container" class="hidden sm:block relative w-full max-w-lg mx-auto h-64 overflow-hidden rounded-xl shadow-lg">
+            </div>
+        </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-8 max-w-7xl">
+        <!-- Anti-forgery Token -->
+        @Html.AntiForgeryToken()
+        
+        <!-- Authentication Block -->
+        @if (!SignInManager.IsSignedIn(User))
+        {
+            <div class="bg-white rounded-xl shadow-lg mb-10 overflow-hidden">
+                <div class="grid grid-cols-1 bg-gradient-to-r from-blue-600 to-indigo-700 px-6 py-4 flex flex-row items-center justify-between p-5">
+                    <h3 class="text-2xl font-bold text-white mb-5">Create an Account or Log in</h3>
+                    <p class="text-lg font-bold text-white mb-5">Make sure to Create or Log in with an account to get access to the features of the app and your personal profile where you can request higher role privileges.</p>
+                    <div class="mb-5">
+                        <a class="mr-5 px-6 py-3 bg-white text-blue-600 font-medium rounded-lg shadow-md hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors inline-block" asp-area="Identity" asp-page="/Account/Login">
+                            Log in
+                        </a>
+                        <a class="px-6 py-3 bg-white text-blue-600 font-medium rounded-lg shadow-md hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors inline-block" asp-area="Identity" asp-page="/Account/Register">
+                            Register
+                        </a>
                     </div>
+                </div>        
+            </div>
+        }
+
+        <!-- Recent Events Slider -->
+        <div class="mb-10 overflow-hidden">
+            <div class="flex w-full max-w-6xl justify-between rounded-xl p-5">
+                <div>
+                    <h3 class="text-2xl font-bold text-black mb-2">Recent Events</h3>
+                    <p class="text-lg text-black">Don't miss out on the most recent events.</p>
+                </div>
+                <div>
+                    <a class="text-blue-600 font-bold hover:underline" href="@Url.Action("EventsForToday", "Events")">View all Events</a>
                 </div>
             </div>
-        </div>
-    </div>
-
-    <!-- Authentication Prompt (Guest Users Only) -->
-    @if (!SignInManager.IsSignedIn(User))
-    {
-        <div class="bg-white rounded-xl shadow-lg mb-10 overflow-hidden">
-            <div class="grid grid-cols-1 bg-gradient-to-r from-blue-600 to-indigo-700 px-6 py-4 flex flex-row items-center justify-between p-5">
-                <h3 class="text-2xl font-bold text-white mb-5">Create an Account or Log in</h3>
-                <p class="text-lg font-bold text-white mb-5">Make sure to Create or Log in with an account to get access to the features of the app and your personal profile where you can request higher role privileges.</p>
-                <div class="mb-5">
-                    <a class="mr-5 px-6 py-3 bg-white text-blue-600 font-medium rounded-lg shadow-md hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors inline-block" asp-area="Identity" asp-page="/Account/Login">
-                        Log in
-                    </a>
-                    <a class="px-6 py-3 bg-white text-blue-600 font-medium rounded-lg shadow-md hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors inline-block" asp-area="Identity" asp-page="/Account/Register">
-                        Register
-                    </a>
+            <div class="relative w-full max-w-6xl mx-auto px-12 py-5">
+                <div class="overflow-hidden rounded-xl py-4"> 
+                    <div id="recent-events-track" class="flex transition-transform duration-500 ease-out" style="transform: translateX(0%);"></div>
                 </div>
-            </div>        
+                <button id="recent-prev-btn" class="absolute left-0 top-1/2 -translate-y-1/2 bg-white text-gray-800 p-3 rounded-full shadow-md hover:bg-gray-50 focus:outline-none transition-colors z-10 disabled:opacity-50 disabled:cursor-not-allowed">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                    </svg>
+                </button>
+                <button id="recent-next-btn" class="absolute right-0 top-1/2 -translate-y-1/2 bg-white text-gray-800 p-3 rounded-full shadow-md hover:bg-gray-50 focus:outline-none transition-colors z-10 disabled:opacity-50 disabled:cursor-not-allowed">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                    </svg>
+                </button>
+            </div>
         </div>
-    }
 
-    <!-- Recent Events Horizontal Slider -->
-    <div class="mb-10 overflow-hidden">
-        <div class="flex w-full max-w-6xl justify-between rounded-xl p-5">
-            <div>
-                <h3 class="text-2xl font-bold text-black mb-2">Recent Events</h3>
-                <p class="text-lg text-black">Don't miss out on the most recent events.</p>
+        <!-- Category Slider -->
+        <div class="mb-10 overflow-hidden">
+            <div class="relative w-full max-w-6xl px-5">
+                <h3 class="text-2xl font-bold text-black mb-2">Event Categories</h3>
+                <p class="text-lg text-black">Choose one of our many Categories, we must have something you like.</p>
             </div>
-            <div>
-                <a class="text-blue-600 font-bold hover:underline" href="@Url.Action("EventsForToday", "Events")">View all Events</a>
+            <div class="relative w-full max-w-6xl mx-auto px-12 py-5">
+                <div class="overflow-hidden rounded-xl">
+                    <div id="category-track" class="flex transition-transform duration-500 ease-out" style="transform: translateX(0%);"></div>
+                </div>
+                <button id="prev-btn" class="absolute left-0 top-1/2 -translate-y-1/2 bg-white text-gray-800 p-3 rounded-full shadow-md hover:bg-gray-50 focus:outline-none transition-colors z-10 disabled:opacity-50 disabled:cursor-not-allowed">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                    </svg>
+                </button>
+                <button id="next-btn" class="absolute right-0 top-1/2 -translate-y-1/2 bg-white text-gray-800 p-3 rounded-full shadow-md hover:bg-gray-50 focus:outline-none transition-colors z-10 disabled:opacity-50 disabled:cursor-not-allowed">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                    </svg>
+                </button>
             </div>
         </div>
-        <div class="relative w-full max-w-6xl mx-auto px-12 py-5">
-            <div class="overflow-hidden rounded-xl py-4"> 
-                <div id="recent-events-track" class="flex transition-transform duration-500 ease-out" style="transform: translateX(0%);"></div>
-            </div>
-            <button id="recent-prev-btn" class="absolute left-0 top-1/2 -translate-y-1/2 bg-white text-gray-800 p-3 rounded-full shadow-md hover:bg-gray-50 focus:outline-none transition-colors z-10 disabled:opacity-50 disabled:cursor-not-allowed">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-                </svg>
-            </button>
-            <button id="recent-next-btn" class="absolute right-0 top-1/2 -translate-y-1/2 bg-white text-gray-800 p-3 rounded-full shadow-md hover:bg-gray-50 focus:outline-none transition-colors z-10 disabled:opacity-50 disabled:cursor-not-allowed">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                </svg>
-            </button>
-        </div>
-    </div>
 
-    <!-- Category Discovery Slider -->
-    <div class="mb-10 overflow-hidden">
-        <div class="relative w-full max-w-6xl px-5">
-            <h3 class="text-2xl font-bold text-black mb-2">Event Categories</h3>
-            <p class="text-lg text-black">Choose one of our many Categories, we must have something you like.</p>
-        </div>
-        <div class="relative w-full max-w-6xl mx-auto px-12 py-5">
-            <div class="overflow-hidden rounded-xl">
-                <div id="category-track" class="flex transition-transform duration-500 ease-out" style="transform: translateX(0%);"></div>
+        <!-- New Events Slider -->
+        <div class="mb-10 overflow-hidden">
+            <div class="flex w-full max-w-6xl justify-between rounded-xl p-5">
+                <div>
+                    <h3 class="text-2xl font-bold text-black mb-2">New Arrivals</h3>
+                    <p class="text-lg text-black">View some of our newest Events.</p>
+                </div>
+                <div>
+                    <a class="text-blue-600 font-bold hover:underline" href="@Url.Action("EventsForToday", "Events")">View all Events</a>
+                </div>
             </div>
-            <button id="prev-btn" class="absolute left-0 top-1/2 -translate-y-1/2 bg-white text-gray-800 p-3 rounded-full shadow-md hover:bg-gray-50 focus:outline-none transition-colors z-10 disabled:opacity-50 disabled:cursor-not-allowed">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-                </svg>
-            </button>
-            <button id="next-btn" class="absolute right-0 top-1/2 -translate-y-1/2 bg-white text-gray-800 p-3 rounded-full shadow-md hover:bg-gray-50 focus:outline-none transition-colors z-10 disabled:opacity-50 disabled:cursor-not-allowed">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                </svg>
-            </button>
-        </div>
-    </div>
-
-    <!-- New Events Horizontal Slider -->
-    <div class="mb-10 overflow-hidden">
-        <div class="flex w-full max-w-6xl justify-between rounded-xl p-5">
-            <div>
-                <h3 class="text-2xl font-bold text-black mb-2">New Arrivals</h3>
-                <p class="text-lg text-black">View some of our newest Events.</p>
+            <div class="relative w-full max-w-6xl mx-auto px-12 py-5">
+                <div class="overflow-hidden rounded-xl py-4"> 
+                    <div id="new-events-track" class="flex transition-transform duration-500 ease-out" style="transform: translateX(0%);"></div>
+                </div>
+                <button id="new-prev-btn" class="absolute left-0 top-1/2 -translate-y-1/2 bg-white text-gray-800 p-3 rounded-full shadow-md hover:bg-gray-50 focus:outline-none transition-colors z-10 disabled:opacity-50 disabled:cursor-not-allowed">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                    </svg>
+                </button>
+                <button id="new-next-btn" class="absolute right-0 top-1/2 -translate-y-1/2 bg-white text-gray-800 p-3 rounded-full shadow-md hover:bg-gray-50 focus:outline-none transition-colors z-10 disabled:opacity-50 disabled:cursor-not-allowed">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                    </svg>
+                </button>
             </div>
-            <div>
-                <a class="text-blue-600 font-bold hover:underline" href="@Url.Action("EventsForToday", "Events")">View all Events</a>
-            </div>
-        </div>
-        <div class="relative w-full max-w-6xl mx-auto px-12 py-5">
-            <div class="overflow-hidden rounded-xl py-4"> 
-                <div id="new-events-track" class="flex transition-transform duration-500 ease-out" style="transform: translateX(0%);"></div>
-            </div>
-            <button id="new-prev-btn" class="absolute left-0 top-1/2 -translate-y-1/2 bg-white text-gray-800 p-3 rounded-full shadow-md hover:bg-gray-50 focus:outline-none transition-colors z-10 disabled:opacity-50 disabled:cursor-not-allowed">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-                </svg>
-            </button>
-            <button id="new-next-btn" class="absolute right-0 top-1/2 -translate-y-1/2 bg-white text-gray-800 p-3 rounded-full shadow-md hover:bg-gray-50 focus:outline-none transition-colors z-10 disabled:opacity-50 disabled:cursor-not-allowed">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                </svg>
-            </button>
         </div>
     </div>
 </div>
 
 <style>
-    /* Tooltip Utilities */
+    /* Tooltip State */
     .tooltip-container {
         position: relative;      
         display: inline-block;   
@@ -209,7 +217,7 @@
         opacity: 1;
     }
 
-    /* Custom CSS Hover Logic to bypass Tailwind compiler limitations on dynamic JS strings */
+    /* Wishlist Hover Selectors */
     .wishlist-hover-badge {
         opacity: 0;
         visibility: hidden;
@@ -222,18 +230,14 @@
     }
 </style>
 
-<!-- Shared Application State -->
+<!-- Context Variables -->
 <script>
-    // Expose current user ID securely for client-side API requests
     const currentUserId = '@UserManager.GetUserId(User)';
 </script>
 
-<!-- Global Wishlist Handler -->
+<!-- Global Event Handlers -->
 <script>
-    /**
-     * Handles the global interaction for adding or removing an event from a user's wishlist.
-     * Evaluates the current state via a GET request, and issues the corresponding POST or DELETE.
-     */
+    /** Wishlist Interaction Delegate */
     window.wishlistAction = function(e, eventId) {
         e.preventDefault();
         e.stopPropagation();
@@ -248,7 +252,7 @@
 
         $.getJSON('/Wishlist/returnItem', wParams).done(function(isWishlisted) {
             if (!isWishlisted) {
-                // Attach event to wishlist
+                // Execute Add Payload
                 $.ajax({
                     url: '/Wishlist/addWishlistEvent',
                     type: 'POST',
@@ -266,7 +270,7 @@
                     }
                 });
             } else {
-                // Detach event from wishlist
+                // Execute Remove Payload
                 $.ajax({
                     url: '/Wishlist/deleteWishlistEvent',
                     type: 'DELETE',
@@ -288,7 +292,7 @@
     }
 </script>
 
-<!-- Category Slider Module -->
+<!-- Category Component -->
 <script>
     document.addEventListener('DOMContentLoaded', async function() {
         const track = document.getElementById('category-track');
@@ -310,12 +314,11 @@
             categories.forEach((category, index) => {
                 let cardHtml = '';
 
-                // Fallback to gradient if no category image is provided
                 if (!category.imagePath) {
                     const colorClass = gradients[index % gradients.length];
                     cardHtml = `
                         <div class="w-full sm:w-1/2 lg:w-1/3 flex-shrink-0 px-3">
-                            <a href="/Events/EventsForToday?category=${category.id}" class="relative block bg-gradient-to-br ${colorClass} rounded-2xl p-8 h-48 flex flex-col justify-end text-white shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer">
+                            <a href="/Events/EventsForToday?category=${category.id}" class="relative block bg-gradient-to-br ${colorClass} rounded-2xl p-8 h-64 flex flex-col justify-end text-white shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer">
                                 <h3 class="absolute bottom-8 left-8 text-2xl font-bold">${category.name}</h3>
                             </a>
                         </div>
@@ -323,7 +326,7 @@
                 } else {
                     cardHtml = `
                         <div class="w-full sm:w-1/2 lg:w-1/3 flex-shrink-0 px-3">
-                            <a href="/Events/EventsForToday?category=${category.id}" class="relative block rounded-2xl h-48 flex flex-col justify-end text-white shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer">
+                            <a href="/Events/EventsForToday?category=${category.id}" class="relative block rounded-2xl h-64 flex flex-col justify-end text-white shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer">
                                 <img src="${category.imagePath}" alt="${category.name}" class="w-full h-full object-cover rounded-2xl" />
                                 <h3 class="absolute bottom-8 left-8 text-2xl font-bold">${category.name}</h3>
                             </a>
@@ -340,9 +343,7 @@
         }
     });
 
-    /**
-     * Initializes generic slider behavior based on visible cards and viewport width
-     */
+    /** Slider Dimension Binding */
     function initializeSlider(trackElement, prevButton, nextButton) {
         const cards = trackElement.children;
         if (cards.length === 0) return;
@@ -374,7 +375,7 @@
     }
 </script>
 
-<!-- Hero Carousel Module -->
+<!-- Carousel Initialization -->
 <script>
     document.addEventListener("DOMContentLoaded", function () {
         async function populateCarousel() {
@@ -453,7 +454,7 @@
     });
 </script>
 
-<!-- Autocomplete Search Module -->
+<!-- Autocomplete Interface -->
 <script>
     $(document).ready(function () {
         let autocompleteTimeout;
@@ -461,7 +462,7 @@
         let currentAutocompleteIndex = -1;
         const maxAutocompleteResults = 8;
 
-        // Perform standard routing search on explicit submit
+        // Base search routing
         $('#search-button').click(function() {
             const searchTerm = $('#search-term').val().trim();
             
@@ -483,11 +484,11 @@
                 return;
             }
 
-            // Debounce network requests
+            // State debounce
             autocompleteTimeout = setTimeout(() => { fetchAutocompleteResults(query); }, 300);
         });
 
-        // Keyboard accessibility
+        // Key bindings
         $('#search-term').on('keydown', function(e) {
             const dropdown = $('#autocomplete-dropdown');
             const isVisible = !dropdown.hasClass('hidden');
@@ -605,7 +606,7 @@
     });
 </script>
 
-<!-- New Arrivals Slider Module -->
+<!-- Arrivals Collection List -->
 <script>
     document.addEventListener('DOMContentLoaded', async function() {
         const newTrack = document.getElementById('new-events-track');
@@ -628,7 +629,6 @@
                 const distinctCities = event.distinctCities || 0;
                 const cityName = event.distinctCities === 0 ? event.cityName : (event.cityNames ? event.cityNames[0] : 'Unknown');
 
-                // Using standard CSS hover classes defined in the style block above
                 let wishlistBadge = `
                 <div class="wishlist-hover-badge cursor-help absolute top-3 left-6 mt-3 mr-3 bg-white text-indigo-800 text-xs font-bold px-2 py-1 z-50 rounded-full shadow-sm wishlist-id-${event.id}">
                     <button type="button" onclick="window.wishlistAction(event, ${event.id})">
@@ -663,7 +663,6 @@
                         <svg class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                     </div>`;
 
-                // Uses the event-card-link class to trigger the CSS hover effect
                 const cardHtml = `
                     <div class="w-full sm:w-1/2 lg:w-1/3 flex-shrink-0 px-3">
                         <a href="/Events/Details/${event.id}" class="event-card-link block bg-white rounded-xl shadow-md hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer h-full border border-gray-100 relative">
@@ -686,7 +685,6 @@
                 newTrack.insertAdjacentHTML('beforeend', cardHtml);
             });
 
-            // Delegate slider logic to shared generic initializer
             initializeSlider(newTrack, newPrevBtn, newNextBtn);
         } catch (error) {
             console.error("Failed to load new events:", error);
@@ -695,7 +693,7 @@
     });
 </script>
 
-<!-- Recent Events Slider Module -->
+<!-- Recent Collection List -->
 <script>
     document.addEventListener('DOMContentLoaded', async function() {
         const recentTrack = document.getElementById('recent-events-track');
@@ -718,7 +716,6 @@
                 const distinctCities = event.distinctCities || 0;
                 const cityName = event.distinctCities === 0 ? event.cityName : (event.cityNames ? event.cityNames[0] : 'Unknown');
                 
-                // Using standard CSS hover classes defined in the style block above
                 let wishlistBadge = `
                 <div class="wishlist-hover-badge cursor-help absolute top-3 left-6 mt-3 mr-3 bg-white text-indigo-800 text-xs font-bold px-2 py-1 z-50 rounded-full shadow-sm wishlist-id-${event.id}">
                     <button type="button" onclick="window.wishlistAction(event, ${event.id})">
@@ -753,7 +750,6 @@
                         <svg class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                     </div>`;
 
-                // Uses the event-card-link class to trigger the CSS hover effect
                 const cardHtml = `
                     <div class="w-full sm:w-1/2 lg:w-1/3 flex-shrink-0 px-3">
                         <a href="/Events/Details/${event.id}" class="event-card-link block bg-white rounded-xl shadow-md hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer h-full border border-gray-100 relative">
@@ -776,7 +772,6 @@
                 recentTrack.insertAdjacentHTML('beforeend', cardHtml);
             });
 
-            // Delegate slider logic to shared generic initializer
             initializeSlider(recentTrack, recentPrevBtn, recentNextBtn);
         } catch (error) {
             console.error("Failed to load recent events:", error);

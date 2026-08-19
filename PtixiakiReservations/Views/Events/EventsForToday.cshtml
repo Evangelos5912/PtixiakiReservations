@@ -12,210 +12,227 @@
     var isEventManager = userRoles.Contains("Event");
 }
 
-<div class="container mx-auto px-4 py-8 max-w-7xl">
+<div class="w-full">
     @Html.AntiForgeryToken()
-    <!-- Search Panel -->
-    <div class="bg-white rounded-xl shadow-lg mb-10 overflow-hidden">
-        <div class="bg-gradient-to-r from-blue-600 to-indigo-700 px-6 py-4 flex flex-row items-center justify-between">
-            <h3 class="text-xl font-bold text-white">Find Events</h3>
-            <button id="panel-button" class="text-xl font-bold text-white">X</button>
+    
+    <!-- Hero Section: Carousel Only -->
+    <div class="w-full pb-2">
+        <div class="relative w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="relative w-full overflow-hidden rounded-2xl shadow-lg" style="height: 20rem;">
+                <div id="dual-hero-track" class="flex h-full gap-6 transition-transform duration-1000 ease-in-out" style="transform: translateX(0);">
+                    <!-- Slides injected by JS -->
+                </div>
+            </div>
         </div>
+    </div>
 
-        <div id="panel-body" class="p-6">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                <!-- Event Type Dropdown -->
-                <div>
-                    <label for="event-type" class="block text-sm font-medium text-gray-700 mb-2">Event Type</label>
-                    <div class="relative">
-                        <select id="event-type" class="w-full appearance-none bg-white border border-gray-300 rounded-lg py-3 px-4 pr-8 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
-                            <option value="">All Event Types</option>
-                            <!-- Will be populated via AJAX -->
+    <!-- The COMPACT SEARCH PANEL -->
+    <div class="relative z-40 w-full max-w-5xl mx-auto px-4 -mt-16 mb-12">
+        
+        <!-- WRAPPER: No overflow-hidden so autocomplete works smoothly -->
+        <div class="bg-white rounded-xl shadow-2xl w-full border border-gray-100 ring-1 ring-black ring-opacity-5">
+            
+            <!-- Gradient Header & X Button -->
+            <div class="bg-gradient-to-r from-blue-600 to-indigo-700 px-6 py-3 rounded-t-xl flex flex-row items-center justify-between">
+                <h3 class="text-lg font-bold text-white tracking-wide">Find Events</h3>
+                <button id="panel-button" class="text-xl font-bold text-white focus:outline-none transition-transform hover:scale-125">X</button>
+            </div>
+
+            <!-- Search Body -->
+            <div id="panel-body" class="p-5">
+                <div class="flex flex-col md:flex-row gap-4 mb-4 mt-1">
+                    
+                    <!-- Search Term with Autocomplete -->
+                    <div class="w-full md:w-1/2 relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                        </div>
+                        <input type="text" id="search-term" placeholder="Event name, venue, or city..."
+                            class="block w-full pl-10 pr-3 py-2.5 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-colors text-sm"
+                            autocomplete="off">
+                        <!-- Autocomplete Dropdown -->
+                        <div id="autocomplete-dropdown" class="absolute left-0 top-full mt-1 z-50 bg-white shadow-xl rounded-lg border border-gray-200 hidden max-h-60 overflow-y-auto w-full"></div>
+                    </div>
+
+                    <!-- Event Type Dropdown -->
+                    <div class="w-full md:w-1/4 relative">
+                        <select id="event-type" class="w-full appearance-none bg-gray-50 border border-gray-300 rounded-lg py-2.5 px-3 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-colors">
+                            <option value="">All Types</option>
                         </select>
-                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500">
                             <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
                                 <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
                             </svg>
                         </div>
                     </div>
-                </div>
 
-                <!-- Date Range Picker -->
-                <div class="md:col-span-2">
-                    <label for="date-range" class="block text-sm font-medium text-gray-700 mb-2">Date Range</label>
-                    <div class="relative">
-                        <input type="text" id="date-range" placeholder="Select date range"
-                               class="w-full bg-white border border-gray-300 rounded-lg py-3 px-4 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
-                        <button id="reset-date" type="button" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <!-- Date Range Picker -->
+                    <div class="w-full md:w-1/4 relative">
+                        <input type="text" id="date-range" placeholder="Dates"
+                            class="w-full bg-gray-50 border border-gray-300 rounded-lg py-2.5 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-colors">
+                        <button id="reset-date" type="button" class="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
                             </svg>
                         </button>
                     </div>
                 </div>
-            </div>
 
-            <!-- Search Term with Autocomplete -->
-            <div class="mb-6">
-                <label for="search-term" class="block text-sm font-medium text-gray-700 mb-2">Event Name or Venue or Location</label>
-                <div class="relative">
-                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                <!-- Secondary Row -->
+                <div class="flex flex-col sm:flex-row justify-between items-center mt-3">
+                    <div class="flex items-center gap-2 mb-4 sm:mb-0 ml-1">
+                        <input type="checkbox" id="archived-filter" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500" />
+                        <label for="archived-filter" class="text-sm font-medium text-gray-600">Include Archived</label>
+                    </div>
+                    
+                    <div class="flex items-center gap-4 w-full sm:w-auto">
+                        <p id="search-validation-message" class="text-red-500 text-xs font-medium hidden">Please fill at least one field</p>
+                        <button id="search-button"
+                                class="w-full sm:w-auto px-6 py-2.5 bg-blue-600 text-white font-semibold rounded-lg shadow hover:bg-blue-700 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all">
+                            <span class="flex items-center justify-center text-sm">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                </svg>
+                                Search
+                            </span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Area with proper responsive padding -->
+    <div class="w-full px-4 sm:px-6 lg:px-8 max-w-[1600px] mx-auto container">
+
+        <!-- Events Count Display -->
+        <div id="events-count" class="flex items-center justify-between mb-8">
+            <h2 class="text-xl font-semibold text-gray-800">
+                Results: Events <span class="text-blue-600 font-bold">(<span id="filtered-count">0</span>)</span>
+            </h2>
+            <div class="flex items-center gap-3">
+                <div class="relative"> 
+                    <select id="variable-view" class="appearance-none bg-white border border-gray-300 rounded-lg py-3 px-4 pr-8 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors w-48">
+                        <option value="asc" selected>Ascending by Date</option>
+                        <option value="desc">Descending by Date</option>
+                    </select>
+                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                        <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                            <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
                         </svg>
                     </div>
-                    <input type="text" id="search-term" placeholder="Enter event name, venue, or city"
-                        class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                        autocomplete="off">
                 </div>
-                <div id="autocomplete-dropdown" class="absolute left-0 top-full z-50 bg-white shadow-xl rounded-md border border-gray-200 hidden max-h-60 overflow-y-auto w-96"></div>
-            </div>
-
-            <div class="mb-6 items-center flex gap-4">
-                <input type="checkbox" id="archived-filter" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500" />
-                <label for="archived-filter" class="block text-sm font-medium text-gray-700 mb-2">Search for Archived Events?</label>
-            </div>
-
-            <div class="flex justify-between items-center">
-                <p id="search-validation-message" class="text-red-500 text-sm hidden">Please fill at least one field to search</p>
-                <button id="search-button"
-                        class="px-6 py-3 bg-blue-600 text-white font-medium rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors">
-                    <span class="flex items-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                <div class="relative"> 
+                    <select id="variable-pagination" class="appearance-none bg-white border border-gray-300 rounded-lg py-3 px-4 pr-8 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors w-40">
+                        <option value="12" selected>12 per page</option>
+                        <option value="24">24 per page</option>
+                        <option value="48">48 per page</option>
+                    </select>
+                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                        <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                            <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
                         </svg>
-                        Search Events
-                    </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Events Grid -->
+        <div id="events-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3  gap-6">
+            
+        </div>
+
+        <!-- Loading Indicator -->
+        <div id="loading-indicator" class="text-center py-16 hidden">
+            <div class="inline-block h-12 w-12 rounded-full border-4 border-gray-200 border-t-blue-600 animate-spin"></div>
+            <p class="mt-4 text-lg font-medium text-gray-600">Loading events...</p>
+        </div>
+
+        <!-- No Results Message -->
+        <div id="no-results" class="hidden text-center py-16">
+            <div class="max-w-md mx-auto">
+                <svg class="mx-auto h-16 w-16 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <h3 class="mt-4 text-xl font-medium text-gray-700">No events found</h3>
+                <p class="mt-2 text-gray-500">Try adjusting your search criteria or check back later for new events</p>
+                <button id="reset-search" class="mt-6 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                    Reset Search
                 </button>
             </div>
         </div>
-    </div>
 
-    <!-- Events Count Display -->
-    <div id="events-count" class="flex items-center justify-between mb-8">
-        <h2 class="text-xl font-semibold text-gray-800">
-            Results: Events <span class="text-blue-600 font-bold">(<span id="filtered-count">0</span>)</span>
-        </h2>
-        <div class="flex items-center gap-3">
-            <div class="relative"> 
-                <select id="variable-view" class="appearance-none bg-white border border-gray-300 rounded-lg py-3 px-4 pr-8 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors w-[180px]">
-                    <option value="asc" selected>Ascending by Date</option>
-                    <option value="desc">Descending by Date</option>
-                </select>
-                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                    <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                        <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+        <!-- Pagination -->
+        <div class="mt-12 flex justify-center pb-12">
+            <nav id="pagination" class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px @(ViewBag.TotalPages > 1 ? "" : "hidden")" aria-label="Pagination">
+                <button id="prev-page" class="pagination-prev relative inline-flex items-center px-4 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                    <svg class="h-5 w-5 mr-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                        <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
                     </svg>
+                    Previous
+                </button>
+
+                <div id="page-numbers" class="flex flex-wrap justify-center">
                 </div>
-            </div>
-            <div class="relative"> 
-                <select id="variable-pagination" class="appearance-none bg-white border border-gray-300 rounded-lg py-3 px-4 pr-8 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors w-[150px]">
-                    <option value="12" selected>12 per page</option>
-                    <option value="24">24 per page</option>
-                    <option value="48">48 per page</option>
-                </select>
-                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                    <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                        <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+
+                <button id="next-page" class="pagination-next relative inline-flex items-center px-4 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                    Next
+                    <svg class="h-5 w-5 ml-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                        <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
                     </svg>
-                </div>
-            </div>
+                </button>
+            </nav>
         </div>
-    </div>
-
-    <!-- Events Grid -->
-    <div id="events-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        
-    </div>
-
-    <!-- Loading Indicator - Hidden by default -->
-    <div id="loading-indicator" class="text-center py-16 hidden">
-        <div class="inline-block h-12 w-12 rounded-full border-4 border-gray-200 border-t-blue-600 animate-spin"></div>
-        <p class="mt-4 text-lg font-medium text-gray-600">Loading events...</p>
-    </div>
-
-    <!-- No Results Message -->
-    <div id="no-results" class="hidden text-center py-16">
-        <div class="max-w-md mx-auto">
-            <svg class="mx-auto h-16 w-16 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <h3 class="mt-4 text-xl font-medium text-gray-700">No events found</h3>
-            <p class="mt-2 text-gray-500">Try adjusting your search criteria or check back later for new events</p>
-            <button id="reset-search" class="mt-6 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors">
-                Reset Search
-            </button>
-        </div>
-    </div>
-
-    <!-- Pagination -->
-    <div class="mt-12 flex justify-center">
-        <nav id="pagination" class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px @(ViewBag.TotalPages > 1 ? "" : "hidden")" aria-label="Pagination">
-            <button id="prev-page" class="pagination-prev relative inline-flex items-center px-4 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-                <svg class="h-5 w-5 mr-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                    <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
-                </svg>
-                Previous
-            </button>
-
-            <div id="page-numbers" class="flex flex-wrap justify-center">
-            </div>
-
-            <button id="next-page" class="pagination-next relative inline-flex items-center px-4 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-                Next
-                <svg class="h-5 w-5 ml-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                    <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
-                </svg>
-            </button>
-        </nav>
     </div>
 </div>
 
 <style>
-    
     .tooltip-container {
-    position: relative;      
-    display: inline-block;   
-    cursor: help;            
+        position: relative;      
+        display: inline-block;   
+        cursor: help;            
     }
 
     .tooltip-text {
-    visibility: hidden;     
-    opacity: 0;              
-    background-color: #333;  
-    color: #fff;             
-    text-align: center;
-    padding: 8px 12px;
-    border-radius: 6px;
-    width: max-content;     
-    max-width: 200px;     
-    position: absolute;
-    z-index: 10;             
-    bottom: 130%;            
-    left: 50%;            
-    transform: translateX(-50%); 
-    transition: opacity 0.3s ease, visibility 0.3s ease;
-    overflow: visible;
+        visibility: hidden;     
+        opacity: 0;              
+        background-color: #333;  
+        color: #fff;             
+        text-align: center;
+        padding: 8px 12px;
+        border-radius: 6px;
+        width: max-content;     
+        max-width: 200px;     
+        position: absolute;
+        z-index: 10;             
+        bottom: 130%;            
+        left: 50%;            
+        transform: translateX(-50%); 
+        transition: opacity 0.3s ease, visibility 0.3s ease;
+        overflow: visible;
     }
 
     .tooltip-text::after {
-    content: "";
-    position: absolute;
-    top: 100%;              
-    left: 50%;
-    margin-left: -6px;       
-    border-width: 6px;
-    border-style: solid;
-    border-color: #333 transparent transparent transparent; 
+        content: "";
+        position: absolute;
+        top: 100%;              
+        left: 50%;
+        margin-left: -6px;       
+        border-width: 6px;
+        border-style: solid;
+        border-color: #333 transparent transparent transparent; 
     }
 
     .tooltip-container:hover .tooltip-text {
-    visibility: visible;
-    opacity: 1;
+        visibility: visible;
+        opacity: 1;
     }
 
     .tooltip-container2:hover .tooltip-text {
-    visibility: visible;
-    opacity: 1;
+        visibility: visible;
+        opacity: 1;
     }
 
     .event-card {
@@ -228,13 +245,14 @@
         z-index: 1;
         min-height: 300px; 
         background-color: white;
+        border-left-color: #3b82f6;
     }
 
     .event-card:hover {
-        transform: scale(1.02) translate(10px, -10px) ; 
+        transform: scale(1.02) translate(10px, -10px); 
         box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
         z-index: 10;
-        }
+    }
 
     .wishlist-badge {
         visibility: hidden;
@@ -242,7 +260,7 @@
         transition: all 0.3s ease;
     }
 
-    .event-card:hover .wishlist-badge{
+    .event-card:hover .wishlist-badge {
         visibility: visible;
         opacity: 1;
     }
@@ -256,25 +274,14 @@
         margin-top: auto;      
     }
 
-    /* Today events - green accent */
-    .event-today {
-        background-color: #f0fff4;
-        border-left-color: #10b981;
-    }
     .event-today:hover {
         box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.1), 0 4px 6px -2px rgba(16, 185, 129, 0.05);
     }
 
-    /* Upcoming events - blue accent */
-    .event-upcoming {
-        background-color: #eff6ff;
-        border-left-color: #3b82f6;
-    }
     .event-upcoming:hover {
         box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.1), 0 4px 6px -2px rgba(59, 130, 246, 0.05);
     }
 
-    /* Past events - gray accent */
     .event-past {
         background-color: #f8fafc;
         border-left-color: #94a3b8;
@@ -284,7 +291,6 @@
         box-shadow: 0 10px 15px -3px rgba(148, 163, 184, 0.1), 0 4px 6px -2px rgba(148, 163, 184, 0.05);
     }
 
-    /* Autocomplete dropdown styling */
     #autocomplete-dropdown {
         box-shadow: 0 4px 10px -2px rgba(0, 0, 0, 0.2);
         border-radius: 0.5rem;
@@ -308,7 +314,6 @@
 </style>
 
 @section Scripts {
-
     <script>
         $(document).ready(function () {
             const currentUserId = '@UserManager.GetUserId(User)';
@@ -326,12 +331,11 @@
             let currentAutocompleteIndex = -1;
             let maxAutocompleteResults = 8;
 
-            // Initialize Flatpickr date range picker with improved styling
             dateRangePicker = flatpickr("#date-range", {
                 mode: "range",
                 dateFormat: "Y-m-d",
                 altInput: true,
-                altFormat: "F j, Y",
+                altFormat: "d/m/Y",
                 conjunction: " to ",
                 minDate: "today",
                 onChange: function(selectedDates) {
@@ -340,16 +344,13 @@
             });
 
             $('#filtered-count').text(totalRecords);
-
             updatePagination(totalPages > 1);
 
-            // Reset date button
             $('#reset-date').click(function() {
                 dateRangePicker.clear();
                 validateSearch();
             });
 
-            // Reset search button
             $('#reset-search').click(function() {
                 $('#event-type').val('');
                 dateRangePicker.clear();
@@ -358,30 +359,21 @@
                 window.location.href = '@Url.Action("EventsForToday", "Events")';
             });
 
-            // Load event types for the dropdown
             loadEventTypes();
 
             $('#events-container').addClass('hidden');
             $('#loading-indicator').removeClass('hidden');
             performSearch();
-            // ============================================
 
-            // Handle search term input for autocomplete
             $('#search-term').on('input', function() {
                 const query = $(this).val().trim();
+                if (autocompleteTimeout) clearTimeout(autocompleteTimeout);
 
-                // Clear previous timeout
-                if (autocompleteTimeout) {
-                    clearTimeout(autocompleteTimeout);
-                }
-
-                // Hide dropdown if query is empty
                 if (query.length < 1) {
                     $('#autocomplete-dropdown').addClass('hidden').empty();
                     return;
                 }
 
-                // Set timeout for autocomplete to prevent too many requests
                 autocompleteTimeout = setTimeout(function() {
                     fetchAutocompleteResults(query);
                 }, 300);
@@ -389,7 +381,6 @@
                 validateSearch();
             });
 
-            // Handle sort order change asynchronously
             $('#variable-view').on('change', function() {
                 sortOrder = $(this).val();
                 currentPage = 1;
@@ -398,43 +389,33 @@
                 performSearch();
             });
 
-            // Handle keyboard navigation in autocomplete dropdown
             $('#search-term').on('keydown', function(e) {
                 const dropdown = $('#autocomplete-dropdown');
                 const isVisible = !dropdown.hasClass('hidden');
 
                 if (!isVisible) return;
 
-                // Down arrow
                 if (e.keyCode === 40) {
                     e.preventDefault();
                     navigateAutocomplete(1);
-                }
-                // Up arrow
-                else if (e.keyCode === 38) {
+                } else if (e.keyCode === 38) {
                     e.preventDefault();
                     navigateAutocomplete(-1);
-                }
-                // Enter
-                else if (e.keyCode === 13 && currentAutocompleteIndex >= 0) {
+                } else if (e.keyCode === 13 && currentAutocompleteIndex >= 0) {
                     e.preventDefault();
                     selectAutocompleteItem(currentAutocompleteIndex);
-                }
-                // Escape
-                else if (e.keyCode === 27) {
+                } else if (e.keyCode === 27) {
                     dropdown.addClass('hidden');
                     currentAutocompleteIndex = -1;
                 }
             });
 
-            // Handle click outside to close autocomplete
             $(document).on('click', function(e) {
                 if (!$(e.target).closest('#search-term, #autocomplete-dropdown').length) {
                     $('#autocomplete-dropdown').addClass('hidden');
                 }
             });
 
-            // Event types loader
             function loadEventTypes() {
                 $.getJSON('/Events/GetEventTypes')
                     .done(function(data) {
@@ -451,9 +432,7 @@
                     });
             }
 
-            // Fetch autocomplete results
             function fetchAutocompleteResults(query) {
-                // Make an AJAX call to get suggestions
                 $.ajax({
                     url: '/Events/GetAutocompleteResults',
                     data: { query: query },
@@ -461,32 +440,12 @@
                         displayAutocompleteResults(data, query);
                     },
                     error: function() {
-                        // For demo purposes, create mock results if endpoint doesn't exist
                         const mockResults = getMockAutocompleteResults(query);
                         displayAutocompleteResults(mockResults, query);
                     }
                 });
             }
 
-            // Position the dropdown under the search input
-            function positionAutocompleteDropdown() {
-                const searchInput = $('#search-term');
-                const dropdown = $('#autocomplete-dropdown');
-
-                // Get the position and dimensions of the search input
-                const inputPosition = searchInput.offset();
-                const inputWidth = searchInput.outerWidth();
-                const inputHeight = searchInput.outerHeight();
-
-                // Position the dropdown
-                dropdown.css({
-                    top: inputPosition.top + inputHeight + 5 + 'px',
-                    left: inputPosition.left + 'px',
-                    width: inputWidth + 'px'
-                });
-            }
-
-            // Display autocomplete results
             function displayAutocompleteResults(results, query) {
                 const dropdown = $('#autocomplete-dropdown');
                 dropdown.empty();
@@ -496,11 +455,9 @@
                     return;
                 }
 
-                // Limit results to show
                 autocompleteResults = results.slice(0, maxAutocompleteResults);
                 currentAutocompleteIndex = -1;
 
-                // Add results to dropdown
                 autocompleteResults.forEach(function(result, index) {
                     const highlightedText = highlightMatch(result.text, query);
                     const item = $('<div class="autocomplete-item flex items-center">')
@@ -524,60 +481,25 @@
                     dropdown.append(item);
                 });
 
-                // Add "more results" message if applicable
-                if (results.length > maxAutocompleteResults) {
-                    const moreResults = $('<div class="py-2 px-3 text-xs text-center text-gray-500 border-t">')
-                        .text(`${results.length - maxAutocompleteResults} more results available...`);
-                    dropdown.append(moreResults);
-                }
-
-                // Position and show dropdown
-                positionAutocompleteDropdown();
                 dropdown.removeClass('hidden');
-
-                // Update position on window resize
-                $(window).on('resize', function() {
-                    if (!dropdown.hasClass('hidden')) {
-                        positionAutocompleteDropdown();
-                    }
-                });
             }
 
-            // Navigate through autocomplete items
             function navigateAutocomplete(direction) {
                 const items = $('.autocomplete-item');
                 if (items.length === 0) return;
 
-                // Remove active class from current item
                 items.removeClass('active');
-
-                // Update index
                 currentAutocompleteIndex += direction;
 
-                // Wrap around if needed
                 if (currentAutocompleteIndex >= items.length) {
                     currentAutocompleteIndex = 0;
                 } else if (currentAutocompleteIndex < 0) {
                     currentAutocompleteIndex = items.length - 1;
                 }
 
-                // Add active class to new item and scroll if needed
-                const activeItem = items.eq(currentAutocompleteIndex).addClass('active');
-                const dropdown = $('#autocomplete-dropdown');
-
-                // Scroll dropdown to keep active item visible
-                const itemPosition = activeItem.position().top;
-                const itemHeight = activeItem.outerHeight();
-                const dropdownHeight = dropdown.height();
-
-                if (itemPosition < 0) {
-                    dropdown.scrollTop(dropdown.scrollTop() + itemPosition);
-                } else if (itemPosition + itemHeight > dropdownHeight) {
-                    dropdown.scrollTop(dropdown.scrollTop() + itemPosition + itemHeight - dropdownHeight);
-                }
+                items.eq(currentAutocompleteIndex).addClass('active');
             }
 
-            // Select an autocomplete item
             function selectAutocompleteItem(index) {
                 const result = autocompleteResults[index];
                 if (!result) return;
@@ -585,96 +507,55 @@
                 $('#search-term').val(result.text);
                 $('#autocomplete-dropdown').addClass('hidden');
 
-                // If you want to trigger search immediately after selection
                 if (validateSearch()) {
                     $('#search-button').click();
                 }
             }
 
-            // Highlight matching text
             function highlightMatch(text, query) {
                 if (!query) return text;
-
                 const regex = new RegExp('(' + query.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&') + ')', 'gi');
                 return text.replace(regex, '<span class="highlight">$1</span>');
             }
 
-            // Generate mock autocomplete results for demo purposes
             function getMockAutocompleteResults(query) {
                 query = query.toLowerCase();
-                const cities = ['Athens', 'Thessaloniki', 'Patras', 'Heraklion', 'Larissa', 'Volos', 'Ioannina', 'Chania', 'Rhodes', 'Corfu', 'Santorini', 'Mykonos'];
-                const venues = ['Megaron Concert Hall', 'Stavros Niarchos Foundation', 'Pallas Theater', 'Athens Concert Hall', 'Gazi Music Hall', 'Technopolis', 'Piraeus Theater', 'Acropolis Museum Hall'];
-                const events = ['Greek Food Festival', 'Music Concert Series', 'Comedy Night', 'Art Exhibition', 'Dance Performance', 'Theater Play', 'Film Screening', 'Cultural Festival', 'Wine Tasting', 'Literary Evening'];
-
+                const cities = ['Athens', 'Thessaloniki', 'Patras', 'Heraklion'];
+                const events = ['Music Concert Series', 'Comedy Night', 'Art Exhibition'];
                 let results = [];
 
-                // Filter cities
-                cities.filter(city => city.toLowerCase().includes(query))
-                    .forEach(city => {
-                        results.push({
-                            text: city,
-                            type: 'location',
-                            subtext: 'City'
-                        });
-                    });
-
-                // Filter venues
-                venues.filter(venue => venue.toLowerCase().includes(query))
-                    .forEach(venue => {
-                        results.push({
-                            text: venue,
-                            type: 'location',
-                            subtext: 'Venue'
-                        });
-                    });
-
-                // Filter events
-                events.filter(event => event.toLowerCase().includes(query))
-                    .forEach(event => {
-                        results.push({
-                            text: event,
-                            type: 'event',
-                            subtext: 'Event'
-                        });
-                    });
-
+                cities.filter(c => c.toLowerCase().includes(query)).forEach(c => { results.push({ text: c, type: 'location', subtext: 'City' }); });
+                events.filter(e => e.toLowerCase().includes(query)).forEach(e => { results.push({ text: e, type: 'event', subtext: 'Event' }); });
+                
                 return results;
             }
 
-            
             function validateSearch() {
                 const eventType = $('#event-type').val();
                 const dateRange = $('#date-range').val();
                 const searchTerm = $('#search-term').val();
 
-                // Count filled fields
                 let filledFields = 0;
                 if (eventType) filledFields++;
                 if (dateRange) filledFields++;
                 if (searchTerm && searchTerm.length >= 2) filledFields++;
 
-                // Show/hide validation message - require at least 1 field now
                 const isValid = filledFields >= 1;
                 $('#search-validation-message').toggleClass('hidden', isValid);
 
                 return isValid;
             }
 
-            // Monitor all search inputs for validation
             $('#event-type, #date-range, #search-term').on('change input', validateSearch);
 
-            // Handle page size change asynchronously
             $('#variable-pagination').on('change', function() {
                 pageSize = parseInt($(this).val()) || 12;
-                currentPage = 1; // Reset to first page when changing view size
-                
+                currentPage = 1;
                 $('#events-container').addClass('hidden');
                 $('#loading-indicator').removeClass('hidden');
-                
                 performSearch();
             });
 
-            // Search button click handler
             $('#search-button').click(function() {
                 if (!validateSearch()) return;
 
@@ -683,21 +564,17 @@
                 $('#loading-indicator').removeClass('hidden');
                 $('#no-results').addClass('hidden');
 
-                // Show loading state for a short while to demonstrate UI
                 setTimeout(function() {
                     performSearch();
                 }, 500);
             });
 
-            // Pagination handlers
             $('#prev-page').click(function() {
                 if (currentPage > 1) {
                     currentPage--;
                     $('#events-container').addClass('hidden');
                     $('#loading-indicator').removeClass('hidden');
-                    setTimeout(function() {
-                        performSearch();
-                    }, 300);
+                    setTimeout(performSearch, 300);
                 }
             });
 
@@ -706,21 +583,16 @@
                     currentPage++;
                     $('#events-container').addClass('hidden');
                     $('#loading-indicator').removeClass('hidden');
-                    setTimeout(function() {
-                        performSearch();
-                    }, 300);
+                    setTimeout(performSearch, 300);
                 }
             });
 
-            // Event delegation for pagination numbers
             $('#page-numbers').on('click', '.page-button', function(e) {
                 e.preventDefault();
                 currentPage = parseInt($(this).data('page'));
                 $('#events-container').addClass('hidden');
                 $('#loading-indicator').removeClass('hidden');
-                setTimeout(function() {
-                    performSearch();
-                }, 300);
+                setTimeout(performSearch, 300);
             });
 
             function performSearch() {
@@ -763,20 +635,14 @@
                         }
 
                         data.events.forEach(function(event) {
-
                             const timeClass = getEventTimeClass(new Date(event.startDateTime), new Date(event.endTime));
-
                             const cardHtml = buildEventCard(event, timeClass);
-                            
                             container.append(cardHtml);
-
                         });
 
                         function buildEventCard(event, timeClass) {
                             const startDate = new Date(event.startDateTime || event.StartDateTime);
                             const endDate = new Date(event.endTime || event.EndTime);
-                            
-                            // 2. Multi-day check
                             const isMultiDay = startDate.toDateString() !== endDate.toDateString();
                             let dateDisplayHtml = "";
 
@@ -795,13 +661,11 @@
                             const eventName = event.name || event.Name || 'Unnamed Event';
                             const eventId = event.id || event.Id;
 
-                            // 3. Roles and Master Event Checks
                             const isMasterEvent = event.parentEventId == null && event.ParentEventId == null;
                             const canViewSubEvents = @((isSuper || isAdmin || isEventManager).ToString().ToLower());
                             const showSubEventsLink = isMasterEvent && canViewSubEvents;
                             const childCount = event.childCount || event.ChildCount || 0;
 
-                            // Create the default empty star badge. Notice the 'event' parameter in onclick.
                             let wishlistBadge = `
                             <div class="wishlist-badge cursor-help absolute top-3 left-6 mt-3 mr-3 bg-white text-indigo-800 text-xs font-bold px-2 py-1 z-50 rounded-full shadow-sm" id="wishlist-id-${eventId}">
                                 <button type="button" onclick="window.wishlistAction(event, ${eventId})">
@@ -811,13 +675,11 @@
                                 </button>
                             </div>`;
 
-                            // Fetch status asynchronously
                             if (currentUserId !== '') {
                                 let wParams = { eventId: eventId, userId: currentUserId };
                                 $.getJSON('/Wishlist/returnItem', wParams)
                                     .done(function(isWishlisted) {
                                         if (isWishlisted === true) {
-                                            // Render filled star if wishlisted. Notice the 'event' parameter in onclick.
                                             $('#wishlist-id-' + eventId).html(`
                                                 <button type="button" onclick="window.wishlistAction(event, ${eventId})">
                                                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="#eab308" stroke="#eab308" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -840,22 +702,16 @@
 
                             const hasMultipleCities = event.hasMultipleCities || event.HasMultipleCities || false;
                             const distinctCities = event.distinctCities || event.DistinctCities || 0;
-                            
                             let cityName = event.cityNames || event.cityNames[0];
-                            if (event.distinctCities === 0){
-                                cityName = event.cityName;
-                            }
+                            if (event.distinctCities === 0) cityName = event.cityName;
 
                             const cityNamesList = event.cityNames ? event.cityNames.join(', ') : '';
-        
                             let cityBadgeHtml = hasMultipleCities 
-                                ? `<p>${distinctCities} Cities</p>
-                                <span class="tooltip-text" role="tooltip">${cityNamesList}</span>` 
+                                ? `<p>${distinctCities} Cities</p><span class="tooltip-text" role="tooltip">${cityNamesList}</span>` 
                                 : `<p>${cityName}</p>`;
 
                             const hasMultipleVenues = event.hasMultipleVenues || event.HasMultipleVenues || false;
                             const venueName = event.venueName || event.VenueName || (event.venue ? event.venue.name : 'No Venue');
-                            
                             let venueDisplayHtml = hasMultipleVenues 
                                 ? `<p class="text-sm text-gray-600">Multiple Locations</p>` 
                                 : `<p class="text-sm text-gray-600">${venueName}</p>`;
@@ -864,67 +720,42 @@
                             <div class="event-card ${timeClass} rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
                                 <a href="/Events/Details/${eventId}">
                                     <div class="p-5 flex flex-col h-full">
-                                        
                                         <div class="h-40 w-full overflow-hidden mb-4 rounded-md bg-gray-100 relative">
                                             ${hasImage ? 
                                                 `<img src="${imgPath}" alt="${eventName}" class="w-full h-full object-cover transform hover:scale-105 transition-transform duration-300" />` : 
                                                 `<div class="flex items-center justify-center h-full text-gray-400"><svg class="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg></div>`
                                             }
                                         </div>
-                                        
-                                        <div class="tooltip-container2 cursor-help absolute top-3 right-3 mt-3 mr-3 bg-white text-indigo-800 text-xs font-bold px-2 py-1 z-50 rounded-full shadow-sm">
-                                            ${cityBadgeHtml}
-                                        </div>
-
+                                        <div class="tooltip-container2 cursor-help absolute top-3 right-3 mt-3 mr-3 bg-white text-indigo-800 text-xs font-bold px-2 py-1 z-50 rounded-full shadow-sm">${cityBadgeHtml}</div>
                                         ${wishlistBadge}
-                                        
                                         ${statusBadgeHtml}
-                                        
                                         <div class="event-content flex-grow">
                                             <div class="flex items-center justify-between mb-3">
                                                 <h3 class="text-lg font-semibold text-gray-900 mb-2 line-clamp-2">${eventName}</h3>
                                                 ${isMasterEvent ? 
                                                 `<div class="tooltip-container flex items-center cursor-help">
                                                     <svg class="h-5 w-5 text-indigo-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                                        <path d="M12 11V5" />          
-                                                        <path d="M12 11L6 18" />      
-                                                        <path d="M12 11L18 18" />     
+                                                        <path d="M12 11V5" /><path d="M12 11L6 18" /><path d="M12 11L18 18" />
                                                         <circle cx="12" cy="4" r="2.5" fill="currentColor" stroke="none" />
-                                                        <circle cx="6" cy="19" r="2.5" fill="currentColor" stroke="none" /> 
-                                                        <circle cx="18" cy="19" r="2.5" fill="currentColor" stroke="none" /> 
+                                                        <circle cx="6" cy="19" r="2.5" fill="currentColor" stroke="none" />
+                                                        <circle cx="18" cy="19" r="2.5" fill="currentColor" stroke="none" />
                                                     </svg>
-                                                    <span class="tooltip-text" role="tooltip">This Symbol Means that you are viewing a Master event</span>
+                                                    <span class="tooltip-text" role="tooltip">Master event</span>
                                                 </div>` : ''}
                                             </div>
-
                                             <div class="flex items-start mb-3">
-                                                <svg class="h-5 w-5 text-gray-500 mr-2 mt-0.5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                                </svg>
-                                                <div>
-                                                    ${dateDisplayHtml}
-                                                </div>
+                                                <svg class="h-5 w-5 text-gray-500 mr-2 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                                                <div>${dateDisplayHtml}</div>
                                             </div>
-
                                             <div class="flex items-start mb-4">
-                                                <svg class="h-5 w-5 text-gray-500 mr-2 mt-0.5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                </svg>
-                                                <div>
-                                                    ${venueDisplayHtml}
-                                                </div>
+                                                <svg class="h-5 w-5 text-gray-500 mr-2 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                                                <div>${venueDisplayHtml}</div>
                                             </div>
                                         </div>
-
                                         <div class="event-footer flex ${showSubEventsLink ? 'justify-between' : 'justify-end'} items-center border-t pt-4">
                                             ${showSubEventsLink ? `
-                                                <a href="/Events/ChildEvents/${eventId}" class="text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors">
-                                                    Multiple Events (${childCount}) →
-                                                </a>
-                                                <a href="/Events/Edit/${eventId}" class="text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors">
-                                                    Edit Details →
-                                                </a>
+                                                <a href="/Events/ChildEvents/${eventId}" class="text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors">Multiple Events (${childCount}) →</a>
+                                                <a href="/Events/Edit/${eventId}" class="text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors">Edit Details →</a>
                                             ` : ''}
                                         </div>
                                     </div>
@@ -935,14 +766,13 @@
                         container.removeClass('hidden');
                         updatePagination(data.totalPages > 1);
                     })
-                    .fail(function(jqXHR) {
+                    .fail(function() {
                         console.error('Search failed');
                         $('#loading-indicator').addClass('hidden');
                     });
             }
 
             window.wishlistAction = function(e, eventId) {
-                // Prevent event bubbling so the <a> tag doesn't trigger
                 e.preventDefault();
                 e.stopPropagation();
 
@@ -952,76 +782,56 @@
                 }
 
                 let token = $('input[name="__RequestVerificationToken"]').val();
+                let wParams = { eventId: eventId, userId: currentUserId };
 
-                let wParams = {
-                    eventId: eventId,
-                    userId: currentUserId
-                };
-
-                $.getJSON('/Wishlist/returnItem', wParams)
-                    .done(function(isWishlisted) {
-                        if (!isWishlisted) {
-                        
-                            $.ajax({
-                                url: '/Wishlist/addWishlistEvent',
-                                type: 'POST',
-                                data: wParams,
-                                headers: { "RequestVerificationToken": token },
-                                success: function(success) {
-                                    if (success === true) {
-                                        $('#wishlist-id-' + eventId).html(`
-                                        <button type="button" onclick="window.wishlistAction(event, ${eventId}, true)">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="#eab308" stroke="#eab308" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-                                            </svg>
-                                        </button>`);
-                                    } else {
-                                        console.error("Failed to add to wishlist.");
-                                    }
-                                },
-                                error: function() {
-                                    console.error("Failed to add to wishlist.");
+                $.getJSON('/Wishlist/returnItem', wParams).done(function(isWishlisted) {
+                    if (!isWishlisted) {
+                        $.ajax({
+                            url: '/Wishlist/addWishlistEvent',
+                            type: 'POST',
+                            data: wParams,
+                            headers: { "RequestVerificationToken": token },
+                            success: function(success) {
+                                if (success === true) {
+                                    $('#wishlist-id-' + eventId).html(`
+                                    <button type="button" onclick="window.wishlistAction(event, ${eventId})">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="#eab308" stroke="#eab308" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                        </svg>
+                                    </button>`);
                                 }
-                            });
-                        } else {
-                        
-                            $.ajax({
-                                url: '/Wishlist/deleteWishlistEvent',
-                                type: 'DELETE',
-                                data: wParams,
-                                headers: { "RequestVerificationToken": token },
-                                success: function(success) {
-                                    if (success === true) {
-                                        $('#wishlist-id-' + eventId).html(`
-                                        <button type="button" onclick="window.wishlistAction(event, ${eventId}, false)">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#eab308" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-                                            </svg>
-                                        </button>`);
-                                    } else {
-                                        console.error("Failed to remove from wishlist.");
-                                    }
-                                },
-                                error: function() {
-                                    console.error("Failed to remove from wishlist.");
+                            }
+                        });
+                    } else {
+                        $.ajax({
+                            url: '/Wishlist/deleteWishlistEvent',
+                            type: 'DELETE',
+                            data: wParams,
+                            headers: { "RequestVerificationToken": token },
+                            success: function(success) {
+                                if (success === true) {
+                                    $('#wishlist-id-' + eventId).html(`
+                                    <button type="button" onclick="window.wishlistAction(event, ${eventId})">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#eab308" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                        </svg>
+                                    </button>`);
                                 }
-                            });
-                        }
-                    });
+                            }
+                        });
+                    }
+                });
             }
 
             function getEventTimeClass(startDate, endDate) {
                 const today = new Date();
                 today.setHours(0, 0, 0, 0);
-
                 const startDay = new Date(startDate);
                 startDay.setHours(0, 0, 0, 0);
                 const endDay = new Date(endDate);
                 endDay.setHours(0, 0, 0, 0);
 
-
-
-                if (startDay.getTime() <= today.getTime() && endDay.getTime() >= today.getTime()){
+                if (startDay.getTime() <= today.getTime() && endDay.getTime() >= today.getTime()) {
                     return 'event-today';
                 } else if (endDay.getTime() > today.getTime()) {
                     return 'event-upcoming';
@@ -1030,7 +840,6 @@
                 }
             }
 
-            // Update pagination controls
             function updatePagination(show = true) {
                 const paginationContainer = $('#pagination');
                 const pageNumbersContainer = $('#page-numbers');
@@ -1043,20 +852,16 @@
                 paginationContainer.removeClass('hidden');
                 pageNumbersContainer.empty();
 
-                // Enable/disable prev/next buttons
                 $('#prev-page').prop('disabled', currentPage === 1);
                 $('#next-page').prop('disabled', currentPage === totalPages);
-
 
                 let startPage = Math.max(1, currentPage - 2);
                 let endPage = Math.min(totalPages, startPage + 4);
 
-                // Adjust start if we're near the end
                 if (endPage - startPage < 4) {
                     startPage = Math.max(1, endPage - 4);
                 }
 
-                // Add first page if not included
                 if (startPage > 1) {
                     pageNumbersContainer.append(createPageButton(1));
                     if (startPage > 2) {
@@ -1064,12 +869,10 @@
                     }
                 }
 
-                // Add page numbers
                 for (let i = startPage; i <= endPage; i++) {
                     pageNumbersContainer.append(createPageButton(i));
                 }
 
-                // Add last page if not included
                 if (endPage < totalPages) {
                     if (endPage < totalPages - 1) {
                         pageNumbersContainer.append('<span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">...</span>');
@@ -1078,7 +881,6 @@
                 }
             }
 
-            // Create page button for pagination
             function createPageButton(pageNumber) {
                 const isActive = pageNumber === currentPage;
                 return $('<button>', {
@@ -1093,17 +895,90 @@
             }
         });
     </script>
+    
     <script>
         document.getElementById("panel-button").addEventListener("click", function () {
             const panel = document.getElementById("panel-body");
             panel.classList.toggle("hidden");
-        });
-
-        const btn = document.getElementById("panel-button");
-
-        btn.addEventListener("click", () => {
+            const btn = document.getElementById("panel-button");
             btn.textContent = btn.textContent === "X" ? "V" : "X";
         });
+    </script>
 
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            async function populateDualCarousel() {
+                try {
+                    const response = await fetch('/Events/getNewestEvents');
+                    const events = await response.json();
+                    const track = document.getElementById('dual-hero-track');
+
+                    if (!track) return;
+
+                    if (events.length === 0) {
+                        track.innerHTML = '<div class="w-full h-full flex items-center justify-center text-gray-500 bg-white rounded-2xl border border-gray-200 shadow-sm">No events found</div>';
+                        return;
+                    }
+
+                    track.innerHTML = ''; 
+
+                    events.forEach((event) => {
+                        const formattedStartDate = new Date(event.startDateTime).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                        const hasMultipleCities = event.hasMultipleCities || false;
+                        const distinctCities = event.distinctCities || 0;
+                        const cityName = event.distinctCities === 0 ? event.cityName : (event.cityNames ? event.cityNames[0] : 'Unknown');
+                        let locationText = hasMultipleCities ? `${distinctCities} Cities` : cityName;
+                        
+                        const imgBg = event.imagePath ? `url('${event.imagePath}')` : 'none';
+                        const fallbackBg = event.imagePath ? '' : 'bg-gradient-to-br from-gray-700 to-gray-900';
+
+                        const slideHtml = `
+                            <a href="/Events/Details/${event.id}" 
+                               class="flex-shrink-0 h-full rounded-2xl overflow-hidden relative group block shadow-xl hover:shadow-2xl transition-all border border-gray-100" 
+                               style="width: calc(50% - 12px);">
+                               <div class="absolute inset-0 bg-cover bg-center transition-transform duration-1000 group-hover:scale-105 ${fallbackBg}" style="background-image: ${imgBg};"></div>
+                               <div class="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent opacity-90"></div>
+                               <div class="absolute inset-0 p-8 flex flex-col justify-start text-white">
+                                   <span class="bg-blue-600 text-white text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full w-max mb-4 shadow-md">
+                                       ${event.eventType || 'Event'}
+                                   </span>
+                                   <h3 class="text-3xl font-extrabold mb-3 line-clamp-2 leading-tight drop-shadow-md">${event.name}</h3>
+                                   <div class="flex items-center gap-6 text-sm text-gray-200 font-medium drop-shadow-sm">
+                                       <span class="flex items-center">
+                                           <svg class="h-5 w-5 mr-2 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /></svg>
+                                           ${locationText}
+                                       </span>
+                                       <span class="flex items-center">
+                                           <svg class="h-5 w-5 mr-2 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                                           ${formattedStartDate}
+                                       </span>
+                                   </div>
+                               </div>
+                            </a>
+                        `;
+                        track.insertAdjacentHTML('beforeend', slideHtml);
+                    });
+
+                    startDualCarouselLogic(events.length);
+                } catch (err) {
+                    console.error("Dual Carousel fetch error:", err);
+                }
+            }
+
+            function startDualCarouselLogic(totalSlides) {
+                const track = document.getElementById('dual-hero-track');
+                if (totalSlides <= 2) return; 
+
+                let currentIndex = 0;
+                setInterval(() => {
+                    const maxIndex = totalSlides - 2; 
+                    currentIndex++;
+                    if (currentIndex > maxIndex) currentIndex = 0; 
+                    track.style.transform = `translateX(calc(-${currentIndex} * (50% + 12px)))`;
+                }, 4000);
+            }
+
+            populateDualCarousel();
+        });
     </script>
 }
