@@ -9,7 +9,7 @@
 
 <div class="container mx-auto px-4 py-8 max-w-6xl">
     <div class="bg-white rounded-xl shadow-lg overflow-hidden">
-        <!-- Header with gradient background -->
+        <!-- Header Banner Section -->
         <div class="bg-gradient-to-r from-blue-600 to-indigo-700 py-6 px-8">
             <h1 class="text-3xl font-bold text-white">Reserve Seats</h1>
             <p class="text-blue-100 mt-2">@Model.Name</p>
@@ -20,10 +20,10 @@
         </div>
 
         <div class="p-6">
-            <!-- Event Summary & Time Selection -->
+            <!-- Event Summary & Time Selection Container -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <!-- Event Summary -->
-                <div class="md:col-span-1 bg-blue-50 p-5 rounded-lg">
+                <!-- Static Event Details Panel -->
+                <div class="md:col-span-1 bg-blue-50 p-5 rounded-lg border border-blue-100">
                     <h3 class="text-lg font-semibold text-gray-800 mb-3">Event Details</h3>
 
                     <div class="space-y-3">
@@ -32,7 +32,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                             </svg>
                             <div>
-                                <p class="text-sm text-gray-700">
+                                <p class="text-sm font-medium text-gray-800">
                                     @Model.StartDateTime.ToString("dddd, MMMM d, yyyy")
                                 </p>
                                 <p class="text-sm text-gray-600">
@@ -47,7 +47,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                             </svg>
                             <div>
-                                <p class="text-sm text-gray-700">@Model.Venue.Name</p>
+                                <p class="text-sm font-medium text-gray-800">@Model.Venue.Name</p>
                                 @if (Model.Venue.City != null)
                                 {
                                     <p class="text-sm text-gray-600">@Model.Venue.City.Name</p>
@@ -65,18 +65,18 @@
                                 <svg class="h-5 w-5 text-blue-600 mr-2 mt-0.5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
                                 </svg>
-                                <p class="text-sm text-gray-700">@Model.EventType.Name</p>
+                                <p class="text-sm font-medium text-gray-800">@Model.EventType.Name</p>
                             </div>
                         }
                     </div>
                 </div>
 
-                <!-- Time Selection -->
-                <div class="md:col-span-2 bg-blue-50 p-5 rounded-lg">
+                <!-- Custom Time Frame Selection Panel -->
+                <div class="md:col-span-2 bg-blue-50 p-5 rounded-lg border border-blue-100">
                     <h3 class="text-lg font-semibold text-gray-800 mb-3">Reservation Time</h3>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <!-- Time inputs (hidden by default) -->
+                        <!-- System Data Payload (Hidden) -->
                         <div class="hidden">
                             <input type="hidden" id="startTime" value="@Model.StartDateTime.TimeOfDay" />
                             <input type="hidden" id="endTime" value="@Model.EndTime.TimeOfDay" />
@@ -88,12 +88,12 @@
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Start Time</label>
                             <div class="flex items-center space-x-3">
-                                <input class="form-input w-full rounded-md shadow-sm border-gray-300 bg-white text-gray-800"
+                                <input class="form-input w-full rounded-md shadow-sm border-gray-300 bg-white text-gray-800 transition-colors focus:ring-blue-500 focus:border-blue-500"
                                        type="time" id="reservationStartTime"
                                        value="@Model.StartDateTime.ToString("HH:mm")" />
                                 <div class="flex items-center">
-                                    <input type="checkbox" id="useEventStartTime" class="h-4 w-4 text-blue-600 border-gray-300 rounded" checked>
-                                    <label for="useEventStartTime" class="ml-2 text-sm text-gray-700">From Start</label>
+                                    <input type="checkbox" id="useEventStartTime" class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" checked>
+                                    <label for="useEventStartTime" class="ml-2 text-sm text-gray-700 font-medium whitespace-nowrap">From Start</label>
                                 </div> 
                             </div>
                         </div>
@@ -101,12 +101,12 @@
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">End Time</label>
                             <div class="flex items-center space-x-3">
-                                <input class="form-input w-full rounded-md shadow-sm border-gray-300 bg-white text-gray-800"
+                                <input class="form-input w-full rounded-md shadow-sm border-gray-300 bg-white text-gray-800 transition-colors focus:ring-blue-500 focus:border-blue-500"
                                        type="time" id="reservationEndTime"
                                        value="@Model.EndTime.ToString("HH:mm")" />
                                 <div class="flex items-center">
-                                    <input type="checkbox" id="useEventEndTime" class="h-4 w-4 text-blue-600 border-gray-300 rounded" checked>
-                                    <label for="useEventEndTime" class="ml-2 text-sm text-gray-700">Until End</label>
+                                    <input type="checkbox" id="useEventEndTime" class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" checked>
+                                    <label for="useEventEndTime" class="ml-2 text-sm text-gray-700 font-medium whitespace-nowrap">Until End</label>
                                 </div>
                             </div>
                         </div>
@@ -114,7 +114,7 @@
                 </div>
             </div>
 
-            <!-- Only show Layout message if no Layout is set -->
+            <!-- Exception Handling: Empty Layout State -->
             @if (layoutId == null || layoutId == 0)
             {
                 <div class="mb-8 bg-yellow-50 border border-yellow-200 rounded-lg p-6">
@@ -123,7 +123,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
                         </svg>
                         <div>
-                            <h3 class="text-yellow-800 font-medium">No Layout Selected</h3>
+                            <h3 class="text-yellow-800 font-bold">No Layout Selected</h3>
                             <p class="text-yellow-700 text-sm mt-1">This event doesn't have a specific Layout assigned. Seat selection is not available.</p>
                         </div>
                     </div>
@@ -135,8 +135,9 @@
                     <h3 class="text-xl font-semibold text-gray-800 mb-4">Select Your Seats</h3>
 
                     <div class="mb-6 flex justify-center">
-                        <div class="relative w-full border-2 border-gray-200 rounded-lg bg-gray-50 overflow-hidden" style="height: 600px;">
+                        <div id="canvas-container" class="relative w-full border-2 border-gray-200 rounded-lg overflow-hidden bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:20px_20px] bg-gray-50" style="height: 600px;">
                             
+                            <!-- Internal Viewport Controls -->
                             <div class="absolute bottom-4 right-4 z-50 flex items-center gap-1 bg-white p-1.5 rounded-lg shadow-md border border-gray-200">
                                 <button type="button" onclick="ZoomOut()" class="p-1.5 hover:bg-gray-100 rounded text-gray-600 transition-colors" title="Zoom Out">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM13 10H7"/></svg>
@@ -151,56 +152,53 @@
                                 </button>
                             </div>
 
-                            <div class="w-full h-full overflow-auto bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:20px_20px]">
-                                <canvas id="seatCanvas"></canvas>
-                            </div>
-                            
+                            <canvas id="seatCanvas"></canvas>
                         </div>
                     </div>
 
-                    <!-- Legend with improved styling -->
-                    <div class="mb-6 bg-gray-50 p-4 rounded-lg">
+                    <!-- Map Legend Key -->
+                    <div class="mb-6 bg-gray-50 border border-gray-200 p-4 rounded-lg">
                         <h3 class="text-center text-gray-700 font-semibold mb-3">Seat Legend</h3>
                         <div class="flex justify-center flex-wrap gap-6">
                             <div class="flex items-center">
-                                <div class="w-5 h-5 bg-green-500 rounded mr-2 shadow-sm"></div>
-                                <span class="text-sm text-gray-700">Available</span>
+                                <div class="w-5 h-5 bg-green-500 rounded border border-green-600 mr-2 shadow-sm"></div>
+                                <span class="text-sm font-medium text-gray-700">Available</span>
                             </div>
                             <div class="flex items-center">
-                                <div class="w-5 h-5 bg-red-500 rounded mr-2 shadow-sm"></div>
-                                <span class="text-sm text-gray-700">Reserved</span>
+                                <div class="w-5 h-5 bg-red-500 rounded border border-red-600 mr-2 shadow-sm"></div>
+                                <span class="text-sm font-medium text-gray-700">Reserved / Unavailable</span>
                             </div>
                             <div class="flex items-center">
-                                <div class="w-5 h-5 bg-blue-500 rounded mr-2 shadow-sm"></div>
-                                <span class="text-sm text-gray-700">Selected</span>
+                                <div class="w-5 h-5 bg-blue-500 rounded border border-blue-600 mr-2 shadow-sm"></div>
+                                <span class="text-sm font-medium text-gray-700">Selected</span>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Selected seats summary -->
+                    <!-- Selected Seats Feedback Tray -->
                     <div id="selection-summary" class="mb-6 hidden">
-                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                            <h3 class="text-blue-800 font-medium mb-2">Your Selection</h3>
+                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 transition-all">
+                            <h3 class="text-blue-800 font-bold mb-2">Your Selection</h3>
                             <div class="flex items-center">
                                 <div class="mr-3">
-                                    <span id="selected-count" class="text-2xl font-bold text-blue-600">0</span>
-                                    <span class="text-blue-600">seats</span>
+                                    <span id="selected-count" class="text-2xl font-black text-blue-600">0</span>
+                                    <span class="text-blue-600 font-medium">seats</span>
                                 </div>
-                                <div id="selected-seats-list" class="text-sm text-blue-800">
-                                    <!-- Will be populated by JavaScript -->
+                                <div id="selected-seats-list" class="text-sm font-semibold text-blue-800 flex-wrap">
+                                    <!-- Rendered dynamically by javascript handler -->
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Action buttons -->
+                <!-- Submission Actions -->
                 <div class="flex flex-col sm:flex-row gap-3 justify-center">
-                    <button id="clear-selection" class="px-5 py-3 border border-gray-300 text-gray-700 font-medium rounded-md shadow-sm hover:bg-gray-50 transition-duration-150 hidden">
+                    <button id="clear-selection" class="px-5 py-3 border border-gray-300 text-gray-700 font-medium rounded-md shadow-sm hover:bg-gray-100 transition-colors hidden focus:outline-none focus:ring-2 focus:ring-gray-300">
                         Clear Selection
                     </button>
 
-                    <button id="confirm-reservation" class="px-6 py-3 bg-blue-600 text-white font-medium rounded-md shadow-md hover:bg-blue-700 transition-duration-150 flex items-center justify-center">
+                    <button id="confirm-reservation" class="px-6 py-3 bg-blue-600 text-white font-bold rounded-md shadow-md hover:bg-blue-700 transition-colors flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
                         <span>Complete Reservation</span>
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
@@ -211,9 +209,9 @@
         </div>
     </div>
 
-    <!-- Back Button -->
-    <div class="mt-8">
-        <a href="@Url.Action("Details", "Events", new { id = Model.Id })" class="inline-flex items-center text-blue-600 hover:text-blue-800 transition-colors">
+    <!-- Navigation Breadcrumb -->
+    <div class="mt-8 text-center sm:text-left">
+        <a href="@Url.Action("Details", "Events", new { id = Model.Id })" class="inline-flex items-center text-blue-600 font-medium hover:text-blue-800 transition-colors">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
@@ -228,11 +226,19 @@
         const eventId = @eventId;
         const venueId = @venueId;
         const layoutId = @(layoutId ?? 0);
+        
         let selectedSeats = [];
         let seatNames = {};
+        let currentSeatsCache = [];
+        let currentShapesCache = [];
+        let currentGroupsCache = [];
         let fabricCanvas;
 
-        // --- ZOOM & PAN CONTROLS ---
+        // --- FABRIC VIEWPORT ENGINES ---
+        
+        /** 
+         * Updates the percentage indicator in the bottom right of the canvas 
+         */
         function updateZoomText() {
             const zoomText = document.getElementById('zoom-level');
             if (zoomText && fabricCanvas) {
@@ -240,6 +246,9 @@
             }
         }
 
+        /** 
+         * Steps up the canvas scale incrementally 
+         */
         function ZoomIn() {
             if (!fabricCanvas) return;
             let zoom = fabricCanvas.getZoom() * 1.1;
@@ -248,6 +257,9 @@
             updateZoomText();
         }
 
+        /** 
+         * Steps down the canvas scale incrementally 
+         */
         function ZoomOut() {
             if (!fabricCanvas) return;
             let zoom = fabricCanvas.getZoom() / 1.1;
@@ -256,76 +268,128 @@
             updateZoomText();
         }
 
+        /** 
+         * Restores canvas transformation to 1:1 scale at origin 
+         */
         function ResetZoom() {
             if (!fabricCanvas) return;
             fabricCanvas.setZoom(1);
             fabricCanvas.viewportTransform = [1, 0, 0, 1, 0, 0];
+            fabricCanvas.calcOffset();
             fabricCanvas.requestRenderAll();
             updateZoomText();
         }
 
-        function resizeCanvasToFitElements(seats, shapes) {
+        /** 
+         * Automatically calculates the bounding box of all map objects, expands the 
+         * canvas if necessary, and scales/pans the viewport to frame them cleanly on load.
+         * Utilizes setViewportTransform to ensure click event hitboxes align natively.
+         */
+        function fitLayoutToViewport(seats, shapes, groups) {
             if (!fabricCanvas) return;
 
-            const minWidth = 800;
-            const minHeight = 600;
-            const padding = 100;
+            const allItems = [...(seats || []), ...(shapes || [])];
+            if (allItems.length === 0) return;
 
-            let maxX = 0; let maxY = 0;
+            // Secure coordinate extraction parsing safely as floats
+            const xs = allItems.map(s => parseFloat(s.x) || parseFloat(s.X) || 0);
+            const ys = allItems.map(s => parseFloat(s.y) || parseFloat(s.Y) || 0);
+            const maxXs = allItems.map(s => (parseFloat(s.x) || parseFloat(s.X) || 0) + (parseFloat(s.width) || 60));
+            const maxYs = allItems.map(s => (parseFloat(s.y) || parseFloat(s.Y) || 0) + (parseFloat(s.height) || 60));
 
-            if (seats && seats.length > 0) {
-                maxX = Math.max(maxX, ...seats.map(s => (Number(s.x) || 0) + 60)); // Seat width is 60
-                maxY = Math.max(maxY, ...seats.map(s => (Number(s.y) || 0) + 60));
-            }
-            if (shapes && shapes.length > 0) {
-                maxX = Math.max(maxX, ...shapes.map(s => (Number(s.x) || 0) + (Number(s.width) || 0)));
-                maxY = Math.max(maxY, ...shapes.map(s => (Number(s.y) || 0) + (Number(s.height) || 0)));
-            }
+            const minX = Math.min(...xs);
+            const minY = Math.min(...ys);
+            const maxX = Math.max(...maxXs);
+            const maxY = Math.max(...maxYs);
 
-            fabricCanvas.setWidth(Math.max(minWidth, maxX + padding));
-            fabricCanvas.setHeight(Math.max(minHeight, maxY + padding));
-            fabricCanvas.calcOffset();
+            const padding = 100; 
+
+            const contentWidth = (maxX - minX) + (padding * 2);
+            const contentHeight = (maxY - minY) + (padding * 2);
+
+            // Sync structural canvas dimensions to exactly match CSS wrapper layout constraints
+            const container = document.getElementById('canvas-container');
+            const viewportWidth = container.clientWidth;
+            const viewportHeight = container.clientHeight;
+
+            fabricCanvas.setWidth(viewportWidth);
+            fabricCanvas.setHeight(viewportHeight);
+
+            // Determine scaling factor capped at 1.2x max zoom
+            const scaleX = viewportWidth / contentWidth;
+            const scaleY = viewportHeight / contentHeight;
+            const optimalScale = Math.max(0.1, Math.min(scaleX, scaleY, 1.2)); 
+
+            // Execute programmatic pan to layout centerpoint
+            const centerX = (minX + maxX) / 2;
+            const centerY = (minY + Math.max(maxY, minY + 10)) / 2; 
+            
+            const vpt = fabricCanvas.viewportTransform.slice();
+            vpt[0] = optimalScale; 
+            vpt[3] = optimalScale; 
+            vpt[4] = (viewportWidth / 2) - (centerX * optimalScale); 
+            vpt[5] = (viewportHeight / 2) - (centerY * optimalScale); 
+            
+            fabricCanvas.setViewportTransform(vpt);
+            fabricCanvas.calcOffset(); 
+            updateZoomText();
         }
 
-        // --- INITIALIZATION ---
+        // --- DOM INITIALIZATION PIPELINE ---
+
         document.addEventListener('DOMContentLoaded', function () {
             fabricCanvas = new fabric.Canvas('seatCanvas', { selection: false });
 
-            // Allow Canvas Panning by dragging empty space
+            // Implements drag-to-pan across empty background sectors
             fabricCanvas.on('mouse:down', function (opt) {
                 const evt = opt.e;
                 if (!opt.target || (opt.target && opt.target.selectable === false && !opt.target.seatId)) {
                     this.isDragging = true;
                     this.lastPosX = evt.clientX;
                     this.lastPosY = evt.clientY;
+                    this.selection = false;
                 }
             });
+            
             fabricCanvas.on('mouse:move', function (opt) {
                 if (this.isDragging) {
                     const e = opt.e;
-                    const vpt = this.viewportTransform;
+                    const vpt = this.viewportTransform.slice();
                     vpt[4] += e.clientX - this.lastPosX;
                     vpt[5] += e.clientY - this.lastPosY;
-                    this.requestRenderAll();
+                    
+                    this.setViewportTransform(vpt);
+                    
                     this.lastPosX = e.clientX;
                     this.lastPosY = e.clientY;
                 }
             });
+            
             fabricCanvas.on('mouse:up', function () {
-                this.setViewportTransform(this.viewportTransform);
                 this.isDragging = false;
+                this.calcOffset();
             });
 
-            // Mouse wheel zoom
+            // Translates mouse wheel events into smooth zooming transformations
             fabricCanvas.on('mouse:wheel', function(opt) {
                 let delta = opt.e.deltaY;
                 let zoom = fabricCanvas.getZoom() * (0.999 ** delta);
                 if (zoom > 5) zoom = 5;
                 if (zoom < 0.1) zoom = 0.1;
+                
                 fabricCanvas.zoomToPoint({ x: opt.e.offsetX, y: opt.e.offsetY }, zoom);
+                fabricCanvas.calcOffset(); 
+                
                 opt.e.preventDefault();
                 opt.e.stopPropagation();
                 updateZoomText();
+            });
+
+            // Adjust scaling automatically if user resizes browser window
+            window.addEventListener('resize', () => {
+                if (currentSeatsCache.length > 0) {
+                    fitLayoutToViewport(currentSeatsCache, currentShapesCache, currentGroupsCache);
+                }
             });
 
             if (layoutId && layoutId !== 0) {
@@ -333,23 +397,34 @@
             }
         });
 
+        /** 
+         * Executes parallel asynchronous data fetches for map generation constraints 
+         */
         async function loadSeatMap(layoutId, eventId) {
             showLoadingOnFabric(fabricCanvas);
 
             try {
-                const [seatRes, shapeRes] = await Promise.all([
+                // Fetch dynamic seat availability, non-selectable environments, and group outlines concurrently
+                const [seatRes, shapeRes, layoutRes] = await Promise.all([
                     fetch(`/Seat/get_data?LayoutId=${layoutId}&eventId=${eventId}`),
-                    fetch(`/NonSelectable/GetElements?layoutId=${layoutId}`)
+                    fetch(`/NonSelectable/GetElements?layoutId=${layoutId}`),
+                    fetch(`/Seat/GetCompleteLayout?layoutId=${layoutId}`)
                 ]);
 
                 const seatData = seatRes.ok ? await seatRes.json() : [];
                 const shapeData = shapeRes.ok ? await shapeRes.json() : [];
+                const layoutData = layoutRes.ok ? await layoutRes.json() : { groups: [] };
+                const groupsData = layoutData.groups || [];
+
+                currentSeatsCache = seatData;
+                currentShapesCache = shapeData;
+                currentGroupsCache = groupsData;
 
                 fabricCanvas.clear();
 
                 if ((seatData && seatData.length > 0) || (shapeData && shapeData.length > 0)) {
-                    resizeCanvasToFitElements(seatData, shapeData);
-                    renderMap(fabricCanvas, seatData, shapeData);
+                    renderMap(fabricCanvas, seatData, shapeData, groupsData);
+                    fitLayoutToViewport(seatData, shapeData, groupsData);
                 } else {
                     showNoSeatsMessageOnFabric(fabricCanvas);
                 }
@@ -360,8 +435,10 @@
             }
         }
 
-        // --- UI & FORM LOGIC ---
+        // --- FORM DATA & API SUBMISSION ---
+
         $(document).ready(function () {
+            // Logic mapping checkmarks to input control states
             $("#useEventStartTime").on("change", function() {
                 if ($(this).is(':checked')) {
                     $("#reservationStartTime").val('@Model.StartDateTime.ToString("HH:mm")');
@@ -383,6 +460,7 @@
             if ($("#useEventStartTime").is(':checked')) $("#reservationStartTime").prop('disabled', true);
             if ($("#useEventEndTime").is(':checked')) $("#reservationEndTime").prop('disabled', true);
 
+            /** Assembles transactional reservation payload and dispatches to system endpoints */
             $("#confirm-reservation").on("click", function () {
                 if (selectedSeats.length > 0) {
                     if (!layoutId || layoutId === 0) {
@@ -402,10 +480,11 @@
 
                     if (difference <= 0) {
                         showNotification('End time must be after start time.', 'error');
-                        $(this).prop('disabled', false).html('<span>Complete Reservation</span>');
+                        $(this).prop('disabled', false).html('<span>Complete Reservation</span><svg class="h-5 w-5 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>');
                         return;
                     }
 
+                    // Standardize span into timespan layout required by .NET API
                     const duration = `${Math.floor(difference / 3600000).toString().padStart(2, '0')}:${Math.floor((difference % 3600000) / 60000).toString().padStart(2, '0')}:${Math.floor((difference % 60000) / 1000).toString().padStart(2, '0')}`;
                     const reservationDate = `${$("#eventDate").val()}T${startTime}`;
 
@@ -425,7 +504,7 @@
                             setTimeout(() => window.location.href = "/Reservation/Index", 1500);
                         },
                         error: function(xhr) {
-                            $("#confirm-reservation").prop('disabled', false).html('<span>Complete Reservation</span>');
+                            $("#confirm-reservation").prop('disabled', false).html('<span>Complete Reservation</span><svg class="h-5 w-5 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>');
                             let msg = "Failed to reserve seats.";
                             try { msg = JSON.parse(xhr.responseText) || msg; } catch(e) { msg = xhr.responseText || msg; }
                             showNotification(msg, 'error');
@@ -439,17 +518,55 @@
             $("#clear-selection").on("click", () => clearAllSelections(fabricCanvas));
         });
 
-        // --- MAP RENDERING (MATCHES DOM EDITOR 1:1) ---
-        function renderMap(canvas, seats, shapes) {
+        // --- MAP RENDERING ---
+
+        /** 
+         * Constructs graphic layers for all items bound to coordinate layout 
+         */
+        function renderMap(canvas, seats, shapes, groups) {
             canvas.clear();
 
-            // 1. Render Background Shapes (True to top-left coordinates)
+            // 1. Render Logical Group Regions
+            if (groups) {
+                groups.forEach(group => {
+                    const childNames = new Set();
+                    if(group.selectableUnits) group.selectableUnits.forEach(u => childNames.add(u.name));
+                    if(group.nonSelectableUnits) group.nonSelectableUnits.forEach(u => childNames.add(u.name));
+
+                    const bounds = [];
+                    seats.forEach(s => { if(childNames.has(s.name)) bounds.push({ x: s.x||s.X, y: s.y||s.Y, w: 60, h: 60 }); });
+                    shapes.forEach(s => { if(childNames.has(s.name)) bounds.push({ x: s.x||s.X, y: s.y||s.Y, w: s.width||100, h: s.height||100 }); });
+
+                    if (bounds.length === 0) return;
+
+                    const minX = Math.min(...bounds.map(c => parseFloat(c.x) || 0));
+                    const minY = Math.min(...bounds.map(c => parseFloat(c.y) || 0));
+                    const maxX = Math.max(...bounds.map(c => (parseFloat(c.x) || 0) + (parseFloat(c.w) || 0)));
+                    const maxY = Math.max(...bounds.map(c => (parseFloat(c.y) || 0) + (parseFloat(c.h) || 0)));
+
+                    const groupRect = new fabric.Rect({
+                        left: minX - 15, top: minY - 15,
+                        width: (maxX - minX) + 30, height: (maxY - minY) + 30,
+                        fill: 'rgba(99, 102, 241, 0.05)', 
+                        stroke: '#6366f1', strokeWidth: 2,
+                        strokeDashArray: [5, 5],
+                        rx: 8, ry: 8,
+                        selectable: false, evented: false
+                    });
+                    
+                    canvas.add(groupRect);
+                });
+            }
+
+            // 2. Render Aesthetic Shapes (Scenery, structural items)
             if (shapes) {
                 shapes.forEach(shape => {
                     let fabricShape;
                     const fill = shape.backgroundColor || '#D1D5DB';
                     const width = shape.width || 100;
                     const height = shape.height || 100;
+                    const posX = parseFloat(shape.x) || parseFloat(shape.X) || 0;
+                    const posY = parseFloat(shape.y) || parseFloat(shape.Y) || 0;
 
                     if (shape.shapeType === 'ellipse') {
                         fabricShape = new fabric.Ellipse({
@@ -470,7 +587,6 @@
                         });
                     }
 
-                    // Text sits dead center of the shape dimensions
                     const shapeText = new fabric.Text(shape.name, {
                         originX: 'center', originY: 'center',
                         left: width / 2, top: height / 2,
@@ -481,34 +597,35 @@
                     if (shape.shapeType === 'triangle') shapeText.set('top', height / 1.5);
 
                     const shapeGroup = new fabric.Group([fabricShape, shapeText], {
-                        left: shape.x, top: shape.y,
+                        left: posX, top: posY,
                         selectable: false, evented: false
                     });
                     canvas.add(shapeGroup);
                 });
             }
 
-            // 2. Render Seats (True 60x60 DOM dimensions)
+            // 3. Render Selectable Seats (Core reservation logic)
             if (seats) {
                 seats.forEach(seat => {
                     seatNames[seat.id] = seat.name;
+                    const posX = parseFloat(seat.x) || parseFloat(seat.X) || 0;
+                    const posY = parseFloat(seat.y) || parseFloat(seat.Y) || 0;
                     
                     const seatRect = new fabric.Rect({
                         width: 60, height: 60, 
                         fill: seat.available ? '#4CAF50' : '#f44336', 
-                        stroke: '#333', strokeWidth: 1, rx: 5, ry: 5,
+                        stroke: seat.available ? '#2E7D32' : '#c62828', strokeWidth: 1, rx: 6, ry: 6,
                         originX: 'left', originY: 'top'
                     });
 
-                    // Text sits dead center of the 60x60 rect
                     const seatText = new fabric.Text(seat.name, {
                         originX: 'center', originY: 'center',
                         left: 30, top: 30,
-                        fill: 'white', fontSize: 11, fontFamily: 'Arial'
+                        fill: 'white', fontSize: 12, fontFamily: 'Arial', fontWeight: 'bold'
                     });
 
                     const seatGroup = new fabric.Group([seatRect, seatText], {
-                        left: seat.x, top: seat.y,
+                        left: posX, top: posY,
                         selectable: seat.available,
 
                         hasControls: false, 
@@ -535,6 +652,9 @@
             canvas.renderAll();
         }
 
+        /** 
+         * Mutates visual properties bound to selected reservation array 
+         */
         function toggleSeatSelection(seatGroup, canvas) {
             const seatId = seatGroup.seatId;
             const rect = seatGroup.item(0);
@@ -544,13 +664,16 @@
                 rect.set('fill', '#4CAF50'); 
             } else {
                 selectedSeats.push(seatId);
-                rect.set('fill', '#2196F3'); 
+                rect.set('fill', '#3b82f6'); 
             }
 
             updateSelectionSummary();
             canvas.renderAll();
         }
 
+        /** 
+         * Propagates state modifications mapping reservation context downwards 
+         */
         function updateSelectionSummary() {
             const count = selectedSeats.length;
             if (count > 0) {
@@ -564,6 +687,9 @@
             }
         }
 
+        /** 
+         * Empties cache mapping array restoring layout objects visual defaults 
+         */
         function clearAllSelections(canvas) {
             canvas.getObjects('group').forEach(group => {
                 if (group.available && group.seatId) {
@@ -575,17 +701,18 @@
             canvas.renderAll();
         }
 
-        // --- NOTIFICATIONS & MESSAGES ---
+        // --- UI ALERT NOTIFICATIONS ---
+
         function showLoadingOnFabric(canvas) {
-            canvas.add(new fabric.Text('Loading map...', { left: 300, top: 200, originX: 'center', originY: 'center', fill: '#4a5568', fontSize: 18 }));
+            canvas.add(new fabric.Text('Loading map...', { left: canvas.width/2, top: canvas.height/2, originX: 'center', originY: 'center', fill: '#4a5568', fontSize: 18, fontFamily: 'Arial' }));
             canvas.renderAll();
         }
         function showNoSeatsMessageOnFabric(canvas) {
-            canvas.add(new fabric.Text('No seats or layout available for this area', { left: 300, top: 200, originX: 'center', originY: 'center', fill: '#666', fontSize: 18 }));
+            canvas.add(new fabric.Text('No seats or layout available for this area', { left: canvas.width/2, top: canvas.height/2, originX: 'center', originY: 'center', fill: '#666', fontSize: 18, fontFamily: 'Arial' }));
             canvas.renderAll();
         }
         function showErrorMessageOnFabric(canvas) {
-            canvas.add(new fabric.Text('Failed to load map data. Please try again.', { left: 300, top: 200, originX: 'center', originY: 'center', fill: '#e53e3e', fontSize: 18 }));
+            canvas.add(new fabric.Text('Failed to load map data. Please try again.', { left: canvas.width/2, top: canvas.height/2, originX: 'center', originY: 'center', fill: '#e53e3e', fontSize: 18, fontFamily: 'Arial' }));
             canvas.renderAll();
         }
         function showNotification(message, type = 'info') {
