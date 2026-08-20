@@ -5,8 +5,9 @@
     ViewData["Title"] = "Edit Layout";
 }
 
-<div class="bg-gradient-to-r from-blue-50 to-indigo-50 min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+<div class="container mx-auto bg-gradient-to-r from-blue-50 to-indigo-50 min-h-screen py-8 px-4 sm:px-6 lg:px-8">
     <div class="w-full mx-auto">
+        <!-- Page Header Component -->
         <div class="bg-white rounded-xl shadow-md overflow-hidden mb-8">
             <div class="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-8">
                 <div class="flex flex-col md:flex-row md:items-center md:justify-between">
@@ -29,7 +30,9 @@
             </div>
         </div>
 
+        <!-- Main Workspace Card -->
         <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+            <!-- Navigation Tabs -->
             <div class="border-b border-gray-200">
                 <nav class="flex -mb-px" aria-label="Tabs">
                     <button id="tab-details" class="tab-button border-indigo-500 text-indigo-600 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" aria-current="page">
@@ -42,6 +45,7 @@
             </div>
 
             <div class="p-6">
+                <!-- Layout Properties Form Tab -->
                 <div id="details-content" class="tab-content">
                     <form asp-action="Edit" id="editLayoutForm" class="space-y-6 max-w-xl mx-auto">
                         @Html.AntiForgeryToken()
@@ -81,7 +85,7 @@
                                 <div class="relative">
                                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l-5-5m11 5v-4m0 4h-4m4 0l-5-5"/>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5-5M4 16v4m0 0h4m-4 0l-5-5m11 5v-4m0 4h-4m4 0l-5-5"/>
                                         </svg>
                                     </div>
                                     <input asp-for="Width" type="number" min="0" class="pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"/>
@@ -142,10 +146,9 @@
                         </div>
                     </form>
                 </div>
-                
 
+                <!-- Interactive Seat Map Editor Tab -->
                 <div id="seats-content" class="tab-content hidden">
-                    
                     <div id="seat-status" class="hidden mb-4 font-medium text-sm transition-all duration-300"></div>
 
                     <div class="flex flex-col w-full">
@@ -165,7 +168,6 @@
                     
                     <div class="grid grid-cols-1 bg-gray-50 rounded-t-lg border border-b-0 border-gray-200 px-6 py-4 gap-4 mt-5">
                         <div class="flex flex-wrap gap-4 items-center w-full justify-between">
-                            
                             <div class="flex gap-2">
                                 <button type="button" id="show-seat" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md shadow-sm transition-colors">Seat</button>
                                 <button type="button" id="show-table" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md shadow-sm transition-colors">Table</button>
@@ -195,13 +197,12 @@
                                     Delete Selected
                                 </button>
                             </div>
-
                         </div>
                         <div class="AddContainer w-full hidden flex gap-2 justify-left rounded-md" id="seatContainer">
                             <button type="button" id="add-seat-single" draggable="true" class="px-4 py-2 text-sm font-medium text-blue-700 bg-white border border-blue-300 hover:bg-blue-50 rounded-md shadow-sm">Single</button>
-                            <button type="button" id="add-seat-hline" class="px-4 py-2 text-sm font-medium text-blue-700 bg-white border border-blue-300 hover:bg-blue-50 rounded-md shadow-sm">Horizontal Line</button>
-                            <button type="button" id="add-seat-vline" class="px-4 py-2 text-sm font-medium text-blue-700 bg-white border border-blue-300 hover:bg-blue-50 rounded-md shadow-sm">Vertical Line</button>
-                            <button type="button" id="add-seat-grid" class="px-4 py-2 text-sm font-medium text-blue-700 bg-white border border-blue-300 hover:bg-blue-50 rounded-md shadow-sm">Grid</button>
+                            <button type="button" id="add-seat-hline" draggable="true" class="px-4 py-2 text-sm font-medium text-blue-700 bg-white border border-blue-300 hover:bg-blue-50 rounded-md shadow-sm">Horizontal Line</button>
+                            <button type="button" id="add-seat-vline" draggable="true" class="px-4 py-2 text-sm font-medium text-blue-700 bg-white border border-blue-300 hover:bg-blue-50 rounded-md shadow-sm">Vertical Line</button>
+                            <button type="button" id="add-seat-grid" draggable="true" class="px-4 py-2 text-sm font-medium text-blue-700 bg-white border border-blue-300 hover:bg-blue-50 rounded-md shadow-sm">Grid</button>
                         </div>
                         <div class="AddContainer w-full hidden flex gap-2 justify-left rounded-md" id="tableContainer">
                             <button type="button" id="add-table-square" draggable="true" class="px-4 py-2 text-sm font-medium text-blue-700 bg-white border border-blue-300 hover:bg-blue-50 rounded-md shadow-sm">Square</button>
@@ -212,12 +213,11 @@
                             <button type="button" id="add-scene-stage" draggable="true" class="px-4 py-2 text-sm font-medium text-blue-700 bg-white border border-blue-300 hover:bg-blue-50 rounded-md shadow-sm">Stage/Scene</button>
                         </div>
                     </div>
-                    
-                    
 
+                    <!-- Canvas Viewport -->
                     <div class="flex gap-4 mt-4 relative">
                         <div class="bg-white rounded-lg border border-gray-200 p-0 w-full overflow-hidden relative" style="min-height: 400px; height: 600px;">
-                            
+                            <!-- Zoom Control Panel -->
                             <div class="absolute bottom-4 right-4 z-50 flex items-center gap-1 bg-white p-1.5 rounded-lg shadow-md border border-gray-200">
                                 <button type="button" id="zoom-out" class="p-1.5 hover:bg-gray-100 rounded text-gray-600 transition-colors" title="Zoom Out">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM13 10H7"/></svg>
@@ -233,19 +233,16 @@
                             </div>
 
                             <div id="seat-map" class="relative w-full h-full overflow-auto select-none bg-gray-50">
-                                <div id="zoom-container" class="absolute top-0 left-0 min-w-full min-h-full origin-top-left transition-transform duration-75 bg-[radial-gradient(#d1d5db_1px,transparent_1px)] [background-size:20px_20px]" style="width: 2500px; height: 2500px;">
+                                <div id="zoom-container" class="absolute top-0 left-0 origin-top-left transition-transform duration-75 bg-[radial-gradient(#d1d5db_1px,transparent_1px)] [background-size:20px_20px]" style="width: 2500px; height: 2500px;">
                                     <div id="selection-box" class="selection-box"></div>
                                 </div>
                             </div>
-
-                            
-                            
                         </div>
                     </div>
 
+                    <!-- Dynamic Properties Configuration Panel -->
                     <div class="bg-white border border-gray-200 p-4 shadow-md w-full flex flex-col items-center z-10 relative">
-                        <div class="hidden flex bg-blue-50 border border-blue-200 rounded-lg p-5 w-full gap-5" id="optionsPanel">
-                        </div>
+                        <div class="hidden flex bg-blue-50 border border-blue-200 rounded-lg p-5 w-full gap-5" id="optionsPanel"></div>
                     </div>
                 </div>
             </div>
@@ -276,16 +273,76 @@
         const seatMap = document.getElementById('seat-map');
         const zoomContainer = document.getElementById('zoom-container');
         const optionsPanel = document.getElementById("optionsPanel");
-        
 
-        // --- ZOOM LOGIC ---
+        // --- ZOOM & VIEWPORT AUTO-FIT LOGIC ---
         let currentScale = 1;
         const zoomLevelText = document.getElementById('zoom-level');
 
+        /** 
+         * Sets canvas scale transformation and updates UI indicator 
+         * @@param {number} scale - The desired scale multiplier
+         */
         function setZoom(scale) {
-            currentScale = Math.max(0.3, Math.min(scale, 2.5)); 
+            currentScale = Math.max(0.1, Math.min(scale, 2.5)); 
             zoomContainer.style.transform = `scale(${currentScale})`;
             zoomLevelText.textContent = `${Math.round(currentScale * 100)}%`;
+        }
+
+        /** 
+         * Automatically calculates the bounding box of all map objects, expands the 
+         * canvas if necessary, and scales/pans the viewport to frame them cleanly on load.
+         */
+        function fitLayoutToViewport() {
+            const allItems = currentSeats.concat(currentShapes).concat(currentGroups);
+            if (allItems.length === 0) {
+                setZoom(1);
+                return;
+            }
+
+            // Extract coordinates safely, defaulting to 0 if NaN to prevent catastrophic zoom failures
+            const xs = allItems.map(s => parseFloat(s.x) || 0);
+            const ys = allItems.map(s => parseFloat(s.y) || 0);
+            const maxXs = allItems.map(s => (parseFloat(s.x) || 0) + (parseFloat(s.width) || 60)); // Default item width
+            const maxYs = allItems.map(s => (parseFloat(s.y) || 0) + (parseFloat(s.height) || 60));
+
+            const minX = Math.min(...xs);
+            const minY = Math.min(...ys);
+            const maxX = Math.max(...maxXs);
+            const maxY = Math.max(...maxYs);
+
+            const padding = 120; // Internal buffer around the layout
+
+            // Ensure the canvas stretches if elements were placed outside the initial 2500x2500 constraints
+            const requiredWidth = Math.max(2500, maxX + padding);
+            const requiredHeight = Math.max(2500, maxY + padding);
+            zoomContainer.style.width = requiredWidth + 'px';
+            zoomContainer.style.height = requiredHeight + 'px';
+
+            const contentWidth = (maxX - minX) + (padding * 2);
+            const contentHeight = (maxY - minY) + (padding * 2);
+
+            // Calculate viewport size (Using fallbacks in case the tab CSS transition hasn't fully fired)
+            const viewportWidth = seatMap.clientWidth || seatMap.parentElement.clientWidth || window.innerWidth * 0.7;
+            const viewportHeight = seatMap.clientHeight || 600;
+
+            const scaleX = viewportWidth / contentWidth;
+            const scaleY = viewportHeight / contentHeight;
+            
+            // Apply bounds to the zoom to prevent extreme zooming on very small or very large layouts
+            const optimalScale = Math.max(0.2, Math.min(scaleX, scaleY, 1.1));
+            setZoom(optimalScale);
+
+            const centerX = (minX + maxX) / 2;
+            const centerY = (minY + maxY) / 2;
+
+            // Wait 100ms for the CSS transform to physically apply before moving the scrollbars
+            setTimeout(() => {
+                const targetScrollLeft = (centerX * optimalScale) - (viewportWidth / 2);
+                const targetScrollTop = (centerY * optimalScale) - (viewportHeight / 2);
+                
+                seatMap.scrollLeft = Math.max(0, targetScrollLeft);
+                seatMap.scrollTop = Math.max(0, targetScrollTop);
+            }, 100);
         }
 
         document.getElementById('zoom-in').addEventListener('click', () => setZoom(currentScale + 0.1));
@@ -300,11 +357,10 @@
             }
         }, { passive: false });
 
-        // --- UI UTILS ---
+        // --- UI UTILITIES ---
         window.hideAllOptions = function() {
             optionsPanel.classList.add("hidden");
             optionsPanel.innerHTML = "";
-            
         };
 
         window.updateStatus = function(message, type = "info") {
@@ -313,14 +369,12 @@
             statusBar.textContent = message;
             statusBar.classList.remove("hidden");
             
-            // Format styling correctly
             statusBar.className = 'mt-4 p-3 rounded-md w-full text-center border font-medium ' + 
                 (type === 'success' ? 'bg-green-100 text-green-800 border-green-200' : 
                  type === 'error' ? 'bg-red-100 text-red-800 border-red-200' : 
                  type === 'warning' ? 'bg-yellow-100 text-yellow-800 border-yellow-200' : 
                  'bg-blue-100 text-blue-800 border-blue-200');
                  
-            // Auto-hide success messages after 3 seconds
             if(type === 'success') {
                 setTimeout(() => {
                     statusBar.classList.add("hidden");
@@ -328,8 +382,8 @@
             }
         };
 
+        /** Updates DOM elements to visually represent their selection state */
         function updateSelectionVisuals() {
-            // Exclude group boundaries so they don't turn into solid blue/red seats
             zoomContainer.querySelectorAll('div[data-id]:not([data-type="shape"]):not([data-type="group"])').forEach(el => {
                 if (selectedItems.has(el.dataset.name)) {
                     el.classList.remove('bg-blue-500', 'hover:bg-blue-600');
@@ -348,7 +402,6 @@
                 }
             });
             
-            // Update group outlines visual logic
             zoomContainer.querySelectorAll('div[data-type="group"]').forEach(el => {
                 const groupId = el.dataset.id;
                 const groupChildren = currentSeats.concat(currentShapes).filter(s => s.groupId === groupId);
@@ -364,7 +417,7 @@
             });
         }
 
-        // --- MENU TABS ---
+        // --- TOOLBAR TAB TOGGLES ---
         document.getElementById('show-seat').addEventListener('click', () => {
             document.querySelectorAll('.AddContainer').forEach(con => con.classList.add("hidden"));
             document.getElementById('seatContainer').classList.remove('hidden');
@@ -378,7 +431,7 @@
             document.getElementById('sceneContainer').classList.remove('hidden');
         });
 
-        // --- DELETION LOGIC ---
+        // --- ITEM DELETION LOGIC ---
         window.removeSelectedItems = async function() {
             if (selectedItems.size === 0) return updateStatus("No items selected.", "warning");
 
@@ -420,9 +473,8 @@
             }
         };
 
-        // --- SHOW OPTIONS MENU ---
+        // --- PROPERTIES PANEL & CONFIGURATION ---
         window.showOptions = function(data, type) {
-            
             optionsPanel.classList.remove("hidden");
             
             const isTemp = String(data.id).startsWith('temp-') || String(data.id).startsWith('group-temp-');
@@ -435,17 +487,14 @@
                             <h3 class="font-bold text-gray-800 border-b pb-1">Group Mass Rename</h3>
                             <p class="text-xs text-gray-500">ID: ${displayId}</p>
                         </div>
-
                         <div class="flex flex-col">
                             <label class="text-xs font-semibold text-gray-700 text-left mb-1">Prefix</label>
                             <input id="opt-prefix" type="text" style="height: 30px;" class="w-24 border border-gray-300 rounded px-2 py-1 text-sm focus:ring-indigo-500" value="S" onfocus="this.select()" />
                         </div>
-
                         <div class="flex flex-col">
                             <label class="text-xs font-semibold text-gray-700 text-left mb-1">Start Number</label>
                             <input id="opt-start-num" type="number" style="height: 30px;" class="w-20 border border-gray-300 rounded px-2 py-1 text-sm focus:ring-indigo-500" value="1" />
                         </div>
-
                         <button type="button" id="opt-confirm-group" style="height: 30px;" class="px-4 border border-transparent bg-indigo-600 text-white rounded shadow-sm hover:bg-indigo-700 transition-colors text-sm font-medium flex items-center justify-center">
                             Rename All Items
                         </button>
@@ -458,7 +507,6 @@
                     
                     const children = currentSeats.concat(currentShapes).filter(s => s.groupId === data.id);
                     
-                    // Sort items spatially (top-to-bottom, left-to-right) so numbering is logical
                     children.sort((a, b) => {
                         if (Math.abs(a.y - b.y) < 15) return a.x - b.x;
                         return a.y - b.y;
@@ -516,12 +564,10 @@
                         <h3 class="font-bold text-gray-800 border-b pb-1">${type === 'seat' ? 'Seat' : 'Shape'} Settings</h3>
                         <p class="text-xs text-gray-500" id="opt-display-id"></p>
                     </div>
-
                     <div class="flex flex-col">
                         <label class="text-xs font-semibold text-gray-700 text-left mb-1">Name</label>
                         <input id="opt-name" type="text" style="height: 30px;" class="border border-gray-300 rounded px-2 py-1 text-sm focus:ring-indigo-500" onfocus="this.select()" />
                     </div>
-
                     <div class="flex flex-row gap-2">
                         <div class="flex flex-col">
                             <label class="text-xs font-semibold text-gray-700 mb-1">X Position</label>
@@ -532,7 +578,6 @@
                             <input id="opt-y" type="number" style="height: 30px;" class="w-20 border border-gray-300 rounded px-2 py-1 text-sm focus:ring-indigo-500" />
                         </div>
                     </div>
-
                     ${type === 'shape' ? `
                         <div class="flex flex-row gap-2">
                             <div class="flex flex-col">
@@ -545,7 +590,6 @@
                             </div>
                         </div>
                     ` : ''}
-                    
                     <button type="button" id="opt-confirm" style="height: 30px;" class="px-4 border border-transparent bg-indigo-600 text-white rounded shadow-sm hover:bg-indigo-700 transition-colors text-sm font-medium flex items-center justify-center">
                         Apply Changes
                     </button>
@@ -619,22 +663,18 @@
             updateStatus(`Added ${numCols * numRows} seat(s).`, 'success');
         }
 
-        // --- GROUPING LOGIC ---
+        // --- GROUPING MANAGEMENT ---
         window.groupSelectedItems = function() {
             if (selectedItems.size < 2) {
-                return updateStatus("Select at least 2 items to group (Use Shift+Click or click-and-drag).", "warning");
+                return updateStatus("Select at least 2 items to group.", "warning");
             }
 
             const itemsToGroup = currentSeats.concat(currentShapes).filter(s => selectedItems.has(s.name));
-            
-            // Prevent grouping items that are already in a group
             if (itemsToGroup.some(s => s.groupId)) {
-                return updateStatus("Some items are already grouped. Ungroup them first.", "error");
+                return updateStatus("Some items are already grouped.", "error");
             }
 
             const groupId = `group-temp-${Date.now()}`;
-            
-            // Calculate the bounding box for the new group
             const minX = Math.min(...itemsToGroup.map(s => s.x));
             const minY = Math.min(...itemsToGroup.map(s => s.y));
 
@@ -645,9 +685,7 @@
                 y: minY
             });
 
-            // Tag the children
             itemsToGroup.forEach(s => s.groupId = groupId);
-
             updateStatus("Items grouped successfully.", "success");
             renderAll();
         };
@@ -657,8 +695,6 @@
             if (itemsToUngroup.length === 0) return updateStatus("No grouped items selected.", "warning");
 
             const groupIdsToRemove = new Set(itemsToUngroup.map(s => s.groupId));
-            
-            // Remove from array and untag children
             currentGroups = currentGroups.filter(g => !groupIdsToRemove.has(g.id));
             currentSeats.concat(currentShapes).forEach(s => {
                 if (groupIdsToRemove.has(s.groupId)) delete s.groupId;
@@ -668,25 +704,7 @@
             renderAll();
         };
 
-        document.getElementById('add-seat-hline').addEventListener('click', () => {
-            let input = prompt('How many seats in this horizontal line?');
-            if (input && !isNaN(input) && parseInt(input) > 0) generateSeats(1, parseInt(input));
-        });
-        document.getElementById('add-seat-vline').addEventListener('click', () => {
-            let input = prompt('How many seats in this vertical line?');
-            if (input && !isNaN(input) && parseInt(input) > 0) generateSeats(parseInt(input), 1);
-        });
-        document.getElementById('add-seat-grid').addEventListener('click', () => {
-            let input = prompt('Format: seats,rows (e.g. 5,2 for 5 seats across 2 rows)');
-            if (input && input.trim() !== '') {
-                let parts = input.split(',');
-                let cols = (parts.length > 0 && !isNaN(parts[0])) ? parseInt(parts[0]) : 1;
-                let rows = (parts.length > 1 && !isNaN(parts[1])) ? parseInt(parts[1]) : 1;
-                generateSeats(rows, cols);
-            }
-        });
-
-        // Drag & Drop Generation
+        // Drag & Drop Generation Setup
         document.querySelectorAll('[draggable="true"]').forEach(btn => {
             btn.addEventListener('dragstart', (e) => {
                 let type = btn.id.replace('add-table-', '').replace('add-scene-', '').replace('add-seat-', '');
@@ -700,7 +718,6 @@
         seatMap.addEventListener('drop', (e) => {
             e.preventDefault();
             const itemType = e.dataTransfer.getData('itemType');
-        
             const rect = zoomContainer.getBoundingClientRect();
             
             const dropX = Math.round(((e.clientX - rect.left) / currentScale) / 10) * 10;
@@ -735,11 +752,12 @@
             renderAll();
         });
 
-
-        // --- RENDERING MAIN ---
+        // --- RENDERING PIPELINE ---
+        /** Clears the canvas and re-renders all seats, shapes, and group boundaries */
         function renderAll() {
             zoomContainer.querySelectorAll('div[data-id]').forEach(el => el.remove());
 
+            // Render Group Boundaries
             currentGroups.forEach(group => {
                 const children = currentSeats.concat(currentShapes).filter(s => s.groupId === group.id);
                 if (children.length === 0) return;
@@ -753,12 +771,10 @@
                 group.y = minY;
 
                 const el = document.createElement('div');
-                
                 el.dataset.id = group.id;
                 el.dataset.type = 'group';
                 
                 const isSelected = Array.from(selectedItems).some(name => children.find(c => c.name === name));
-                
                 el.className = `absolute border-2 border-dashed rounded z-0 transition-colors cursor-move ${isSelected ? 'border-indigo-500 bg-indigo-500/10' : 'border-gray-400 bg-gray-400/10'}`;
                 
                 el.style.left = `${minX - 10}px`;
@@ -767,7 +783,6 @@
                 el.style.height = `${(maxY - minY) + 20}px`;
 
                 setupDragAndSelect(el, group, 'group');
-
                 zoomContainer.appendChild(el);
             });
 
@@ -833,6 +848,7 @@
         }
 
         // --- INTERACTION LOGIC (DRAG & SELECT) ---
+        /** Attaches mouse event listeners for selection and dragging mechanisms */
         function setupDragAndSelect(element, dataObj, type) {
             let isDragging = false;
             let startX, startY;
@@ -946,17 +962,11 @@
                         });
 
                         if (isGroup) {
-                            updateStatus(`Repositioned group items`, 'success');
                             showOptions(dataObj, 'group'); 
-                        } else if (selectedItems.size > 1) {
-                            updateStatus(`Repositioned ${selectedItems.size} item(s)`, 'success');
-                            hideAllOptions(); 
                         } else if (selectedItems.size === 1) {
-                            updateStatus(`Repositioned item`, 'success');
                             showOptions(dataObj, type); 
                         }
                         renderAll();
-
                     } else if (!eUp.shiftKey && !isGroup) {
                         selectedItems.clear();
                         selectedItems.add(dataObj.name);
@@ -970,6 +980,7 @@
             });
         }
 
+        /** Attaches interaction logic to the corner handles of shapes to allow free-form scaling */
         function setupShapeResize(handleElement, parentElement, shapeData) {
             let isResizing = false;
             let startW, startH, startX, startY;
@@ -992,7 +1003,6 @@
                     parentElement.style.width = `${shapeData.width}px`;
                     parentElement.style.height = `${shapeData.height}px`;
 
-                    // --- LIVE UPDATE GROUP OUTLINE WHILE RESIZING ---
                     if (shapeData.groupId) {
                         const gId = shapeData.groupId;
                         const children = currentSeats.concat(currentShapes).filter(s => s.groupId === gId);
@@ -1019,7 +1029,6 @@
                     document.removeEventListener('mouseup', onMouseUp);
                     
                     selectedItems.clear();
-                    
                     if (shapeData.groupId) {
                         const group = currentGroups.find(g => g.id === shapeData.groupId);
                         currentSeats.concat(currentShapes).forEach(s => {
@@ -1032,8 +1041,6 @@
                         updateSelectionVisuals();
                         showOptions(shapeData, 'shape');
                     }
-                    
-                    updateStatus(`Resized shape to ${shapeData.width}x${shapeData.height}`, 'success');
                     renderAll(); 
                 };
 
@@ -1056,7 +1063,6 @@
             }
 
             hideAllOptions();
-
             isBoxSelecting = true;
             
             const rect = zoomContainer.getBoundingClientRect();
@@ -1112,10 +1118,6 @@
                 isBoxSelecting = false;
                 selectionBox.style.display = 'none';
                 
-                if (parseInt(selectionBox.style.width) > 5) {
-                    updateStatus(`Selected ${selectedItems.size} items.`);
-                }
-
                 if (selectedItems.size === 1) {
                     const selectedName = Array.from(selectedItems)[0];
                     const obj = currentSeats.find(s => s.name === selectedName) || currentShapes.find(s => s.name === selectedName);
@@ -1123,8 +1125,6 @@
                         const type = currentSeats.includes(obj) ? 'seat' : 'shape';
                         showOptions(obj, type);
                     }
-                } else {
-                    hideAllOptions();
                 }
                 
                 document.removeEventListener('mousemove', onMouseMove);
@@ -1135,7 +1135,7 @@
             document.addEventListener('mouseup', onMouseUp);
         });
 
-        // --- SAVE MAP ---
+        // --- SAVE LAYOUT ROUTINE ---
         document.getElementById('save-seats').addEventListener('click', async () => {
             updateStatus("Saving layout...", "loading");
 
@@ -1149,7 +1149,6 @@
 
             const unitGroupsData = currentGroups.map(g => {
                 const groupChildren = currentSeats.concat(currentShapes).filter(s => s.groupId === g.id);
-                
                 return {
                     name: g.name,
                     top: g.y,
@@ -1172,7 +1171,6 @@
 
             try {
                 const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
-                
                 const response = await fetch(`/Seat/SaveCompleteLayout?layoutId=${layoutId}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': token },
@@ -1190,11 +1188,11 @@
             }
         });
         
-        // --- INITIAL LOAD ---
+        // --- DATA FETCHING & INITIALIZATION ---
+        /** Requests seat, shape, and grouping information from server and renders it */
         async function loadSeats(id) {
             updateStatus("Loading layout...", "loading");
             try {
-
                 const response = await fetch(`/Seat/GetCompleteLayout?layoutId=${id}`);
                 if (!response.ok) throw new Error("Failed to fetch layout");
                 
@@ -1204,14 +1202,12 @@
                 currentShapes = [];
                 currentGroups = [];
 
-
                 if (data.seats) {
                     data.seats.forEach(s => currentSeats.push({...s, x: s.x ?? s.X ?? 0, y: s.y ?? s.Y ?? 0}));
                 }
                 if (data.shapes) {
                     data.shapes.forEach(s => currentShapes.push({...s, x: s.x ?? s.X ?? 0, y: s.y ?? s.Y ?? 0}));
                 }
-
 
                 if (data.groups) {
                     data.groups.forEach(g => {
@@ -1225,9 +1221,7 @@
 
                         if (g.selectableUnits) {
                             g.selectableUnits.forEach(c => {
-                                // Destroy any standalone duplicate
                                 currentSeats = currentSeats.filter(s => s.id !== c.id);
-                                
                                 currentSeats.push({
                                     ...c,
                                     x: (c.x ?? c.X ?? 0) + g.left,
@@ -1239,9 +1233,7 @@
 
                         if (g.nonSelectableUnits) {
                             g.nonSelectableUnits.forEach(c => {
-                                // Destroy any standalone duplicate
                                 currentShapes = currentShapes.filter(s => s.id !== c.id);
-                                
                                 currentShapes.push({
                                     ...c,
                                     x: (c.x ?? c.X ?? 0) + g.left,
@@ -1256,6 +1248,10 @@
                 selectedItems.clear();
                 renderAll();
                 hideAllOptions(); 
+
+                // Process initial viewport scaling to fit canvas nicely inside view frame
+                setTimeout(fitLayoutToViewport, 150);
+
                 updateStatus(`Loaded ${currentSeats.length} seats, ${currentShapes.length} shapes, and ${currentGroups.length} groups.`, "success");
             } catch (error) {
                 console.error(error);
@@ -1263,6 +1259,7 @@
             }
         }
 
+        // --- TAB STATE MANAGEMENT ---
         document.getElementById('tab-details').addEventListener('click', function() {
             this.classList.add('border-indigo-500', 'text-indigo-600');
             this.classList.remove('border-transparent', 'text-gray-500');
@@ -1281,6 +1278,8 @@
             if (!window.seatsInitialized) {
                 window.seatsInitialized = true;
                 loadSeats(layoutId);
+            } else {
+                setTimeout(fitLayoutToViewport, 50); // Re-center layout automatically if user navigates back to tab
             }
         });
 
