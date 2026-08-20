@@ -15,34 +15,32 @@
 <div class="w-full">
     @Html.AntiForgeryToken()
     
-    <!-- Hero Section: Carousel Only -->
-    <div class="w-full pb-2">
+    <!-- Hero Section: Featured new arrivals dual-slide carousel (hidden on small mobile viewports) -->
+    <div class="hidden sm:block w-full pb-2">
         <div class="relative w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="relative w-full overflow-hidden rounded-2xl shadow-lg" style="height: 20rem;">
                 <div id="dual-hero-track" class="flex h-full gap-6 transition-transform duration-1000 ease-in-out" style="transform: translateX(0);">
-                    <!-- Slides injected by JS -->
+                    <!-- Dynamic slides injected via asynchronous event fetching -->
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- The COMPACT SEARCH PANEL -->
-    <div class="relative z-40 w-full max-w-5xl mx-auto px-4 -mt-16 mb-12">
-        
-        <!-- WRAPPER: No overflow-hidden so autocomplete works smoothly -->
+    <!-- Advanced Search & Filtering Panel -->
+    <div class="relative z-40 w-full max-w-5xl mx-auto px-4 mt-4 sm:-mt-16 mb-12">
         <div class="bg-white rounded-xl shadow-2xl w-full border border-gray-100 ring-1 ring-black ring-opacity-5">
             
-            <!-- Gradient Header & X Button -->
+            <!-- Panel Header with Toggle Control -->
             <div class="bg-gradient-to-r from-blue-600 to-indigo-700 px-6 py-3 rounded-t-xl flex flex-row items-center justify-between">
                 <h3 class="text-lg font-bold text-white tracking-wide">Find Events</h3>
                 <button id="panel-button" class="text-xl font-bold text-white focus:outline-none transition-transform hover:scale-125">X</button>
             </div>
 
-            <!-- Search Body -->
+            <!-- Search Configuration Form Body -->
             <div id="panel-body" class="p-5">
                 <div class="flex flex-col md:flex-row gap-4 mb-4 mt-1">
                     
-                    <!-- Search Term with Autocomplete -->
+                    <!-- Search input field backed by real-time autocomplete suggestions -->
                     <div class="w-full md:w-1/2 relative">
                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                             <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -52,11 +50,11 @@
                         <input type="text" id="search-term" placeholder="Event name, venue, or city..."
                             class="block w-full pl-10 pr-3 py-2.5 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-colors text-sm"
                             autocomplete="off">
-                        <!-- Autocomplete Dropdown -->
+                        <!-- Autocomplete suggestion results dropdown list -->
                         <div id="autocomplete-dropdown" class="absolute left-0 top-full mt-1 z-50 bg-white shadow-xl rounded-lg border border-gray-200 hidden max-h-60 overflow-y-auto w-full"></div>
                     </div>
 
-                    <!-- Event Type Dropdown -->
+                    <!-- Event Category Type Filter Dropdown -->
                     <div class="w-full md:w-1/4 relative">
                         <select id="event-type" class="w-full appearance-none bg-gray-50 border border-gray-300 rounded-lg py-2.5 px-3 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-colors">
                             <option value="">All Types</option>
@@ -68,7 +66,7 @@
                         </div>
                     </div>
 
-                    <!-- Date Range Picker -->
+                    <!-- Date Range Selection Input Component -->
                     <div class="w-full md:w-1/4 relative">
                         <input type="text" id="date-range" placeholder="Dates"
                             class="w-full bg-gray-50 border border-gray-300 rounded-lg py-2.5 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-colors">
@@ -80,7 +78,7 @@
                     </div>
                 </div>
 
-                <!-- Secondary Row -->
+                <!-- Secondary Control Row: Archival Filter and Search Trigger -->
                 <div class="flex flex-col sm:flex-row justify-between items-center mt-3">
                     <div class="flex items-center gap-2 mb-4 sm:mb-0 ml-1">
                         <input type="checkbox" id="archived-filter" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500" />
@@ -104,10 +102,10 @@
         </div>
     </div>
 
-    <!-- Main Content Area with proper responsive padding -->
-    <div class="w-full px-4 sm:px-6 lg:px-8 max-w-[1600px] mx-auto container">
+    <!-- Main Results Layout Area -->
+    <div class="w-full px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
 
-        <!-- Events Count Display -->
+        <!-- Results Header Controls & View Modifiers -->
         <div id="events-count" class="flex items-center justify-between mb-8">
             <h2 class="text-xl font-semibold text-gray-800">
                 Results: Events <span class="text-blue-600 font-bold">(<span id="filtered-count">0</span>)</span>
@@ -139,18 +137,16 @@
             </div>
         </div>
 
-        <!-- Events Grid -->
-        <div id="events-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3  gap-6">
-            
-        </div>
+        <!-- Dynamic Events Grid Container -->
+        <div id="events-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
 
-        <!-- Loading Indicator -->
+        <!-- Asynchronous Data Loading Indicator -->
         <div id="loading-indicator" class="text-center py-16 hidden">
             <div class="inline-block h-12 w-12 rounded-full border-4 border-gray-200 border-t-blue-600 animate-spin"></div>
             <p class="mt-4 text-lg font-medium text-gray-600">Loading events...</p>
         </div>
 
-        <!-- No Results Message -->
+        <!-- Empty State Notification -->
         <div id="no-results" class="hidden text-center py-16">
             <div class="max-w-md mx-auto">
                 <svg class="mx-auto h-16 w-16 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -164,7 +160,7 @@
             </div>
         </div>
 
-        <!-- Pagination -->
+        <!-- Pagination Controls Navigation -->
         <div class="mt-12 flex justify-center pb-12">
             <nav id="pagination" class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px @(ViewBag.TotalPages > 1 ? "" : "hidden")" aria-label="Pagination">
                 <button id="prev-page" class="pagination-prev relative inline-flex items-center px-4 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
@@ -174,8 +170,7 @@
                     Previous
                 </button>
 
-                <div id="page-numbers" class="flex flex-wrap justify-center">
-                </div>
+                <div id="page-numbers" class="flex flex-wrap justify-center"></div>
 
                 <button id="next-page" class="pagination-next relative inline-flex items-center px-4 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                     Next
@@ -189,6 +184,7 @@
 </div>
 
 <style>
+
     .tooltip-container {
         position: relative;      
         display: inline-block;   
@@ -235,17 +231,17 @@
         opacity: 1;
     }
 
+
     .event-card {
         position: relative;
         display: flex;
         flex-direction: column; 
         height: 100%;          
         transition: all 0.3s ease;
-        border-left: 4px solid #e2e8f0;
+        border-left: 4px solid #3b82f6;
         z-index: 1;
         min-height: 300px; 
         background-color: white;
-        border-left-color: #3b82f6;
     }
 
     .event-card:hover {
@@ -254,15 +250,22 @@
         z-index: 10;
     }
 
-    .wishlist-badge {
-        visibility: hidden;
-        opacity: 0;
-        transition: all 0.3s ease;
-    }
 
-    .event-card:hover .wishlist-badge {
+    .wishlist-badge {
         visibility: visible;
         opacity: 1;
+    }
+
+    @@media (min-width: 1024px) {
+        .wishlist-badge {
+            visibility: hidden;
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+        .event-card:hover .wishlist-badge {
+            visibility: visible;
+            opacity: 1;
+        }
     }
 
     .event-content {
@@ -331,6 +334,7 @@
             let currentAutocompleteIndex = -1;
             let maxAutocompleteResults = 8;
 
+            // Configure Flatpickr range selector with localized DD/MM/YYYY view format
             dateRangePicker = flatpickr("#date-range", {
                 mode: "range",
                 dateFormat: "Y-m-d",
@@ -365,6 +369,7 @@
             $('#loading-indicator').removeClass('hidden');
             performSearch();
 
+            // Setup input listener for dynamic search suggestion queries
             $('#search-term').on('input', function() {
                 const query = $(this).val().trim();
                 if (autocompleteTimeout) clearTimeout(autocompleteTimeout);
@@ -416,6 +421,7 @@
                 }
             });
 
+            // Populate event type dropdown options dynamically from server
             function loadEventTypes() {
                 $.getJSON('/Events/GetEventTypes')
                     .done(function(data) {
@@ -595,6 +601,7 @@
                 setTimeout(performSearch, 300);
             });
 
+            // Core search request handler communicating with backend endpoint
             function performSearch() {
                 let startDate = null;
                 let endDate = null;
@@ -896,6 +903,7 @@
         });
     </script>
     
+    <!-- Search panel collapse/expand toggle handler -->
     <script>
         document.getElementById("panel-button").addEventListener("click", function () {
             const panel = document.getElementById("panel-body");
@@ -905,6 +913,7 @@
         });
     </script>
 
+    <!-- Dual-slide side-by-side hero carousel progression logic -->
     <script>
         document.addEventListener("DOMContentLoaded", function () {
             async function populateDualCarousel() {
