@@ -15,7 +15,7 @@
 <div class="w-full">
     @Html.AntiForgeryToken()
     
-    <!-- Hero Section: Featured new arrivals dual-slide carousel (hidden on small mobile viewports) -->
+    <!-- Hero Section: Featured dual-slide carousel -->
     <div class="hidden sm:block w-full pb-2">
         <div class="relative w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="relative w-full overflow-hidden rounded-2xl shadow-lg" style="height: 20rem;">
@@ -30,17 +30,14 @@
     <div class="relative z-40 w-full max-w-5xl mx-auto px-4 mt-4 sm:-mt-16 mb-12">
         <div class="bg-white rounded-xl shadow-2xl w-full border border-gray-100 ring-1 ring-black ring-opacity-5">
             
-            <!-- Panel Header with Toggle Control -->
             <div class="bg-gradient-to-r from-blue-600 to-indigo-700 px-6 py-3 rounded-t-xl flex flex-row items-center justify-between">
                 <h3 class="text-lg font-bold text-white tracking-wide">Find Events</h3>
                 <button id="panel-button" class="text-xl font-bold text-white focus:outline-none transition-transform hover:scale-125">X</button>
             </div>
 
-            <!-- Search Configuration Form Body -->
             <div id="panel-body" class="p-5">
                 <div class="flex flex-col md:flex-row gap-4 mb-4 mt-1">
                     
-                    <!-- Search input field backed by real-time autocomplete suggestions -->
                     <div class="w-full md:w-1/2 relative">
                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                             <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -50,11 +47,9 @@
                         <input type="text" id="search-term" placeholder="Event name, venue, or city..."
                             class="block w-full pl-10 pr-3 py-2.5 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-colors text-sm"
                             autocomplete="off">
-                        <!-- Autocomplete suggestion results dropdown list -->
                         <div id="autocomplete-dropdown" class="absolute left-0 top-full mt-1 z-50 bg-white shadow-xl rounded-lg border border-gray-200 hidden max-h-60 overflow-y-auto w-full"></div>
                     </div>
 
-                    <!-- Event Category Type Filter Dropdown -->
                     <div class="w-full md:w-1/4 relative">
                         <select id="event-type" class="w-full appearance-none bg-gray-50 border border-gray-300 rounded-lg py-2.5 px-3 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-colors">
                             <option value="">All Types</option>
@@ -66,7 +61,6 @@
                         </div>
                     </div>
 
-                    <!-- Date Range Selection Input Component -->
                     <div class="w-full md:w-1/4 relative">
                         <input type="text" id="date-range" placeholder="Dates"
                             class="w-full bg-gray-50 border border-gray-300 rounded-lg py-2.5 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-colors">
@@ -78,7 +72,6 @@
                     </div>
                 </div>
 
-                <!-- Secondary Control Row: Archival Filter and Search Trigger -->
                 <div class="flex flex-col sm:flex-row justify-between items-center mt-3">
                     <div class="flex items-center gap-2 mb-4 sm:mb-0 ml-1">
                         <input type="checkbox" id="archived-filter" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500" />
@@ -137,16 +130,13 @@
             </div>
         </div>
 
-        <!-- Dynamic Events Grid Container -->
         <div id="events-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
 
-        <!-- Asynchronous Data Loading Indicator -->
         <div id="loading-indicator" class="text-center py-16 hidden">
             <div class="inline-block h-12 w-12 rounded-full border-4 border-gray-200 border-t-blue-600 animate-spin"></div>
             <p class="mt-4 text-lg font-medium text-gray-600">Loading events...</p>
         </div>
 
-        <!-- Empty State Notification -->
         <div id="no-results" class="hidden text-center py-16">
             <div class="max-w-md mx-auto">
                 <svg class="mx-auto h-16 w-16 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -160,7 +150,6 @@
             </div>
         </div>
 
-        <!-- Pagination Controls Navigation -->
         <div class="mt-12 flex justify-center pb-12">
             <nav id="pagination" class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px @(ViewBag.TotalPages > 1 ? "" : "hidden")" aria-label="Pagination">
                 <button id="prev-page" class="pagination-prev relative inline-flex items-center px-4 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
@@ -184,7 +173,6 @@
 </div>
 
 <style>
-
     .tooltip-container {
         position: relative;      
         display: inline-block;   
@@ -231,7 +219,6 @@
         opacity: 1;
     }
 
-
     .event-card {
         position: relative;
         display: flex;
@@ -249,7 +236,6 @@
         box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
         z-index: 10;
     }
-
 
     .wishlist-badge {
         visibility: visible;
@@ -334,7 +320,9 @@
             let currentAutocompleteIndex = -1;
             let maxAutocompleteResults = 8;
 
-            // Configure Flatpickr range selector with localized DD/MM/YYYY view format
+            /** 
+             * Initialize Flatpickr component for generalized date filtering 
+             */
             dateRangePicker = flatpickr("#date-range", {
                 mode: "range",
                 dateFormat: "Y-m-d",
@@ -369,7 +357,9 @@
             $('#loading-indicator').removeClass('hidden');
             performSearch();
 
-            // Setup input listener for dynamic search suggestion queries
+            /** 
+             * Debounced input event listener managing autocomplete visibility logic 
+             */
             $('#search-term').on('input', function() {
                 const query = $(this).val().trim();
                 if (autocompleteTimeout) clearTimeout(autocompleteTimeout);
@@ -394,6 +384,9 @@
                 performSearch();
             });
 
+            /** 
+             * Handles keyboard accessibility bindings for dropdown navigation 
+             */
             $('#search-term').on('keydown', function(e) {
                 const dropdown = $('#autocomplete-dropdown');
                 const isVisible = !dropdown.hasClass('hidden');
@@ -421,7 +414,9 @@
                 }
             });
 
-            // Populate event type dropdown options dynamically from server
+            /** 
+             * Fetches available event categories from external API to populate form controls 
+             */
             function loadEventTypes() {
                 $.getJSON('/Events/GetEventTypes')
                     .done(function(data) {
@@ -438,6 +433,10 @@
                     });
             }
 
+            /** 
+             * Transmits search fragment state to external API for query completion recommendations 
+             * @@param {string} query - The active partial string fragment 
+             */
             function fetchAutocompleteResults(query) {
                 $.ajax({
                     url: '/Events/GetAutocompleteResults',
@@ -452,6 +451,11 @@
                 });
             }
 
+            /** 
+             * Renders recommendation blocks inside dynamic absolute panel structure 
+             * @@param {Array} results - Structured payload containing matched search terms
+             * @@param {string} query - Base string for applying matched HTML highlighting
+             */
             function displayAutocompleteResults(results, query) {
                 const dropdown = $('#autocomplete-dropdown');
                 dropdown.empty();
@@ -490,6 +494,10 @@
                 dropdown.removeClass('hidden');
             }
 
+            /** 
+             * Cycles target state recursively through current autocomplete constraints 
+             * @@param {number} direction - Iterator integer designating directional focus
+             */
             function navigateAutocomplete(direction) {
                 const items = $('.autocomplete-item');
                 if (items.length === 0) return;
@@ -506,6 +514,10 @@
                 items.eq(currentAutocompleteIndex).addClass('active');
             }
 
+            /** 
+             * Applies localized query values upon explicit user confirmation 
+             * @@param {number} index - Position mapping index
+             */
             function selectAutocompleteItem(index) {
                 const result = autocompleteResults[index];
                 if (!result) return;
@@ -518,6 +530,11 @@
                 }
             }
 
+            /** 
+             * Injects highlighting spans mapping explicit query arrays to text node DOM 
+             * @@param {string} text - Standard node text element
+             * @@param {string} query - Baseline match text
+             */
             function highlightMatch(text, query) {
                 if (!query) return text;
                 const regex = new RegExp('(' + query.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&') + ')', 'gi');
@@ -536,6 +553,9 @@
                 return results;
             }
 
+            /** 
+             * Assesses user parameter integrity preventing blank payload generation 
+             */
             function validateSearch() {
                 const eventType = $('#event-type').val();
                 const dateRange = $('#date-range').val();
@@ -601,7 +621,10 @@
                 setTimeout(performSearch, 300);
             });
 
-            // Core search request handler communicating with backend endpoint
+            /** 
+             * Core asynchronous search endpoint constructing payload, communicating with backend endpoint,
+             * formatting structural grids and conditionally restricting sub-event hierarchies.
+             */
             function performSearch() {
                 let startDate = null;
                 let endDate = null;
@@ -613,15 +636,22 @@
                         : startDate;
                 }
 
+                const eventTypeId = $('#event-type').val();
+                const searchTerm = $('#search-term').val().trim();
+                
+                // Track active search state to conditionally isolate master events from internal sub-events natively.
+                const isSearchActive = (eventTypeId !== '' || startDate !== null || searchTerm !== '');
+
                 searchParams = {
-                    eventTypeId: $('#event-type').val(),
+                    eventTypeId: eventTypeId,
                     startDate: startDate,
                     endDate: endDate,
-                    searchTerm: $('#search-term').val(),
+                    searchTerm: searchTerm,
                     sort: sortOrder,
                     page: currentPage,
                     pageSize: pageSize,
-                    archived: $('#archived-filter').is(':checked')
+                    archived: $('#archived-filter').is(':checked'),
+                    onlyMasterEvents: !isSearchActive 
                 };
 
                 $.getJSON('/Events/SearchEvents', searchParams)
@@ -642,11 +672,23 @@
                         }
 
                         data.events.forEach(function(event) {
+                            const isMasterEvent = event.parentEventId == null && event.ParentEventId == null;
+                            
+                            // Implements localized structural filtering preventing child events from bypassing search checks
+                            if (!isSearchActive && !isMasterEvent) {
+                                return; 
+                            }
+
                             const timeClass = getEventTimeClass(new Date(event.startDateTime), new Date(event.endTime));
                             const cardHtml = buildEventCard(event, timeClass);
                             container.append(cardHtml);
                         });
 
+                        /** 
+                         * Structures localized DOM strings incorporating dynamic variables mapping specific backend model data
+                         * @@param {object} event - Internal JSON data block representation
+                         * @@param {string} timeClass - Contextualized temporal styling logic reference
+                         */
                         function buildEventCard(event, timeClass) {
                             const startDate = new Date(event.startDateTime || event.StartDateTime);
                             const endDate = new Date(event.endTime || event.EndTime);
@@ -779,6 +821,9 @@
                     });
             }
 
+            /** 
+             * Manages asynchronous addition and removal of events from user wishlist states
+             */
             window.wishlistAction = function(e, eventId) {
                 e.preventDefault();
                 e.stopPropagation();
@@ -830,6 +875,9 @@
                 });
             }
 
+            /** 
+             * Dynamically resolves scheduling thresholds comparing event block metadata internally against relative server times 
+             */
             function getEventTimeClass(startDate, endDate) {
                 const today = new Date();
                 today.setHours(0, 0, 0, 0);
@@ -847,6 +895,10 @@
                 }
             }
 
+            /** 
+             * Structures UI nodes dynamically generating scalable pagination logic configurations
+             * @@param {boolean} show - Dictates absolute container layout visibility limits
+             */
             function updatePagination(show = true) {
                 const paginationContainer = $('#pagination');
                 const pageNumbersContainer = $('#page-numbers');
@@ -903,8 +955,10 @@
         });
     </script>
     
-    <!-- Search panel collapse/expand toggle handler -->
     <script>
+        /** 
+         * Mobile Search panel collapse/expand logic mapping toggle handler
+         */
         document.getElementById("panel-button").addEventListener("click", function () {
             const panel = document.getElementById("panel-body");
             panel.classList.toggle("hidden");
@@ -913,8 +967,10 @@
         });
     </script>
 
-    <!-- Dual-slide side-by-side hero carousel progression logic -->
     <script>
+        /** 
+         * Dual-slide side-by-side hero carousel execution engine internally tracking dynamic event loads
+         */
         document.addEventListener("DOMContentLoaded", function () {
             async function populateDualCarousel() {
                 try {
