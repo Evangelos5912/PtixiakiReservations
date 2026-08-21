@@ -686,7 +686,8 @@ public class EventsController(
         string sort = "asc",
         int page = 1,
         int pageSize = 12,
-        bool archived = false)
+        bool archived = false,
+        bool onlyMasterEvents = true)
     {
         try
         {
@@ -700,8 +701,6 @@ public class EventsController(
             if (!string.IsNullOrWhiteSpace(endDate) && DateTime.TryParse(endDate, out DateTime endDateValue))
                 parsedEndDate = endDateValue.Date.AddDays(1).AddSeconds(-1);
 
-            bool hasDateFilter = !string.IsNullOrWhiteSpace(startDate) || !string.IsNullOrWhiteSpace(endDate);
-
             var query = context.Event
                 .Include(e => e.Venue)
                 .ThenInclude(v => v.City)
@@ -710,26 +709,39 @@ public class EventsController(
                 .ThenInclude(v => v.City)
                 .AsQueryable();
 
-            if (!archived) query = query.Where(e => e.EndTime >= today);
+            // 1. Boundary Constraints
+            if (!archived) 
+                query = query.Where(e => e.EndTime >= today);
 
-            if (!hasDateFilter) query = query.Where(e => e.ParentEventId == null);
+            // 2. Structural Hierarchy Constraints
+            if (onlyMasterEvents) 
+                query = query.Where(e => e.ParentEventId == null);
 
+            // 3. Category & Temporal Filters
             if (!string.IsNullOrWhiteSpace(eventTypeId) && int.TryParse(eventTypeId, out int eventTypeIdValue))
                 query = query.Where(e => e.EventTypeId == eventTypeIdValue);
 
             if (parsedStartDate.HasValue) query = query.Where(e => e.StartDateTime >= parsedStartDate.Value);
             if (parsedEndDate.HasValue) query = query.Where(e => e.StartDateTime <= parsedEndDate.Value);
 
+            // 4. Deep Text Search (Spans parent properties and nested child environments)
             if (!string.IsNullOrWhiteSpace(searchTerm))
             {
                 string term = searchTerm.ToLower();
                 query = query.Where(e =>
+                    // Check master event directly
                     e.Name.ToLower().Contains(term) ||
-                    e.Venue.Name.ToLower().Contains(term) ||
-                    (e.Venue.City != null && e.Venue.City.Name.ToLower().Contains(term))
+                    (e.Venue != null && e.Venue.Name.ToLower().Contains(term)) ||
+                    (e.Venue != null && e.Venue.City != null && e.Venue.City.Name.ToLower().Contains(term)) ||
+                    // Check all nested child events for venue/city matches
+                    e.ChildEvents.Any(c => 
+                        (c.Venue != null && c.Venue.Name.ToLower().Contains(term)) ||
+                        (c.Venue != null && c.Venue.City != null && c.Venue.City.Name.ToLower().Contains(term))
+                    )
                 );
             }
 
+            // 5. Sorting & Pagination Execution
             if (sort == "desc") query = query.OrderByDescending(e => e.EndTime);
             else query = query.OrderBy(e => e.StartDateTime);
 
@@ -765,10 +777,10 @@ public class EventsController(
                         .Count() > 1,
 
                     cityNames = e.ChildEvents
-                    .Where(c => c.Venue != null && c.Venue.City != null)
-                    .Select(c => c.Venue.City.Name)
-                    .Distinct()
-                    .ToList()
+                        .Where(c => c.Venue != null && c.Venue.City != null)
+                        .Select(c => c.Venue.City.Name)
+                        .Distinct()
+                        .ToList()
                 })
                 .ToListAsync();
 
