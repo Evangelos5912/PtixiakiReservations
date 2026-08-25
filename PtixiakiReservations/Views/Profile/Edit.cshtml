@@ -65,12 +65,6 @@
                 <span asp-validation-for="PostalCode" class="text-xs text-red-500"></span> 
             </div> 
 
-            <div>
-                <label asp-for="Email" class="block text-sm font-semibold text-gray-700 dark:text-gray-200">Email</label>
-                <input asp-for="Email" readonly disabled class="mt-2 block w-full py-3 px-4 border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-600 rounded-lg shadow-sm text-gray-700 dark:text-gray-300 cursor-not-allowed" />
-                <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">To change your email, please visit the account settings page.</p>
-            </div>
-
             <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-5">
                 <a href="@Url.Action("Index", "Profile")" class="inline-flex justify-center items-center px-5 py-3 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-white bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-4 focus:ring-blue-100 transition font-medium">
                     Cancel

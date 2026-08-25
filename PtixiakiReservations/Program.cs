@@ -116,6 +116,8 @@ try
     builder.Services.AddControllersWithViews().AddXmlSerializerFormatters();
     builder.Services.AddRazorPages();
 
+    builder.Services.AddMemoryCache();
+
     builder.Services.Configure<ElasticSettings>(builder.Configuration.GetSection("ElasticSettings"));
     builder.Services.AddSingleton<IElasticSearch, ElasticSearchService>();
 
