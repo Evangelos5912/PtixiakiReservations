@@ -2,114 +2,222 @@
 
 @{
     ViewData["Title"] = "Role Requests";
+
+    // Extract pagination and search metadata injected by the Controller
+    int currentPage = ViewBag.CurrentPage ?? 1;
+    int totalPages = ViewBag.TotalPages ?? 1;
+    string searchQuery = ViewBag.SearchQuery as string;
+    int totalItems = ViewBag.TotalItems ?? 0;
 }
 
+<!-- Primary Administrative Layout Container -->
 <div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-    <h1 class="text-3xl font-bold text-gray-900 mb-8">Pending Role Requests</h1>
+    
+    <!-- Page Header & Search Controls -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">Pending Role Requests</h1>
+            <p class="text-sm text-gray-500 mt-1">Review and manage elevated permission requests.</p>
+        </div>
 
-    <div class="bg-white shadow overflow-hidden sm:rounded-lg mb-8">
-        <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50">
-                <tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role Requested</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reason</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
-                </tr>
-            </thead>
-            <tbody class="bg-white divide-y divide-gray-200">
-                @foreach (var user in Model)
-                {
-                    // Pre-calculate the role details for this row to keep the HTML clean
-                    string roleName = "";
-                    string reason = "";
-                    string badgeColor = "";
-                    string formRoleType = "";
+        <!-- Search Engine Form -->
+        <!-- Preserves route parameters dynamically for backend filtering -->
+        <form method="get" class="flex w-full md:w-auto relative">
+            <div class="relative w-full md:w-80">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                </div>
+                <input type="text" name="searchQuery" value="@searchQuery" placeholder="Search applicants..." 
+                       class="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-l-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-colors" />
+            </div>
+            <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-r-lg transition-colors border border-indigo-600">
+                Search
+            </button>
+            
+            @if (!string.IsNullOrEmpty(searchQuery))
+            {
+                <a href="?" class="ml-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-lg transition-colors border border-gray-300 flex items-center">
+                    Clear
+                </a>
+            }
+        </form>
+    </div>
 
-                    if (user.VenueManagerRequestStatus == "Pending")
-                    {
-                        roleName = "Venue Manager";
-                        badgeColor = "text-blue-600 bg-blue-100";
-                        formRoleType = "VenueManager";
-                        reason = string.IsNullOrEmpty(user.VenueManagerRequestReason) ? "No reason provided." : user.VenueManagerRequestReason;
-                    }
-                    else if (user.EventManagerRequestStatus == "Pending")
-                    {
-                        roleName = "Event Organizer";
-                        badgeColor = "text-green-600 bg-green-100";
-                        formRoleType = "Event";
-                        reason = string.IsNullOrEmpty(user.EventManagerRequestReason) ? "No reason provided." : user.EventManagerRequestReason;
-                    }
-                    else if (user.SuperOrganizerRequestStatus == "Pending")
-                    {
-                        roleName = "Super Organizer";
-                        badgeColor = "text-purple-600 bg-purple-100";
-                        formRoleType = "SuperOrganizer";
-                        reason = string.IsNullOrEmpty(user.SuperOrganizerRequestReason) ? "No reason provided." : user.SuperOrganizerRequestReason;
-                    }
-
+    <!-- Data Display Core -->
+    <div class="bg-white shadow overflow-hidden sm:rounded-xl mb-8 border border-gray-200">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
                     <tr>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                            @user.FirstName @user.LastName
-                        </td>
-                        
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full @badgeColor">
-                                @roleName
-                            </span>
-                        </td>
-                        
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <button type="button" 
-                                    onclick="showReasonModal('@roleName', this.nextElementSibling.textContent)" 
-                                    class="text-indigo-600 hover:text-indigo-900 text-sm font-medium underline focus:outline-none">
-                                Read Reason
-                            </button>
-                            <div class="hidden">@reason</div>
-                        </td>
-                        
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="flex space-x-2">
-                                <form asp-action="ApproveRoleRequest" method="post" class="inline">
-                                    <input type="hidden" name="userId" value="@user.Id" />
-                                    <input type="hidden" name="roleType" value="@formRoleType" />
-                                    <button type="submit" class="text-white bg-green-600 hover:bg-green-700 px-4 py-2 rounded-md shadow-sm font-bold text-sm transition-colors">
-                                        Approve
-                                    </button>
-                                </form>
-                                <form asp-action="RejectRoleRequest" method="post" class="inline">
-                                    <input type="hidden" name="userId" value="@user.Id" />
-                                    <input type="hidden" name="roleType" value="@formRoleType" />
-                                    <button type="submit" class="text-white bg-red-600 hover:bg-red-700 px-4 py-2 rounded-md shadow-sm font-bold text-sm transition-colors">
-                                        Reject
-                                    </button>
-                                </form>
-                            </div>
-
-
-                        </td>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Applicant</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Role Requested</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Reason</th>
+                        <th scope="col" class="px-6 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Action</th>
                     </tr>
-                }
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    @if (Model != null && Model.Any())
+                    {
+                        foreach (var user in Model)
+                        {
+                            // LOGIC FIX: Generate a list of requests for the current user.
+                            // This ensures that if a user applies for BOTH Event Organizer and Venue Manager, 
+                            // both requests render as separate rows instead of one hiding the other.
+                            var pendingRequests = new List<(string RoleName, string BadgeColor, string FormRoleType, string Reason)>();
+
+                            if (user.VenueManagerRequestStatus == "Pending")
+                                pendingRequests.Add(("Venue Manager", "text-blue-700 bg-blue-100 border-blue-200", "VenueManager", user.VenueManagerRequestReason));
+                            
+                            if (user.EventManagerRequestStatus == "Pending")
+                                pendingRequests.Add(("Event Organizer", "text-green-700 bg-green-100 border-green-200", "Event", user.EventManagerRequestReason));
+                            
+                            if (user.SuperOrganizerRequestStatus == "Pending")
+                                pendingRequests.Add(("Super Organizer", "text-purple-700 bg-purple-100 border-purple-200", "SuperOrganizer", user.SuperOrganizerRequestReason));
+
+                            // Render a distinct row for every pending request the user currently holds
+                            foreach (var req in pendingRequests)
+                            {
+                                <tr class="hover:bg-gray-50 transition-colors">
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm font-bold text-gray-900">@user.FirstName @user.LastName</div>
+                                        <div class="text-xs text-gray-500 mt-0.5">@user.Email</div>
+                                    </td>
+                                    
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="px-3 py-1 inline-flex text-xs leading-5 font-bold rounded-full border @req.BadgeColor">
+                                            @req.RoleName
+                                        </span>
+                                    </td>
+                                    
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        @{ string safeReason = string.IsNullOrWhiteSpace(req.Reason) ? "No reason provided." : req.Reason; }
+                                        <button type="button" 
+                                                onclick="showReasonModal('@req.RoleName', this.nextElementSibling.textContent)" 
+                                                class="text-indigo-600 hover:text-indigo-900 text-sm font-medium underline focus:outline-none transition-colors">
+                                            Read Reason
+                                        </button>
+                                        <!-- Hidden container strictly used to pass text payload to the JavaScript modal -->
+                                        <div class="hidden">@safeReason</div>
+                                    </td>
+                                    
+                                    <td class="px-6 py-4 whitespace-nowrap text-center">
+                                        <div class="flex items-center justify-center space-x-2">
+                                            <!-- Authorization Pipeline: Approve -->
+                                            <form asp-action="ApproveRoleRequest" method="post" class="inline">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="userId" value="@user.Id" />
+                                                <input type="hidden" name="roleType" value="@req.FormRoleType" />
+                                                <button type="submit" class="text-white bg-green-600 hover:bg-green-700 px-4 py-2 rounded-md shadow-sm font-semibold text-xs transition-colors flex items-center">
+                                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                                    Approve
+                                                </button>
+                                            </form>
+                                            
+                                            <!-- Authorization Pipeline: Reject -->
+                                            <form asp-action="RejectRoleRequest" method="post" class="inline">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="userId" value="@user.Id" />
+                                                <input type="hidden" name="roleType" value="@req.FormRoleType" />
+                                                <button type="submit" class="text-white bg-red-600 hover:bg-red-700 px-4 py-2 rounded-md shadow-sm font-semibold text-xs transition-colors flex items-center">
+                                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                                    Reject
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    }
+                    else
+                    {
+                        <!-- Empty State Fallback -->
+                        <tr>
+                            <td colspan="4" class="px-6 py-12 text-center text-gray-500">
+                                <svg class="mx-auto h-12 w-12 text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <p class="text-lg font-medium text-gray-900">No Pending Requests</p>
+                                <p class="text-sm mt-1">There are currently no role authorization requests matching your criteria.</p>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination Footer Navigation -->
+        @if (totalPages > 1)
+        {
+            <div class="bg-gray-50 px-6 py-4 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-4">
                 
-                @if (!Model.Any())
-                {
-                    <tr>
-                        <td colspan="4" class="px-6 py-8 text-center text-gray-500">
-                            No pending role requests at this time.
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
+                <div class="text-sm text-gray-700">
+                    Showing page <span class="font-medium">@currentPage</span> of <span class="font-medium">@totalPages</span>
+                    <span class="text-gray-400 mx-2">|</span>
+                    Total Requests: <span class="font-medium">@totalItems</span>
+                </div>
+
+                <div class="flex items-center space-x-2">
+                    
+                    @if (currentPage > 1)
+                    {
+                        <a href="?pageNumber=@(currentPage - 1)&searchQuery=@searchQuery" 
+                           class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                            Previous
+                        </a>
+                    }
+                    else
+                    {
+                        <button disabled class="px-4 py-2 border border-gray-200 rounded-md text-sm font-medium text-gray-400 bg-gray-50 cursor-not-allowed">
+                            Previous
+                        </button>
+                    }
+
+                    <!-- Dynamic Sliding Pagination Window -->
+                    <div class="hidden md:flex space-x-1">
+                        @for (int i = 1; i <= totalPages; i++)
+                        {
+                            if (i == 1 || i == totalPages || (i >= currentPage - 2 && i <= currentPage + 2))
+                            {
+                                <a href="?pageNumber=@i&searchQuery=@searchQuery"
+                                   class="px-3 py-1.5 rounded-md text-sm font-medium transition-colors @(i == currentPage ? "bg-indigo-600 text-white border border-indigo-600" : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50")">
+                                    @i
+                                </a>
+                            }
+                            else if (i == currentPage - 3 || i == currentPage + 3)
+                            {
+                                <span class="px-2 py-1 text-gray-500">...</span>
+                            }
+                        }
+                    </div>
+
+                    @if (currentPage < totalPages)
+                    {
+                        <a href="?pageNumber=@(currentPage + 1)&searchQuery=@searchQuery" 
+                           class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                            Next
+                        </a>
+                    }
+                    else
+                    {
+                        <button disabled class="px-4 py-2 border border-gray-200 rounded-md text-sm font-medium text-gray-400 bg-gray-50 cursor-not-allowed">
+                            Next
+                        </button>
+                    }
+                </div>
+            </div>
+        }
     </div>
 </div>
 
-<div id="reasonModal" class="fixed inset-0 z-50 hidden bg-gray-900 bg-opacity-50 flex items-center justify-center transition-opacity">
-    <div class="bg-white rounded-lg shadow-xl w-full max-w-lg mx-4 overflow-hidden transform transition-all">
+<div id="reasonModal" class="fixed inset-0 z-50 hidden bg-gray-900 bg-opacity-60 flex items-center justify-center transition-opacity backdrop-blur-sm" aria-modal="true" role="dialog">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden transform transition-all border border-gray-200">
         
         <div class="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4 flex justify-between items-center">
             <h4 class="text-lg font-bold text-white" id="modalRoleTitle">Role Request</h4>
-            <button type="button" class="text-white hover:text-gray-200 focus:outline-none" onclick="closeReasonModal()">
+            <button type="button" class="text-indigo-100 hover:text-white transition-colors focus:outline-none" onclick="closeReasonModal()">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
@@ -117,12 +225,12 @@
         </div>
         
         <div class="p-6 max-h-96 overflow-y-auto">
-            <h3 class="text-sm font-medium text-gray-500 mb-3 uppercase tracking-wider">Applicant's Reason:</h3>
-            <p id="modalReasonText" class="text-gray-800 text-base whitespace-pre-wrap leading-relaxed bg-gray-50 p-4 rounded-md border border-gray-100"></p>
+            <h3 class="text-xs font-bold text-gray-500 mb-3 uppercase tracking-wider">Applicant's Stated Reason:</h3>
+            <p id="modalReasonText" class="text-gray-800 text-sm whitespace-pre-wrap leading-relaxed bg-gray-50 p-4 rounded-lg border border-gray-200 shadow-inner"></p>
         </div>
         
         <div class="bg-gray-50 border-t border-gray-200 px-6 py-4 flex justify-end">
-            <button type="button" onclick="closeReasonModal()" class="px-6 py-2 bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition duration-200 font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+            <button type="button" onclick="closeReasonModal()" class="px-6 py-2 bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-100 transition duration-200 font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 shadow-sm">
                 Close
             </button>
         </div>
@@ -131,21 +239,37 @@
 
 @section Scripts {
     <script>
+        /**
+         * Injects dynamic request metadata into the modal DOM structure and triggers visibility.
+         * @@param {string} roleName - The human-readable classification of the requested role.
+         * @@param {string} reasonText - The applicant's raw justification text.
+         */
         function showReasonModal(roleName, reasonText) {
-
             document.getElementById('modalRoleTitle').textContent = roleName + ' Request';
             document.getElementById('modalReasonText').textContent = reasonText;
             document.getElementById('reasonModal').classList.remove('hidden');
+            
+            // Prevent background body scrolling while modal is engaged
             document.body.style.overflow = 'hidden';
         }
 
+        /**
+         * Purges active modal state and restores default DOM interactivity.
+         */
         function closeReasonModal() {
             document.getElementById('reasonModal').classList.add('hidden');
             document.body.style.overflow = 'auto';
         }
 
+        // Binds an event listener to the modal backdrop allowing users to close the dialog by clicking outside the modal boundary
         document.getElementById('reasonModal').addEventListener('click', function(e) {
             if (e.target === this) {
+                closeReasonModal();
+            }
+        });
+        
+        document.addEventListener('keydown', function(event) {
+            if (event.key === "Escape") {
                 closeReasonModal();
             }
         });
