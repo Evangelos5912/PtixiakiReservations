@@ -17,7 +17,8 @@ namespace PtixiakiReservations.Controllers
 {
     /// <summary>
     /// Manages core user account operations including administrative role assignments, 
-    /// profile security (2FA, Password management), and complex multi-step email verification workflows.
+    /// profile security (2FA, Password management), role elevation requests, 
+    /// and complex multi-step email verification workflows.
     /// </summary>
     public class ApplicationUserController : Controller
     {
@@ -45,20 +46,190 @@ namespace PtixiakiReservations.Controllers
         }
 
         /// <summary>
-        /// Retrieves a comprehensive list of all registered platform users.
+        /// Retrieves a paginated and searchable list of all registered platform users.
+        /// Execution is deferred until pagination limits are applied to minimize database memory load.
         /// Restricted strictly to administrative personnel.
         /// </summary>
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string searchQuery = null, int pageNumber = 1)
         {
-            var users = await _context.Users.ToListAsync();
+            const int pageSize = 10; 
+
+            // Initialize deferred query execution against the user table (No database call made yet)
+            var query = _context.Users.AsQueryable();
+
+            // Apply search filters dynamically if a search string is provided by the view
+            if (!string.IsNullOrWhiteSpace(searchQuery))
+            {
+                var normalizedQuery = searchQuery.ToLower().Trim();
+                query = query.Where(u => 
+                    (u.Email != null && u.Email.ToLower().Contains(normalizedQuery)) ||
+                    (u.FirstName != null && u.FirstName.ToLower().Contains(normalizedQuery)) ||
+                    (u.LastName != null && u.LastName.ToLower().Contains(normalizedQuery)));
+            }
+
+            // Calculate pagination metadata boundaries
+            int totalItems = await query.CountAsync();
+            int totalPages = totalItems > 0 ? (int)Math.Ceiling(totalItems / (double)pageSize) : 1;
+
+            // Enforce safe boundary limits on user-provided page numbers
+            pageNumber = Math.Max(1, Math.Min(pageNumber, totalPages));
+
+            // Extract the exact subset of records required for the current view.
+            var users = await query
+                .OrderBy(u => u.Email) 
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync(); 
+
+            // Inject pagination metadata into the ViewBag for frontend UI rendering
+            ViewBag.CurrentPage = pageNumber;
+            ViewBag.TotalPages = totalPages;
+            ViewBag.SearchQuery = searchQuery;
+            ViewBag.TotalItems = totalItems;
+
             return View(users);
         }
+
+        /* ==============================================================
+         * ROLE ELEVATION REQUEST MANAGEMENT
+         * ============================================================== */
+
+        /// <summary>
+        /// Retrieves a paginated list of users actively requesting elevated administrative roles.
+        /// Explicitly filters out standard users who have no pending requests.
+        /// </summary>
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> RoleRequests(string searchQuery = null, int pageNumber = 1)
+        {
+            const int pageSize = 10; 
+
+            // Filter base query to ONLY include users with actively pending status flags
+            var query = _context.Users.Where(u => 
+                u.VenueManagerRequestStatus == "Pending" || 
+                u.EventManagerRequestStatus == "Pending" || 
+                u.SuperOrganizerRequestStatus == "Pending").AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(searchQuery))
+            {
+                var normalizedQuery = searchQuery.ToLower().Trim();
+                query = query.Where(u => 
+                    (u.Email != null && u.Email.ToLower().Contains(normalizedQuery)) ||
+                    (u.FirstName != null && u.FirstName.ToLower().Contains(normalizedQuery)) ||
+                    (u.LastName != null && u.LastName.ToLower().Contains(normalizedQuery)));
+            }
+
+            int totalItems = await query.CountAsync();
+            int totalPages = totalItems > 0 ? (int)Math.Ceiling(totalItems / (double)pageSize) : 1;
+            pageNumber = Math.Max(1, Math.Min(pageNumber, totalPages));
+
+            var pendingUsers = await query
+                .OrderBy(u => u.Email) 
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync(); 
+
+            ViewBag.CurrentPage = pageNumber;
+            ViewBag.TotalPages = totalPages;
+            ViewBag.SearchQuery = searchQuery;
+            ViewBag.TotalItems = totalItems;
+
+            return View(pendingUsers);
+        }
+
+        /// <summary>
+        /// Authorizes a user's request for elevated permissions.
+        /// Resolves the pending status tag and explicitly binds the target Identity Role to the user account.
+        /// </summary>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> ApproveRoleRequest(string userId, string roleType)
+        {
+            if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(roleType)) return BadRequest();
+
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null) return NotFound();
+
+            string identityRoleTarget = "";
+
+            // Resolve abstract form role payload into strict internal database structures
+            switch (roleType)
+            {
+                case "VenueManager":
+                    user.VenueManagerRequestStatus = "Approved";
+                    identityRoleTarget = "Venue Manager"; 
+                    break;
+                case "Event":
+                    user.EventManagerRequestStatus = "Approved";
+                    identityRoleTarget = "Event Manager"; // Adjust to "Event Organizer" if that is your literal DB role name
+                    break;
+                case "SuperOrganizer":
+                    user.SuperOrganizerRequestStatus = "Approved";
+                    identityRoleTarget = "Super Organizer";
+                    break;
+                default:
+                    return BadRequest("Invalid role type requested.");
+            }
+
+            // Execute programmatic role assignment securely
+            if (!string.IsNullOrEmpty(identityRoleTarget))
+            {
+                // Ensure underlying role actually exists in the database to prevent fatal reference crashes
+                if (!await _roleManager.RoleExistsAsync(identityRoleTarget))
+                {
+                    await _roleManager.CreateAsync(new ApplicationRole { Name = identityRoleTarget });
+                }
+
+                // Append role claim if user does not already possess it
+                if (!await _userManager.IsInRoleAsync(user, identityRoleTarget))
+                {
+                    await _userManager.AddToRoleAsync(user, identityRoleTarget);
+                }
+            }
+
+            await _userManager.UpdateAsync(user);
+            return RedirectToAction(nameof(RoleRequests));
+        }
+
+        /// <summary>
+        /// Rejects a user's request for elevated permissions.
+        /// Simply mutates the status tag allowing the request to cleanly drop from the pending queue.
+        /// </summary>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> RejectRoleRequest(string userId, string roleType)
+        {
+            if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(roleType)) return BadRequest();
+
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null) return NotFound();
+
+            switch (roleType)
+            {
+                case "VenueManager":
+                    user.VenueManagerRequestStatus = "Rejected";
+                    break;
+                case "Event":
+                    user.EventManagerRequestStatus = "Rejected";
+                    break;
+                case "SuperOrganizer":
+                    user.SuperOrganizerRequestStatus = "Rejected";
+                    break;
+            }
+
+            await _userManager.UpdateAsync(user);
+            return RedirectToAction(nameof(RoleRequests));
+        }
+
+        /* ==============================================================
+         * CORE PROFILE METADATA VIEWS
+         * ============================================================== */
 
         /// <summary>
         /// Fetches detailed profile information for a specific target user.
         /// </summary>
-        /// <param name="id">The unique GUID identifier of the target user.</param>
         public async Task<IActionResult> Details(string id)
         {
             if (string.IsNullOrEmpty(id)) return NotFound();
@@ -70,7 +241,7 @@ namespace PtixiakiReservations.Controllers
         }
 
         /// <summary>
-        /// Renders the role modification interface for a selected user account.
+        /// Renders the manual role modification interface for administrative overrides.
         /// </summary>
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> ChangeRole(string id)
@@ -82,8 +253,8 @@ namespace PtixiakiReservations.Controllers
         }
 
         /// <summary>
-        /// Executes a role transition for a user, ensuring they are cleanly stripped of 
-        /// previous permissions before the new authorization level is applied to prevent claim overlaps.
+        /// Executes a manual role override, ensuring previous permissions are stripped 
+        /// to prevent administrative claim overlaps.
         /// </summary>
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> ChangeRoleAction(string id, string Role)
@@ -93,7 +264,7 @@ namespace PtixiakiReservations.Controllers
 
             bool alreadyHasRole = await _userManager.IsInRoleAsync(user, Role);
 
-            // Flush existing permissions to prevent authorization overlap or conflicting claims
+            // Flush existing permissions
             var currentRoles = await _userManager.GetRolesAsync(user);
             if (currentRoles.Any())
             {
@@ -101,7 +272,7 @@ namespace PtixiakiReservations.Controllers
                 if (!removeResult.Succeeded) return BadRequest("Failed to remove existing roles.");
             }
 
-            // Toggle logic: If they already had the requested role, demote them back to the base "User" tier
+            // Toggle logic: If they already had the requested role, demote them back to standard User
             string roleToAssign = alreadyHasRole ? "User" : Role;
 
             var addResult = await _userManager.AddToRoleAsync(user, roleToAssign);
@@ -112,7 +283,7 @@ namespace PtixiakiReservations.Controllers
         }
 
         /// <summary>
-        /// Initializes the baseline administrative account required for platform configuration.
+        /// Initializes the baseline administrative account required for initial platform configuration.
         /// </summary>
         public async Task<IActionResult> SeedAdminUser()
         {
@@ -129,7 +300,6 @@ namespace PtixiakiReservations.Controllers
 
         /// <summary>
         /// Provides autocomplete suggestions for location-based input fields.
-        /// Limits payload to 10 records for optimal frontend rendering performance and reduced database load.
         /// </summary>
         [HttpGet]
         public JsonResult SearchCities(string term)
@@ -143,9 +313,10 @@ namespace PtixiakiReservations.Controllers
             return Json(cities);
         }
 
-        /// <summary>
-        /// Data Transfer Object for securing the Two-Factor Authentication state change.
-        /// </summary>
+        /* ==============================================================
+         * AUTHENTICATION & SECURITY OPERATIONS
+         * ============================================================== */
+
         public class Toggle2FaRequest
         {
             public string Password { get; set; }
@@ -153,8 +324,7 @@ namespace PtixiakiReservations.Controllers
         }
 
         /// <summary>
-        /// Toggles the account's Two-Factor Authentication status. 
-        /// Requires active password verification to prevent unauthorized state manipulation via hijacked sessions.
+        /// Toggles the account's Two-Factor Authentication status after confirming payload password matches.
         /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -163,14 +333,12 @@ namespace PtixiakiReservations.Controllers
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return Unauthorized();
 
-            // Cryptographic validation of the provided password against the stored hash
             var isPasswordValid = await _userManager.CheckPasswordAsync(user, request.Password);
             if (!isPasswordValid) return BadRequest(new { message = "Incorrect password." });
 
             var result = await _userManager.SetTwoFactorEnabledAsync(user, request.Enable);
             if (result.Succeeded)
             {
-                // Refresh the authentication cookie so the newly applied 2FA claims take effect immediately without requiring re-login
                 await _signInManager.RefreshSignInAsync(user);
                 return Ok(new { message = request.Enable ? "2FA Enabled" : "2FA Disabled" });
             }
@@ -187,7 +355,6 @@ namespace PtixiakiReservations.Controllers
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return NotFound();
 
-            // Leverages ASP.NET Identity's native RFC 6238 compliant token generation
             var code = await _userManager.GenerateTwoFactorTokenAsync(user, "Email");
 
             string subject = "Your EventSphere Security Code";
@@ -206,7 +373,6 @@ namespace PtixiakiReservations.Controllers
             }
             catch (Exception ex)
             {
-                // Log transmission failure to the console for infrastructure debugging
                 Console.WriteLine($"EMAIL ERROR: {ex.Message}");
                 return StatusCode(500, new { message = "Failed to send verification email. Please try again." });
             }
@@ -245,8 +411,7 @@ namespace PtixiakiReservations.Controllers
         }
 
         /// <summary>
-        /// Phase 1 of Email Modification: Validates an OTP dispatched to the user's currently active email.
-        /// This ensures the entity initiating the change genuinely controls the established inbox.
+        /// Phase 1 of Email Modification: Validates an OTP dispatched to the user's currently active verified email.
         /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -256,15 +421,13 @@ namespace PtixiakiReservations.Controllers
             if (user == null) return Unauthorized();
 
             var isValid = await _userManager.VerifyTwoFactorTokenAsync(user, "Email", code);
-
             if (!isValid) return BadRequest(new { message = "Invalid or expired code." });
 
             return Ok();
         }
 
         /// <summary>
-        /// Phase 2 of Email Modification: Generates a custom 6-digit OTP directed at the newly requested address.
-        /// Utilizes IMemoryCache to handle the transient token payload since Identity natively generates URL strings for email changes.
+        /// Phase 2 of Email Modification: Generates a custom 6-digit OTP directed at the newly requested address utilizing memory caching.
         /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -275,20 +438,15 @@ namespace PtixiakiReservations.Controllers
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return Unauthorized();
 
-            // Security Mechanism: Prevent targeted email enumeration attacks by silently succeeding
-            // if the requested target email is already bound to a different database identity.
             var existingUser = await _userManager.FindByEmailAsync(request.NewEmail);
             if (existingUser != null && existingUser.Id != user.Id)
             {
                 return Ok(); 
             }
 
-            // Cryptographically secure generation is unnecessary here as the entropy of a 6 digit pin 
-            // paired with a 10-minute timeout and rate-limiting is sufficient for email validation logic.
             var random = new Random();
             string otpCode = random.Next(100000, 999999).ToString();
 
-            // Construct a highly specific cache composite key to prevent state collision between concurrent requests
             var cacheKey = $"EmailChange_{user.Id}_{request.NewEmail.ToLower()}";
             _cache.Set(cacheKey, otpCode, TimeSpan.FromMinutes(10));
 
@@ -307,7 +465,6 @@ namespace PtixiakiReservations.Controllers
 
         /// <summary>
         /// Phase 3 of Email Modification: Interrogates the server cache to validate the OTP against the requested target email.
-        /// Upon successful validation, the underlying Identity records are permanently mutated.
         /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -319,7 +476,6 @@ namespace PtixiakiReservations.Controllers
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return Unauthorized();
 
-            // Reconstruct the composite key to fetch the transient verification token
             var cacheKey = $"EmailChange_{user.Id}_{request.NewEmail.ToLower()}";
             if (!_cache.TryGetValue(cacheKey, out string expectedCode))
             {
@@ -331,10 +487,8 @@ namespace PtixiakiReservations.Controllers
                 return BadRequest(new { message = "Invalid verification code." });
             }
 
-            // Immediate cache invalidation post-validation strictly prevents replay attacks
             _cache.Remove(cacheKey);
 
-            // Execute the Identity mutation committing the new address as the primary identifier
             user.Email = request.NewEmail;
             user.EmailConfirmed = true; 
             user.UserName = request.NewEmail; 
@@ -349,9 +503,6 @@ namespace PtixiakiReservations.Controllers
             return BadRequest(new { message = "Failed to update email in the database." });
         }
 
-        /// <summary>
-        /// Data Transfer Object mapping Discord-style 3-tier password modification requests.
-        /// </summary>
         public class ChangePasswordDto
         {
             public string CurrentPassword { get; set; }
@@ -360,29 +511,25 @@ namespace PtixiakiReservations.Controllers
         }
 
         /// <summary>
-        /// Updates the user's password securely utilizing Identity's built-in validation matrix.
+        /// Updates the user's password securely utilizing Identity's built-in verification matrix.
         /// Dispatches a security notification to the user's email upon successful modification.
         /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDto request)
         {
-            // Preliminary guard clause ensuring input synchronization
             if (request.NewPassword != request.ConfirmPassword)
                 return BadRequest(new { message = "New passwords do not match." });
 
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return Unauthorized();
 
-            // Identity automatically verifies the CurrentPassword before applying the NewPassword payload
             var result = await _userManager.ChangePasswordAsync(user, request.CurrentPassword, request.NewPassword);
             
             if (result.Succeeded)
             {
-                // Refresh the auth cookie so the underlying security stamp mutation doesn't forcefully log the user out
                 await _signInManager.RefreshSignInAsync(user);
 
-                // Dispatch the security notification email alerting the user to the sensitive state change
                 string subject = "Your password has been changed";
                 string message = $@"
                     <div style='font-family: Arial, sans-serif; padding: 20px; color: #333;'>
@@ -398,7 +545,6 @@ namespace PtixiakiReservations.Controllers
                 return Ok();
             }
 
-            // Return Identity's precise localized error strings (e.g., "Password must contain a number", "Incorrect current password")
             return BadRequest(new { message = string.Join(" ", result.Errors.Select(e => e.Description)) });
         }
     }

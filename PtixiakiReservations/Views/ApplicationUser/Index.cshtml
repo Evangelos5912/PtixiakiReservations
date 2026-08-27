@@ -1,49 +1,185 @@
 ﻿@model IEnumerable<PtixiakiReservations.Models.ApplicationUser>
 
 @{
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = "User Management";
+
+    // Safely extract pagination and search metadata provided by the Controller's ViewBag
+    int currentPage = ViewBag.CurrentPage ?? 1;
+    int totalPages = ViewBag.TotalPages ?? 1;
+    string searchQuery = ViewBag.SearchQuery as string;
+    int totalItems = ViewBag.TotalItems ?? 0;
 }
 
-<div class="container mx-auto px-4">
-    <h1 class="text-3xl font-bold text-gray-800 mb-6">All Users</h1>
+<!-- Main Administrative Layout Container -->
+<div class="container mx-auto px-4 py-8 max-w-7xl">
+    
+    <div class="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-800">User Management</h1>
+            <p class="text-sm text-gray-500 mt-1">Manage platform administrators, managers, and registered users.</p>
+        </div>
 
-    <div class="overflow-x-auto">
-        <table class="min-w-full bg-white rounded-lg shadow-md overflow-hidden">
-            <thead class="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
-            <tr>
-                <th class="py-3 px-6 text-left">First Name</th>
-                <th class="py-3 px-6 text-left">Last Name</th>
-                <th class="py-3 px-6 text-left">Phone Number</th>
-                <th class="py-3 px-6 text-left">Email</th>
-                <th class="py-3 px-6 text-center">Details</th>
-                <th class="py-3 px-6 text-center">Change Role</th>
-            </tr>
-            </thead>
-            <tbody class="text-gray-600 text-sm font-light">
-            @foreach (var item in Model)
+        <!-- Search Engine Form -->
+        <!-- Submits a GET request back to the Index action with the 'searchQuery' parameter -->
+        <form method="get" asp-action="Index" class="flex w-full md:w-auto relative">
+            <div class="relative w-full md:w-80">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                </div>
+                <input type="text" name="searchQuery" value="@searchQuery" placeholder="Search by name or email..." 
+                       class="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-l-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors" />
+            </div>
+            <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-r-lg transition-colors border border-blue-600 hover:border-blue-700">
+                Search
+            </button>
+            
+            <!-- Conditional Clear Button: Only renders if an active search is currently applied -->
+            @if (!string.IsNullOrEmpty(searchQuery))
             {
-                <tr class="border-b border-gray-200 hover:bg-gray-100">
-                    <td class="py-3 px-6 text-left">
-                        @Html.DisplayFor(modelItem => item.FirstName)
-                    </td>
-                    <td class="py-3 px-6 text-left">
-                        @Html.DisplayFor(modelItem => item.LastName)
-                    </td>
-                    <td class="py-3 px-6 text-left">
-                        @Html.DisplayFor(modelItem => item.PhoneNumber)
-                    </td>
-                    <td class="py-3 px-6 text-left">
-                        @Html.DisplayFor(modelItem => item.Email)
-                    </td>
-                    <td class="py-3 px-6 text-center">
-                        <a asp-action="Details" asp-route-id="@item.Id" class="text-blue-600 hover:underline">Details</a>
-                    </td>
-                    <td class="py-3 px-6 text-center">
-                        <a asp-action="ChangeRole" asp-route-id="@item.Id" class="text-blue-600 hover:underline">Change Role</a>
-                    </td>
-                </tr>
+                <a asp-action="Index" class="ml-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-lg transition-colors border border-gray-300 flex items-center">
+                    Clear
+                </a>
             }
-            </tbody>
-        </table>
+        </form>
+    </div>
+
+    <!-- Data Display Core -->
+    <div class="bg-white rounded-xl shadow-md overflow-hidden border border-gray-200">
+        
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th scope="col" class="py-4 px-6 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">User Details</th>
+                        <th scope="col" class="py-4 px-6 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Contact</th>
+                        <th scope="col" class="py-4 px-6 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200 text-sm">
+                    
+                    @if (Model != null && Model.Any())
+                    {
+                        foreach (var item in Model)
+                        {
+                            <tr class="hover:bg-blue-50/50 transition-colors">
+                                <!-- Name Block -->
+                                <td class="py-4 px-6 text-left">
+                                    <div class="font-medium text-gray-900">
+                                        @(string.IsNullOrEmpty(item.FirstName) && string.IsNullOrEmpty(item.LastName) 
+                                            ? "Name not provided" 
+                                            : $"{item.FirstName} {item.LastName}")
+                                    </div>
+                                    <div class="text-xs text-gray-500 font-mono mt-1" title="User ID">ID: @item.Id.Substring(0, 8)...</div>
+                                </td>
+                                
+                                <!-- Contact Block -->
+                                <td class="py-4 px-6 text-left">
+                                    <div class="text-gray-900 font-medium">@item.Email</div>
+                                    <div class="text-gray-500 mt-1">@(item.PhoneNumber ?? "No phone")</div>
+                                </td>
+                                
+                                <!-- Administrative Actions -->
+                                <td class="py-4 px-6">
+                                    <div class="flex items-center justify-center space-x-3">
+                                        <a asp-action="Details" asp-route-id="@item.Id" 
+                                           class="inline-flex items-center px-3 py-1.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-md transition-colors text-xs font-semibold border border-indigo-200">
+                                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                                            View
+                                        </a>
+                                        <a asp-action="ChangeRole" asp-route-id="@item.Id" 
+                                           class="inline-flex items-center px-3 py-1.5 bg-gray-50 text-gray-700 hover:bg-gray-100 rounded-md transition-colors text-xs font-semibold border border-gray-200">
+                                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+                                            Roles
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <!-- Empty State Fallback -->
+                        <tr>
+                            <td colspan="3" class="py-12 text-center text-gray-500">
+                                <svg class="mx-auto h-12 w-12 text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                                </svg>
+                                <p class="text-lg font-medium text-gray-900">No users found</p>
+                                <p class="text-sm mt-1">Try adjusting your search query.</p>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination Controls Footer -->
+        @if (totalPages > 1)
+        {
+            <div class="bg-gray-50 px-6 py-4 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-4">
+                
+                <!-- Pagination Metadata -->
+                <div class="text-sm text-gray-700">
+                    Showing page <span class="font-medium">@currentPage</span> of <span class="font-medium">@totalPages</span>
+                    <span class="text-gray-400 mx-2">|</span>
+                    Total Users: <span class="font-medium">@totalItems</span>
+                </div>
+
+                <!-- Navigation Buttons -->
+                <div class="flex items-center space-x-2">
+                    
+                    <!-- Previous Button -->
+                    @if (currentPage > 1)
+                    {
+                        <a asp-action="Index" asp-route-pageNumber="@(currentPage - 1)" asp-route-searchQuery="@searchQuery" 
+                           class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                            Previous
+                        </a>
+                    }
+                    else
+                    {
+                        <button disabled class="px-4 py-2 border border-gray-200 rounded-md text-sm font-medium text-gray-400 bg-gray-50 cursor-not-allowed">
+                            Previous
+                        </button>
+                    }
+
+                    <!-- Page Number Indicators (Dynamic Window) -->
+                    <div class="hidden md:flex space-x-1">
+                        @for (int i = 1; i <= totalPages; i++)
+                        {
+                            // Logic to only show pages close to the current page to prevent massive UI overflow
+                            if (i == 1 || i == totalPages || (i >= currentPage - 2 && i <= currentPage + 2))
+                            {
+                                <a asp-action="Index" asp-route-pageNumber="@i" asp-route-searchQuery="@searchQuery"
+                                   class="px-3 py-1.5 rounded-md text-sm font-medium transition-colors @(i == currentPage ? "bg-blue-600 text-white border border-blue-600" : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50")">
+                                    @i
+                                </a>
+                            }
+                            else if (i == currentPage - 3 || i == currentPage + 3)
+                            {
+                                <span class="px-2 py-1 text-gray-500">...</span>
+                            }
+                        }
+                    </div>
+
+                    <!-- Next Button -->
+                    @if (currentPage < totalPages)
+                    {
+                        <a asp-action="Index" asp-route-pageNumber="@(currentPage + 1)" asp-route-searchQuery="@searchQuery" 
+                           class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                            Next
+                        </a>
+                    }
+                    else
+                    {
+                        <button disabled class="px-4 py-2 border border-gray-200 rounded-md text-sm font-medium text-gray-400 bg-gray-50 cursor-not-allowed">
+                            Next
+                        </button>
+                    }
+                </div>
+            </div>
+        }
     </div>
 </div>
