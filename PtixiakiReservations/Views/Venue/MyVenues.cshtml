@@ -2,49 +2,44 @@
 
 @{
     ViewData["Title"] = "My Venues";
-}
 
-@{
+    // Extract structural and pagination configurations
     int currentPage = ViewBag.CurrentPage ?? 1;
     int totalPages = ViewBag.TotalPages ?? 1;
     int pageSize = ViewBag.PageSize ?? 12;
+    
+    // Extract filter states
     string currentFilter = ViewBag.CurrentFilter ?? Context.Request.Query["filter"].ToString();
     if (string.IsNullOrEmpty(currentFilter)) currentFilter = "mine";
+    
+    string searchString = ViewBag.SearchString ?? Context.Request.Query["searchString"].ToString();
 }
 
-<div class="bg-gray-50 min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+<!-- ============================================================== -->
+<!-- MAIN WORKSPACE CONTAINER                                       -->
+<!-- ============================================================== -->
+<div class="bg-gradient-to-br from-gray-50 to-blue-50/50 min-h-screen py-8 px-4 sm:px-6 lg:px-8 font-sans">
     <div class="max-w-7xl mx-auto">
-        <!-- Page Header -->
-        <div class="bg-white rounded-xl shadow-md overflow-hidden mb-8">
-            <div class="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-8 md:flex md:items-center md:justify-between">
+        
+        <!-- ============================================================== -->
+        <!-- DASHBOARD HEADER & KPI STATISTICS                              -->
+        <!-- ============================================================== -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden mb-6">
+            
+            <!-- Primary Title & Call to Action -->
+            <div class="bg-gradient-to-r from-blue-600 to-indigo-700 px-6 sm:px-8 py-8 md:flex md:items-center md:justify-between">
                 <div>
-                    <h1 class="text-2xl md:text-3xl font-bold text-white">
-                        Venues
+                    <h1 class="text-2xl md:text-3xl font-extrabold text-white tracking-tight">
+                        Venues Directory
                     </h1>
-                    <p class="mt-2 text-blue-100 max-w-3xl">
-                        Manage your venues and their settings
+                    <p class="mt-2 text-blue-100 max-w-3xl text-sm sm:text-base">
+                        Manage your properties, review floor plans, and adjust venue-specific settings.
                     </p>
                 </div>
 
-                <div class="mt-4 md:mt-0 flex flex-col sm:flex-row items-center gap-4">
-                    <!-- The Dropdown -->
-                    <select onchange="updateUrl('filter', this.value)" 
-                            class="block w-full sm:w-auto pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-2 focus:ring-white focus:border-white sm:text-sm rounded-md shadow-sm bg-white text-gray-700">
-                        @if (currentFilter == "all")
-                        {
-                            <option value="mine">My Venues</option>
-                            <option value="all" selected>All Venues</option>
-                        }
-                        else
-                        {
-                            <option value="mine" selected>My Venues</option>
-                            <option value="all">All Venues</option>
-                        }
-                    </select>
-
-                    <!-- The Add Button -->
+                <div class="mt-6 md:mt-0 flex flex-col sm:flex-row items-center gap-4 shrink-0">
                     <a href="@Url.Action("Create", "Venue")"
-                       class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-indigo-700 bg-white hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 shadow-sm transition-colors w-full sm:w-auto justify-center">
+                       class="inline-flex items-center px-5 py-2.5 bg-white text-indigo-700 font-bold rounded-lg shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all transform hover:-translate-y-0.5 justify-center w-full sm:w-auto">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                         </svg>
@@ -53,67 +48,120 @@
                 </div>
             </div>
 
-            <!-- Stats Section -->
-            <div class="bg-white px-6 py-4 border-b border-gray-200">
-                <div class="grid grid-cols-2 gap-4 sm:grid-cols-3">
+            <!-- Key Performance Indicator (KPI) Strip -->
+            <div class="bg-gray-50/50 px-6 sm:px-8 py-5 border-t border-gray-100">
+                <div class="grid grid-cols-2 gap-6 sm:grid-cols-3">
+                    <!-- KPI: Venue Count -->
                     <div class="flex items-center">
-                        <div class="flex-shrink-0 h-10 w-10 rounded-md bg-blue-100 flex items-center justify-center">
+                        <div class="flex-shrink-0 h-12 w-12 rounded-xl bg-blue-100 border border-blue-200 flex items-center justify-center">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                      d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                             </svg>
                         </div>
-                        <div class="ml-3">
-                            <p class="text-sm font-medium text-gray-500">@(currentFilter == "all" ? "Total Venues" : "My Venues")</p>
-                            <p class="text-lg font-semibold text-gray-900">@(ViewBag.TotalCount ?? Model.Count())</p>
+                        <div class="ml-4">
+                            <p class="text-xs font-bold text-gray-500 uppercase tracking-wider">@(currentFilter == "all" ? "Total Venues" : "My Venues")</p>
+                            <p class="text-xl font-extrabold text-gray-900">@(ViewBag.TotalCount ?? Model.Count())</p>
                         </div>
                     </div>
 
+                    <!-- KPI: Geographic Spread -->
                     <div class="flex items-center">
-                        <div class="flex-shrink-0 h-10 w-10 rounded-md bg-green-100 flex items-center justify-center">
+                        <div class="flex-shrink-0 h-12 w-12 rounded-xl bg-green-100 border border-green-200 flex items-center justify-center">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                      d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                             </svg>
                         </div>
-                        <div class="ml-3">
-                            <p class="text-sm font-medium text-gray-500">Cities</p>
-                            <p class="text-lg font-semibold text-gray-900">@(ViewBag.CityCount ?? Model.Select(v => v.City.Name).Distinct().Count())</p>
+                        <div class="ml-4">
+                            <p class="text-xs font-bold text-gray-500 uppercase tracking-wider">Cities</p>
+                            <p class="text-xl font-extrabold text-gray-900">@(ViewBag.CityCount ?? Model.Select(v => v.City.Name).Distinct().Count())</p>
                         </div>
                     </div>
 
+                    <!-- KPI: Active Events -->
                     <div class="flex items-center">
-                        <div class="flex-shrink-0 h-10 w-10 rounded-md bg-purple-100 flex items-center justify-center">
+                        <div class="flex-shrink-0 h-12 w-12 rounded-xl bg-purple-100 border border-purple-200 flex items-center justify-center">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                             </svg>
                         </div>
-                        <div class="ml-3">
-                            <p class="text-sm font-medium text-gray-500">Events</p>
-                            <p class="text-lg font-semibold text-gray-900">@(ViewBag.EventCount ?? 0)</p>
+                        <div class="ml-4">
+                            <p class="text-xs font-bold text-gray-500 uppercase tracking-wider">Events</p>
+                            <p class="text-xl font-extrabold text-gray-900">@(ViewBag.EventCount ?? 0)</p>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="flex items-center justify-between mb-8">
-            <div class="relative"> 
-                <select id="variable-pagination" onchange="updateUrl('pageSize', this.value)" class="appearance-none bg-white border border-gray-300 rounded-lg py-2 px-4 pr-8 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors w-[150px] text-sm">
-                    <option value="12" selected="@(pageSize == 12)">12 per page</option>
-                    <option value="24" selected="@(pageSize == 24)">24 per page</option>
-                    <option value="48" selected="@(pageSize == 48)">48 per page</option>
-                </select>
-                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                    <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                        <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
-                    </svg>
+        <!-- ============================================================== -->
+        <!-- SEARCH, FILTER & PAGINATION PREFERENCES TOOLBAR                -->
+        <!-- ============================================================== -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-8">
+            <div class="flex flex-col lg:flex-row gap-4 items-center justify-between">
+                
+                <!-- Search Input Module -->
+                <div class="w-full lg:flex-grow relative flex items-center">
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <input type="text" id="venue-search" value="@searchString"
+                           class="w-full pl-11 pr-4 py-2.5 border border-gray-300 rounded-l-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors text-sm font-medium placeholder-gray-400"
+                           placeholder="Search venues by name or location...">
+                    <button type="button" onclick="executeSearch()" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-r-xl transition-colors border border-indigo-600 shadow-sm shrink-0">
+                        Search
+                    </button>
+                    @if (!string.IsNullOrEmpty(searchString))
+                    {
+                        <button type="button" onclick="clearSearch()" class="ml-2 px-3 py-2.5 bg-white hover:bg-gray-50 text-gray-500 border border-gray-300 rounded-lg transition-colors shadow-sm shrink-0" title="Clear Search">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
+                    }
+                </div>
+                
+                <div class="w-full lg:w-auto flex flex-col sm:flex-row gap-4 lg:shrink-0">
+                    <!-- Context Filter (Ownership) -->
+                    <div class="w-full sm:w-auto flex items-center">
+                        <span class="text-sm font-bold text-gray-600 mr-3 hidden sm:inline-block">View:</span>
+                        <select onchange="updateUrl('filter', this.value)" 
+                                class="block w-full sm:w-48 pl-3 pr-10 py-2 border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm font-medium rounded-lg shadow-sm bg-gray-50 cursor-pointer">
+                            @if (currentFilter == "all")
+                            {
+                                <option value="mine">My Venues</option>
+                                <option value="all" selected>All Venues</option>
+                            }
+                            else
+                            {
+                                <option value="mine" selected>My Venues</option>
+                                <option value="all">All Venues</option>
+                            }
+                        </select>
+                    </div>
+
+                    <!-- Capacity Filter (Page Size) -->
+                    <div class="w-full sm:w-auto flex items-center justify-end">
+                        <span class="text-sm font-bold text-gray-600 mr-3 hidden sm:inline-block">Show:</span>
+                        <div class="relative w-full sm:w-auto"> 
+                            <select id="variable-pagination" onchange="updateUrl('pageSize', this.value)" class="appearance-none block w-full sm:w-40 pl-3 pr-10 py-2 border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm font-medium rounded-lg shadow-sm bg-gray-50 cursor-pointer">
+                                <option value="12" selected="@(pageSize == 12)">12 per page</option>
+                                <option value="24" selected="@(pageSize == 24)">24 per page</option>
+                                <option value="48" selected="@(pageSize == 48)">48 per page</option>
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
+                                <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                    <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Venue Cards Grid -->
+        <!-- ============================================================== -->
+        <!-- DATA PRESENTATION GRID                                         -->
+        <!-- ============================================================== -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             @foreach (var item in Model)
             {
@@ -230,14 +278,17 @@
             }
         </div>
 
-        <!-- Pagination -->
+        <!-- ============================================================== -->
+        <!-- SERVER-SIDE PAGINATION CONTROLS                                -->
+        <!-- ============================================================== -->
         @if (totalPages > 1)
         {
             <div class="mt-12 flex justify-center">
                 <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                    <!-- Previous Button -->
                     @if (currentPage > 1)
                     {
-                        <a href="@Url.Action("MyVenues", new { page = currentPage - 1, filter = currentFilter, pageSize = pageSize })"
+                        <a href="@Url.Action("MyVenues", new { page = currentPage - 1, filter = currentFilter, pageSize = pageSize, searchString = searchString })"
                            class="pagination-prev relative inline-flex items-center px-4 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
                             <span class="sr-only">Previous</span>
                             <svg class="h-5 w-5 mr-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
@@ -247,43 +298,47 @@
                         </a>
                     }
 
+                    <!-- Numbered Sliding Window -->
                     @{
                         int startPage = Math.Max(1, currentPage - 2);
                         int endPage = Math.Min(totalPages, startPage + 4);
                         if (endPage - startPage < 4) startPage = Math.Max(1, endPage - 4);
                     }
 
-                    @if (startPage > 1)
-                    {
-                        <a href="@Url.Action("MyVenues", new { page = 1, filter = currentFilter, pageSize = pageSize })" 
-                           class="page-number pagination-link relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">1</a>
-                        @if (startPage > 2)
+                    <div class="hidden sm:flex -space-x-px">
+                        @if (startPage > 1)
                         {
-                            <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">...</span>
+                            <a href="@Url.Action("MyVenues", new { page = 1, filter = currentFilter, pageSize = pageSize, searchString = searchString })" 
+                               class="page-number pagination-link relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">1</a>
+                            @if (startPage > 2)
+                            {
+                                <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">...</span>
+                            }
                         }
-                    }
 
-                    @for (int i = startPage; i <= endPage; i++)
-                    {
-                        <a href="@Url.Action("MyVenues", new { page = i, filter = currentFilter, pageSize = pageSize })"
-                           class="page-number pagination-link @(i == currentPage ? "active current-page z-10 bg-indigo-50 border-indigo-500 text-indigo-600" : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50") relative inline-flex items-center px-4 py-2 border text-sm font-medium">
-                            @i
-                        </a>
-                    }
-
-                    @if (endPage < totalPages)
-                    {
-                        @if (endPage < totalPages - 1)
+                        @for (int i = startPage; i <= endPage; i++)
                         {
-                            <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">...</span>
+                            <a href="@Url.Action("MyVenues", new { page = i, filter = currentFilter, pageSize = pageSize, searchString = searchString })"
+                               class="page-number pagination-link @(i == currentPage ? "active current-page z-10 bg-indigo-600 border-indigo-600 text-white" : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50") relative inline-flex items-center px-4 py-2 border text-sm font-medium transition-colors">
+                                @i
+                            </a>
                         }
-                        <a href="@Url.Action("MyVenues", new { page = totalPages, filter = currentFilter, pageSize = pageSize })" 
-                           class="page-number pagination-link relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">@totalPages</a>
-                    }
 
+                        @if (endPage < totalPages)
+                        {
+                            @if (endPage < totalPages - 1)
+                            {
+                                <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">...</span>
+                            }
+                            <a href="@Url.Action("MyVenues", new { page = totalPages, filter = currentFilter, pageSize = pageSize, searchString = searchString })" 
+                               class="page-number pagination-link relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">@totalPages</a>
+                        }
+                    </div>
+
+                    <!-- Next Button -->
                     @if (currentPage < totalPages)
                     {
-                        <a href="@Url.Action("MyVenues", new { page = currentPage + 1, filter = currentFilter, pageSize = pageSize })"
+                        <a href="@Url.Action("MyVenues", new { page = currentPage + 1, filter = currentFilter, pageSize = pageSize, searchString = searchString })"
                            class="pagination-next relative inline-flex items-center px-4 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
                             Next
                             <svg class="h-5 w-5 ml-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
@@ -295,40 +350,86 @@
             </div>
         }
 
+        <!-- ============================================================== -->
+        <!-- EMPTY STATE FALLBACK                                           -->
+        <!-- ============================================================== -->
         @if (!Model.Any())
         {
-            <div class="text-center py-12">
-                <div class="mx-auto h-24 w-24 text-gray-400 mb-4">
-                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" class="h-full w-full">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1"
-                              d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 py-16 px-6 text-center mt-6">
+                <div class="mx-auto h-20 w-20 bg-gray-50 rounded-full flex items-center justify-center mb-5 border border-gray-100">
+                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" class="h-10 w-10 text-gray-400">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                     </svg>
                 </div>
-                <h3 class="mt-4 text-sm font-medium text-gray-900">No venues</h3>
-                <p class="mt-1 text-sm text-gray-500">Get started by creating your first venue.</p>
-                <div class="mt-6">
-                    <a href="@Url.Action("Create", "Venue")"
-                       class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                        </svg>
-                        Add New Venue
-                    </a>
-                </div>
+                
+                @if (!string.IsNullOrEmpty(searchString))
+                {
+                    <h3 class="text-xl font-bold text-gray-900">No matching venues</h3>
+                    <p class="mt-2 text-gray-500 max-w-sm mx-auto">We couldn't find any venues matching "@searchString".</p>
+                    <div class="mt-8">
+                        <button onclick="clearSearch()" class="inline-flex items-center px-6 py-3 border border-transparent shadow-sm text-sm font-bold rounded-lg text-indigo-700 bg-indigo-50 hover:bg-indigo-100 transition-all">
+                            Clear Search
+                        </button>
+                    </div>
+                }
+                else
+                {
+                    <h3 class="text-xl font-bold text-gray-900">No venues found</h3>
+                    <p class="mt-2 text-gray-500 max-w-sm mx-auto">Get started by creating your first venue to begin hosting events and managing layouts.</p>
+                    <div class="mt-8">
+                        <a href="@Url.Action("Create", "Venue")"
+                           class="inline-flex items-center px-6 py-3 border border-transparent shadow-sm text-sm font-bold rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all transform hover:-translate-y-0.5">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                            </svg>
+                            Add New Venue
+                        </a>
+                    </div>
+                }
             </div>
         }
     </div>
 </div>
 
+<!-- ============================================================== -->
+<!-- JAVASCRIPT STATE MUTATORS                                      -->
+<!-- ============================================================== -->
 @section Scripts {
     <script>
+        /** Dispatches navigation updates preserving existing query parameters while resetting pagination offset */
         function updateUrl(param, value) {
             const url = new URL(window.location.href);
-            url.searchParams.set(param, value);
+            
+            if (value === null || value === '') {
+                url.searchParams.delete(param);
+            } else {
+                url.searchParams.set(param, value);
+            }
+            
             if (param !== 'page') {
                 url.searchParams.set('page', '1');
             }
             window.location.href = url.href;
         }
+
+        /** Evaluates search input and dispatches to URL router */
+        function executeSearch() {
+            const val = document.getElementById('venue-search').value.trim();
+            updateUrl('searchString', val);
+        }
+
+        /** Clears the active search parameter */
+        function clearSearch() {
+            document.getElementById('venue-search').value = '';
+            updateUrl('searchString', '');
+        }
+
+        /** Binds Enter key inside the search input to trigger execution */
+        document.getElementById('venue-search').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                executeSearch();
+            }
+        });
     </script>
 }
