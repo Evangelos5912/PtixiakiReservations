@@ -40,6 +40,7 @@
     <PackageReference Include="Serilog.Settings.Configuration" Version="8.0.4" />
     <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />
     <PackageReference Include="Serilog.Sinks.Elasticsearch" Version="10.0.0" />
+    <PackageReference Include="SixLabors.ImageSharp" Version="4.1.1" />
     <PackageReference Include="System.Text.Json" Version="9.0.1" />
   </ItemGroup>
 
@@ -64,6 +65,9 @@
     </Content>
   </ItemGroup>
 
+  <Target Name="Tailwind" BeforeTargets="Build">
+    <Exec Command="npm run build:css" />
+  </Target>
 
   <ItemGroup>
     <None Include="wwwroot\images\image.jpg" />
