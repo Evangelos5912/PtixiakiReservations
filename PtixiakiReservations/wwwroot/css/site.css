@@ -1,5 +1,9 @@
 ﻿/* Please see documentation at https://docs.microsoft.com/aspnet/core/client-side/bundling-and-minification
 for details on configuring this project to bundle and minify static web assets. */
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+@source "../../Views";
+
 
 a.navbar-brand {
   white-space: normal;
@@ -7,21 +11,19 @@ a.navbar-brand {
   word-break: break-all;
 }
 
-/* Provide sufficient contrast against white background */
-a {
-  color: #0366d6;
-}
 
 .btn-primary {
-  color: #fff;
-  background-color: #1b6ec2;
-  border-color: #1861ac;
+  color: #fff !important;
+  background-color: #2563eb !important; 
+  border-color: #1d4ed8 !important;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  display: inline-block;
+  text-align: center;
 }
 
-.nav-pills .nav-link.active, .nav-pills .show > .nav-link {
-  color: #fff;
-  background-color: #1b6ec2;
-  border-color: #1861ac;
+.btn-primary:hover {
+  background-color: #1d4ed8 !important;
 }
 
 /* Sticky footer styles

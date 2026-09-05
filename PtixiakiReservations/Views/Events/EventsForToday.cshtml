@@ -7,16 +7,129 @@
     ViewData["Title"] = "Events";
     var currentUser = SignInManager.IsSignedIn(User) ? await UserManager.GetUserAsync(User) : null;
     var userRoles = currentUser != null ? await UserManager.GetRolesAsync(currentUser) : new List<string>();
+    
+    /** 
+     * Authorization parameters establishing boolean visibility states 
+     * for administrative and organizational DOM elements.
+     */
     var isAdmin = userRoles.Contains("Admin");
     var isSuper = userRoles.Contains("SuperOrganizer");
     var isEventManager = userRoles.Contains("Event");
 }
 
-<div class="w-full">
+<!-- 
+  =======================================================================
+  STYLESHEET: V3 Color Space Mapping & Functional Component Rules
+  =======================================================================
+-->
+<style>
+    :root {
+        /* Preserves explicit hexadecimal color definitions matching established UI guidelines */
+        --color-blue-50: #eff6ff;
+        --color-blue-100: #dbeafe;
+        --color-blue-300: #93c5fd; 
+        --color-blue-400: #60a5fa; 
+        --color-blue-500: #3b82f6;
+        --color-blue-600: #2563eb;
+        --color-blue-700: #1d4ed8;
+        --color-indigo-600: #4f46e5;
+        --color-indigo-700: #4338ca;
+        --color-gray-50: #f9fafb;
+        --color-gray-100: #f3f4f6;
+        --color-gray-200: #e5e7eb;
+        --color-gray-300: #d1d5db;
+        --color-gray-400: #9ca3af;
+        --color-gray-500: #6b7280;
+        --color-gray-600: #4b5563;
+        --color-gray-700: #374151;
+        --color-gray-800: #1f2937;
+        --color-gray-900: #111827;
+    }
+
+    /** 
+     * Tooltip Interface
+     * Generates a floating z-indexed container for aggregated string metadata.
+     */
+    .tooltip-container { position: relative; display: inline-block; cursor: help; }
+    .tooltip-text {
+        visibility: hidden; opacity: 0; background-color: #1f2937; color: #fff;
+        text-align: center; padding: 8px 12px; border-radius: 6px; font-weight: normal;
+        width: max-content; max-width: 200px; position: absolute; z-index: 50;
+        bottom: 130%; left: 50%; transform: translateX(-50%);
+        transition: opacity 0.2s ease, visibility 0.2s ease; font-size: 0.75rem;
+    }
+    .tooltip-text::after {
+        content: ""; position: absolute; top: 100%; left: 50%; margin-left: -6px;
+        border-width: 6px; border-style: solid; border-color: #1f2937 transparent transparent transparent;
+    }
+    .tooltip-container:hover .tooltip-text,
+    .tooltip-container2:hover .tooltip-text { visibility: visible; opacity: 1; }
+
+    /** 
+     * Event Card Structural Grid
+     * Enforces responsive flex-column behavior with an established visual boundary thickness.
+     */
+    .event-card {
+        position: relative;
+        display: flex;
+        flex-direction: column; 
+        height: 100%;          
+        transition: all 0.3s ease;
+        z-index: 1;
+        min-height: 300px; 
+        background-color: white;
+        border-radius: 0.75rem;
+        border-top: 6px solid var(--color-blue-400); 
+    }
+    
+    .event-card:hover {
+        transform: scale(1.02) translate(0px, -5px); 
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        z-index: 10;
+    }
+    
+    .event-content { flex-grow: 1; display: flex; flex-direction: column; }
+    .event-footer { margin-top: auto; }
+    
+    /** Temporal specific overlay states */
+    .event-today:hover { box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.15), 0 4px 6px -2px rgba(16, 185, 129, 0.05); }
+    .event-upcoming:hover { box-shadow: 0 10px 15px -3px rgba(96, 165, 250, 0.15), 0 4px 6px -2px rgba(96, 165, 250, 0.05); }
+    .event-past { background-color: #f8fafc; opacity: 0.85; border-top-color: var(--color-gray-400); }
+    .event-past:hover { box-shadow: 0 10px 15px -3px rgba(148, 163, 184, 0.15), 0 4px 6px -2px rgba(148, 163, 184, 0.05); }
+
+    /** 
+     * Autocomplete Dropdown
+     * Maintains absolute z-index prioritization over adjacent inputs.
+     */
+    #autocomplete-dropdown { box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1); border-radius: 0.75rem; border: 1px solid #e5e7eb; }
+    .autocomplete-item { padding: 0.75rem 1.25rem; cursor: pointer; transition: background-color 0.2s ease; }
+    .autocomplete-item:hover, .autocomplete-item.active { background-color: #f3f4f6; }
+    .highlight { font-weight: 700; color: #3b82f6; }
+
+    /** 
+     * Wishlist Action Badge
+     * Restricts visual load on desktop viewports by binding visibility to parent hover execution.
+     */
+    .wishlist-badge { visibility: visible; opacity: 1; transition: all 0.2s ease; }
+    @@media (min-width: 1024px) {
+        .wishlist-badge { visibility: hidden; opacity: 0; }
+        .event-card:hover .wishlist-badge { visibility: visible; opacity: 1; }
+    }
+</style>
+
+<!-- 
+  =======================================================================
+  MAIN LAYOUT DOM ARCHITECTURE
+  =======================================================================
+-->
+<div class="w-full bg-gray-50 min-h-screen pb-12">
     @Html.AntiForgeryToken()
-    <div class="w-full bg-gradient-to-r from-blue-600 to-indigo-700">
-        <div class="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
-            <h3 class="text-xl font-bold text-white tracking-wide">Search for Events</h3>
+    
+    <!-- Application Global Navigation Header -->
+    <div class="w-full bg-gradient-to-r from-blue-700 to-indigo-800 shadow-md">
+        <div class="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
+            <h1 class="text-3xl font-extrabold text-white tracking-tight">Discover Events</h1>
+            <p class="text-blue-100 mt-1">Find experiences tailored just for you.</p>
         </div>
     </div>
     
@@ -31,67 +144,60 @@
         </div>
     </div>
 
-    <!-- Advanced Search & Filtering Panel -->
-    <div class="relative z-40 w-full max-w-5xl mx-auto px-4 mt-4 sm:-mt-16 mb-12">
-        <div class="bg-white rounded-xl shadow-2xl w-full border border-gray-100 ring-1 ring-black ring-opacity-5">
+    <!-- Advanced Search & Filtering Interface -->
+    <div class="relative z-40 w-full max-w-5xl mx-auto px-4 mt-6 sm:-mt-12 mb-12">
+        <div class="bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] w-full border border-gray-200">
             
-            <div class="bg-gradient-to-r from-blue-600 to-indigo-700 px-6 py-3 rounded-t-xl flex flex-row items-center justify-between">
-                <h3 class="text-lg font-bold text-white tracking-wide">Find Events</h3>
-                <button id="panel-button" class="text-xl font-bold text-white focus:outline-none transition-transform hover:scale-125">X</button>
+            <div class="bg-gray-50 border-b border-gray-200 px-6 py-4 flex flex-row items-center justify-between rounded-t-2xl">
+                <h3 class="text-lg font-bold text-gray-800 tracking-tight flex items-center gap-2">
+                    <svg class="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                    Search Criteria
+                </h3>
+                <button id="panel-button" class="text-gray-400 hover:text-gray-700 focus:outline-none transition-colors">
+                    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
             </div>
 
-            <div id="panel-body" class="p-5">
-                <div class="flex flex-col md:flex-row gap-4 mb-4 mt-1">
+            <div id="panel-body" class="p-6">
+                <div class="flex flex-col md:flex-row gap-5 mb-5">
                     
                     <div class="w-full md:w-1/2 relative">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                            </svg>
+                        <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                            <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                         </div>
-                        <input type="text" id="search-term" placeholder="Event name, venue, or city..."
-                            class="block w-full pl-10 pr-3 py-2.5 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-colors text-sm"
-                            autocomplete="off">
-                        <div id="autocomplete-dropdown" class="absolute left-0 top-full mt-1 z-50 bg-white shadow-xl rounded-lg border border-gray-200 hidden max-h-60 overflow-y-auto w-full"></div>
+                        <input type="text" id="search-term" placeholder="Event name, venue, or city..." class="block w-full pl-11 pr-4 py-3 bg-white border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm font-medium" autocomplete="off">
+                        <div id="autocomplete-dropdown" class="absolute left-0 top-full mt-2 z-50 bg-white shadow-2xl rounded-xl border border-gray-100 hidden max-h-60 overflow-y-auto w-full"></div>
                     </div>
 
                     <div class="w-full md:w-1/4 relative">
-                        <select id="event-type" class="w-full appearance-none bg-gray-50 border border-gray-300 rounded-lg py-2.5 px-3 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-colors">
-                            <option value="">All Types</option>
+                        <select id="event-type" class="w-full appearance-none bg-white border border-gray-300 rounded-xl shadow-sm py-3 px-4 pr-10 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors cursor-pointer">
+                            <option value="">All Categories</option>
                         </select>
-                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500">
-                            <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                                <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
-                            </svg>
+                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-400">
+                            <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg>
                         </div>
                     </div>
 
                     <div class="w-full md:w-1/4 relative">
-                        <input type="text" id="date-range" placeholder="Dates"
-                            class="w-full bg-gray-50 border border-gray-300 rounded-lg py-2.5 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-colors">
-                        <button id="reset-date" type="button" class="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
-                            </svg>
+                        <input type="text" id="date-range" placeholder="Select Dates" class="w-full bg-white border border-gray-300 rounded-xl shadow-sm py-3 px-4 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors cursor-pointer">
+                        <button id="reset-date" type="button" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors bg-white pl-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" /></svg>
                         </button>
                     </div>
                 </div>
 
-                <div class="flex flex-col sm:flex-row justify-between items-center mt-3">
-                    <div class="flex items-center gap-2 mb-4 sm:mb-0 ml-1">
-                        <input type="checkbox" id="archived-filter" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500" />
-                        <label for="archived-filter" class="text-sm font-medium text-gray-600">Include Archived</label>
+                <div class="flex flex-col sm:flex-row justify-between items-center pt-2 border-t border-gray-100 mt-4">
+                    <div class="flex items-center gap-2 mb-4 sm:mb-0">
+                        <input type="checkbox" id="archived-filter" class="w-4 h-4 text-blue-600 bg-white border-gray-300 rounded focus:ring-blue-500 cursor-pointer" />
+                        <label for="archived-filter" class="text-sm font-medium text-gray-600 cursor-pointer select-none">Include Archived Events</label>
                     </div>
                     
                     <div class="flex items-center gap-4 w-full sm:w-auto">
                         <p id="search-validation-message" class="text-red-500 text-xs font-medium hidden">Please fill at least one field</p>
-                        <button id="search-button"
-                                class="w-full sm:w-auto px-6 py-2.5 bg-blue-600 text-white font-semibold rounded-lg shadow hover:bg-blue-700 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all">
-                            <span class="flex items-center justify-center text-sm">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                                </svg>
-                                Search
+                        <button id="search-button" class="w-full sm:w-auto px-8 py-3 bg-blue-600 text-white font-bold rounded-xl shadow-md hover:bg-blue-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all">
+                            <span class="flex items-center justify-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                                Search Now
                             </span>
                         </button>
                     </div>
@@ -100,61 +206,67 @@
         </div>
     </div>
 
-    <!-- Main Results Layout Area -->
+    <!-- 
+      =======================================================================
+      DYNAMIC EVENT RESULTS GRID
+      =======================================================================
+    -->
     <div class="w-full px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
 
-        <!-- Results Header Controls & View Modifiers -->
-        <div id="events-count" class="flex items-center justify-between mb-8">
-            <h2 class="text-xl font-semibold text-gray-800">
-                Results: Events <span class="text-blue-600 font-bold">(<span id="filtered-count">0</span>)</span>
+        <!-- Result Evaluation Headers and Configuration Limiters -->
+        <div id="events-count" class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">
+            <h2 class="text-2xl font-extrabold text-gray-900 tracking-tight">
+                Results <span class="text-blue-600 font-bold ml-2 bg-blue-50 px-3 py-1 rounded-full text-lg" id="filtered-count">0</span>
             </h2>
-            <div class="flex items-center gap-3">
-                <div class="relative"> 
-                    <select id="variable-view" class="appearance-none bg-white border border-gray-300 rounded-lg py-3 px-4 pr-8 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors w-48">
-                        <option value="asc" selected>Ascending by Date</option>
-                        <option value="desc">Descending by Date</option>
+            <div class="flex items-center gap-3 w-full sm:w-auto">
+                <div class="relative w-full sm:w-auto"> 
+                    <select id="variable-view" class="appearance-none bg-white border border-gray-300 rounded-xl py-2.5 px-4 pr-10 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors w-full sm:w-48 shadow-sm cursor-pointer">
+                        <option value="asc" selected>Sort by Date: Asc</option>
+                        <option value="desc">Sort by Date: Desc</option>
                     </select>
-                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                        <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                            <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
-                        </svg>
+                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-400">
+                        <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg>
                     </div>
                 </div>
-                <div class="relative"> 
-                    <select id="variable-pagination" class="appearance-none bg-white border border-gray-300 rounded-lg py-3 px-4 pr-8 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors w-40">
+                <div class="relative w-full sm:w-auto"> 
+                    <select id="variable-pagination" class="appearance-none bg-white border border-gray-300 rounded-xl py-2.5 px-4 pr-10 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors w-full sm:w-36 shadow-sm cursor-pointer">
                         <option value="12" selected>12 per page</option>
                         <option value="24">24 per page</option>
                         <option value="48">48 per page</option>
                     </select>
-                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                        <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                            <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
-                        </svg>
+                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-400">
+                        <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div id="events-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+        <!-- Render Target for Generated DOM Iterations -->
+        <div id="events-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 py-4"></div>
 
-        <div id="loading-indicator" class="text-center py-16 hidden">
+        <!-- System Latency Loading Visualization -->
+        <div id="loading-indicator" class="text-center py-20 hidden">
             <div class="inline-block h-12 w-12 rounded-full border-4 border-gray-200 border-t-blue-600 animate-spin"></div>
-            <p class="mt-4 text-lg font-medium text-gray-600">Loading events...</p>
+            <p class="mt-4 text-lg font-medium text-gray-500">Discovering events...</p>
         </div>
 
-        <div id="no-results" class="hidden text-center py-16">
+        <!-- Empty Query Handling View -->
+        <div id="no-results" class="hidden text-center py-20 bg-white rounded-3xl shadow-sm border border-gray-100">
             <div class="max-w-md mx-auto">
-                <svg class="mx-auto h-16 w-16 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <h3 class="mt-4 text-xl font-medium text-gray-700">No events found</h3>
-                <p class="mt-2 text-gray-500">Try adjusting your search criteria or check back later for new events</p>
-                <button id="reset-search" class="mt-6 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors">
-                    Reset Search
+                <div class="bg-gray-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="h-10 w-10 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+                <h3 class="text-xl font-bold text-gray-900">No events found</h3>
+                <p class="mt-2 text-gray-500 font-medium">Try adjusting your filters or search criteria.</p>
+                <button id="reset-search" class="mt-6 px-6 py-2.5 bg-gray-900 text-white rounded-xl font-semibold hover:bg-gray-800 transition-colors shadow-md">
+                    Clear Filters
                 </button>
             </div>
         </div>
 
+        <!-- Component Iteration Pagination Link Structures -->
         <div class="mt-12 flex justify-center pb-12">
             <nav id="pagination" class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px @(ViewBag.TotalPages > 1 ? "" : "hidden")" aria-label="Pagination">
                 <button id="prev-page" class="pagination-prev relative inline-flex items-center px-4 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
@@ -177,139 +289,15 @@
     </div>
 </div>
 
-<style>
-    .tooltip-container {
-        position: relative;      
-        display: inline-block;   
-        cursor: help;            
-    }
-
-    .tooltip-text {
-        visibility: hidden;     
-        opacity: 0;              
-        background-color: #333;  
-        color: #fff;             
-        text-align: center;
-        padding: 8px 12px;
-        border-radius: 6px;
-        width: max-content;     
-        max-width: 200px;     
-        position: absolute;
-        z-index: 10;             
-        bottom: 130%;            
-        left: 50%;            
-        transform: translateX(-50%); 
-        transition: opacity 0.3s ease, visibility 0.3s ease;
-        overflow: visible;
-    }
-
-    .tooltip-text::after {
-        content: "";
-        position: absolute;
-        top: 100%;              
-        left: 50%;
-        margin-left: -6px;       
-        border-width: 6px;
-        border-style: solid;
-        border-color: #333 transparent transparent transparent; 
-    }
-
-    .tooltip-container:hover .tooltip-text {
-        visibility: visible;
-        opacity: 1;
-    }
-
-    .tooltip-container2:hover .tooltip-text {
-        visibility: visible;
-        opacity: 1;
-    }
-
-    .event-card {
-        position: relative;
-        display: flex;
-        flex-direction: column; 
-        height: 100%;          
-        transition: all 0.3s ease;
-        border-left: 4px solid #3b82f6;
-        z-index: 1;
-        min-height: 300px; 
-        background-color: white;
-    }
-
-    .event-card:hover {
-        transform: scale(1.02) translate(10px, -10px); 
-        box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
-        z-index: 10;
-    }
-
-    .wishlist-badge {
-        visibility: visible;
-        opacity: 1;
-    }
-
-    @@media (min-width: 1024px) {
-        .wishlist-badge {
-            visibility: hidden;
-            opacity: 0;
-            transition: all 0.3s ease;
-        }
-        .event-card:hover .wishlist-badge {
-            visibility: visible;
-            opacity: 1;
-        }
-    }
-
-    .event-content {
-        flex-grow: 1;          
-        display: flex;
-        flex-direction: column;
-    }
-    .event-footer {
-        margin-top: auto;      
-    }
-
-    .event-today:hover {
-        box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.1), 0 4px 6px -2px rgba(16, 185, 129, 0.05);
-    }
-
-    .event-upcoming:hover {
-        box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.1), 0 4px 6px -2px rgba(59, 130, 246, 0.05);
-    }
-
-    .event-past {
-        background-color: #f8fafc;
-        border-left-color: #94a3b8;
-        opacity: 0.85;
-    }
-    .event-past:hover {
-        box-shadow: 0 10px 15px -3px rgba(148, 163, 184, 0.1), 0 4px 6px -2px rgba(148, 163, 184, 0.05);
-    }
-
-    #autocomplete-dropdown {
-        box-shadow: 0 4px 10px -2px rgba(0, 0, 0, 0.2);
-        border-radius: 0.5rem;
-        border: 1px solid #e5e7eb;
-    }
-
-    .autocomplete-item {
-        padding: 0.75rem 1rem;
-        cursor: pointer;
-        transition: background-color 0.2s ease;
-    }
-
-    .autocomplete-item:hover, .autocomplete-item.active {
-        background-color: #f3f4f6;
-    }
-
-    .highlight {
-        font-weight: 600;
-        color: #3b82f6;
-    }
-</style>
-
 @section Scripts {
+    <!-- 
+      =======================================================================
+      JAVASCRIPT: Logic Controllers & Async Evaluation Cycles
+      =======================================================================
+    -->
     <script>
         $(document).ready(function () {
+            /** Maintains operational scope references globally scoped to user initialization */
             const currentUserId = '@UserManager.GetUserId(User)';
             let currentPage = 1;
             let pageSize = 12;
@@ -325,8 +313,8 @@
             let currentAutocompleteIndex = -1;
             let maxAutocompleteResults = 8;
 
-            /** 
-             * Initialize Flatpickr component for generalized date filtering 
+            /**
+             * Initializes the Flatpickr framework binding it to specific internal DOM elements.
              */
             dateRangePicker = flatpickr("#date-range", {
                 mode: "range",
@@ -356,14 +344,15 @@
                 window.location.href = '@Url.Action("EventsForToday", "Events")';
             });
 
+            // Hydrates select inputs with JSON records upon DOM initialization
             loadEventTypes();
 
             $('#events-container').addClass('hidden');
             $('#loading-indicator').removeClass('hidden');
             performSearch();
 
-            /** 
-             * Debounced input event listener managing autocomplete visibility logic 
+            /**
+             * Implements debounce limiters terminating consecutive duplicate search requests
              */
             $('#search-term').on('input', function() {
                 const query = $(this).val().trim();
@@ -389,8 +378,8 @@
                 performSearch();
             });
 
-            /** 
-             * Handles keyboard accessibility bindings for dropdown navigation 
+            /**
+             * Manages logical overrides for keyboard execution paths targeting specific DOM index locations.
              */
             $('#search-term').on('keydown', function(e) {
                 const dropdown = $('#autocomplete-dropdown');
@@ -398,16 +387,16 @@
 
                 if (!isVisible) return;
 
-                if (e.keyCode === 40) {
+                if (e.keyCode === 40) { 
                     e.preventDefault();
                     navigateAutocomplete(1);
-                } else if (e.keyCode === 38) {
+                } else if (e.keyCode === 38) { 
                     e.preventDefault();
                     navigateAutocomplete(-1);
-                } else if (e.keyCode === 13 && currentAutocompleteIndex >= 0) {
+                } else if (e.keyCode === 13 && currentAutocompleteIndex >= 0) { 
                     e.preventDefault();
                     selectAutocompleteItem(currentAutocompleteIndex);
-                } else if (e.keyCode === 27) {
+                } else if (e.keyCode === 27) { 
                     dropdown.addClass('hidden');
                     currentAutocompleteIndex = -1;
                 }
@@ -419,9 +408,6 @@
                 }
             });
 
-            /** 
-             * Fetches available event categories from external API to populate form controls 
-             */
             function loadEventTypes() {
                 $.getJSON('/Events/GetEventTypes')
                     .done(function(data) {
@@ -438,9 +424,9 @@
                     });
             }
 
-            /** 
-             * Transmits search fragment state to external API for query completion recommendations 
-             * @@param {string} query - The active partial string fragment 
+            /**
+             * Processes Ajax callbacks parsing backend object values for local DOM hydration.
+             * Utilizes functional mockup generations mitigating runtime faults.
              */
             function fetchAutocompleteResults(query) {
                 $.ajax({
@@ -456,11 +442,6 @@
                 });
             }
 
-            /** 
-             * Renders recommendation blocks inside dynamic absolute panel structure 
-             * @@param {Array} results - Structured payload containing matched search terms
-             * @@param {string} query - Base string for applying matched HTML highlighting
-             */
             function displayAutocompleteResults(results, query) {
                 const dropdown = $('#autocomplete-dropdown');
                 dropdown.empty();
@@ -477,15 +458,15 @@
                     const highlightedText = highlightMatch(result.text, query);
                     const item = $('<div class="autocomplete-item flex items-center">')
                         .html(`
-                            <div class="mr-2 text-gray-400">
+                            <div class="mr-3 text-blue-500">
                                 ${result.type === 'event' ?
-                                    '<svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>' :
-                                    '<svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>'
+                                    '<svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>' :
+                                    '<svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>'
                                 }
                             </div>
                             <div>
-                                <div class="text-sm">${highlightedText}</div>
-                                <div class="text-xs text-gray-500">${result.subtext || ''}</div>
+                                <div class="text-sm text-gray-900">${highlightedText}</div>
+                                <div class="text-xs text-gray-500 font-medium">${result.subtext || ''}</div>
                             </div>
                         `)
                         .data('index', index)
@@ -499,10 +480,6 @@
                 dropdown.removeClass('hidden');
             }
 
-            /** 
-             * Cycles target state recursively through current autocomplete constraints 
-             * @@param {number} direction - Iterator integer designating directional focus
-             */
             function navigateAutocomplete(direction) {
                 const items = $('.autocomplete-item');
                 if (items.length === 0) return;
@@ -519,10 +496,6 @@
                 items.eq(currentAutocompleteIndex).addClass('active');
             }
 
-            /** 
-             * Applies localized query values upon explicit user confirmation 
-             * @@param {number} index - Position mapping index
-             */
             function selectAutocompleteItem(index) {
                 const result = autocompleteResults[index];
                 if (!result) return;
@@ -535,10 +508,8 @@
                 }
             }
 
-            /** 
-             * Injects highlighting spans mapping explicit query arrays to text node DOM 
-             * @@param {string} text - Standard node text element
-             * @@param {string} query - Baseline match text
+            /**
+             * Implements logical text string mapping highlighting sub-parameters against input requests.
              */
             function highlightMatch(text, query) {
                 if (!query) return text;
@@ -558,8 +529,9 @@
                 return results;
             }
 
-            /** 
-             * Assesses user parameter integrity preventing blank payload generation 
+            /**
+             * Parses explicit input form values checking execution readiness flags.
+             * Restricts requests mitigating blank payload generations.
              */
             function validateSearch() {
                 const eventType = $('#event-type').val();
@@ -595,11 +567,10 @@
                 $('#loading-indicator').removeClass('hidden');
                 $('#no-results').addClass('hidden');
 
-                setTimeout(function() {
-                    performSearch();
-                }, 500);
+                setTimeout(function() { performSearch(); }, 500);
             });
 
+            // Evaluation block tracking state-bound page changes
             $('#prev-page').click(function() {
                 if (currentPage > 1) {
                     currentPage--;
@@ -626,9 +597,9 @@
                 setTimeout(performSearch, 300);
             });
 
-            /** 
-             * Core asynchronous search endpoint constructing payload, communicating with backend endpoint,
-             * formatting structural grids and conditionally restricting sub-event hierarchies.
+            /**
+             * Central JSON processing loop evaluating form conditions, querying endpoint arrays,
+             * establishing conditional DOM boundaries, and injecting rendering templates.
              */
             function performSearch() {
                 let startDate = null;
@@ -644,7 +615,7 @@
                 const eventTypeId = $('#event-type').val();
                 const searchTerm = $('#search-term').val().trim();
                 
-                // Track active search state to conditionally isolate master events from internal sub-events natively.
+                // Evaluates boolean constraint logic checking parameter overrides
                 const isSearchActive = (eventTypeId !== '' || startDate !== null || searchTerm !== '');
 
                 searchParams = {
@@ -678,21 +649,16 @@
 
                         data.events.forEach(function(event) {
                             const isMasterEvent = event.parentEventId == null && event.ParentEventId == null;
-                            
-                            // Implements localized structural filtering preventing child events from bypassing search checks
-                            if (!isSearchActive && !isMasterEvent) {
-                                return; 
-                            }
+                            if (!isSearchActive && !isMasterEvent) return; 
 
                             const timeClass = getEventTimeClass(new Date(event.startDateTime), new Date(event.endTime));
                             const cardHtml = buildEventCard(event, timeClass);
                             container.append(cardHtml);
                         });
 
-                        /** 
-                         * Structures localized DOM strings incorporating dynamic variables mapping specific backend model data
-                         * @@param {object} event - Internal JSON data block representation
-                         * @@param {string} timeClass - Contextualized temporal styling logic reference
+                        /**
+                         * Evaluates target variables interpreting individual record states into 
+                         * formatted HTML node strings, preventing nested anchor corruption on UI roles.
                          */
                         function buildEventCard(event, timeClass) {
                             const startDate = new Date(event.startDateTime || event.StartDateTime);
@@ -703,11 +669,11 @@
                             if (isMultiDay) {
                                 const startStr = startDate.toLocaleDateString('en-US', {month: 'short', day: 'numeric', year: 'numeric' });
                                 const endStr = endDate.toLocaleDateString('en-US', {month: 'short', day: 'numeric', year: 'numeric' });
-                                dateDisplayHtml = `<p class="text-sm text-blue-600"><b>${startStr} - ${endStr}</b></p>`;
+                                dateDisplayHtml = `<p class="text-sm text-gray-800 font-bold">${startStr} - ${endStr}</p>`;
                             } else {
                                 const dateStr = startDate.toLocaleDateString('en-US', {month: 'long', day: 'numeric', year: 'numeric' });
                                 const timeStr = `${startDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })} - ${endDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`;
-                                dateDisplayHtml = `<p class="text-sm text-blue-600"><b>${dateStr}</b></p><p class="text-sm text-blue-500">${timeStr}</p>`;
+                                dateDisplayHtml = `<p class="text-sm text-gray-800 font-bold">${dateStr}</p><p class="text-sm text-gray-500 font-medium">${timeStr}</p>`;
                             }
 
                             const imgPath = event.displayImagePath || event.imagePath || '';
@@ -715,14 +681,16 @@
                             const eventName = event.name || event.Name || 'Unnamed Event';
                             const eventId = event.id || event.Id;
 
+                            // Security state evaluation restricting administrative footer generation
                             const isMasterEvent = event.parentEventId == null && event.ParentEventId == null;
                             const canViewSubEvents = @((isSuper || isAdmin || isEventManager).ToString().ToLower());
                             const showSubEventsLink = isMasterEvent && canViewSubEvents;
                             const childCount = event.childCount || event.ChildCount || 0;
 
+                            // Pre-compiles absolute target layer avoiding async collision on replacement
                             let wishlistBadge = `
-                            <div class="wishlist-badge cursor-help absolute top-3 left-6 mt-3 mr-3 bg-white text-indigo-800 text-xs font-bold px-2 py-1 z-50 rounded-full shadow-sm" id="wishlist-id-${eventId}">
-                                <button type="button" onclick="window.wishlistAction(event, ${eventId})">
+                            <div class="wishlist-badge cursor-help absolute top-7 left-7 bg-white/90 backdrop-blur-sm border border-gray-100 text-indigo-800 p-2 z-20 rounded-full shadow-sm hover:bg-white transition-colors wishlist-id-${eventId}">
+                                <button type="button" onclick="window.wishlistAction(event, ${eventId})" class="border-none bg-transparent p-0 cursor-pointer flex items-center justify-center">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#eab308" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                         <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
                                     </svg>
@@ -734,8 +702,8 @@
                                 $.getJSON('/Wishlist/returnItem', wParams)
                                     .done(function(isWishlisted) {
                                         if (isWishlisted === true) {
-                                            $('#wishlist-id-' + eventId).html(`
-                                                <button type="button" onclick="window.wishlistAction(event, ${eventId})">
+                                            $(`.wishlist-id-${eventId}`).html(`
+                                                <button type="button" onclick="window.wishlistAction(event, ${eventId})" class="border-none bg-transparent p-0 cursor-pointer flex items-center justify-center">
                                                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="#eab308" stroke="#eab308" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                                         <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
                                                     </svg>
@@ -745,13 +713,14 @@
                                     });
                             }
 
+                            // Dynamic Chronological Status Badges
                             let statusBadgeHtml = "";
                             if (timeClass === "event-today") {
-                                statusBadgeHtml = `<div class="absolute top-10 right-3 mt-3 mr-3 bg-green-500 text-white text-xs font-bold px-2 py-1 z-50 rounded-full shadow-sm">Today</div>`;
+                                statusBadgeHtml = `<div class="bg-green-500/95 backdrop-blur-sm text-white text-[10px] font-extrabold px-3 py-1.5 rounded-full shadow-sm tracking-wide uppercase border border-green-400">TODAY</div>`;
                             } else if (timeClass === "event-upcoming") {
-                                statusBadgeHtml = `<div class="absolute top-10 right-3 mt-3 mr-3 bg-blue-500 text-white text-xs font-bold px-2 py-1 z-50 rounded-full shadow-sm">Upcoming</div>`;
+                                statusBadgeHtml = `<div class="bg-blue-400/95 backdrop-blur-sm text-white text-[10px] font-extrabold px-3 py-1.5 rounded-full shadow-sm tracking-wide uppercase border border-blue-300">UPCOMING</div>`;
                             } else {
-                                statusBadgeHtml = `<div class="absolute top-10 right-3 mt-3 mr-3 bg-gray-500 text-white text-xs font-bold px-2 py-1 z-50 rounded-full shadow-sm">Ended</div>`;
+                                statusBadgeHtml = `<div class="bg-gray-600/95 backdrop-blur-sm text-white text-[10px] font-extrabold px-3 py-1.5 rounded-full shadow-sm tracking-wide uppercase border border-gray-500">ENDED</div>`;
                             }
 
                             const hasMultipleCities = event.hasMultipleCities || event.HasMultipleCities || false;
@@ -760,6 +729,8 @@
                             if (event.distinctCities === 0) cityName = event.cityName;
 
                             const cityNamesList = event.cityNames ? event.cityNames.join(', ') : '';
+                            
+                            // Displays contextual metadata indicating multi-property values
                             let cityBadgeHtml = hasMultipleCities 
                                 ? `<p>${distinctCities} Cities</p><span class="tooltip-text" role="tooltip">${cityNamesList}</span>` 
                                 : `<p>${cityName}</p>`;
@@ -767,53 +738,69 @@
                             const hasMultipleVenues = event.hasMultipleVenues || event.HasMultipleVenues || false;
                             const venueName = event.venueName || event.VenueName || (event.venue ? event.venue.name : 'No Venue');
                             let venueDisplayHtml = hasMultipleVenues 
-                                ? `<p class="text-sm text-gray-600">Multiple Locations</p>` 
-                                : `<p class="text-sm text-gray-600">${venueName}</p>`;
+                                ? `<p class="text-sm font-medium text-gray-600">Multiple Locations</p>` 
+                                : `<p class="text-sm font-medium text-gray-600">${venueName}</p>`;
 
+                            // Primary Card Element returned resolving structural HTML blocks
                             return `
-                            <div class="event-card ${timeClass} rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
-                                <a href="/Events/Details/${eventId}">
-                                    <div class="p-5 flex flex-col h-full">
-                                        <div class="h-40 w-full overflow-hidden mb-4 rounded-md bg-gray-100 relative">
+                            <div class="event-card ${timeClass} border border-gray-200 shadow-md transition-all">
+                                <a href="/Events/Details/${eventId}" class="block !no-underline text-current flex-grow relative p-5 pb-0">
+                                    
+                                    <!-- Image Bounds Enforcing Aspect Ratios While Retaining Absolute Floating Capabilities -->
+                                    <div class="relative h-40 w-full shrink-0 mb-4 z-10">
+                                        
+                                        <div class="absolute inset-0 overflow-hidden rounded-xl bg-gray-100">
                                             ${hasImage ? 
                                                 `<img src="${imgPath}" alt="${eventName}" class="w-full h-full object-cover transform hover:scale-105 transition-transform duration-300" />` : 
                                                 `<div class="flex items-center justify-center h-full text-gray-400"><svg class="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg></div>`
                                             }
                                         </div>
-                                        <div class="tooltip-container2 cursor-help absolute top-3 right-3 mt-3 mr-3 bg-white text-indigo-800 text-xs font-bold px-2 py-1 z-50 rounded-full shadow-sm">${cityBadgeHtml}</div>
-                                        ${wishlistBadge}
-                                        ${statusBadgeHtml}
-                                        <div class="event-content flex-grow">
-                                            <div class="flex items-center justify-between mb-3">
-                                                <h3 class="text-lg font-semibold text-gray-900 mb-2 line-clamp-2">${eventName}</h3>
-                                                ${isMasterEvent ? 
-                                                `<div class="tooltip-container flex items-center cursor-help">
-                                                    <svg class="h-5 w-5 text-indigo-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                                        <path d="M12 11V5" /><path d="M12 11L6 18" /><path d="M12 11L18 18" />
-                                                        <circle cx="12" cy="4" r="2.5" fill="currentColor" stroke="none" />
-                                                        <circle cx="6" cy="19" r="2.5" fill="currentColor" stroke="none" />
-                                                        <circle cx="18" cy="19" r="2.5" fill="currentColor" stroke="none" />
-                                                    </svg>
-                                                    <span class="tooltip-text" role="tooltip">Master event</span>
-                                                </div>` : ''}
-                                            </div>
-                                            <div class="flex items-start mb-3">
-                                                <svg class="h-5 w-5 text-gray-500 mr-2 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                                                <div>${dateDisplayHtml}</div>
-                                            </div>
-                                            <div class="flex items-start mb-4">
-                                                <svg class="h-5 w-5 text-gray-500 mr-2 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                                                <div>${venueDisplayHtml}</div>
+                                        
+                                        <!-- Vertical Badge Hierarchy explicitly positioned above image bounds -->
+                                        <div class="absolute top-2 right-2 z-50 flex flex-col items-end gap-2">
+                                            ${statusBadgeHtml}
+                                            <div class="tooltip-container2 cursor-help bg-white/95 backdrop-blur-sm border border-gray-100 text-indigo-800 text-[10px] font-extrabold px-3 py-1.5 rounded-full shadow-sm uppercase tracking-wide">
+                                                ${cityBadgeHtml}
                                             </div>
                                         </div>
-                                        <div class="event-footer flex ${showSubEventsLink ? 'justify-between' : 'justify-end'} items-center border-t pt-4">
-                                            ${showSubEventsLink ? `
-                                                <a href="/Events/ChildEvents/${eventId}" class="text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors">Multiple Events (${childCount}) →</a>
-                                                <a href="/Events/Edit/${eventId}" class="text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors">Edit Details →</a>
-                                            ` : ''}
+                                    </div>
+                                    
+                                    <div class="event-content">
+                                        <div class="flex items-center justify-between mb-3">
+                                            <h3 class="text-lg font-bold text-gray-900 mb-2 line-clamp-2">${eventName}</h3>
+                                            ${isMasterEvent ? 
+                                            `<div class="tooltip-container flex items-center cursor-help shrink-0">
+                                                <svg class="h-5 w-5 text-indigo-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                                    <path d="M12 11V5" /><path d="M12 11L6 18" /><path d="M12 11L18 18" />
+                                                    <circle cx="12" cy="4" r="2.5" fill="currentColor" stroke="none" />
+                                                    <circle cx="6" cy="19" r="2.5" fill="currentColor" stroke="none" />
+                                                    <circle cx="18" cy="19" r="2.5" fill="currentColor" stroke="none" />
+                                                </svg>
+                                                <span class="tooltip-text" role="tooltip">Master event</span>
+                                            </div>` : ''}
+                                        </div>
+                                        <div class="flex items-start mb-3">
+                                            <svg class="h-5 w-5 text-gray-500 mr-2 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                                            <div>${dateDisplayHtml}</div>
+                                        </div>
+                                        <div class="flex items-start mb-4">
+                                            <svg class="h-5 w-5 text-gray-500 mr-2 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /></svg>
+                                            <div>${venueDisplayHtml}</div>
                                         </div>
                                     </div>
                                 </a>
+
+                                ${wishlistBadge}
+                                
+                                <!-- Segregated Admin Link Container guarding against nested anchor rendering failures -->
+                                ${showSubEventsLink ? `
+                                <div class="px-5 pb-5 mt-auto">
+                                    <div class="event-footer flex justify-between items-center pt-4 border-t border-gray-100">
+                                        <a href="/Events/ChildEvents/${eventId}" class="text-sm font-bold text-blue-600 hover:text-blue-800 transition-colors bg-blue-50 px-3 py-1.5 rounded-lg hover:bg-blue-100 !no-underline cursor-pointer">Manage Sub-Events (${childCount})</a>
+                                        <a href="/Events/Edit/${eventId}" class="text-sm font-bold text-gray-500 hover:text-gray-800 transition-colors !no-underline cursor-pointer">Edit →</a>
+                                    </div>
+                                </div>
+                                ` : '<div class="pb-5"></div>'}
                             </div>`;
                         }
 
@@ -821,13 +808,13 @@
                         updatePagination(data.totalPages > 1);
                     })
                     .fail(function() {
-                        console.error('Search failed');
+                        console.error('Search query operation encountered a server-side exception or routing failure.');
                         $('#loading-indicator').addClass('hidden');
                     });
             }
 
-            /** 
-             * Manages asynchronous addition and removal of events from user wishlist states
+            /**
+             * Handles asynchronous addition and removal mutations updating backend models and UI toggles globally.
              */
             window.wishlistAction = function(e, eventId) {
                 e.preventDefault();
@@ -850,8 +837,8 @@
                             headers: { "RequestVerificationToken": token },
                             success: function(success) {
                                 if (success === true) {
-                                    $('#wishlist-id-' + eventId).html(`
-                                    <button type="button" onclick="window.wishlistAction(event, ${eventId})">
+                                    $(`.wishlist-id-${eventId}`).html(`
+                                    <button type="button" onclick="window.wishlistAction(event, ${eventId})" class="border-none bg-transparent p-0 cursor-pointer flex items-center justify-center">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="#eab308" stroke="#eab308" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                             <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
                                         </svg>
@@ -867,8 +854,8 @@
                             headers: { "RequestVerificationToken": token },
                             success: function(success) {
                                 if (success === true) {
-                                    $('#wishlist-id-' + eventId).html(`
-                                    <button type="button" onclick="window.wishlistAction(event, ${eventId})">
+                                    $(`.wishlist-id-${eventId}`).html(`
+                                    <button type="button" onclick="window.wishlistAction(event, ${eventId})" class="border-none bg-transparent p-0 cursor-pointer flex items-center justify-center">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#eab308" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                             <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
                                         </svg>
@@ -880,8 +867,8 @@
                 });
             }
 
-            /** 
-             * Dynamically resolves scheduling thresholds comparing event block metadata internally against relative server times 
+            /**
+             * Generates string-based timeline classifications comparing dynamic metadata blocks.
              */
             function getEventTimeClass(startDate, endDate) {
                 const today = new Date();
@@ -957,18 +944,15 @@
                     text: pageNumber
                 });
             }
+        
         });
     </script>
     
     <script>
-        /** 
-         * Mobile Search panel collapse/expand logic mapping toggle handler
-         */
+        // Implements structural CSS mutations managing dynamic UI panel states
         document.getElementById("panel-button").addEventListener("click", function () {
             const panel = document.getElementById("panel-body");
             panel.classList.toggle("hidden");
-            const btn = document.getElementById("panel-button");
-            btn.textContent = btn.textContent === "X" ? "V" : "X";
         });
     </script>
 

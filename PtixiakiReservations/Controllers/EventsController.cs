@@ -17,10 +17,17 @@ using PtixiakiReservations.Services;
 using System.Text;
 using System.Text.Json; 
 using Microsoft.AspNetCore.Hosting; 
-using Microsoft.AspNetCore.Http;    
+using Microsoft.AspNetCore.Http;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Processing;
+using SixLabors.ImageSharp.Formats.Webp;
 
 namespace PtixiakiReservations.Controllers;
 
+/// <summary>
+/// Manages the primary execution logic for event operations, including hierarchical sub-events,
+/// ElasticSearch indexing, and dynamic on-the-fly media compression via ImageSharp.
+/// </summary>
 public class EventsController(
     ApplicationDbContext context,
     UserManager<ApplicationUser> userManager,
@@ -30,20 +37,60 @@ public class EventsController(
     IWebHostEnvironment environment)
     : Controller
 {
-    // GET: Events
     [Authorize]
     [HttpGet]
     public async Task<IActionResult> Index(int page = 1, int pageSize = 12)
     {
         var query = context.Event.AsQueryable();
-
         int totalCount = await query.CountAsync();
-
 
         ViewBag.CurrentPage = page;
         ViewBag.PageSize = pageSize;
         ViewBag.TotalPages = totalCount == 0 ? 1 : (int)Math.Ceiling((double)totalCount / pageSize);
         return View();
+    }
+
+    /// <summary>
+    /// Dynamically transcodes and compresses requested images to WEBP format on-the-fly.
+    /// Preserves the original high-resolution file on disk while optimizing network payload for views.
+    /// </summary>
+    /// <param name="path">The relative virtual path to the original image.</param>
+    /// <param name="width">Target width boundary. Aspect ratio is preserved automatically.</param>
+    /// <param name="quality">Compression quality (0-100).</param>
+    [AllowAnonymous]
+    [HttpGet]
+    [ResponseCache(Duration = 86400, Location = ResponseCacheLocation.Any)] // Cache response for 24 hours
+    public async Task<IActionResult> GetCompressedImage(string path, int width = 800, int quality = 75)
+    {
+        if (string.IsNullOrWhiteSpace(path)) return NotFound();
+
+        string physicalPath = Path.Combine(environment.WebRootPath, path.TrimStart('/', '\\'));
+        if (!System.IO.File.Exists(physicalPath)) return NotFound();
+
+        try
+        {
+            using var image = await Image.LoadAsync(physicalPath);
+            
+            // Only apply scaling if the source image exceeds the target bounds
+            if (image.Width > width)
+            {
+                int newHeight = (int)((double)image.Height / image.Width * width);
+                image.Mutate(x => x.Resize(width, newHeight));
+            }
+
+            var memoryStream = new MemoryStream();
+            var encoder = new WebpEncoder { Quality = quality };
+            await image.SaveAsync(memoryStream, encoder);
+            memoryStream.Position = 0;
+
+            return File(memoryStream, "image/webp");
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to dynamically compress image stream. Falling back to original asset.");
+            // Graceful fallback: return the original uncompressed file if ImageSharp fails
+            return PhysicalFile(physicalPath, "application/octet-stream"); 
+        }
     }
 
     [HttpGet]
@@ -77,7 +124,7 @@ public class EventsController(
                 endTime = e.EndTime,
                 venueName = e.Venue.Name,
                 cityName = e.Venue.City != null ? e.Venue.City.Name : "N/A",
-                imagePath = e.ImagePath
+                imagePath = !string.IsNullOrEmpty(e.ImagePath) ? $"/Events/GetCompressedImage?path={e.ImagePath}&width=600" : null
             })
             .ToListAsync();
 
@@ -117,7 +164,7 @@ public class EventsController(
                 endTime = e.EndTime,
                 venueName = e.Venue.Name,
                 cityName = e.Venue.City != null ? e.Venue.City.Name : "N/A",
-                imagePath = e.ImagePath
+                imagePath = !string.IsNullOrEmpty(e.ImagePath) ? $"/Events/GetCompressedImage?path={e.ImagePath}&width=600" : null
             })
             .ToListAsync();
 
@@ -157,7 +204,7 @@ public class EventsController(
                 endTime = e.EndTime,
                 venueName = e.Venue.Name,
                 cityName = e.Venue.City != null ? e.Venue.City.Name : "N/A",
-                imagePath = e.ImagePath
+                imagePath = !string.IsNullOrEmpty(e.ImagePath) ? $"/Events/GetCompressedImage?path={e.ImagePath}&width=600" : null
             })
             .ToListAsync();
 
@@ -194,7 +241,7 @@ public class EventsController(
                 endTime = e.EndTime,
                 venueName = e.Venue.Name,
                 cityName = e.Venue.City != null ? e.Venue.City.Name : "N/A",
-                imagePath = e.ImagePath
+                imagePath = !string.IsNullOrEmpty(e.ImagePath) ? $"/Events/GetCompressedImage?path={e.ImagePath}&width=600" : null
             })
             .ToListAsync();
 
@@ -228,7 +275,7 @@ public class EventsController(
             .Include(e => e.ChildEvents)
             .ThenInclude(c => c.Venue)      
             .ThenInclude(v => v.City)
-            .Where(e => e.ParentEventId == null && e.EndTime>=today); 
+            .Where(e => e.ParentEventId == null && e.EndTime >= today); 
 
         if (!string.IsNullOrWhiteSpace(searchTerm))
         {
@@ -276,7 +323,6 @@ public class EventsController(
         return View(eventsList);
     }
 
-    // GET: Events/Details/5
     public async Task<IActionResult> Details(int? id)
     {
         if (id == null) return NotFound();
@@ -323,7 +369,8 @@ public class EventsController(
 
         if (galleryToUse != null && galleryToUse.Any())
         {
-            paths.AddRange(galleryToUse.Select(g => g.ImagePath));
+            // Apply lightweight dynamic compression to gallery queries
+            paths.AddRange(galleryToUse.Select(g => $"/Events/GetCompressedImage?path={g.ImagePath}&width=1000"));
         }
 
         return Json(new { success = true, images = paths });
@@ -439,7 +486,6 @@ public class EventsController(
             return BadRequest(new { success = false, message = "Invalid form data.", errors });
         }
 
-        
         PtixiakiReservations.Models.Venue venue = null;
         if (newEvent.VenueId.HasValue)
         {
@@ -452,6 +498,7 @@ public class EventsController(
 
         newEvent.OrganizerId = userId;
 
+        // Save Main Image in original quality
         if (imageFile != null && imageFile.Length > 0)
         {
             try
@@ -471,14 +518,14 @@ public class EventsController(
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error saving event image to disk.");
+                logger.LogError(ex, "Error saving original event image to disk.");
                 return BadRequest(new { success = false, message = "Error saving image." });
             }
         }
 
+        // Save Gallery Images in original quality
         if (galleryFiles != null && galleryFiles.Count > 0)
         {
-            
             string galleryFolder = Path.Combine(environment.WebRootPath, "images", "events", "gallery");
             if (!Directory.Exists(galleryFolder)) Directory.CreateDirectory(galleryFolder);
 
@@ -503,7 +550,6 @@ public class EventsController(
                 }
             }
         }
-
        
         try
         {
@@ -516,7 +562,6 @@ public class EventsController(
                 TimeSpan startTimeSpan = DateTime.TryParse(StartTime, out DateTime pst) ? pst.TimeOfDay : TimeSpan.Parse(StartTime);
                 TimeSpan endTimeSpan = DateTime.TryParse(MultiEndTime, out DateTime pet) ? pet.TimeOfDay : TimeSpan.Parse(MultiEndTime);
 
-                // If creating a brand new Master Event, save the parent shell first
                 if (!newEvent.ParentEventId.HasValue)
                 {
                     if (newEvent.StartDateTime == DateTime.MinValue && selectedDates.Any())
@@ -538,9 +583,9 @@ public class EventsController(
                         {
                             Name = newEvent.Name + " Day " + count,
                             Description = newEvent.Description,
-                            VenueId = newEvent.VenueId, // This correctly passes null if it's a master multi-day
+                            VenueId = newEvent.VenueId, 
                             EventTypeId = newEvent.EventTypeId,
-                            LayoutId = newEvent.LayoutId, // This correctly passes null if it's a master multi-day
+                            LayoutId = newEvent.LayoutId, 
                             StartDateTime = date.Date.Add(startTimeSpan),
                             EndTime = date.Date.Add(endTimeSpan),
                             ImagePath = newEvent.ImagePath,
@@ -595,6 +640,159 @@ public class EventsController(
     }
 
     [Authorize]
+    [HttpGet]
+    public async Task<IActionResult> Edit(int? id)
+    {
+        if (id == null) return NotFound();
+
+        var eventToEdit = await context.Event
+            .Include(e => e.Venue)
+            .Include(e => e.EventType)
+            .Include(e => e.Layout)
+            .FirstOrDefaultAsync(e => e.Id == id);
+
+        if (eventToEdit == null) return NotFound();
+
+        var currentUserId = userManager.GetUserId(User);
+        bool isOwner = eventToEdit.OrganizerId == currentUserId;
+        bool isAdmin = User.IsInRole("Admin");
+
+        if (!isAdmin && !isOwner)
+        {
+            return Forbid(); 
+        }
+
+        var venues = await context.Venue
+            .Where(v => v.UserId == currentUserId)
+            .Select(v => new SelectListItem { Value = v.Id.ToString(), Text = v.Name })
+            .ToListAsync();
+
+        ViewBag.VenueList = venues;
+        ViewBag.EventTypeList = new SelectList(await context.EventType.ToListAsync(), "Id", "Name", eventToEdit.EventTypeId);
+
+        var layouts = await context.Layout
+            .Where(sa => sa.VenueId == eventToEdit.VenueId)
+            .Select(sa => new SelectListItem { Value = sa.Id.ToString(), Text = sa.AreaName })
+            .ToListAsync();
+
+        ViewBag.LayoutList = layouts;
+        return View(eventToEdit);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Authorize] 
+    public async Task<IActionResult> Edit(int id, Event updatedEvent, IFormFile? imageFile, IFormFileCollection? galleryFiles)
+    {
+        if (id != updatedEvent.Id) return NotFound();
+
+        ViewBag.VenueList = await context.Venue.Select(v => new SelectListItem { Value = v.Id.ToString(), Text = v.Name }).ToListAsync();
+        ViewBag.EventTypeList = new SelectList(await context.EventType.ToListAsync(), "Id", "Name");
+        ViewBag.LayoutList = await context.Layout.Where(sa => sa.VenueId == updatedEvent.VenueId).Select(sa => new SelectListItem { Value = sa.Id.ToString(), Text = sa.AreaName }).ToListAsync();
+
+        if (ModelState.IsValid)
+        {
+            try
+            {
+                var originalEvent = await context.Event.FindAsync(id);
+                if (originalEvent == null) return NotFound();
+
+                var currentUserId = userManager.GetUserId(User);
+                bool isOwner = originalEvent.OrganizerId == currentUserId;
+                bool isAdmin = User.IsInRole("Admin");
+
+                if (!isAdmin && !isOwner)
+                {
+                    return Forbid(); 
+                }
+
+                if (imageFile != null && imageFile.Length > 0)
+                {
+                    if (!string.IsNullOrEmpty(originalEvent.ImagePath))
+                    {
+                        string oldFilePath = Path.Combine(environment.WebRootPath, originalEvent.ImagePath.TrimStart('/'));
+                        if (System.IO.File.Exists(oldFilePath)) System.IO.File.Delete(oldFilePath);
+                    }
+
+                    try
+                    {
+                        string uploadsFolder = Path.Combine(environment.WebRootPath, "images", "events");
+                        if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
+
+                        string uniqueFileName = Guid.NewGuid().ToString() + "_" + Path.GetFileName(imageFile.FileName);
+                        string filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+                        using (var fileStream = new FileStream(filePath, FileMode.Create))
+                        {
+                            await imageFile.CopyToAsync(fileStream);
+                        }
+                        originalEvent.ImagePath = "/images/events/" + uniqueFileName;
+                    }
+                    catch (Exception)
+                    {
+                        ModelState.AddModelError("", "Error saving main image.");
+                        return View(updatedEvent);
+                    }
+                }
+
+                if (galleryFiles != null && galleryFiles.Count > 0)
+                {
+                    string galleryFolder = Path.Combine(environment.WebRootPath, "images", "events", "gallery");
+                    if (!Directory.Exists(galleryFolder)) Directory.CreateDirectory(galleryFolder);
+
+                    foreach (var file in galleryFiles)
+                    {
+                        if (file.Length > 0)
+                        {
+                            string uniqueGalleryName = Guid.NewGuid().ToString() + "_" + Path.GetFileName(file.FileName);
+                            string galleryPath = Path.Combine(galleryFolder, uniqueGalleryName);
+
+                            using (var fileStream = new FileStream(galleryPath, FileMode.Create))
+                            {
+                                await file.CopyToAsync(fileStream);
+                            }
+
+                            var newGalleryImage = new EventImage 
+                            {
+                                EventId = originalEvent.Id,
+                                ImagePath = "/images/events/gallery/" + uniqueGalleryName
+                            };
+                            context.Add(newGalleryImage);
+                        }
+                    }
+                }
+
+                originalEvent.Name = updatedEvent.Name;
+                originalEvent.StartDateTime = updatedEvent.StartDateTime;
+                originalEvent.EndTime = updatedEvent.EndTime;
+                originalEvent.EventTypeId = updatedEvent.EventTypeId;
+                originalEvent.VenueId = updatedEvent.VenueId;
+                originalEvent.LayoutId = updatedEvent.LayoutId;
+
+                if (originalEvent.ParentEventId == null)
+                {
+                    originalEvent.Description = updatedEvent.Description;
+                }
+
+                await context.SaveChangesAsync();
+                TempData["SuccessMessage"] = "Event updated successfully.";
+                return RedirectToAction(nameof(VenueEvents), new { venueId = updatedEvent.VenueId });
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!EventExists(updatedEvent.Id)) return NotFound();
+                else ModelState.AddModelError("", "The event was modified by another user. Please try again.");
+            }
+            catch (Exception)
+            {
+                ModelState.AddModelError("", "An error occurred while updating the event. Please try again.");
+            }
+        }
+
+        return View(updatedEvent);
+    }
+
+    [Authorize]
     public bool CorrectDay(JsonEventModel ev, int i, int everyNum)
     {
         bool correctDay = false;
@@ -628,7 +826,7 @@ public class EventsController(
             return Unauthorized();
         }
 
-        if (dAll == true)
+        if (dAll)
         {
             var targetParentId = ev.ParentEventId ?? ev.Id;
             var relatedEvents = context.Event
@@ -709,31 +907,25 @@ public class EventsController(
                 .ThenInclude(v => v.City)
                 .AsQueryable();
 
-            // 1. Boundary Constraints
             if (!archived) 
                 query = query.Where(e => e.EndTime >= today);
 
-            // 2. Structural Hierarchy Constraints
             if (onlyMasterEvents) 
                 query = query.Where(e => e.ParentEventId == null);
 
-            // 3. Category & Temporal Filters
             if (!string.IsNullOrWhiteSpace(eventTypeId) && int.TryParse(eventTypeId, out int eventTypeIdValue))
                 query = query.Where(e => e.EventTypeId == eventTypeIdValue);
 
             if (parsedStartDate.HasValue) query = query.Where(e => e.StartDateTime >= parsedStartDate.Value);
             if (parsedEndDate.HasValue) query = query.Where(e => e.StartDateTime <= parsedEndDate.Value);
 
-            // 4. Deep Text Search (Spans parent properties and nested child environments)
             if (!string.IsNullOrWhiteSpace(searchTerm))
             {
                 string term = searchTerm.ToLower();
                 query = query.Where(e =>
-                    // Check master event directly
                     e.Name.ToLower().Contains(term) ||
                     (e.Venue != null && e.Venue.Name.ToLower().Contains(term)) ||
                     (e.Venue != null && e.Venue.City != null && e.Venue.City.Name.ToLower().Contains(term)) ||
-                    // Check all nested child events for venue/city matches
                     e.ChildEvents.Any(c => 
                         (c.Venue != null && c.Venue.Name.ToLower().Contains(term)) ||
                         (c.Venue != null && c.Venue.City != null && c.Venue.City.Name.ToLower().Contains(term))
@@ -741,7 +933,6 @@ public class EventsController(
                 );
             }
 
-            // 5. Sorting & Pagination Execution
             if (sort == "desc") query = query.OrderByDescending(e => e.EndTime);
             else query = query.OrderBy(e => e.StartDateTime);
 
@@ -756,7 +947,9 @@ public class EventsController(
                     e.Name,
                     e.StartDateTime,
                     e.EndTime,
-                    ImagePath = e.ImagePath ?? (e.ParentEvent != null ? e.ParentEvent.ImagePath : null),
+                    // Intercepting raw image paths through the dynamic compression endpoint before handing off to the frontend view
+                    ImagePath = !string.IsNullOrEmpty(e.ImagePath) ? $"/Events/GetCompressedImage?path={e.ImagePath}&width=800" 
+                        : (e.ParentEvent != null && !string.IsNullOrEmpty(e.ParentEvent.ImagePath) ? $"/Events/GetCompressedImage?path={e.ParentEvent.ImagePath}&width=800" : null),
                     VenueName = e.Venue != null ? e.Venue.Name : "No Venue",
                     CityName = (e.Venue != null && e.Venue.City != null) ? e.Venue.City.Name : "N/A",
                     parentEventId = e.ParentEventId,
@@ -1009,168 +1202,6 @@ public class EventsController(
     }
 
     [Authorize]
-    [HttpGet]
-    public async Task<IActionResult> Edit(int? id)
-    {
-        if (id == null) return NotFound();
-
-        // 1. Fetch the event
-        var eventToEdit = await context.Event
-            .Include(e => e.Venue)
-            .Include(e => e.EventType)
-            .Include(e => e.Layout)
-            .FirstOrDefaultAsync(e => e.Id == id);
-
-        if (eventToEdit == null) return NotFound();
-
-        // 2. SECURITY CHECK 
-        var currentUserId = userManager.GetUserId(User);
-        bool isOwner = eventToEdit.OrganizerId == currentUserId;
-        bool isAdmin = User.IsInRole("Admin");
-
-        if (!isAdmin && !isOwner)
-        {
-            return Forbid(); 
-        }
-
-        // 3. Load Dropdowns
-        var venues = await context.Venue
-            .Where(v => v.UserId == currentUserId)
-            .Select(v => new SelectListItem { Value = v.Id.ToString(), Text = v.Name })
-            .ToListAsync();
-
-        ViewBag.VenueList = venues;
-        ViewBag.EventTypeList = new SelectList(await context.EventType.ToListAsync(), "Id", "Name", eventToEdit.EventTypeId);
-
-        var layouts = await context.Layout
-            .Where(sa => sa.VenueId == eventToEdit.VenueId)
-            .Select(sa => new SelectListItem { Value = sa.Id.ToString(), Text = sa.AreaName })
-            .ToListAsync();
-
-        ViewBag.LayoutList = layouts;
-        return View(eventToEdit);
-    }
-
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    [Authorize] 
-    public async Task<IActionResult> Edit(int id, Event updatedEvent, IFormFile? imageFile, IFormFileCollection? galleryFiles)
-    {
-        if (id != updatedEvent.Id) return NotFound();
-
-        // Re-populate ViewBags in case we need to return the view due to an error
-        ViewBag.VenueList = await context.Venue.Select(v => new SelectListItem { Value = v.Id.ToString(), Text = v.Name }).ToListAsync();
-        ViewBag.EventTypeList = new SelectList(await context.EventType.ToListAsync(), "Id", "Name");
-        ViewBag.LayoutList = await context.Layout.Where(sa => sa.VenueId == updatedEvent.VenueId).Select(sa => new SelectListItem { Value = sa.Id.ToString(), Text = sa.AreaName }).ToListAsync();
-
-        if (ModelState.IsValid)
-        {
-            try
-            {
-                var originalEvent = await context.Event.FindAsync(id);
-                if (originalEvent == null) return NotFound();
-
-                // SECURITY CHECK: This MUST happen before making any changes!
-                var currentUserId = userManager.GetUserId(User);
-                bool isOwner = originalEvent.OrganizerId == currentUserId;
-                bool isAdmin = User.IsInRole("Admin");
-
-                if (!isAdmin && !isOwner)
-                {
-                    return Forbid(); 
-                }
-
-                // 1. MAIN POSTER LOGIC
-                if (imageFile != null && imageFile.Length > 0)
-                {
-                    if (!string.IsNullOrEmpty(originalEvent.ImagePath))
-                    {
-                        string oldFilePath = Path.Combine(environment.WebRootPath, originalEvent.ImagePath.TrimStart('/'));
-                        if (System.IO.File.Exists(oldFilePath)) System.IO.File.Delete(oldFilePath);
-                    }
-                    try
-                    {
-                        string uploadsFolder = Path.Combine(environment.WebRootPath, "images/events");
-                        if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
-
-                        string uniqueFileName = Guid.NewGuid().ToString() + "_" + Path.GetFileName(imageFile.FileName);
-                        string filePath = Path.Combine(uploadsFolder, uniqueFileName);
-
-                        using (var fileStream = new FileStream(filePath, FileMode.Create))
-                        {
-                            await imageFile.CopyToAsync(fileStream);
-                        }
-                        originalEvent.ImagePath = "/images/events/" + uniqueFileName;
-                    }
-                    catch (Exception)
-                    {
-                        ModelState.AddModelError("", "Error saving main image.");
-                        return View(updatedEvent);
-                    }
-                }
-
-                // 2. GALLERY IMAGES LOGIC
-                if (galleryFiles != null && galleryFiles.Count > 0)
-                {
-                    string galleryFolder = Path.Combine(environment.WebRootPath, "images/events/gallery");
-                    if (!Directory.Exists(galleryFolder)) Directory.CreateDirectory(galleryFolder);
-
-                    foreach (var file in galleryFiles)
-                    {
-                        if (file.Length > 0)
-                        {
-                            string uniqueGalleryName = Guid.NewGuid().ToString() + "_" + Path.GetFileName(file.FileName);
-                            string galleryPath = Path.Combine(galleryFolder, uniqueGalleryName);
-
-                            using (var fileStream = new FileStream(galleryPath, FileMode.Create))
-                            {
-                                await file.CopyToAsync(fileStream);
-                            }
-
-                            var newGalleryImage = new EventImage 
-                            {
-                                EventId = originalEvent.Id,
-                                ImagePath = "/images/events/gallery/" + uniqueGalleryName
-                            };
-                            context.Add(newGalleryImage);
-                        }
-                    }
-                }
-
-                // 3. STANDARD EVENT FIELDS
-                originalEvent.Name = updatedEvent.Name;
-                originalEvent.StartDateTime = updatedEvent.StartDateTime;
-                originalEvent.EndTime = updatedEvent.EndTime;
-                originalEvent.EventTypeId = updatedEvent.EventTypeId;
-                originalEvent.VenueId = updatedEvent.VenueId;
-                originalEvent.LayoutId = updatedEvent.LayoutId;
-
-                // 4. PARENT-ONLY FIELD ENFORCEMENT
-                if (originalEvent.ParentEventId == null)
-                {
-                    originalEvent.Description = updatedEvent.Description;
-                }
-
-                // 5. SAVE CHANGES (Only happens if the security check passed)
-                await context.SaveChangesAsync();
-                TempData["SuccessMessage"] = "Event updated successfully.";
-                return RedirectToAction(nameof(VenueEvents), new { venueId = updatedEvent.VenueId });
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!EventExists(updatedEvent.Id)) return NotFound();
-                else ModelState.AddModelError("", "The event was modified by another user. Please try again.");
-            }
-            catch (Exception)
-            {
-                ModelState.AddModelError("", "An error occurred while updating the event. Please try again.");
-            }
-        }
-
-        return View(updatedEvent);
-    }
-
-    [Authorize]
     [HttpPost]
     public async Task<IActionResult> EditSubSelectedName(int id, string NewName)
     {
@@ -1402,7 +1433,7 @@ public class EventsController(
                 endTime = e.EndTime,
                 venueName = e.Venue.Name,
                 cityName = e.Venue.City != null ? e.Venue.City.Name : "N/A",
-                imagePath = e.ImagePath,
+                imagePath = !string.IsNullOrEmpty(e.ImagePath) ? $"/Events/GetCompressedImage?path={e.ImagePath}&width=800" : null,
                 eventType = e.EventType != null ? e.EventType.Name : "Default",
                 distinctCities = e.ChildEvents
                     .Where(c => c.Venue != null && c.Venue.City != null)
@@ -1434,8 +1465,6 @@ public class EventsController(
         return View();
     }
 
-    
-
     [AllowAnonymous]
     [HttpGet]
     public async Task<IActionResult> getRecentEvents()
@@ -1451,7 +1480,7 @@ public class EventsController(
                 endTime = e.EndTime,
                 venueName = e.Venue.Name,
                 cityName = e.Venue.City != null ? e.Venue.City.Name : "N/A",
-                imagePath = e.ImagePath,
+                imagePath = !string.IsNullOrEmpty(e.ImagePath) ? $"/Events/GetCompressedImage?path={e.ImagePath}&width=800" : null,
                 eventType = e.EventType != null ? e.EventType.Name : "Default",
                 distinctCities = e.ChildEvents
                     .Where(c => c.Venue != null && c.Venue.City != null)
