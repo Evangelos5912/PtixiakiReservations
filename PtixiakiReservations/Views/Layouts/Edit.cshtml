@@ -5,13 +5,9 @@
     ViewData["Title"] = "Edit Layout";
 }
 
-<!-- ============================================================== -->
-<!-- MAIN APPLICATION WORKSPACE CONTAINER                           -->
-<!-- ============================================================== -->
 <div class="container mx-auto bg-gradient-to-br from-gray-50 to-blue-50/50 min-h-screen py-4 sm:py-8 px-2 sm:px-6 lg:px-8">
     <div class="w-full max-w-screen-2xl mx-auto">
         
-        <!-- Contextual Page Header -->
         <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden mb-4 sm:mb-8">
             <div class="bg-gradient-to-r from-blue-600 to-indigo-700 px-4 sm:px-8 py-6 sm:py-8">
                 <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -34,12 +30,8 @@
             </div>
         </div>
 
-        <!-- ============================================================== -->
-        <!-- TABBED EDITOR WORKSPACE                                        -->
-        <!-- ============================================================== -->
         <div class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
             
-            <!-- View Navigation Interface -->
             <div class="border-b border-gray-200 bg-gray-50/50 overflow-x-auto">
                 <nav class="flex px-2 sm:px-4" aria-label="Tabs">
                     <button id="tab-details" class="tab-button flex items-center border-indigo-500 text-indigo-600 py-4 px-4 sm:px-6 border-b-2 font-bold text-sm transition-colors" aria-current="page">
@@ -55,9 +47,6 @@
 
             <div class="p-4 sm:p-8">
                 
-                <!-- ============================================================== -->
-                <!-- TAB 1: METADATA FORM VIEW                                      -->
-                <!-- ============================================================== -->
                 <div id="details-content" class="tab-content">
                     <form asp-action="Edit" id="editLayoutForm" class="space-y-6 max-w-2xl mx-auto">
                         @Html.AntiForgeryToken()
@@ -100,19 +89,13 @@
                     </form>
                 </div>
 
-                <!-- ============================================================== -->
-                <!-- TAB 2: INTERACTIVE MAPPING VIEWPORT                            -->
-                <!-- ============================================================== -->
                 <div id="seats-content" class="tab-content hidden">
                     <div id="seat-status" class="hidden mb-4 font-bold text-sm transition-all duration-300 shadow-sm"></div>
 
-                    <!-- Primary Control Toolbar -->
                     <div class="bg-white rounded-t-xl border border-gray-200 p-4 shadow-sm relative z-20">
                         
-                        <!-- Mobile Responsive Container: Uses 'order' to place Action controls ON TOP for mobile -->
                         <div class="flex flex-col xl:flex-row gap-4 w-full items-start xl:items-center justify-between">
                             
-                            <!-- 1. Layout Action Controls (Group, Ungroup, Save, Delete) -->
                             <div class="order-1 xl:order-2 flex flex-wrap gap-2 w-full xl:w-auto justify-start xl:justify-end">
                                 <button type="button" onclick="groupSelectedItems()" class="flex items-center px-4 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-lg shadow-sm text-sm font-bold transition-all flex-1 sm:flex-none justify-center">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
@@ -131,7 +114,6 @@
                                 </button>
                             </div>
 
-                            <!-- 2. Entity Addition Controls (Categories: Seat, Table, Scene) -->
                             <div class="order-2 xl:order-1 flex flex-wrap gap-2 w-full xl:w-auto justify-start border-t xl:border-t-0 border-gray-100 pt-4 xl:pt-0">
                                 <span class="w-full xl:hidden text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Add Elements:</span>
                                 <button type="button" id="show-seat" class="px-4 py-2 text-sm font-bold text-blue-700 bg-blue-50 border border-blue-200 hover:bg-blue-600 hover:text-white rounded-lg shadow-sm transition-all flex-1 sm:flex-none">Seats</button>
@@ -140,36 +122,46 @@
                             </div>
                         </div>
 
-                        <!-- 3. Secondary Object Creation Toolbars (Specific Options) -->
                         <div class="order-3 w-full mt-4 bg-gray-50 rounded-lg p-3 border border-gray-200 shadow-inner min-h-[60px]">
-                            <!-- Instruction Placeholder -->
                             <div id="toolbar-instruction" class="text-sm text-gray-500 italic flex items-center justify-center h-full w-full">
-                                Select a category above to view draggable components.
+                                Select a category above to view component configurations.
                             </div>
-                            <!-- Sub-Menus -->
-                            <div class="AddContainer w-full hidden flex flex-wrap gap-2 justify-start" id="seatContainer">
+                            
+                            <div class="AddContainer w-full hidden flex flex-wrap items-center gap-2 justify-start" id="seatContainer">
+                                
+                                <div class="flex items-center bg-white border border-gray-300 rounded-md shadow-sm overflow-hidden h-9">
+                                    <button type="button" id="toggle-click-add" class="px-3 h-full text-sm font-bold text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-1.5 border-r border-gray-300 outline-none focus:bg-gray-50">
+                                        <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"></path></svg>
+                                        Click-to-Add: <span id="click-add-status" class="text-red-500 font-extrabold ml-1">OFF</span>
+                                    </button>
+                                    <input type="text" id="click-add-prefix" value="S" placeholder="Prefix" class="w-16 h-full text-sm px-2 outline-none focus:bg-indigo-50 font-bold text-gray-700" title="Seat Prefix">
+                                    <div class="w-px h-5 bg-gray-300"></div>
+                                    <input type="number" id="click-add-start" value="1" min="1" class="w-16 h-full text-sm px-2 outline-none focus:bg-indigo-50 font-bold text-gray-700" title="Start Number">
+                                </div>
+                                <div class="w-px h-6 bg-gray-300 mx-1"></div>
+
                                 <button type="button" id="add-seat-single" draggable="true" class="px-4 py-1.5 text-sm font-bold text-gray-700 bg-white border border-gray-300 hover:border-blue-400 hover:text-blue-600 rounded-md shadow-sm cursor-grab active:cursor-grabbing">Single</button>
-                                <button type="button" id="add-seat-hline" draggable="true" class="px-4 py-1.5 text-sm font-bold text-gray-700 bg-white border border-gray-300 hover:border-blue-400 hover:text-blue-600 rounded-md shadow-sm cursor-grab active:cursor-grabbing">Horizontal Row</button>
-                                <button type="button" id="add-seat-vline" draggable="true" class="px-4 py-1.5 text-sm font-bold text-gray-700 bg-white border border-gray-300 hover:border-blue-400 hover:text-blue-600 rounded-md shadow-sm cursor-grab active:cursor-grabbing">Vertical Row</button>
-                                <button type="button" id="add-seat-grid" draggable="true" class="px-4 py-1.5 text-sm font-bold text-gray-700 bg-white border border-gray-300 hover:border-blue-400 hover:text-blue-600 rounded-md shadow-sm cursor-grab active:cursor-grabbing">Grid</button>
+                                <button type="button" id="add-seat-hline" class="px-4 py-1.5 text-sm font-bold text-gray-700 bg-white border border-gray-300 hover:border-blue-400 hover:bg-blue-50 hover:text-blue-600 rounded-md shadow-sm transition-colors cursor-pointer">Horizontal Row</button>
+                                <button type="button" id="add-seat-vline" class="px-4 py-1.5 text-sm font-bold text-gray-700 bg-white border border-gray-300 hover:border-blue-400 hover:bg-blue-50 hover:text-blue-600 rounded-md shadow-sm transition-colors cursor-pointer">Vertical Row</button>
+                                <button type="button" id="add-seat-grid" class="px-4 py-1.5 text-sm font-bold text-gray-700 bg-white border border-gray-300 hover:border-blue-400 hover:bg-blue-50 hover:text-blue-600 rounded-md shadow-sm transition-colors cursor-pointer">Grid</button>
                             </div>
+                            
                             <div class="AddContainer w-full hidden flex flex-wrap gap-2 justify-start" id="tableContainer">
                                 <button type="button" id="add-table-square" draggable="true" class="px-4 py-1.5 text-sm font-bold text-gray-700 bg-white border border-gray-300 hover:border-blue-400 hover:text-blue-600 rounded-md shadow-sm cursor-grab active:cursor-grabbing">Square Table</button>
                                 <button type="button" id="add-table-circle" draggable="true" class="px-4 py-1.5 text-sm font-bold text-gray-700 bg-white border border-gray-300 hover:border-blue-400 hover:text-blue-600 rounded-md shadow-sm cursor-grab active:cursor-grabbing">Circular Table</button>
                                 <button type="button" id="add-table-triangle" draggable="true" class="px-4 py-1.5 text-sm font-bold text-gray-700 bg-white border border-gray-300 hover:border-blue-400 hover:text-blue-600 rounded-md shadow-sm cursor-grab active:cursor-grabbing">Triangular Table</button>
                             </div>
+                            
                             <div class="AddContainer w-full hidden flex flex-wrap gap-2 justify-start" id="sceneContainer">
                                 <button type="button" id="add-scene-stage" draggable="true" class="px-4 py-1.5 text-sm font-bold text-gray-700 bg-white border border-gray-300 hover:border-blue-400 hover:text-blue-600 rounded-md shadow-sm cursor-grab active:cursor-grabbing">Performance Stage</button>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Layout Rendering Canvas -->
                     <div class="relative mt-[-1px] z-10">
                         <div class="bg-gray-100 rounded-b-xl border border-gray-200 p-0 w-full overflow-hidden relative shadow-inner" style="height: 65vh; min-height: 500px; max-height: 900px;">
                             
-                            <!-- Internal Canvas Viewport Controls -->
-                            <div class="absolute bottom-4 right-4 z-50 flex items-center gap-1 bg-white/90 backdrop-blur p-1.5 rounded-lg shadow-md border border-gray-200">
+                            <div class="absolute bottom-4 right-4 z-[110] flex items-center gap-1 bg-white/90 backdrop-blur p-1.5 rounded-lg shadow-md border border-gray-200">
                                 <button type="button" id="zoom-out" class="p-1.5 hover:bg-gray-100 rounded text-gray-700 transition-colors" title="Zoom Out">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM13 10H7"/></svg>
                                 </button>
@@ -183,15 +175,14 @@
                                 </button>
                             </div>
 
-                            <div id="seat-map" class="relative w-full h-full overflow-auto select-none touch-pan-x touch-pan-y shadow-inner">
-                                <div id="zoom-container" class="absolute top-0 left-0 origin-top-left transition-transform duration-75 bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:20px_20px]" style="width: 2500px; height: 2500px;">
+                            <div id="seat-map" class="relative w-full h-full overflow-auto select-none touch-pan-x touch-pan-y shadow-inner z-[90]">
+                                <div id="zoom-container" class="absolute top-0 left-0 origin-top-left transition-transform duration-75 bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:20px_20px]" style="width: 2500px; height: 2500px; z-index: 10;">
                                     <div id="selection-box" class="selection-box"></div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Dynamic Properties Configuration Panel -->
                     <div class="mt-4 w-full relative z-30">
                         <div class="hidden flex flex-col bg-white shadow-xl border-t-4 border-indigo-500 rounded-xl p-4 sm:p-6 w-full gap-4 transition-all duration-300 animate-fade-in-up" id="optionsPanel"></div>
                     </div>
@@ -202,7 +193,6 @@
 </div>
 
 <style>
-    /* Bounding box used for Shift+Click Marquee Selection */
     .selection-box {
         position: absolute;
         border: 2px dashed #4f46e5; 
@@ -212,7 +202,6 @@
         display: none;
     }
     
-    /* Smooth entrance animation for the properties options panel */
     @@keyframes fadeInUp {
         from { opacity: 0; transform: translateY(10px); }
         to { opacity: 1; transform: translateY(0); }
@@ -224,7 +213,6 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // --- MEMORY STATE TRACKERS ---
         let currentSeats = [];
         let currentShapes = [];
         let currentGroups = [];
@@ -240,20 +228,205 @@
         let currentScale = 1;
         const zoomLevelText = document.getElementById('zoom-level');
 
-        /** 
-         * Applies hardware-accelerated CSS scaling to the internal mapping container.
-         * @@param {number} scale - Absolute float representing magnification ratio.
-         */
+        let isClickToAddMode = false;
+        const toggleClickAddBtn = document.getElementById('toggle-click-add');
+        const clickAddStatus = document.getElementById('click-add-status');
+        const prefixInput = document.getElementById('click-add-prefix');
+        const startInput = document.getElementById('click-add-start');
+
+        function getUniqueItemName(prefix, startNum) {
+            let num = startNum;
+            let nameStr = `${prefix}${num}`;
+            while (currentSeats.some(s => s.name === nameStr) || currentShapes.some(s => s.name === nameStr)) {
+                num++;
+                nameStr = `${prefix}${num}`;
+            }
+            return { name: nameStr, nextNum: num + 1 };
+        }
+
+        toggleClickAddBtn.addEventListener('click', () => {
+            isClickToAddMode = !isClickToAddMode;
+            if(isClickToAddMode) {
+                clickAddStatus.textContent = "ON";
+                clickAddStatus.classList.replace('text-red-500', 'text-green-600');
+                toggleClickAddBtn.classList.add('ring-2', 'ring-green-400', 'border-green-400');
+                seatMap.style.cursor = 'crosshair'; 
+            } else {
+                turnOffClickToAdd();
+            }
+        });
+
+        function turnOffClickToAdd() {
+            isClickToAddMode = false;
+            if(clickAddStatus) {
+                clickAddStatus.textContent = "OFF";
+                clickAddStatus.classList.replace('text-green-600', 'text-red-500');
+                toggleClickAddBtn.classList.remove('ring-2', 'ring-green-400', 'border-green-400');
+                seatMap.style.cursor = 'default';
+            }
+        }
+
+        zoomContainer.addEventListener('click', function(e) {
+            if (!isClickToAddMode) return;
+            
+            if (e.target === zoomContainer || e.target === seatMap) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                const prefix = prefixInput.value.trim();
+                let currentNum = parseInt(startInput.value) || 1;
+                
+                const u = getUniqueItemName(prefix, currentNum);
+                const seatName = u.name;
+
+                const rect = zoomContainer.getBoundingClientRect();
+                const dropX = Math.round(((e.clientX - rect.left) / currentScale) / 10) * 10;
+                const dropY = Math.round(((e.clientY - rect.top) / currentScale) / 10) * 10;
+
+                currentSeats.push({
+                    id: `temp-${Date.now()}`,
+                    name: seatName,
+                    x: dropX,
+                    y: dropY,
+                    available: true
+                });
+
+                startInput.value = u.nextNum;
+                renderAll();
+            }
+        });
+
+        function findFreeSpace(reqWidth, reqHeight) {
+            const gap = 40;
+            const stepX = 50;
+            const stepY = 50;
+
+            const allItems = currentSeats.map(s => ({x: s.x, y: s.y, w: 60, h: 60}))
+                .concat(currentShapes.map(s => ({x: s.x, y: s.y, w: s.width || 60, h: s.height || 60})));
+
+            if (allItems.length === 0) return { x: 50, y: 50 };
+
+            let maxX = 50, maxY = 50;
+            allItems.forEach(i => {
+                if (i.x + i.w > maxX) maxX = i.x + i.w;
+                if (i.y + i.h > maxY) maxY = i.y + i.h;
+            });
+
+            for (let y = 50; y <= maxY + reqHeight + gap; y += stepY) {
+                for (let x = 50; x <= maxX + reqWidth + gap; x += stepX) {
+                    let isFree = true;
+                    for (let i = 0; i < allItems.length; i++) {
+                        const item = allItems[i];
+                        if (x < item.x + item.w + gap &&
+                            x + reqWidth + gap > item.x &&
+                            y < item.y + item.h + gap &&
+                            y + reqHeight + gap > item.y) {
+                            isFree = false;
+                            break;
+                        }
+                    }
+                    if (isFree) return { x, y };
+                }
+            }
+            return { x: 50, y: maxY + gap };
+        }
+
+        document.getElementById('add-seat-hline').addEventListener('click', () => {
+            const countStr = prompt("How many seats in this horizontal row?", "5");
+            if (!countStr) return;
+            const count = parseInt(countStr);
+            if (!count || count <= 0) return;
+            const prefix = prompt("Seat Prefix:", "R1-");
+            if (prefix === null) return;
+
+            const reqWidth = count * 70;
+            const freePos = findFreeSpace(reqWidth, 60);
+            
+            const newSeats = [];
+            let currentNum = 1;
+            for (let i = 0; i < count; i++) {
+                const u = getUniqueItemName(prefix, currentNum);
+                newSeats.push({ id: `temp-${Date.now()}-${i}`, name: u.name, x: freePos.x + (i * 70), y: freePos.y, available: true });
+                currentNum = u.nextNum;
+            }
+            createAndInjectGroup(newSeats, 'Horizontal Row');
+        });
+
+        document.getElementById('add-seat-vline').addEventListener('click', () => {
+            const countStr = prompt("How many seats in this vertical row?", "5");
+            if (!countStr) return;
+            const count = parseInt(countStr);
+            if (!count || count <= 0) return;
+            const prefix = prompt("Seat Prefix:", "C1-");
+            if (prefix === null) return;
+
+            const reqHeight = count * 70;
+            const freePos = findFreeSpace(60, reqHeight);
+            
+            const newSeats = [];
+            let currentNum = 1;
+            for (let i = 0; i < count; i++) {
+                const u = getUniqueItemName(prefix, currentNum);
+                newSeats.push({ id: `temp-${Date.now()}-${i}`, name: u.name, x: freePos.x, y: freePos.y + (i * 70), available: true });
+                currentNum = u.nextNum;
+            }
+            createAndInjectGroup(newSeats, 'Vertical Row');
+        });
+
+        document.getElementById('add-seat-grid').addEventListener('click', () => {
+            const input = prompt("Enter grid dimensions (Rows x Columns), e.g. 4x5", "4x5");
+            if (!input) return;
+            const parts = input.toLowerCase().split('x');
+            if (parts.length !== 2) return alert("Invalid format. Please use RowsxColumns (e.g. 4x5).");
+            const rows = parseInt(parts[0].trim());
+            const cols = parseInt(parts[1].trim());
+            if (!rows || !cols || rows <= 0 || cols <= 0) return alert("Invalid dimensions provided.");
+            
+            const prefix = prompt("Seat Prefix:", "G-");
+            if (prefix === null) return;
+
+            const reqWidth = cols * 70;
+            const reqHeight = rows * 70;
+            const freePos = findFreeSpace(reqWidth, reqHeight);
+            
+            const newSeats = [];
+            let currentNum = 1;
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    const u = getUniqueItemName(prefix, currentNum);
+                    newSeats.push({ id: `temp-${Date.now()}-${r}-${c}`, name: u.name, x: freePos.x + (c * 70), y: freePos.y + (r * 70), available: true });
+                    currentNum = u.nextNum;
+                }
+            }
+            createAndInjectGroup(newSeats, 'Grid');
+        });
+
+        function createAndInjectGroup(newSeatsArray, groupTitlePrefix) {
+            currentSeats.push(...newSeatsArray);
+            const targetGroupId = `group-temp-${Date.now()}`;
+            currentGroups.push({
+                id: targetGroupId,
+                name: `${groupTitlePrefix} ${currentGroups.length + 1}`,
+                x: Math.min(...newSeatsArray.map(s => s.x)),
+                y: Math.min(...newSeatsArray.map(s => s.y))
+            });
+
+            newSeatsArray.forEach(s => s.groupId = targetGroupId);
+            updateStatus(`Generated ${newSeatsArray.length} items.`, "success");
+            
+            selectedItems.clear();
+            currentSeats.filter(s => s.groupId === targetGroupId).forEach(s => selectedItems.add(s.name));
+            
+            renderAll();
+            showOptions({ id: targetGroupId }, 'group');
+        }
+
         function setZoom(scale) {
             currentScale = Math.max(0.1, Math.min(scale, 2.5)); 
             zoomContainer.style.transform = `scale(${currentScale})`;
             zoomLevelText.textContent = `${Math.round(currentScale * 100)}%`;
         }
 
-        /** 
-         * Evaluates current coordinate structures determining optimum viewport bounds,
-         * mitigating clipping errors and centralizing content distribution automatically.
-         */
         function fitLayoutToViewport() {
             const allItems = currentSeats.concat(currentShapes).concat(currentGroups);
             if (allItems.length === 0) {
@@ -297,7 +470,6 @@
             }, 100);
         }
 
-        // --- ZOOM BINDINGS ---
         document.getElementById('zoom-in').addEventListener('click', () => setZoom(currentScale + 0.1));
         document.getElementById('zoom-out').addEventListener('click', () => setZoom(currentScale - 0.1));
         document.getElementById('zoom-reset').addEventListener('click', () => setZoom(1));
@@ -309,15 +481,11 @@
             }
         }, { passive: false });
 
-        /** Removes interactive HTML panel content restricting visual occlusion. */
         window.hideAllOptions = function() {
             optionsPanel.classList.add("hidden");
             optionsPanel.innerHTML = "";
         };
 
-        /** 
-         * Displays contextual notification banners resolving user action feedback loops.
-         */
         window.updateStatus = function(message, type = "info") {
             const statusBar = document.getElementById('seat-status');
             if (!statusBar) return;
@@ -333,7 +501,6 @@
             if(type === 'success') setTimeout(() => statusBar.classList.add("hidden"), 3000);
         };
 
-        /** Synchronizes current visual DOM state classes against memory tracked selection sets. */
         function updateSelectionVisuals() {
             zoomContainer.querySelectorAll('div[data-id]:not([data-type="shape"]):not([data-type="group"])').forEach(el => {
                 if (selectedItems.has(el.dataset.name)) {
@@ -370,18 +537,18 @@
             });
         }
 
-        // --- SUB-MENU TOGGLES ---
         function toggleCategory(categoryId) {
             instructionBar.classList.add("hidden");
             document.querySelectorAll('.AddContainer').forEach(con => con.classList.add("hidden"));
             document.getElementById(categoryId).classList.remove('hidden');
+
+            if (categoryId !== 'seatContainer') turnOffClickToAdd();
         }
+
         document.getElementById('show-seat').addEventListener('click', () => toggleCategory('seatContainer'));
         document.getElementById('show-table').addEventListener('click', () => toggleCategory('tableContainer'));
         document.getElementById('show-scene').addEventListener('click', () => toggleCategory('sceneContainer'));
 
-        // --- GENERATOR ALGORITHMS ---
-        
         function generateSeatsAroundTable(shapeData, seatCount, prefix) {
             if (seatCount <= 0 || seatCount > 50) return updateStatus("Please enter a valid number (1-50).", "warning");
 
@@ -397,15 +564,18 @@
             if (ry < requiredMinRadius) ry = requiredMinRadius;
 
             const newSeats = [];
+            let currentNum = 1;
             for (let i = 0; i < seatCount; i++) {
                 const angle = (i * 2 * Math.PI) / seatCount;
+                const u = getUniqueItemName(prefix, currentNum);
                 newSeats.push({
                     id: `temp-${Date.now()}-${i}`,
-                    name: `${prefix}${i + 1}`,
+                    name: u.name,
                     x: Math.round((cx + (rx * Math.cos(angle)) - (seatW / 2)) / 10) * 10,
                     y: Math.round((cy + (ry * Math.sin(angle)) - (seatH / 2)) / 10) * 10,
                     available: true
                 });
+                currentNum = u.nextNum;
             }
             
             injectGeneratedSetAndGroup(shapeData, newSeats, 'Table Group');
@@ -428,7 +598,7 @@
             if (baseRx < reqRadius) baseRx = reqRadius;
             if (baseRy < reqRadius) baseRy = reqRadius;
 
-            const newSeats = []; let counter = 0;
+            const newSeats = []; let counter = 0; let currentNum = 1;
             for (let r = 0; r < rowCount; r++) {
                 if (seatsPerRow[r] <= 0) continue;
                 for (let i = 0; i < seatsPerRow[r]; i++) {
@@ -436,13 +606,15 @@
                         ? (i * 2 * Math.PI) / seatsPerRow[r] 
                         : (seatsPerRow[r] === 1 ? Math.PI / 2 : 0.1 * Math.PI + (i * (0.8 * Math.PI) / (seatsPerRow[r] - 1)));
                         
+                    const u = getUniqueItemName(prefix, currentNum);    
                     newSeats.push({
                         id: `temp-${Date.now()}-${counter}`,
-                        name: `${prefix}${counter + 1}`,
+                        name: u.name,
                         x: Math.round((cx + ((baseRx + (r * rowSpacing)) * Math.cos(angle)) - (seatW / 2)) / 10) * 10,
                         y: Math.round((cy + ((baseRy + (r * rowSpacing)) * Math.sin(angle)) - (seatH / 2)) / 10) * 10,
                         available: true
                     });
+                    currentNum = u.nextNum;
                     counter++;
                 }
             }
@@ -475,7 +647,6 @@
             showOptions(parentShape, 'shape');
         }
 
-        /** Dispatches transactional remote delete endpoints. */
         window.removeSelectedItems = async function() {
             if (selectedItems.size === 0) return updateStatus("No items selected.", "warning");
 
@@ -508,7 +679,6 @@
             }
         };
 
-        /** Builds the dynamic properties configuration interface for the selected item. */
         window.showOptions = function(data, type) {
             optionsPanel.classList.remove("hidden");
             const isTemp = String(data.id).startsWith('temp-') || String(data.id).startsWith('group-temp-');
@@ -539,17 +709,16 @@
                     const prefix = document.getElementById('opt-prefix').value;
                     let currentNum = parseInt(document.getElementById('opt-start-num').value) || 1;
                     
-                    // SECURITY FIX: Only filter and map over 'currentSeats'. 
-                    // This explicitly prevents the Group Renamer from renaming the parent Stage/Table shape.
                     const children = currentSeats.filter(s => s.groupId === data.id);
                     
-                    // Sorting structurally by visual Y then X coordinates so seat arrays follow a logical top-left to bottom-right numbering
                     children.sort((a, b) => Math.abs(a.y - b.y) < 15 ? a.x - b.x : a.y - b.y);
 
                     const updatePromises = [];
                     children.forEach(child => {
                         const oldName = child.name;
-                        child.name = prefix + currentNum++;
+                        const u = getUniqueItemName(prefix, currentNum);
+                        child.name = u.name;
+                        currentNum = u.nextNum;
                         
                         if (selectedItems.has(oldName)) {
                             selectedItems.delete(oldName);
@@ -578,9 +747,6 @@
                 return;
             }
 
-            // ROBUST STAGE EVALUATION FIX: 
-            // Evaluates identity via string matching on the name, exact color mapping from the DB, 
-            // AND a physical dimensional heuristic fallback ensuring massive rectangular blocks are treated as stages.
             const isStageNode = type === 'shape' && (
                 (data.name && data.name.toLowerCase().includes('stage')) || 
                 (data.backgroundColor && data.backgroundColor.toUpperCase() === '#4B5563') || 
@@ -690,21 +856,12 @@
             });
         };
 
-        // --- GROUPING LOGIC ---
-        
-        /** 
-         * Automatically merges multiple distinct entities OR entirely separate groups into one massive super-group.
-         */
         window.groupSelectedItems = function() {
             if (selectedItems.size < 2) return updateStatus("Select at least 2 items to group.", "warning");
 
-            // Extract exact entities highlighted by the user
             const explicitItems = currentSeats.concat(currentShapes).filter(s => selectedItems.has(s.name));
-
-            // Extract ID tags of any preexisting groups these entities belong to
             const existingGroupIds = new Set(explicitItems.map(s => s.groupId).filter(id => id));
 
-            // Assemble a comprehensive list of ALL entities attached to those groups, plus the loose selected ones
             let allItemsToGroup = new Set([...explicitItems]);
             if (existingGroupIds.size > 0) {
                 currentSeats.concat(currentShapes).forEach(s => {
@@ -714,18 +871,14 @@
 
             const itemsArray = Array.from(allItemsToGroup);
 
-            // Establish universal bounding dimensions for the new super-group
             const newGroupId = `group-temp-${Date.now()}`;
             const minX = Math.min(...itemsArray.map(s => s.x));
             const minY = Math.min(...itemsArray.map(s => s.y));
 
-            // Purge the old redundant groups from the tracking array
             currentGroups = currentGroups.filter(g => !existingGroupIds.has(g.id));
 
-            // Inject the new super-group
             currentGroups.push({ id: newGroupId, name: `Group ${currentGroups.length + 1}`, x: minX, y: minY });
 
-            // Ensure all combined entities point to the new structural parent
             selectedItems.clear();
             itemsArray.forEach(s => { s.groupId = newGroupId; selectedItems.add(s.name); });
 
@@ -746,7 +899,6 @@
             renderAll();
         };
 
-        // --- DRAG & DROP TOOLBAR BINDING ---
         document.querySelectorAll('[draggable="true"]').forEach(btn => {
             btn.addEventListener('dragstart', (e) => {
                 e.dataTransfer.setData('itemType', btn.id.replace('add-table-', '').replace('add-scene-', '').replace('add-seat-', ''));
@@ -763,19 +915,20 @@
             const dropY = Math.round(((e.clientY - rect.top) / currentScale) / 10) * 10;
 
             if (itemType === 'single') {
-                currentSeats.push({ id: `temp-${Date.now()}`, name: `S${currentSeats.length + 1}`, x: dropX, y: dropY, available: true });
+                const u = getUniqueItemName('S', 1);
+                currentSeats.push({ id: `temp-${Date.now()}`, name: u.name, x: dropX, y: dropY, available: true });
             } else if (['square', 'circle', 'triangle', 'stage'].includes(itemType)) {
                 let shapeType = 'rectangle'; let w = 100; let h = 100; let pfx = "Table"; let bg = '#D1D5DB';
                 if (itemType === 'circle') shapeType = 'ellipse';
                 if (itemType === 'triangle') shapeType = 'triangle';
                 if (itemType === 'stage') { w = 300; h = 150; pfx = "Stage"; bg = '#4B5563'; }
                 
-                currentShapes.push({ id: `temp-${Date.now()}`, name: `${pfx} ${currentShapes.length + 1}`, x: dropX, y: dropY, width: w, height: h, shapeType: shapeType, backgroundColor: bg });
+                const u = getUniqueItemName(pfx + ' ', 1);
+                currentShapes.push({ id: `temp-${Date.now()}`, name: u.name, x: dropX, y: dropY, width: w, height: h, shapeType: shapeType, backgroundColor: bg });
             }
             renderAll();
         });
 
-        // --- RENDERING PIPELINE ---
         function renderAll() {
             zoomContainer.querySelectorAll('div[data-id]').forEach(el => el.remove());
 
@@ -814,7 +967,7 @@
             currentShapes.forEach(shape => {
                 const el = document.createElement('div');
                 el.dataset.type = "shape"; el.dataset.id = shape.id; el.dataset.name = shape.name; el.title = shape.name; 
-                el.className = 'absolute flex flex-col items-center justify-center text-sm font-medium group z-10 hover:z-20 select-none';
+                el.className = 'absolute flex flex-col items-center justify-center text-sm font-medium group z-[10] hover:z-[20] select-none';
                 el.style.left = `${shape.x}px`; el.style.top = `${shape.y}px`; el.style.width = `${shape.width}px`; el.style.height = `${shape.height}px`;
 
                 const visualBg = document.createElement('div');
@@ -841,7 +994,6 @@
             });
         }
 
-        // --- INTERACTION LOGIC (DRAG & SELECT) ---
         function setupDragAndSelect(element, dataObj, type) {
             let isDragging = false; let startX, startY;
 
@@ -852,11 +1004,19 @@
                 const isGroup = (type === 'group');
                 const groupId = isGroup ? dataObj.id : dataObj.groupId;
 
-                // Clicking an ungrouped object clears other selections, unless holding shift
                 if (!e.shiftKey && (!isGroup && (!selectedItems.has(dataObj.name) || !groupId))) selectedItems.clear();
 
                 if (groupId) currentSeats.concat(currentShapes).forEach(s => { if (s.groupId === groupId) selectedItems.add(s.name); });
                 else selectedItems.add(dataObj.name);
+
+                // --- CRITICAL FIX: Ensure all partially selected groups lock together before drag begins
+                const activeGroupIds = new Set();
+                currentSeats.concat(currentShapes).forEach(s => {
+                    if (selectedItems.has(s.name) && s.groupId) activeGroupIds.add(s.groupId);
+                });
+                currentSeats.concat(currentShapes).forEach(s => {
+                    if (s.groupId && activeGroupIds.has(s.groupId)) selectedItems.add(s.name);
+                });
 
                 updateSelectionVisuals(); showOptions(dataObj, isGroup ? 'group' : type);
 
@@ -866,10 +1026,10 @@
                     if (selectedItems.has(s.name)) {
                         startingPositions.set(s.name, { x: s.x, y: s.y });
                         const childEl = document.querySelector(`[data-name="${s.name}"]`);
-                        if(childEl) childEl.classList.add('opacity-70', 'z-50');
+                        if(childEl) childEl.classList.add('opacity-70', 'z-[100]');
                     }
                 });
-                if (isGroup) element.classList.add('opacity-70', 'z-50');
+                if (isGroup) element.classList.add('opacity-70', 'z-[100]');
 
                 const onMouseMove = function(moveEvent) {
                     const dx = (moveEvent.clientX - startX) / currentScale; const dy = (moveEvent.clientY - startY) / currentScale;
@@ -906,10 +1066,10 @@
                     currentSeats.concat(currentShapes).forEach(s => {
                         if (selectedItems.has(s.name)) {
                             const childEl = document.querySelector(`[data-name="${s.name}"]`);
-                            if(childEl) childEl.classList.remove('opacity-70', 'z-50');
+                            if(childEl) childEl.classList.remove('opacity-70', 'z-[100]');
                         }
                     });
-                    if (isGroup) element.classList.remove('opacity-70', 'z-50');
+                    if (isGroup) element.classList.remove('opacity-70', 'z-[100]');
 
                     if (isDragging) {
                         currentSeats.concat(currentShapes).forEach(s => {
@@ -921,7 +1081,6 @@
                         });
                         showOptions(dataObj, isGroup ? 'group' : type); renderAll();
                     } else if (!eUp.shiftKey && !isGroup) {
-                        // Crucial fix: Do not unselect the rest of the group if we simply clicked on a member without dragging
                         if (dataObj.groupId) {
                             selectedItems.clear();
                             currentSeats.concat(currentShapes).forEach(s => { if (s.groupId === dataObj.groupId) selectedItems.add(s.name); });
@@ -978,13 +1137,13 @@
             });
         }
 
-        // --- MARQUEE BOX SELECTION ---
         const selectionBox = document.getElementById('selection-box');
         let isBoxSelecting = false; let startBoxX, startBoxY;
 
         seatMap.addEventListener('mousedown', function(e) {
+            if (isClickToAddMode) return;
+
             if (e.target !== seatMap && e.target !== zoomContainer) return; 
-            if (!e.shiftKey) { selectedItems.clear(); updateSelectionVisuals(); }
 
             hideAllOptions(); isBoxSelecting = true;
             const rect = zoomContainer.getBoundingClientRect();
@@ -1001,14 +1160,36 @@
                 selectionBox.style.left = `${left}px`; selectionBox.style.top = `${top}px`;
                 selectionBox.style.width = `${width}px`; selectionBox.style.height = `${height}px`;
 
+                if (!eMove.shiftKey) selectedItems.clear();
+
+                const activeGroups = new Set();
+
                 currentSeats.forEach(seat => {
-                    if (seat.x + 30 >= left && seat.x + 30 <= left + width && seat.y + 30 >= top && seat.y + 30 <= top + height) selectedItems.add(seat.name);
-                    else if (!eMove.shiftKey) selectedItems.delete(seat.name);
+                    if (seat.x + 30 >= left && seat.x + 30 <= left + width && seat.y + 30 >= top && seat.y + 30 <= top + height) {
+                        selectedItems.add(seat.name);
+                        if (seat.groupId) activeGroups.add(seat.groupId);
+                    } else if (!eMove.shiftKey && !seat.groupId) {
+                        selectedItems.delete(seat.name);
+                    }
                 });
+                
                 currentShapes.forEach(shape => {
-                    if (shape.x + (shape.width/2) >= left && shape.x + (shape.width/2) <= left + width && shape.y + (shape.height/2) >= top && shape.y + (shape.height/2) <= top + height) selectedItems.add(shape.name);
-                    else if (!eMove.shiftKey) selectedItems.delete(shape.name);
+                    if (shape.x + (shape.width/2) >= left && shape.x + (shape.width/2) <= left + width && shape.y + (shape.height/2) >= top && shape.y + (shape.height/2) <= top + height) {
+                        selectedItems.add(shape.name);
+                        if (shape.groupId) activeGroups.add(shape.groupId);
+                    } else if (!eMove.shiftKey && !shape.groupId) {
+                        selectedItems.delete(shape.name);
+                    }
                 });
+
+                // --- CRITICAL FIX: Ensure all items belonging to any touched group are selected
+                currentSeats.concat(currentShapes).forEach(s => {
+                    if (s.groupId) {
+                        if (activeGroups.has(s.groupId)) selectedItems.add(s.name);
+                        else if (!eMove.shiftKey) selectedItems.delete(s.name);
+                    }
+                });
+
                 updateSelectionVisuals(); 
             };
 
@@ -1026,9 +1207,8 @@
             document.addEventListener('mousemove', onMouseMove); document.addEventListener('mouseup', onMouseUp);
         });
 
-        // --- SAVE LAYOUT ROUTINE ---
         document.getElementById('save-seats').addEventListener('click', async () => {
-            updateStatus("Saving layout...", "loading");
+            updateStatus("Saving layout configuration...", "loading");
 
             const layoutPayload = {
                 seats: currentSeats.filter(s => !s.groupId).map(s => ({ name: s.name, X: s.x, Y: s.y, available: true, layoutId: parseInt(layoutId), width: 60, height: 60 })),
@@ -1049,17 +1229,16 @@
                     headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value },
                     body: JSON.stringify(layoutPayload)
                 });
-                if (response.ok) { updateStatus("Layout saved successfully!", "success"); loadSeats(layoutId); }
-                else throw new Error("Save failed");
-            } catch (error) { updateStatus("Error saving layout", "error"); }
+                if (response.ok) { updateStatus("Layout mapped and saved securely.", "success"); loadSeats(layoutId); }
+                else throw new Error("Synchronization failure.");
+            } catch (error) { updateStatus("Error processing save transaction.", "error"); }
         });
         
-        // --- DATA FETCHING & INITIALIZATION ---
         async function loadSeats(id) {
-            updateStatus("Loading layout...", "loading");
+            updateStatus("Retrieving layout coordinates...", "loading");
             try {
                 const response = await fetch(`/Seat/GetCompleteLayout?layoutId=${id}`);
-                if (!response.ok) throw new Error("Failed to fetch layout");
+                if (!response.ok) throw new Error("Failed to retrieve coordinate array.");
                 
                 const data = await response.json();
                 currentSeats = []; currentShapes = []; currentGroups = [];
@@ -1083,17 +1262,17 @@
                 
                 selectedItems.clear(); renderAll(); hideAllOptions(); 
                 setTimeout(fitLayoutToViewport, 150);
-                updateStatus(`Loaded ${currentSeats.length} seats, ${currentShapes.length} shapes, and ${currentGroups.length} groups.`, "success");
-            } catch (error) { updateStatus("Error loading layout", "error"); }
+                updateStatus(`Retrieved ${currentSeats.length} active seats.`, "success");
+            } catch (error) { updateStatus("Error parsing retrieved layout constraints.", "error"); }
         }
 
-        // --- TAB STATE MANAGEMENT ---
         document.getElementById('tab-details').addEventListener('click', function() {
             this.classList.add('border-indigo-500', 'text-indigo-600');
             this.classList.remove('border-transparent', 'text-gray-500');
             document.getElementById('tab-seats').className = 'tab-button flex items-center border-transparent text-gray-500 hover:text-gray-800 hover:border-gray-300 py-4 px-4 sm:px-6 border-b-2 font-semibold text-sm transition-colors ml-2';
             document.getElementById('details-content').style.display = 'block';
             document.getElementById('seats-content').style.display = 'none';
+            turnOffClickToAdd(); 
         });
 
         document.getElementById('tab-seats').addEventListener('click', function() {
