@@ -4,281 +4,407 @@
     ViewData["Title"] = "Create New Event";
 }
 
-<div class="bg-gradient-to-r from-blue-50 to-indigo-50 min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+<div class="min-h-screen bg-gray-50/50 py-6 sm:py-10 px-4 sm:px-6 lg:px-8 pb-32 sm:pb-12">
     <div class="max-w-4xl mx-auto">
-        <div class="bg-white rounded-xl shadow-md overflow-hidden mb-8">
-            <div class="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-8">
-                <h1 class="text-2xl md:text-3xl font-bold text-white">Create New Event</h1>
-                <p class="mt-2 text-indigo-100 max-w-3xl">
-                    Schedule new events for your venue, set up recurring events or create single instances
-                </p>
+        
+        <!-- Page Header -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
+            <div>
+                <nav class="flex text-sm text-gray-500 mb-2" aria-label="Breadcrumb">
+                    <ol class="inline-flex items-center space-x-1 md:space-x-3">
+                        <li class="inline-flex items-center">
+                            <a href="@Url.Action("Index", "Events")" class="hover:text-indigo-600 transition-colors font-medium">Events Page</a>
+                        </li>
+                        <li>
+                            <div class="flex items-center">
+                                <svg class="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" /></svg>
+                                <span class="ml-1 text-gray-700 font-bold md:ml-2">Create</span>
+                            </div>
+                        </li>
+                    </ol>
+                </nav>
+                <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">Create New Event</h1>
+                <p class="mt-1 text-gray-500 text-sm">Schedule new standalone events, master containers, or individual sub-events.</p>
+            </div>
+            <div class="hidden sm:block">
+                <a href="@Url.Action("Index", "Events")" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors shadow-sm">
+                    <svg class="h-4 w-4 mr-2 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                    Back to List
+                </a>
             </div>
         </div>
 
-        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
-            <div class="p-6">
-                <form asp-action="CreateEvent" asp-controller="Events" method="post" id="createEventForm" enctype="multipart/form-data">
-                    @Html.AntiForgeryToken()
-                    <div class="space-y-6">
+        <!-- ========================================================= -->
+        <!-- CREATION RULES / INFO PANEL                               -->
+        <!-- ========================================================= -->
+        <div class="bg-indigo-50 border border-indigo-100 rounded-2xl p-5 sm:p-6 mb-8 shadow-sm relative overflow-hidden">
+            <div class="absolute -right-4 -top-4 w-24 h-24 bg-indigo-200 rounded-full opacity-40 blur-2xl pointer-events-none"></div>
+            <div class="flex items-start relative z-10">
+                <div class="flex-shrink-0 mt-0.5">
+                    <svg class="h-6 w-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+                <div class="ml-3 sm:ml-4 w-full">
+                    <h3 class="text-sm font-extrabold text-indigo-900 uppercase tracking-wider mb-3">How Event Creation Works</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                        <div class="bg-white/60 p-4 rounded-xl border border-indigo-50">
+                            <strong class="text-indigo-900 block mb-1.5 flex items-center">
+                                <svg class="w-4 h-4 mr-1 text-indigo-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clip-rule="evenodd" /></svg>
+                                Master Events
+                            </strong>
+                            <ul class="list-disc pl-5 space-y-1 text-indigo-800/80">
+                                <li>Act as standalone events OR parent containers.</li>
+                                <li>Hold the primary Description, Category, and Media.</li>
+                                <li>If it's just a container with no physical location yet, uncheck <span class="font-bold text-indigo-600">Standalone Event</span>.</li>
+                            </ul>
+                        </div>
+                        <div class="bg-white/60 p-4 rounded-xl border border-indigo-50">
+                            <strong class="text-indigo-900 block mb-1.5 flex items-center">
+                                <svg class="w-4 h-4 mr-1 text-indigo-500" fill="currentColor" viewBox="0 0 20 20"><path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z" /></svg>
+                                Sub-Events (Children)
+                            </strong>
+                            <ul class="list-disc pl-5 space-y-1 text-indigo-800/80">
+                                <li>Automatically inherit the Master's Category, Description, and Images.</li>
+                                <li><span class="font-bold underline">Must</span> be scheduled strictly within the Master's timeframe.</li>
+                                <li><span class="font-bold underline">Must</span> have a specific Venue and Floorplan selected.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <form asp-action="CreateEvent" asp-controller="Events" method="post" id="createEventForm" enctype="multipart/form-data" class="space-y-8">
+            @Html.AntiForgeryToken()
+            
+            <!-- 1. EVENT MODE TOGGLE -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 relative z-[80]">
+                <div class="px-6 py-5 border-b border-gray-100 bg-gray-50/30 flex items-center rounded-t-2xl">
+                    <div class="h-8 w-8 rounded-lg bg-blue-50 border border-blue-100 flex items-center justify-center mr-3">
+                        <svg class="h-4 w-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-900">Creation Mode</h3>
+                </div>
+                
+                <div class="p-6">
+                    <div class="bg-indigo-600 rounded-xl p-1 mb-2 flex shadow-inner">
+                        <label class="flex-1 text-center py-2.5 cursor-pointer transition-all rounded-lg bg-white shadow-sm font-bold text-indigo-700" id="labelFather">
+                            <input type="radio" id="radioFather" name="eventMode" value="father" class="sr-only" checked onchange="toggleEventMode('father', true)">
+                            <span>Master Event</span>
+                        </label>
+                        <label class="flex-1 text-center py-2.5 cursor-pointer transition-all rounded-lg" id="labelChild">
+                            <input type="radio" id="radioChild" name="eventMode" value="child" class="sr-only" onchange="toggleEventMode('child', true)">
+                            <span class="text-white font-medium flex items-center justify-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                </svg>
+                                Sub-Event (Child)
+                            </span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. PARENT EVENT SELECTION (Child Mode Only) -->
+            <div id="parentEventSection" class="hidden bg-white rounded-2xl shadow-sm border border-gray-200 ring-2 ring-indigo-500 border-transparent relative z-[70]">
+                <div class="px-6 py-5 border-b border-gray-100 bg-indigo-50/50 flex items-center rounded-t-2xl">
+                    <div class="h-8 w-8 rounded-lg bg-indigo-100 border border-indigo-200 flex items-center justify-center mr-3">
+                        <svg class="h-4 w-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-900">Link to Master Event</h3>
+                </div>
+                <div class="p-6">
+                    <input type="hidden" asp-for="ParentEventId" id="ParentEventId" name="ParentEventId" />
+                    <label class="block text-sm font-bold text-gray-700 mb-1.5">Search Existing Master Event <span class="text-red-500">*</span></label>
+                    <div class="search-container relative">
+                        <div class="flex gap-2">
+                            <input type="text" id="parentEventSearch" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-lg disabled:opacity-60 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all text-sm font-medium relative z-10" placeholder="Start typing parent event name..." autocomplete="off" />
+                            <button class="px-4 py-2 bg-gray-100 hover:bg-gray-200 border border-gray-200 rounded-lg text-sm font-bold text-gray-600 hidden transition-colors" type="button" id="clearParentSelection">Clear</button>
+                        </div>
+                        <ul id="searchResults" class="absolute w-full bg-white border border-gray-200 rounded-b-xl shadow-2xl z-[100] hidden max-h-60 overflow-y-auto mt-2 divide-y divide-gray-50"></ul>
+                    </div>
+                    <p id="parentRequiredError" class="text-red-500 text-xs mt-2 hidden font-bold">You must strictly select a Master Event to proceed in Child Mode.</p>
+                </div>
+            </div>
+
+            <!-- 3. SUB-EVENTS LIST (Child Mode Only) -->
+            <div id="subEventsListContainer" class="hidden bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden relative z-[65]">
+                <div class="bg-gray-50 px-6 py-4 border-b border-gray-200 flex flex-col sm:flex-row justify-between sm:items-center gap-4 rounded-t-2xl">
+                    <div>
+                        <h3 class="text-gray-900 font-bold text-sm">Generated Sub-Events (<span id="subEventCountDisplay">0</span>)</h3>
+                        <p class="text-[11px] text-gray-500 uppercase tracking-wider font-bold mt-1">Instances tied to the selected Master Event</p>
                         
-                        <!-- 1. EVENT MODE TOGGLE -->
-                        <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                            <div class="flex items-center mb-4">
-                                <div class="h-10 w-10 rounded-md bg-indigo-100 flex items-center justify-center text-indigo-600">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                    </svg>
-                                </div>
-                                <h2 class="ml-3 text-lg font-medium text-gray-800">Event Mode</h2>
-                            </div>
-
-                            <div class="bg-indigo-600 rounded-lg p-1 mb-2 flex shadow-inner">
-                                <label class="flex-1 text-center py-2 cursor-pointer transition-all rounded-md bg-white shadow-sm font-bold text-indigo-700" id="labelFather">
-                                    <input type="radio" id="radioFather" name="eventMode" value="father" class="sr-only" checked onchange="toggleEventMode('father')">
-                                    <span>Master Event</span>
-                                </label>
-
-                                <label class="flex-1 text-center py-2 cursor-not-allowed transition-all rounded-md opacity-50 pointer-events-none" id="labelChild" title="You must create a Master Event first!">
-                                    <input type="radio" id="radioChild" name="eventMode" value="child" class="sr-only" disabled onchange="toggleEventMode('child')">
-                                    <span class="text-white font-medium flex items-center justify-center">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                                        </svg>
-                                        Sub-Event (Child)
-                                    </span>
-                                </label>
-                            </div>
-
-                            <p id="parentUnlockHelperText" class="text-sm text-indigo-500 font-medium mt-1 text-right italic">
-                                * Create a Master Event first to unlock Sub-Events
-                            </p>
+                        <div class="flex items-center mt-3 gap-2">
+                            <input type="checkbox" id="MultiRenameCheckbox" onchange="showRenameCheckboxes()" class="h-4 w-4 cursor-pointer rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"/>
+                            <label for="MultiRenameCheckbox" class="text-xs font-bold text-indigo-700 cursor-pointer">Enable Multi-Rename</label>
+                            <button type="button" onclick="showRenameModal()" id="ConfirmMultiRenameBtn" class="hidden ml-2 bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-xs transition-colors shadow-sm font-bold">Apply Bulk Rename</button>
                         </div>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2 mt-3 sm:mt-0">
+                        <button type="button" onclick="resetToCleanMasterMode()" class="px-4 py-2.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-lg hover:bg-emerald-100 transition-colors text-sm font-bold shadow-sm">Create New Master</button>
+                        <a href="@Url.Action("EventsForToday", "Events")" class="px-4 py-2.5 bg-white border border-gray-300 rounded-lg text-sm font-bold text-gray-700 hover:bg-gray-50 shadow-sm transition-colors">Exit</a>
+                        <button type="button" onclick="showChildEventForm()" class="inline-flex items-center px-4 py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-bold shadow-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v6h4a1 1 0 110 2h-4v6a1 1 0 11-2 0v-6H4a1 1 0 110-2h4V4a1 1 0 011-1z" clip-rule="evenodd" />
+                            </svg>
+                            Draft New Sub-Event
+                        </button>
+                    </div>
+                </div>
+                <div class="max-h-60 overflow-y-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-white text-[10px] uppercase font-extrabold text-gray-400 sticky top-0 shadow-sm z-10">
+                            <tr>
+                                <th class="px-6 py-3 text-left">Identifier Name</th>
+                                <th class="px-6 py-3 text-left">Time Boundaries</th>
+                                <th class="px-6 py-3 text-left">Floorplan</th>
+                                <th class="px-6 py-3 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="subEventsTableBody" class="divide-y divide-gray-100 text-sm bg-white"></tbody>
+                    </table>
+                </div>
+            </div>
 
-                        <!-- 2. PARENT EVENT SELECTION (Child Mode Only) -->
-                        <div id="parentEventSection" class="hidden bg-gray-50 rounded-lg p-4 border border-gray-200">
-                            <h2 class="text-lg font-medium text-gray-800 mb-4">Parent Event Selection</h2>
-                            <input type="hidden" asp-for="ParentEventId" id="ParentEventId" name="ParentEventId" />
-                            <div class="search-container relative max-w-md">
-                                <label class="text-sm font-medium text-gray-700">Search Father Event</label>
-                                <div class="flex gap-2">
-                                    <input type="text" id="parentEventSearch" class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white" placeholder="Start typing..." autocomplete="off" />
-                                    <button class="px-4 py-2 bg-gray-200 rounded-md text-sm hidden" type="button" id="clearParentSelection">Clear</button>
-                                </div>
-                                <ul id="searchResults" class="absolute w-full bg-white border rounded-b-lg shadow-xl z-50 hidden max-h-60 overflow-y-auto"></ul>
-                            </div>
-                            <p id="parentRequiredError" class="text-red-500 text-xs mt-2 hidden font-bold">You must select a father event to continue in child mode!</p>
+            <!-- 4. EVENT DETAILS FORM -->
+            <div id="eventDetailsWrapper" class="space-y-8">
+                
+                <!-- General Info -->
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-200 relative z-[60]">
+                    <div class="px-6 py-5 border-b border-gray-100 bg-gray-50/30 flex items-center rounded-t-2xl">
+                        <div class="h-8 w-8 rounded-lg bg-indigo-50 border border-indigo-100 flex items-center justify-center mr-3">
+                            <svg class="h-4 w-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                         </div>
-
-                        <!-- 3. SUB-EVENTS LIST -->
-                        <div id="subEventsListContainer" class="hidden mt-6 bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden">
-                            <div class="bg-indigo-50 px-6 py-4 border-b border-indigo-100 flex justify-between items-center">
-                                <div>
-                                    <h3 class="text-indigo-800 font-bold text-sm">Sub-Events Created (<span id="subEventCountDisplay">0</span>)</h3>
-                                    <p class="text-[10px] text-indigo-600">Instances tied to this Master Event</p>
-                                    <label for="MultiRenameCheckbox" class="text-xs font-bold text-indigo-700 mt-1 cursor-pointer">Rename Multiple:</label>
-                                    <input type="checkbox" id="MultiRenameCheckbox" onchange="showRenameCheckboxes()" class="ml-1 cursor-pointer rounded border-indigo-300 text-indigo-600 focus:ring-indigo-500"/>
-                                    <button type="button" onclick="showRenameModal()" id="ConfirmMultiRenameBtn" class="hidden ml-2 bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded text-xs transition-colors shadow-sm">
-                                        Confirm
-                                    </button>
-                                </div>
-
-                                <button type="button" onclick="showChildEventForm()" class="p-1.5 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 shadow-sm transition-transform hover:scale-110" title="Add another sub-event">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                                        <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v6h4a1 1 0 110 2h-4v6a1 1 0 11-2 0v-6H4a1 1 0 110-2h4V4a1 1 0 011-1z" clip-rule="evenodd" />
-                                    </svg>
-                                </button>
+                        <h3 class="text-lg font-bold text-gray-900">General Information</h3>
+                    </div>
+                    
+                    <div class="p-6 space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label asp-for="Name" class="block text-sm font-bold text-gray-700 mb-1.5">Event Name <span class="text-red-500">*</span></label>
+                                <input asp-for="Name" placeholder="Enter event name" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all text-sm font-medium text-gray-900"/>
+                                <span asp-validation-for="Name" class="text-red-500 text-xs mt-1.5 block font-medium"></span>
                             </div>
-                            <div class="max-h-48 overflow-y-auto">
-                                <table class="min-w-full divide-y divide-gray-200">
-                                    <thead class="bg-gray-50 text-[10px] uppercase font-bold text-gray-500">
-                                        <tr>
-                                            <th class="px-6 py-2 text-left">Event Name</th>
-                                            <th class="px-6 py-2 text-left">Date & Time</th>
-                                            <th class="px-6 py-2 text-left">Layout</th>
-                                            <th class="px-6 py-2 text-right">Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="subEventsTableBody" class="divide-y divide-gray-100 text-sm"></tbody>
-                                </table>
+
+                            <div>
+                                <label asp-for="EventTypeId" class="block text-sm font-bold text-gray-700 mb-1.5">Event Category <span class="text-red-500">*</span></label>
+                                <select asp-for="EventTypeId" asp-items="ViewBag.EventTypeList" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all text-sm font-medium text-gray-900 appearance-none disabled:opacity-60"></select>
                             </div>
                         </div>
+                        
+                        <div id="descriptionContainer">
+                            <label asp-for="Description" class="block text-sm font-bold text-gray-700 mb-1.5">Detailed Description</label>
+                            <textarea asp-for="Description" rows="4" placeholder="Enter event description..." class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all text-sm text-gray-900 leading-relaxed"></textarea>
+                        </div>
 
-                        <!-- 4. EVENT DETAILS FORM -->
-                        <div id="eventDetailsWrapper" class="space-y-6">
+                        <div id="childDescriptionNote" class="hidden">
+                            <label class="block text-sm font-bold text-gray-700 mb-1.5">Description Status</label>
+                            <div class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg">
+                                <p class="text-sm font-bold text-indigo-700 flex items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                    Description & Category are inherited strictly from the Master Event.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Location Details -->
+                <div id="location-section" class="bg-white rounded-2xl shadow-sm border border-gray-200 relative z-[50]">
+                    <div class="px-6 py-5 border-b border-gray-100 bg-gray-50/30 flex items-center rounded-t-2xl">
+                        <div class="h-8 w-8 rounded-lg bg-emerald-50 border border-emerald-100 flex items-center justify-center mr-3">
+                            <svg class="h-4 w-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                        </div>
+                        <h3 class="text-lg font-bold text-gray-900">Location Settings</h3>
+                    </div>
+                    
+                    <div class="p-6">
+                        <div id="single-checkbox-container" class="mb-6 p-4 bg-gray-50 border border-gray-200 rounded-xl flex items-center gap-3">
+                            <input type="checkbox" id="single-checkbox" name="IsStandalone" value="true" class="h-5 w-5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 cursor-pointer" checked onchange="handleLayoutAndVenueState()" />
+                            <label for="single-checkbox" class="block text-sm font-bold text-gray-700 cursor-pointer">Standalone Event <span class="font-normal text-gray-500">(Uncheck if this will act as a Master Container with no physical location yet)</span></label>
+                        </div>
+                        
+                        <div id="venue-layout-fields" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-bold text-gray-700 mb-1.5">Assigned Venue <span class="text-red-500">*</span></label>
+                                <div class="relative">
+                                    <input type="hidden" asp-for="VenueId" id="VenueId" />
+                                    <div class="flex gap-2 w-full">
+                                        <input type="text" id="venueSearch" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-lg disabled:opacity-60 focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all text-sm font-medium relative z-10" placeholder="Search for a venue..." autocomplete="off" />
+                                        <button class="px-4 py-2 bg-gray-100 hover:bg-gray-200 border border-gray-200 rounded-lg text-sm font-bold text-gray-600 hidden transition-colors" type="button" id="clearVenueSelection">Clear</button>
+                                    </div>
+                                    <ul id="venueSearchResults" class="absolute w-full bg-white border border-gray-200 rounded-b-xl shadow-2xl z-[100] hidden max-h-60 overflow-y-auto mt-2 divide-y divide-gray-50"></ul>
+                                </div>
+                            </div>
+                            <div>
+                                <label asp-for="LayoutId" class="block text-sm font-bold text-gray-700 mb-1.5">Active Floorplan <span class="text-red-500">*</span></label>
+                                <select asp-for="LayoutId" id="layoutSelect" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-lg disabled:opacity-60 focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all text-sm font-medium appearance-none">
+                                    <option value="">Select a Layout</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Media Assets (Centered) -->
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-200 relative z-[40]">
+                    <div class="px-6 py-5 border-b border-gray-100 bg-gray-50/30 flex items-center justify-center text-center rounded-t-2xl">
+                        <div class="h-8 w-8 rounded-lg bg-pink-50 border border-pink-100 flex items-center justify-center mr-3">
+                            <svg class="h-4 w-4 text-pink-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                        </div>
+                        <h3 class="text-lg font-bold text-gray-900">Media Assets</h3>
+                    </div>
+                    
+                    <div class="p-6 space-y-10 max-w-2xl mx-auto">
+                        <div class="flex flex-col items-center text-center">
+                            <label class="block text-sm font-bold text-gray-700 mb-3 border-b border-gray-100 pb-2 w-full">Main Event Banner</label>
                             
-                            <div class="bg-gray-50 rounded-lg p-4 border border-gray-200 mt-6">
-                                <h3 class="text-md font-medium text-gray-700 mb-4">Event Details</h3>
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div>
-                                        <label asp-for="Name" class="block text-sm font-medium text-gray-700 mb-1">Event Name</label>
-                                        <input asp-for="Name" placeholder="Enter event name" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"/>
-                                        <span asp-validation-for="Name" class="text-red-500 text-xs mt-1"></span>
-                                    </div>
-                                    <div>
-                                        <label asp-for="EventTypeId" class="block text-sm font-medium text-gray-700 mb-1">Event Type</label>
-                                        <select asp-for="EventTypeId" asp-items="ViewBag.EventTypeList" class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white"></select>
-                                    </div>
-                                </div>
-                                
-                                <div class="mt-4" id="descriptionContainer">
-                                    <label asp-for="Description" class="block text-sm font-medium text-gray-700 mb-1">Description (Optional)</label>
-                                    <textarea asp-for="Description" rows="4" placeholder="Enter event description..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"></textarea>
-                                </div>
-
-                                <div class="mt-4 hidden" id="childDescriptionNote">
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                                    <div class="w-full px-4 py-3 bg-gray-100 border border-gray-200 rounded-lg">
-                                        <p class="text-sm text-gray-500 italic flex items-center">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                            </svg>
-                                            Sub-events automatically inherit the description from their Master Event.
-                                        </p>
-                                    </div>
+                            <div class="w-full max-w-md flex justify-center px-6 py-6 border-2 border-gray-300 border-dashed rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors mx-auto">
+                                <div class="text-center">
+                                    <label for="imageFile" class="cursor-pointer font-bold text-indigo-600 hover:text-indigo-500">
+                                        <span>Upload Poster Image</span>
+                                        <input id="imageFile" name="imageFile" type="file" class="sr-only" accept="image/*" onchange="previewImage(this)">
+                                    </label>
+                                    <p id="childImageNote" class="hidden text-gray-500 text-[11px] mt-1 font-bold uppercase tracking-wider">Inherits Master's image if left empty</p>
                                 </div>
                             </div>
+                            <div id="imagePreviewContainer" class="hidden mt-4 w-full max-w-md mx-auto">
+                                <p class="text-[10px] font-bold text-pink-500 uppercase tracking-wider mb-2">Upload Preview</p>
+                                <img id="imagePreview" src="#" class="w-full h-48 object-cover rounded-lg shadow-sm border border-gray-200 mx-auto">
+                            </div>
+                        </div>
 
-                            <!-- 5. IMAGES -->
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="flex flex-col items-center text-center">
+                            <label class="block text-sm font-bold text-gray-700 mb-3 border-b border-gray-100 pb-2 w-full">Gallery Additions</label>
+                            <div class="w-full max-w-md flex justify-center px-6 py-6 border-2 border-gray-300 border-dashed rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors mx-auto">
+                                <div class="text-center">
+                                    <label for="galleryFiles" class="cursor-pointer font-bold text-indigo-600 hover:text-indigo-500">
+                                        <span>Upload Gallery Collection</span>
+                                        <input id="galleryFiles" name="galleryFiles" type="file" class="sr-only" accept="image/*" multiple onchange="previewGalleryImages(this)">
+                                    </label>
+                                    <p class="text-gray-400 text-[11px] mt-1 uppercase tracking-wider">Hold Ctrl/Shift for multiple</p>
+                                </div>
+                            </div>
+                            <div id="galleryPreviewContainer" class="hidden mt-4 w-full grid grid-cols-3 md:grid-cols-4 gap-2"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Scheduling -->
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-200 relative z-[30]">
+                    <div class="px-6 py-5 border-b border-gray-100 bg-gray-50/30 flex items-center rounded-t-2xl">
+                        <div class="h-8 w-8 rounded-lg bg-orange-50 border border-orange-100 flex items-center justify-center mr-3">
+                            <svg class="h-4 w-4 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                        </div>
+                        <h3 class="text-lg font-bold text-gray-900">Scheduling</h3>
+                    </div>
+                    
+                    <div class="p-6">
+                        <div id="multiDayToggleContainer" class="flex items-center mb-6 p-4 bg-gray-50 border border-gray-200 rounded-xl">
+                            <input type="checkbox" id="isMultiDay" name="IsMultiDay" class="h-5 w-5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 cursor-pointer" onchange="handleLayoutAndVenueState()">
+                            <label for="isMultiDay" class="ml-3 font-bold text-gray-700 cursor-pointer">Deploy events across multiple days automatically</label>
+                        </div>
+
+                        <div id="singleDayContainer" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label asp-for="StartDateTime" class="block text-sm font-bold text-gray-700 mb-1.5">Start Date & Time</label>
+                                <input asp-for="StartDateTime" type="datetime-local" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-orange-500 disabled:opacity-60 transition-all text-sm font-bold text-gray-900" />
+                            </div>
+                            <div>
+                                <label asp-for="EndTime" class="block text-sm font-bold text-gray-700 mb-1.5">End Date & Time</label>
+                                <input asp-for="EndTime" type="datetime-local" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-orange-500 disabled:opacity-60 transition-all text-sm font-bold text-gray-900" />
+                            </div>
+                        </div>
+
+                        <div id="multiDayContainer" class="hidden space-y-6">
+                            <input asp-for="StartDateTime" type="hidden" id="multiStartDateTime" />
+                            <input asp-for="EndTime" type="hidden" id="multiEndDateTime" />
+                            
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Event Poster</label>
-                                    <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg bg-white h-40 items-center">
-                                        <div class="text-center">
-                                            <label for="imageFile" class="cursor-pointer font-medium text-indigo-600 hover:text-indigo-500 transition-colors">
-                                                <span>Upload Poster Image</span>
-                                                <input id="imageFile" name="imageFile" type="file" class="sr-only" accept="image/*" onchange="previewImage(this)">
-                                            </label>
-                                            <p id="childImageNote" class="hidden text-indigo-500 text-xs italic mt-1">Inherits Father's image if left empty</p>
-                                        </div>
-                                    </div>
-                                    <div id="imagePreviewContainer" class="hidden mt-4">
-                                        <img id="imagePreview" src="#" class="h-32 w-auto rounded-lg shadow-sm border mx-auto object-cover">
-                                    </div>
+                                    <label class="block text-[11px] uppercase tracking-wider font-bold text-gray-500 mb-1">Start Date</label>
+                                    <input id="StartDate" name="StartDate" type="date" class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-orange-500 text-sm font-bold disabled:opacity-60" />
                                 </div>
-
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Gallery Images</label>
-                                    <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg bg-white h-40 items-center">
-                                        <div class="text-center">
-                                            <label for="galleryFiles" class="cursor-pointer font-medium text-indigo-600 hover:text-indigo-500 transition-colors">
-                                                <span>Upload Gallery Collection</span>
-                                                <input id="galleryFiles" name="galleryFiles" type="file" class="sr-only" accept="image/*" multiple onchange="previewGalleryImages(this)">
-                                            </label>
-                                            <p class="text-[11px] text-gray-400 mt-1">Hold Ctrl/Shift to pick multiple items</p>
-                                        </div>
-                                    </div>
-                                    <div id="galleryPreviewContainer" class="hidden mt-4 grid grid-cols-3 gap-2 overflow-y-auto max-h-32 p-1 border border-gray-100 rounded-lg bg-gray-50/50"></div>
+                                    <label class="block text-[11px] uppercase tracking-wider font-bold text-gray-500 mb-1">End Date</label>
+                                    <input id="EndDate" name="EndDate" type="date" class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-orange-500 text-sm font-bold disabled:opacity-60" />
                                 </div>
-                            </div>
-
-                            <!-- 6. LOCATION / VENUE (Now Isolated) -->
-                            <div id="location-section" class="bg-gray-50 rounded-lg p-4 border border-gray-200 mt-6">
-                                <div id="single-checkbox-container" class="mb-6 items-center flex gap-4">
-                                    <input type="checkbox" id="single-checkbox" name="IsStandalone" value="true" class="h-5 w-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500" checked onchange="toggleStandaloneMode()" />
-                                    <label for="single-checkbox" class="block text-sm font-medium text-gray-700">One time event? (Includes Venue & Layout)</label>
-                                </div>
-                                
-                                <div id="venue-layout-fields" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Venue</label>
-                                        <input type="hidden" asp-for="VenueId" id="VenueId" />
-                                        <div class="search-container relative">
-                                            <div class="flex gap-2">
-                                                <input type="text" id="venueSearch" class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white disabled:bg-gray-100 disabled:text-gray-400" placeholder="Search for a venue..." autocomplete="off" />
-                                                <button class="px-4 py-2 bg-gray-200 rounded-md text-sm hidden" type="button" id="clearVenueSelection">Clear</button>
-                                            </div>
-                                            <ul id="venueSearchResults" class="absolute w-full bg-white border rounded-b-lg shadow-xl z-50 hidden max-h-60 overflow-y-auto"></ul>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <label asp-for="LayoutId" class="block text-sm font-medium text-gray-700 mb-1">Layout</label>
-                                        <select asp-for="LayoutId" id="subAreaSelect" class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white disabled:bg-gray-100">
-                                            <option value="">Select a Layout</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- 7. DATE & TIME SCHEDULE -->
-                            <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                <div id="multiDayToggleContainer" class="flex items-center mb-6">
-                                    <input type="checkbox" id="isMultiDay" name="IsMultiDay" class="h-5 w-5 text-indigo-600 border-gray-300 rounded">
-                                    <label for="isMultiDay" class="ml-3 font-medium text-gray-700">Create events for multiple days</label>
-                                </div>
-
-                                <div id="singleDayContainer" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <input asp-for="StartDateTime" type="datetime-local" class="w-full border p-2 rounded-lg disabled:bg-gray-100" />
-                                    <input asp-for="EndTime" type="datetime-local" class="w-full border p-2 rounded-lg disabled:bg-gray-100" />
-                                </div>
-
-                                <div id="multiDayContainer" class="hidden space-y-6">
-                                    <input asp-for="StartDateTime" type="hidden" id="multiStartDateTime" />
-                                    <input asp-for="EndTime" type="hidden" id="multiEndDateTime" />
-                                    <div class="grid grid-cols-2 gap-4">
-                                        <input id="StartDate" name="StartDate" type="date" class="border p-2 rounded-lg disabled:bg-gray-100" />
-                                        <input id="EndDate" name="EndDate" type="date" class="border p-2 rounded-lg disabled:bg-gray-100" />
-                                        <input id="StartTime" name="StartTime" type="time" class="border p-2 rounded-lg disabled:bg-gray-100" />
-                                        <input id="DailyEndTime" name="MultiEndTime" type="time" class="border p-2 rounded-lg disabled:bg-gray-100" />
-                                    </div>
-                                    <div id="datePreviewContainer" class="bg-blue-50 p-4 rounded hidden">
-                                        <table class="min-w-full divide-y divide-gray-200">
-                                            <thead class="bg-gray-50 text-[10px] uppercase font-bold text-gray-500">
-                                                <tr>
-                                                    <th class="px-6 py-2 text-left">Date & Time</th>
-                                                    <th class="px-6 py-2 text-right">Actions</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody id="eventPreviewList" class="divide-y divide-gray-100 text-sm"></tbody>
-                                        </table>
-                                        <p class="text-xs mt-2"><span id="eventCount">0</span> events total</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="flex justify-between space-x-3 pt-5 border-t">
-                                <button type="button" id="doneChildBtn" onclick="finishChildCreation()" class="hidden px-4 py-2 text-white bg-green-600 rounded-md hover:bg-green-700 shadow transition-colors">Done Creating Sub-Events</button>
                                 <div>
-                                    <a href="@Url.Action("EventsForToday", "Events")" class="px-4 py-2 text-gray-700 hover:text-gray-900 transition-colors">Exit</a>
-                                    <button type="button" id="cancelChildBtn" onclick="hideChildEventForm()" class="hidden px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors">Cancel</button>
-                                    <button type="submit" class="px-6 py-2 bg-indigo-600 text-white rounded-md shadow hover:bg-indigo-700 transition-colors">Create Event</button>
+                                    <label class="block text-[11px] uppercase tracking-wider font-bold text-gray-500 mb-1">Daily Start</label>
+                                    <input id="StartTime" name="StartTime" type="time" class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-orange-500 text-sm font-bold disabled:opacity-60" />
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] uppercase tracking-wider font-bold text-gray-500 mb-1">Daily End</label>
+                                    <input id="DailyEndTime" name="MultiEndTime" type="time" class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-orange-500 text-sm font-bold disabled:opacity-60" />
+                                </div>
+                            </div>
+                            
+                            <div id="datePreviewContainer" class="bg-white border border-gray-200 rounded-xl hidden overflow-hidden shadow-sm">
+                                <div class="bg-gray-50 px-4 py-3 border-b border-gray-200 flex justify-between items-center">
+                                    <span class="text-sm font-bold text-gray-700">Deployment Preview</span>
+                                    <span class="text-xs font-bold bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full"><span id="eventCount">0</span> Events</span>
+                                </div>
+                                <div class="max-h-48 overflow-y-auto p-2">
+                                    <table class="min-w-full">
+                                        <tbody id="eventPreviewList" class="divide-y divide-gray-100 text-sm font-medium"></tbody>
+                                    </table>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </form>
+                </div>
             </div>
-        </div>
+
+            <!-- Sticky Bottom Action Bar -->
+            <div id="bottomActionBar" class="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 p-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-50 sm:static sm:bg-transparent sm:border-0 sm:p-0 sm:shadow-none sm:flex sm:justify-end sm:gap-3 sm:mt-4">
+                <div class="flex w-full sm:w-auto gap-3 mt-3 sm:mt-0">
+                    <button type="button" id="cancelChildBtn" onclick="hideChildEventForm()" class="hidden w-full sm:w-auto justify-center items-center px-6 py-2.5 bg-white border border-gray-300 rounded-xl text-sm font-bold text-gray-700 hover:bg-gray-50 shadow-sm transition-colors">Cancel Draft</button>
+                    <button type="submit" id="btnSubmitForm" class="w-full sm:w-auto flex justify-center items-center px-8 py-3 sm:py-2.5 bg-indigo-600 text-white text-sm font-bold rounded-xl shadow-md hover:bg-indigo-700 focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all">
+                        Create Event
+                    </button>
+                </div>
+            </div>
+
+        </form>
     </div>
 </div>
 
-<!-- MODALS -->
-<div id="renameModal" tabindex="-1" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm transition-opacity">
-    <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md relative transform transition-all">
-        <h3 class="text-xl font-bold text-gray-900 mb-2">Choose a Name</h3>
-        <input type="text" id="ModalField" placeholder="New Name..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 mb-4" />
-
-        <div class="flex justify-end gap-3 mt-4">
-            <button type="button" onclick="closeRenameModal()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium text-sm">Cancel</button>
-            <button type="button" onclick="RenameMultiple(document.getElementById('ModalField').value)" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm">Rename</button>
+<!-- MODALS & ALERTS -->
+<div id="renameModal" tabindex="-1" class="hidden fixed inset-0 z-[110] flex items-center justify-center bg-gray-900 bg-opacity-60 backdrop-blur-sm transition-opacity">
+    <div class="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md relative transform transition-all border border-gray-100">
+        <h3 class="text-xl font-extrabold text-gray-900 mb-2">Bulk Rename Elements</h3>
+        <p class="text-sm text-gray-500 mb-4">Provide a new baseline name for selected events.</p>
+        <input type="text" id="ModalField" placeholder="New Baseline Name..." class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-indigo-500 mb-5 outline-none font-bold text-gray-900" />
+        <div class="flex justify-end gap-3">
+            <button type="button" onclick="closeRenameModal()" class="px-5 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-bold text-sm">Cancel</button>
+            <button type="button" onclick="RenameMultiple(document.getElementById('ModalField').value)" class="px-5 py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 shadow-sm transition-colors font-bold text-sm">Apply Rename</button>
         </div>
     </div>
 </div>
     
-<div id="successMessage" class="hidden mb-6 bg-green-50 border-l-4 border-green-500 p-4 rounded-md shadow-sm">
+<div id="successMessage" class="hidden mb-6 bg-emerald-50 border border-emerald-200 p-4 rounded-xl shadow-lg fixed top-6 right-6 z-[120] animate-fade-in-up">
     <div class="flex items-center">
-        <div class="flex-shrink-0">
-            <svg class="h-5 w-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+        <div class="flex-shrink-0 bg-emerald-100 p-2 rounded-full">
+            <svg class="h-5 w-5 text-emerald-600" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
             </svg>
         </div>
         <div class="ml-3">
-            <p class="text-sm text-green-700 font-medium">Event created successfully!</p>
+            <p class="text-sm text-emerald-800 font-bold">Event provisioned successfully!</p>
         </div>
     </div>
 </div>
 
 <style>
-    .highlight { font-weight: 600; color: #3b82f6; }
+    .highlight { font-weight: 800; color: #4f46e5; }
+    @@keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in-up {
+        animation: fadeInUp 0.4s ease-out forwards;
+    }
 </style>
 
 @section Scripts {
@@ -286,40 +412,40 @@
 
     <script>
         document.addEventListener("DOMContentLoaded", function () {
-            // --- Core Elements ---
+            
             const form = document.getElementById('createEventForm');
             const eventDetailsWrapper = document.getElementById('eventDetailsWrapper');
-            const doneChildBtn = document.getElementById('doneChildBtn');
+            const bottomActionBar = document.getElementById('bottomActionBar');
             const cancelChildBtn = document.getElementById('cancelChildBtn');
             const subEventsListContainer = document.getElementById('subEventsListContainer');
             
-            // --- Mode & Feature Toggles ---
-            const multiDayToggleContainer = document.getElementById('multiDayToggleContainer');
+            const radioMaster = document.getElementById('radioFather');
+            const radioChild = document.getElementById('radioChild');
             const isMultiDay = document.getElementById('isMultiDay');
+            const singleCheckbox = document.getElementById('single-checkbox');
+            const singleCheckboxContainer = document.getElementById('single-checkbox-container');
+            const multiDayToggleContainer = document.getElementById('multiDayToggleContainer');
+            
             const descriptionContainer = document.getElementById('descriptionContainer');
             const childDescriptionNote = document.getElementById('childDescriptionNote');
             const childImageNote = document.getElementById('childImageNote');
             const eventTypeSelect = document.getElementById('EventTypeId');
 
-            // --- Location & Venue Elements ---
             const locationSection = document.getElementById('location-section');
-            const singleCheckboxContainer = document.getElementById('single-checkbox-container');
-            const singleCheckbox = document.getElementById('single-checkbox');
             const venueLayoutFields = document.getElementById('venue-layout-fields');
             const venueSearch = document.getElementById('venueSearch');
             const venueResultsList = document.getElementById('venueSearchResults');
             const venueHiddenInput = document.getElementById('VenueId');
             const clearVenueBtn = document.getElementById('clearVenueSelection');
-            const subAreaSelect = document.getElementById('subAreaSelect');
+            const layoutSelect = document.getElementById('layoutSelect');
 
-            // --- Parent Event Elements ---
+            const parentEventSection = document.getElementById('parentEventSection');
             const parentError = document.getElementById('parentRequiredError'); 
             const searchInput = document.getElementById('parentEventSearch');
             const resultsList = document.getElementById('searchResults');
             const hiddenIdInput = document.getElementById('ParentEventId');
             const clearBtn = document.getElementById('clearParentSelection');
 
-            // --- Timing Elements ---
             const startInput = document.querySelector('input[name="StartDateTime"]:not([type="hidden"])');
             const endInput = document.querySelector('input[name="EndTime"]:not([type="hidden"])');
             const multiStartDate = document.getElementById('StartDate');
@@ -335,53 +461,83 @@
             let namingIds = [];
             let previewDates = [];
 
-            // --- UI Visibility Helpers ---
-            window.showChildEventForm = function() {
-                eventDetailsWrapper.classList.remove('hidden');
-                cancelChildBtn.classList.remove('hidden'); 
-                document.getElementById('Name').focus();
-                window.scrollTo({top: eventDetailsWrapper.offsetTop - 50, behavior: 'smooth'});
-            };
+            // ==========================================
+            // VALIDATION RESET LOGIC
+            // ==========================================
+            function resetValidationColors() {
+                venueSearch.classList.remove('border-red-500', 'bg-red-50');
+                layoutSelect.classList.remove('border-red-500', 'bg-red-50');
+            }
 
-            window.hideChildEventForm = function() {
-                eventDetailsWrapper.classList.add('hidden');
-            };
+            venueSearch.addEventListener('input', function() {
+                this.classList.remove('border-red-500', 'bg-red-50');
+            });
+            layoutSelect.addEventListener('change', function() {
+                this.classList.remove('border-red-500', 'bg-red-50');
+            });
 
-            // --- Mode Logic ---
-            window.toggleStandaloneMode = function() {
-                if (document.getElementById('radioFather').checked) {
-                    if (singleCheckbox.checked) {
+            // ==========================================
+            // STATE MACHINE LOGIC
+            // ==========================================
+
+            window.handleLayoutAndVenueState = function() {
+                const isMasterMode = radioMaster.checked;
+                const isStandalone = singleCheckbox.checked || isMultiDay.checked;
+                
+                if (isMasterMode) {
+                    if (isStandalone) {
                         venueLayoutFields.classList.remove('hidden');
                         venueSearch.disabled = false;
-                        subAreaSelect.disabled = false;
+                        layoutSelect.disabled = false;
                     } else {
                         venueLayoutFields.classList.add('hidden');
                         venueSearch.disabled = true;
-                        subAreaSelect.disabled = true;
+                        layoutSelect.disabled = true;
+                        venueHiddenInput.value = '';
+                        venueSearch.value = '';
+                        layoutSelect.value = '';
+                        clearVenueBtn.classList.add('hidden');
+                        resetValidationColors();
                     }
                 }
             };
 
-            window.toggleEventMode = function(mode) {
-                const isFather = (mode === 'father');
-                
-                multiDayToggleContainer.classList.toggle('hidden', isFather);
-                if(childImageNote) childImageNote.classList.toggle('hidden', isFather);
-                if(descriptionContainer) descriptionContainer.classList.toggle('hidden', !isFather);
-                if(childDescriptionNote) childDescriptionNote.classList.toggle('hidden', isFather);
+            window.toggleEventMode = function(mode, isManualClick = false) {
+                const isMaster = (mode === 'father');
 
-                if (isFather) {
+                if (isManualClick) {
+                    form.reset();
+                    radioMaster.checked = isMaster;
+                    radioChild.checked = !isMaster;
+                    resetValidationColors();
+                    
+                    document.getElementById('imagePreviewContainer').classList.add('hidden');
+                    document.getElementById('galleryPreviewContainer').classList.add('hidden');
+                    venueHiddenInput.value = '';
+                    layoutSelect.innerHTML = '<option value="">Select a Layout</option>';
+                    hiddenIdInput.value = '';
+                    searchInput.value = '';
+                    resultsList.classList.add('hidden');
+                }
+
+                multiDayToggleContainer.classList.toggle('hidden', isMaster);
+                if(childImageNote) childImageNote.classList.toggle('hidden', isMaster);
+                if(descriptionContainer) descriptionContainer.classList.toggle('hidden', !isMaster);
+                if(childDescriptionNote) childDescriptionNote.classList.toggle('hidden', isMaster);
+                
+                if (isMaster) {
                     eventDetailsWrapper.classList.remove('hidden'); 
+                    bottomActionBar.classList.remove('hidden');
                     cancelChildBtn.classList.add('hidden'); 
                     subEventsListContainer.classList.add('hidden');
+                    parentEventSection.classList.add('hidden');
                     
                     locationSection.classList.remove('hidden');
                     singleCheckboxContainer.classList.remove('hidden');
-                    doneChildBtn.classList.add('hidden'); // Always hide Done button in Father mode
-                    toggleStandaloneMode(); 
                     
-                    if(venueHiddenInput.value) clearVenueBtn.classList.remove('hidden');
-                    allScheduleInputs.forEach(i => i.disabled = false);
+                    handleLayoutAndVenueState(); 
+                    
+                    allScheduleInputs.forEach(i => { if (i) i.disabled = false; });
                     isMultiDay.checked = false;
                     singleDayContainer.classList.remove('hidden');
                     multiDayContainer.classList.add('hidden');
@@ -392,93 +548,77 @@
                     isMultiDay.disabled = false;
                     document.querySelector('label[for="isMultiDay"]').classList.remove('text-gray-400');
                 } else {
-                    hideChildEventForm(); 
-                    if (hiddenIdInput.value) subEventsListContainer.classList.remove('hidden');
+                    eventDetailsWrapper.classList.add('hidden'); 
+                    bottomActionBar.classList.add('hidden');
+                    parentEventSection.classList.remove('hidden');
+                    
+                    if (hiddenIdInput.value) {
+                        subEventsListContainer.classList.remove('hidden');
+                    }
                     
                     locationSection.classList.remove('hidden');
                     singleCheckboxContainer.classList.add('hidden');
                     venueLayoutFields.classList.remove('hidden'); 
                     
-                    // Note: Done button visibility is now strictly handled by updateSubEventsList()
-                    
-                    if(venueSearch) venueSearch.disabled = false;
-                    if(clearVenueBtn && venueHiddenInput.value) clearVenueBtn.classList.remove('hidden');
-                    subAreaSelect.disabled = true;
+                    venueSearch.disabled = false;
+                    layoutSelect.disabled = true; 
                     eventTypeSelect.disabled = true;
                     allScheduleInputs.forEach(i => { if(i) i.disabled = true; });
-
-                    document.getElementById('Description').value = ""; 
                 }
+                
                 updateRadioStyles();
             };
 
             function updateRadioStyles() {
-                const masterRadio = document.getElementById('radioFather');
-                const childRadio = document.getElementById('radioChild');
                 const labelF = document.getElementById('labelFather');
                 const labelC = document.getElementById('labelChild');
 
-                labelF.className = "flex-1 text-center py-2 transition-all rounded-md";
-                labelC.className = "flex-1 text-center py-2 transition-all rounded-md";
+                labelF.className = "flex-1 text-center py-2.5 transition-all rounded-lg";
+                labelC.className = "flex-1 text-center py-2.5 transition-all rounded-lg";
 
-                if (masterRadio.disabled) {
-                    labelF.classList.add('opacity-50', 'cursor-not-allowed', 'pointer-events-none');
-                    labelF.querySelector('span').className = "text-white font-medium";
-                } else if (masterRadio.checked) {
+                if (radioMaster.checked) {
                     labelF.classList.add('cursor-pointer', 'bg-white', 'shadow-sm');
                     labelF.querySelector('span').className = "text-indigo-700 font-bold";
+                    labelC.classList.add('cursor-pointer');
+                    labelC.querySelector('span').className = "text-white font-medium flex items-center justify-center";
                 } else {
+                    labelC.classList.add('cursor-pointer', 'bg-white', 'shadow-sm');
+                    labelC.querySelector('span').className = "text-indigo-700 font-bold flex items-center justify-center";
                     labelF.classList.add('cursor-pointer');
                     labelF.querySelector('span').className = "text-white font-medium";
                 }
-
-                if (childRadio.disabled) {
-                    labelC.classList.add('cursor-not-allowed', 'opacity-50', 'pointer-events-none');
-                    labelC.querySelector('span').className = "text-white font-medium flex items-center justify-center";
-                } else if (childRadio.checked) {
-                    labelC.classList.add('cursor-pointer', 'bg-white', 'shadow-sm');
-                    labelC.querySelector('span').className = "text-indigo-700 font-bold flex items-center justify-center";
-                } else {
-                    labelC.classList.add('cursor-pointer');
-                    labelC.querySelector('span').className = "text-white font-medium flex items-center justify-center";
-                }
             }
 
-            // --- Reset & Transition Helper ---
-            window.finishChildCreation = function() {
-                form.reset();
-                document.getElementById('imagePreviewContainer').classList.add('hidden');
-                document.getElementById('imagePreview').src = '#';
-                document.getElementById('galleryPreviewContainer').classList.add('hidden');
-                document.getElementById('galleryPreviewContainer').innerHTML = '';
-                
-                hiddenIdInput.value = '';
-                searchInput.value = '';
-                searchInput.disabled = false;
-                clearBtn.classList.add('hidden');
-                resultsList.classList.add('hidden');
-                subEventsListContainer.classList.add('hidden');
-                
-                // Re-lock Child Radio
-                const childLabel = document.getElementById('labelChild');
-                const childRadio = document.getElementById('radioChild');
-                childRadio.disabled = true;
-                childRadio.checked = false;
-                childLabel.setAttribute('title', 'You must create a Master Event first!');
-                
-                const helperText = document.getElementById('parentUnlockHelperText');
-                if (helperText) helperText.classList.remove('hidden');
-
-                // Re-activate Master Radio
-                const masterRadio = document.getElementById('radioFather');
-                masterRadio.disabled = false;
-                masterRadio.checked = true;
-                
-                toggleEventMode('father');
+            window.resetToCleanMasterMode = function() {
+                toggleEventMode('father', true);
                 window.scrollTo({top: 0, behavior: 'smooth'});
             };
 
-            // --- Constraint Helper ---
+            window.showChildEventForm = function() {
+                eventDetailsWrapper.classList.remove('hidden');
+                bottomActionBar.classList.remove('hidden');
+                cancelChildBtn.classList.remove('hidden'); 
+                document.getElementById('Name').focus();
+                window.scrollTo({top: eventDetailsWrapper.offsetTop - 50, behavior: 'smooth'});
+            };
+
+            window.hideChildEventForm = function() {
+                eventDetailsWrapper.classList.add('hidden');
+                bottomActionBar.classList.add('hidden');
+                
+                document.getElementById('Name').value = '';
+                document.getElementById('Description').value = '';
+                document.getElementById('imagePreviewContainer').classList.add('hidden');
+                document.getElementById('galleryPreviewContainer').classList.add('hidden');
+                document.getElementById('galleryPreviewContainer').innerHTML = '';
+                resetDateConstraints();
+                resetValidationColors();
+            };
+
+            // ==========================================
+            // DATE & TIME BOUNDARY ENFORCEMENT
+            // ==========================================
+
             async function applyParentTimingConstraints(parentId) {
                 if (!parentId) return;
                 try {
@@ -486,8 +626,8 @@
                     if (!response.ok) throw new Error("Failed to fetch parent timing.");
                     const timing = await response.json();
 
-                    const minISO = timing.start;
-                    const maxISO = timing.end;
+                    const minISO = timing.start.substring(0, 16);
+                    const maxISO = timing.end.substring(0, 16);
                     const minD = minISO.split('T')[0];
                     const maxD = maxISO.split('T')[0];
 
@@ -513,147 +653,8 @@
                 } catch (err) { console.error("Error applying constraints:", err); }
             }
 
-            // --- Parent Event Selection ---
-            async function selectParent(ev) {
-                hiddenIdInput.value = ev.id;
-                searchInput.value = ev.name;
-                searchInput.disabled = true;
-                clearBtn.classList.remove('hidden');
-                resultsList.classList.add('hidden');
-                if(parentError) parentError.classList.add('hidden');
-
-                subEventsListContainer.classList.remove('hidden');
-                hideChildEventForm(); 
-                updateSubEventsList(ev.id);
-
-                eventTypeSelect.value = ev.eventTypeId;
-                eventTypeSelect.disabled = true;
-                
-                // Clear venue fields so user selects a new one for the child
-                venueHiddenInput.value = '';
-                venueSearch.value = '';
-                venueSearch.disabled = false;
-                clearVenueBtn.classList.add('hidden');
-                subAreaSelect.innerHTML = '<option value="">Select a Layout</option>';
-                subAreaSelect.disabled = true;
-
-                allScheduleInputs.forEach(i => i.disabled = false);
-                resetDateConstraints();
-                await applyParentTimingConstraints(ev.id);
-            }
-
-            searchInput.addEventListener('input', function(e) {
-                if (e.target.value.length < 2) { resultsList.classList.add('hidden'); return; }
-                fetch(`/Events/SearchParentEvents?query=${encodeURIComponent(e.target.value)}`)
-                    .then(res => res.json())
-                    .then(data => {
-                        resultsList.innerHTML = '';
-                        data.forEach(ev => {
-                            const li = document.createElement('li');
-                            li.className = 'p-3 hover:bg-indigo-50 cursor-pointer border-b text-sm';
-                            li.innerHTML = `<strong>${ev.name}</strong><br><small>${ev.venue} | ${ev.date}</small>`;
-                            li.onclick = () => selectParent(ev);
-                            resultsList.appendChild(li);
-                        });
-                        resultsList.classList.remove('hidden');
-                    });
-            });
-
-            clearBtn.onclick = () => {
-                hiddenIdInput.value = ''; searchInput.value = ''; searchInput.disabled = false;
-                clearBtn.classList.add('hidden'); 
-                if(document.getElementById('radioChild').checked) {
-                    venueHiddenInput.value = "";
-                    venueSearch.value = "";
-                    clearVenueBtn.classList.add('hidden');
-                    subAreaSelect.disabled = true;
-                    subAreaSelect.innerHTML = '<option value="">Select a layout</option>';
-                    allScheduleInputs.forEach(i => i.disabled = true);
-                }
-                isMultiDay.disabled = false;
-                document.querySelector('label[for="isMultiDay"]').classList.remove('text-gray-400');
-                resetDateConstraints();
-            };
-
-            // --- Venue Selection ---
-            venueSearch.addEventListener('input', function(e) {
-                if (e.target.value.length < 1) { venueResultsList.classList.add('hidden'); return; }
-                fetch(`/Events/SearchVenues?query=${encodeURIComponent(e.target.value)}`)
-                    .then(res => res.json())
-                    .then(data => {
-                        const query = e.target.value;
-                        venueResultsList.innerHTML = '';
-                        data.forEach(v => {
-                            const li = document.createElement('li');
-                            li.className = 'p-3 hover:bg-indigo-50 cursor-pointer border-b text-sm';
-                            li.innerHTML = `<strong>${highlightMatch(v.name, query)}</strong><br><small>${highlightMatch(v.city || '', query)}</small>`;
-                            li.onclick = () => {
-                                venueHiddenInput.value = v.id;
-                                venueSearch.value = v.name + (v.city ? ', ' + v.city : '');
-                                venueSearch.disabled = false;
-                                clearVenueBtn.classList.remove('hidden');
-                                venueResultsList.classList.add('hidden');
-                                fetchLayouts(v.id);
-                                subAreaSelect.disabled = false;
-                            };
-                            venueResultsList.appendChild(li);
-                        });
-                        venueResultsList.classList.remove('hidden');
-                    });
-            });
-
-            function highlightMatch(text, query) {
-                if (!query) return text;
-                const regex = new RegExp('(' + query.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&') + ')', 'gi');
-                return text.replace(regex, '<span class="highlight">$1</span>');
-            }
-
-            clearVenueBtn.onclick = () => {
-                venueHiddenInput.value = '';
-                venueSearch.value = '';
-                venueSearch.disabled = false;
-                clearVenueBtn.classList.add('hidden');
-                subAreaSelect.innerHTML = '<option value="">Select a Layout</option>';
-                subAreaSelect.disabled = true;
-            };
-
-            function fetchLayouts(vId) {
-                if(!vId) return;
-                fetch(`/Events/GetLayouts?venueId=${vId}`)
-                    .then(res => res.json())
-                    .then(data => {
-                        subAreaSelect.innerHTML = '<option value="">Select a Layout</option>';
-                        data.forEach(s => {
-                            const opt = document.createElement('option');
-                            opt.value = s.id; opt.textContent = s.areaName;
-                            subAreaSelect.appendChild(opt);
-                        });
-                    });
-            }
-
-            // --- Date Scheduling ---
-            function resetDateConstraints() {
-                allScheduleInputs.forEach(i => { i.removeAttribute('min'); i.removeAttribute('max'); });
-                const now = new Date();
-                const tzOffset = now.getTimezoneOffset() * 60000;
-                const localISOTime = (new Date(now - tzOffset)).toISOString().slice(0, 16);
-                const localISOLater = (new Date(now.getTime() + (2 * 3600000) - tzOffset)).toISOString().slice(0, 16);
-
-                startInput.value = localISOTime;
-                endInput.value = localISOLater;
-                
-                const todayDate = localISOTime.split('T')[0];
-                multiStartDate.value = multiEndDate.value = todayDate;
-            }
-
-            isMultiDay.onchange = function() {
-                singleDayContainer.classList.toggle('hidden', this.checked);
-                multiDayContainer.classList.toggle('hidden', !this.checked);
-                if(this.checked) updatePreview();
-            };
-
             function enforceParentConstraints() {
-                if (!document.getElementById('radioChild').checked || !hiddenIdInput.value) return;
+                if (!radioChild.checked || !hiddenIdInput.value) return;
 
                 const minISO = startInput.getAttribute('min');
                 const maxISO = startInput.getAttribute('max');
@@ -675,6 +676,186 @@
                 if (pEndTime && multiEndDate.value === multiEndDate.max && multiDailyEndTime.value > pEndTime) multiDailyEndTime.value = pEndTime;
             }
 
+            [startInput, endInput].forEach(input => {
+                if(input) {
+                    input.addEventListener('change', function() {
+                        if (radioChild.checked && hiddenIdInput.value) {
+                            if (this.min && this.value < this.min) {
+                                alert(`Sub-Events cannot start before the Master Event (${this.min.replace('T', ' ')})`);
+                                this.value = this.min;
+                            }
+                            if (this.max && this.value > this.max) {
+                                alert(`Sub-Events cannot end after the Master Event (${this.max.replace('T', ' ')})`);
+                                this.value = this.max;
+                            }
+                        }
+                    });
+                }
+            });
+
+            [multiStartDate, multiEndDate].forEach(input => {
+                if(input) {
+                    input.addEventListener('change', function() {
+                        if (radioChild.checked && hiddenIdInput.value) {
+                            if (this.min && this.value < this.min) {
+                                alert(`Date cannot be earlier than Master Event start (${this.min})`);
+                                this.value = this.min;
+                            }
+                            if (this.max && this.value > this.max) {
+                                alert(`Date cannot be later than Master Event end (${this.max})`);
+                                this.value = this.max;
+                            }
+                        }
+                    });
+                }
+            });
+
+            async function selectParent(ev) {
+                hiddenIdInput.value = ev.id;
+                searchInput.value = ev.name;
+                searchInput.disabled = true;
+                clearBtn.classList.remove('hidden');
+                resultsList.classList.add('hidden');
+                if(parentError) parentError.classList.add('hidden');
+
+                subEventsListContainer.classList.remove('hidden');
+                hideChildEventForm(); 
+                updateSubEventsList(ev.id);
+
+                eventTypeSelect.value = ev.eventTypeId;
+                eventTypeSelect.disabled = true;
+                
+                venueHiddenInput.value = '';
+                venueSearch.value = '';
+                venueSearch.disabled = false;
+                venueSearch.classList.remove('border-red-500', 'bg-red-50');
+                
+                clearVenueBtn.classList.add('hidden');
+                layoutSelect.innerHTML = '<option value="">Select a Layout</option>';
+                layoutSelect.disabled = true;
+                layoutSelect.classList.remove('border-red-500', 'bg-red-50');
+
+                allScheduleInputs.forEach(i => { if (i) i.disabled = false; });
+                resetDateConstraints();
+                await applyParentTimingConstraints(ev.id);
+            }
+
+            searchInput.addEventListener('input', function(e) {
+                if (e.target.value.length < 2) { resultsList.classList.add('hidden'); return; }
+                fetch(`/Events/SearchParentEvents?query=${encodeURIComponent(e.target.value)}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        resultsList.innerHTML = '';
+                        data.forEach(ev => {
+                            const li = document.createElement('li');
+                            li.className = 'px-5 py-3 hover:bg-indigo-50 cursor-pointer border-b border-gray-50 text-sm transition-colors';
+                            li.innerHTML = `<span class="font-bold text-gray-900 block">${ev.name}</span><span class="text-xs text-gray-500 block mt-0.5">${ev.venue} | ${ev.date}</span>`;
+                            li.onclick = () => selectParent(ev);
+                            resultsList.appendChild(li);
+                        });
+                        resultsList.classList.remove('hidden');
+                    });
+            });
+
+            clearBtn.onclick = () => {
+                hiddenIdInput.value = ''; searchInput.value = ''; searchInput.disabled = false;
+                clearBtn.classList.add('hidden'); 
+                if(radioChild.checked) {
+                    venueHiddenInput.value = "";
+                    venueSearch.value = "";
+                    clearVenueBtn.classList.add('hidden');
+                    layoutSelect.disabled = true;
+                    layoutSelect.innerHTML = '<option value="">Select a layout</option>';
+                    allScheduleInputs.forEach(i => { if(i) i.disabled = true; });
+                    subEventsListContainer.classList.add('hidden');
+                    hideChildEventForm();
+                }
+                isMultiDay.disabled = false;
+                document.querySelector('label[for="isMultiDay"]').classList.remove('text-gray-400');
+                resetDateConstraints();
+            };
+
+            // --- Venue Selection ---
+            venueSearch.addEventListener('input', function(e) {
+                if (e.target.value.length < 1) { venueResultsList.classList.add('hidden'); return; }
+                fetch(`/Events/SearchVenues?query=${encodeURIComponent(e.target.value)}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        const query = e.target.value;
+                        venueResultsList.innerHTML = '';
+                        data.forEach(v => {
+                            const li = document.createElement('li');
+                            li.className = 'px-5 py-3 hover:bg-indigo-50 cursor-pointer border-b border-gray-50 text-sm transition-colors';
+                            li.innerHTML = `<span class="font-bold text-gray-900 block">${highlightMatch(v.name, query)}</span><span class="text-xs text-gray-500 block mt-0.5">${highlightMatch(v.city || '', query)}</span>`;
+                            li.onclick = () => {
+                                venueHiddenInput.value = v.id;
+                                venueSearch.value = v.name + (v.city ? ', ' + v.city : '');
+                                venueSearch.disabled = false;
+                                clearVenueBtn.classList.remove('hidden');
+                                venueResultsList.classList.add('hidden');
+                                fetchLayouts(v.id);
+                                layoutSelect.disabled = false;
+                                resetValidationColors();
+                            };
+                            venueResultsList.appendChild(li);
+                        });
+                        venueResultsList.classList.remove('hidden');
+                    });
+            });
+
+            function highlightMatch(text, query) {
+                if (!query) return text;
+                const regex = new RegExp('(' + query.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&') + ')', 'gi');
+                return text.replace(regex, '<span class="highlight">$1</span>');
+            }
+
+            clearVenueBtn.onclick = () => {
+                venueHiddenInput.value = '';
+                venueSearch.value = '';
+                venueSearch.disabled = false;
+                clearVenueBtn.classList.add('hidden');
+                layoutSelect.innerHTML = '<option value="">Select a Layout</option>';
+                layoutSelect.disabled = true;
+            };
+
+            function fetchLayouts(vId) {
+                if(!vId) return;
+                fetch(`/Events/GetLayouts?venueId=${vId}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        layoutSelect.innerHTML = '<option value="">Select a Layout</option>';
+                        data.forEach(s => {
+                            const opt = document.createElement('option');
+                            opt.value = s.id; opt.textContent = s.areaName;
+                            layoutSelect.appendChild(opt);
+                        });
+                    });
+            }
+
+            function resetDateConstraints() {
+                allScheduleInputs.forEach(i => { if(i) { i.removeAttribute('min'); i.removeAttribute('max'); }});
+                const now = new Date();
+                const tzOffset = now.getTimezoneOffset() * 60000;
+                const localISOTime = (new Date(now - tzOffset)).toISOString().slice(0, 16);
+                const localISOLater = (new Date(now.getTime() + (2 * 3600000) - tzOffset)).toISOString().slice(0, 16);
+
+                if(startInput) startInput.value = localISOTime;
+                if(endInput) endInput.value = localISOLater;
+                
+                const todayDate = localISOTime.split('T')[0];
+                if(multiStartDate) multiStartDate.value = todayDate;
+                if(multiEndDate) multiEndDate.value = todayDate;
+            }
+
+            if(isMultiDay) {
+                isMultiDay.onchange = function() {
+                    singleDayContainer.classList.toggle('hidden', this.checked);
+                    multiDayContainer.classList.toggle('hidden', !this.checked);
+                    if(this.checked) updatePreview();
+                    handleLayoutAndVenueState();
+                };
+            }
+
             function updatePreview() {
                 enforceParentConstraints();
                 const s = new Date(multiStartDate.value + 'T00:00:00');
@@ -693,9 +874,9 @@
                     const row = document.createElement('tr');
                     row.setAttribute('data-date', date.toLocaleDateString('en-CA'));
                     row.innerHTML = `
-                        <td class="px-6 py-3">${date.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}</td>
-                        <td class="px-6 py-3 text-right">
-                            <button type="button" onclick="removeDate(${index})" class="text-red-500 hover:text-red-700">Delete</button>
+                        <td class="px-4 py-2">${date.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}</td>
+                        <td class="px-4 py-2 text-right">
+                            <button type="button" onclick="removeDate(${index})" class="text-red-500 hover:text-red-700 font-bold">Delete</button>
                         </td>`;
                     eventPreviewList.appendChild(row);
                 });
@@ -708,22 +889,21 @@
                 renderPreviewTable();
             };
             
-            [multiStartDate, multiEndDate, multiStartTime, multiDailyEndTime].forEach(i => i.oninput = updatePreview);
-            [startInput, endInput].forEach(input => {
-                input.addEventListener('change', function() {
-                    if (document.getElementById('radioChild').checked && hiddenIdInput.value) {
-                        if (this.min && this.value < this.min) this.value = this.min;
-                        if (this.max && this.value > this.max) this.value = this.max;
-                    }
-                });
-            });
+            [multiStartDate, multiEndDate, multiStartTime, multiDailyEndTime].forEach(i => { if(i) i.oninput = updatePreview; });
 
-            // --- Form Submission ---
+            // ==========================================
+            // MAIN SUBMISSION HANDLER
+            // ==========================================
             form.addEventListener('submit', async function(e) {
+                
                 e.preventDefault();
+                
+                if (typeof $(form).valid === "function" && !$(form).valid()) {
+                    return; 
+                }
+
                 enforceParentConstraints();
 
-                // Validation
                 const eventNameInput = document.getElementById('Name');
                 if (!eventNameInput.value.trim()) {
                     alert("Please enter an Event Name.");
@@ -731,25 +911,37 @@
                     return;
                 }
 
-                const isChild = document.getElementById('radioChild').checked;
-                const isMaster = document.getElementById('radioFather').checked;
+                const isChild = radioChild.checked;
+                const isMaster = radioMaster.checked;
+                const isStandalone = singleCheckbox.checked || isMultiDay.checked;
                 
                 if (isChild && !hiddenIdInput.value) {
                     if(parentError) parentError.classList.remove('hidden');
                     return;
                 }
 
-                if (isChild || (isMaster && singleCheckbox.checked)) {
-                    if (!venueHiddenInput.value) {
-                        alert("Please search and select a Venue from the dropdown list.");
-                        venueSearch.focus();
+                if (isChild || (isMaster && isStandalone)) {
+                    let locationError = false;
+
+                    if (!venueHiddenInput.value || venueHiddenInput.value === '0') {
+                        venueSearch.classList.add('border-red-500', 'bg-red-50');
+                        locationError = true;
+                    }
+
+                    if (!layoutSelect.value || layoutSelect.value === '0') {
+                        layoutSelect.classList.add('border-red-500', 'bg-red-50');
+                        locationError = true;
+                    }
+
+                    if (locationError) {
+                        alert("ERROR: Sub-Events and Standalone events strictly require both a Venue and a Layout.");
+                        document.getElementById('location-section').scrollIntoView({ behavior: 'smooth', block: 'center' });
                         return;
                     }
-                    if (!subAreaSelect.value) {
-                        alert("Please select a Layout.");
-                        subAreaSelect.focus();
-                        return;
-                    } 
+                } else {
+                    venueHiddenInput.value = '';
+                    layoutSelect.innerHTML = '<option value="">Select a Layout</option>';
+                    layoutSelect.value = '';
                 }
 
                 if (isMultiDay.checked) {
@@ -790,7 +982,7 @@
 
                 allScheduleInputs.forEach(i => { if(i) i.disabled = false; });
                 if (eventTypeSelect) eventTypeSelect.disabled = false;
-                if (subAreaSelect) subAreaSelect.disabled = false;
+                if (layoutSelect) layoutSelect.disabled = false;
 
                 const formData = new FormData(form);
 
@@ -822,56 +1014,33 @@
                     const alertText = successAlert.querySelector('p'); 
                     successAlert.classList.remove('hidden');
                     
-                    const wasStandalone = isMaster && singleCheckbox.checked;
-                    
-                    // Capture context before reset
                     const currentParentId = isMaster ? data.eventId : hiddenIdInput.value;
                     const currentParentName = isMaster ? data.eventName : searchInput.value;
                     const currentEventTypeId = isMaster ? data.eventTypeId : eventTypeSelect.value;
                     
                     if (isMaster) {
-                        if (wasStandalone) {
+                        if (isStandalone) {
                             alertText.textContent = "Standalone Event created successfully!";
-                            finishChildCreation(); 
+                            resetToCleanMasterMode(); 
                         } else {
                             alertText.textContent = "Master Event created! You can now quickly add Sub-Events for it.";
                             
-                            const childLabel = document.getElementById('labelChild');
-                            const childRadio = childLabel.querySelector('input');
-                            
-                            if (childRadio && childRadio.disabled) {
-                                childRadio.disabled = false;
-                                childLabel.removeAttribute('title');
-                                childLabel.innerHTML = `
-                                    <input type="radio" id="radioChild" name="eventMode" value="child" class="sr-only" onchange="toggleEventMode('child')">
-                                    <span class="text-white font-medium flex items-center justify-center">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
-                                        Sub-Event (Child)
-                                    </span>`;
-                                const helperText = document.getElementById('parentUnlockHelperText');
-                                if (helperText) helperText.classList.add('hidden');
-                            }
-                            
-                            document.getElementById('radioFather').disabled = true;
-                            document.getElementById('radioFather').checked = false;
-                            
-                            childRadio.checked = true;
+                            radioMaster.checked = false;
+                            radioChild.checked = true;
                             toggleEventMode('child');
-                            hideChildEventForm(); 
-
+                            
                             hiddenIdInput.value = data.eventId;
                             searchInput.value = data.eventName;
                             searchInput.disabled = true;          
-                            clearBtn.classList.remove('hidden');  
-                            resultsList.classList.add('hidden');  
+                            clearBtn.classList.remove('hidden');   
+                            resultsList.classList.add('hidden');   
                             
-                            // Explicitly clear venue fields so they are ready for the child input
                             venueHiddenInput.value = '';
                             venueSearch.value = '';
                             venueSearch.disabled = false;
                             clearVenueBtn.classList.add('hidden');
-                            subAreaSelect.innerHTML = '<option value="">Select a Layout</option>';
-                            subAreaSelect.disabled = true;
+                            layoutSelect.innerHTML = '<option value="">Select a Layout</option>';
+                            layoutSelect.disabled = true;
 
                             if (eventTypeSelect) {
                                 eventTypeSelect.value = data.eventTypeId;
@@ -882,18 +1051,16 @@
                             resetDateConstraints();
                             await applyParentTimingConstraints(data.eventId);
                             updateSubEventsList(currentParentId);
+                            
+                            hideChildEventForm();
                         }
                     } else {
-                        alertText.textContent = "Sub-Event created successfully! Add another one if needed.";
-                        hideChildEventForm(); 
+                        alertText.textContent = "Sub-Event created successfully!";
                         
-                        form.reset(); // This completely empties Name, Dates, Venue, Layout etc.
-
-                        // --- BUG FIX: Restore Child Mode ---
-                        // form.reset() defaults the radio back to Master. We must force it back to Child!
-                        document.getElementById('radioFather').checked = false;
-                        document.getElementById('radioChild').checked = true;
-                        // -----------------------------------
+                        form.reset(); 
+                        
+                        radioMaster.checked = false;
+                        radioChild.checked = true;
 
                         document.getElementById('imagePreviewContainer').classList.add('hidden');
                         document.getElementById('galleryPreviewContainer').classList.add('hidden');
@@ -904,13 +1071,12 @@
                         searchInput.disabled = true;
                         clearBtn.classList.remove('hidden');
                         
-                        // Ensure Venue inputs stay empty for the next child creation
                         venueHiddenInput.value = '';
                         venueSearch.value = '';
                         venueSearch.disabled = false;
                         clearVenueBtn.classList.add('hidden');
-                        subAreaSelect.innerHTML = '<option value="">Select a Layout</option>';
-                        subAreaSelect.disabled = true;
+                        layoutSelect.innerHTML = '<option value="">Select a Layout</option>';
+                        layoutSelect.disabled = true;
                         
                         if (eventTypeSelect) {
                             eventTypeSelect.value = currentEventTypeId;
@@ -921,6 +1087,8 @@
                         resetDateConstraints();
                         multiDayContainer.classList.add("hidden");
                         singleDayContainer.classList.remove("hidden");
+                        
+                        hideChildEventForm();
                     }
                     
                     setTimeout(() => successAlert.classList.add('hidden'), 5000);
@@ -931,16 +1099,20 @@
                 } finally {
                     submitBtn.innerHTML = originalBtnText;
                     submitBtn.disabled = false;
+                    
                     if (isChild && !hiddenIdInput.value) {
                         allScheduleInputs.forEach(i => { if(i) i.disabled = true; });
                     }
                 }
             });
 
-            toggleEventMode('father'); // Init form state
+            // Initialize default state on load
+            toggleEventMode('father'); 
         });
 
-        // --- Sub-Events & Renaming ---
+        // ==========================================
+        // SUB-EVENTS LIST & RENAMING MODALS
+        // ==========================================
         async function updateSubEventsList(parentId) {
             if (!parentId) return;
             try {
@@ -951,39 +1123,31 @@
                 document.getElementById('subEventCountDisplay').textContent = data.length;
                 document.getElementById('subEventsListContainer').classList.remove('hidden'); 
                 
-                // Show 'Done' button only if there is at least one sub-event
-                const doneBtn = document.getElementById('doneChildBtn');
-                if (data.length > 0) {
-                    doneBtn.classList.remove('hidden');
-                } else {
-                    doneBtn.classList.add('hidden');
-                }
-                
                 if (data.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="4" class="px-6 py-4 text-center text-sm text-gray-500 italic">No sub-events created yet.</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="4" class="px-6 py-6 text-center text-sm font-bold text-gray-500 italic">No sub-events created yet.</td></tr>`;
                     return;
                 }
 
                 tbody.innerHTML = '';
                 data.forEach(ev => {
                     const row = document.createElement('tr');
-                    row.className = 'hover:bg-gray-50 transition-colors';
+                    row.className = 'hover:bg-indigo-50/30 transition-colors';
                     row.innerHTML = `
-                        <td class="namingData px-6 py-3 whitespace-nowrap flex items-center space-x-2">
+                        <td class="namingData px-6 py-4 whitespace-nowrap flex items-center space-x-2">
                             <label class="hidden SubIdLabels">${ev.id}</label>
-                            <input type="checkbox" class="h-5 w-5 hidden renameCheckboxes"/>
+                            <input type="checkbox" class="h-4 w-4 hidden renameCheckboxes rounded border-gray-300 text-indigo-600"/>
                             <input type="text" id="edit-input-${ev.id}" value="${ev.name}" data-original-value="${ev.name}" onkeydown="if(event.key === 'Enter') { event.preventDefault(); saveEditName(${ev.id}); }" onfocus="showEditButtons(${ev.id})" class="renameField font-bold text-gray-900 border border-transparent hover:border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full max-w-[200px] transition-colors">
-                            <button type="button" id="save-btn-${ev.id}" onclick="saveEditName(${ev.id})" class="hidden bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded text-xs transition-colors shadow-sm">Save</button>
-                            <button type="button" id="cancel-btn-${ev.id}" onclick="cancelEditName(${ev.id})" class="hidden text-gray-500 hover:text-gray-700 px-2 py-1 text-xs transition-colors">Cancel</button>
+                            <button type="button" id="save-btn-${ev.id}" onclick="saveEditName(${ev.id})" class="hidden bg-emerald-500 hover:bg-emerald-600 text-white px-2 py-1 rounded text-xs transition-colors font-bold shadow-sm">Save</button>
+                            <button type="button" id="cancel-btn-${ev.id}" onclick="cancelEditName(${ev.id})" class="hidden text-gray-500 hover:text-gray-700 px-2 py-1 text-xs transition-colors font-bold">Cancel</button>
                         </td>
-                        <td class="px-6 py-3 whitespace-nowrap">
-                            <div class="font-medium text-gray-700">${ev.date}</div>
-                            <div class="text-xs text-indigo-600 font-medium mt-0.5">${ev.time}</div>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="font-bold text-gray-700">${ev.date}</div>
+                            <div class="text-[11px] text-indigo-600 font-bold uppercase tracking-wider mt-0.5">${ev.time}</div>
                         </td>
-                        <td class="px-6 py-3 whitespace-nowrap"><div class="font-bold text-gray-900">${ev.layout}</div></td>
-                        <td class="px-6 py-3 whitespace-nowrap text-right text-sm font-medium flex justify-end items-center gap-2">
-                            <button type="button" onclick="deleteSubEvent(${ev.id})" class="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-50 transition-colors" title="Delete"><svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" /></svg></button>
-                            <button type="button" onclick="DuplicateSubEvent(${ev.id})" class="text-indigo-600 hover:text-indigo-900 p-1 rounded-full hover:bg-indigo-50 transition-colors" title="Duplicate"><svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v6h4a1 1 0 110 2h-4v6a1 1 0 11-2 0v-6H4a1 1 0 110-2h4V4a1 1 0 011-1z" clip-rule="evenodd" /></svg></button>
+                        <td class="px-6 py-4 whitespace-nowrap"><div class="font-bold text-gray-900">${ev.layout}</div></td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium flex justify-end items-center gap-2">
+                            <button type="button" onclick="DuplicateSubEvent(${ev.id})" class="text-indigo-600 hover:text-white hover:bg-indigo-600 p-1.5 rounded-lg border border-indigo-100 bg-indigo-50 transition-colors" title="Duplicate"><svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v6h4a1 1 0 110 2h-4v6a1 1 0 11-2 0v-6H4a1 1 0 110-2h4V4a1 1 0 011-1z" clip-rule="evenodd" /></svg></button>
+                            <button type="button" onclick="deleteSubEvent(${ev.id})" class="text-red-500 hover:text-white hover:bg-red-500 p-1.5 rounded-lg border border-red-100 bg-red-50 transition-colors" title="Delete"><svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" /></svg></button>
                         </td>`;
                     tbody.appendChild(row);
                 });

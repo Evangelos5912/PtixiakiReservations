@@ -3,6 +3,8 @@
 
 @{
     ViewData["Title"] = "Edit Layout";
+    var boundaryWidth = Model.Width > 0 ? Model.Width : 1000;
+    var boundaryHeight = Model.Height > 0 ? Model.Height : 1000;
 }
 
 <div class="container mx-auto bg-gradient-to-br from-gray-50 to-blue-50/50 min-h-screen py-4 sm:py-8 px-2 sm:px-6 lg:px-8">
@@ -69,14 +71,16 @@
 
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
                                 <div>
-                                    <label asp-for="Width" class="block text-sm font-bold text-gray-700 mb-1.5">Map Boundary Width</label>
-                                    <input asp-for="Width" type="number" min="0" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm text-sm" />
+                                    <label asp-for="Width" class="block text-sm font-bold text-gray-700 mb-1.5">Map Boundary Width (Pixels)</label>
+                                    <input asp-for="Width" type="number" min="500" max="5000" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm text-sm" />
                                     <span asp-validation-for="Width" class="text-red-500 text-xs mt-1.5 block"></span>
+                                    <p class="text-[11px] text-gray-500 mt-1">Defines the horizontal size of the editable canvas.</p>
                                 </div>
                                 <div>
-                                    <label asp-for="Height" class="block text-sm font-bold text-gray-700 mb-1.5">Map Boundary Height</label>
-                                    <input asp-for="Height" type="number" min="0" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm text-sm" />
+                                    <label asp-for="Height" class="block text-sm font-bold text-gray-700 mb-1.5">Map Boundary Height (Pixels)</label>
+                                    <input asp-for="Height" type="number" min="500" max="5000" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm text-sm" />
                                     <span asp-validation-for="Height" class="text-red-500 text-xs mt-1.5 block"></span>
+                                    <p class="text-[11px] text-gray-500 mt-1">Defines the vertical size of the editable canvas.</p>
                                 </div>
                             </div>
                         </div>
@@ -92,23 +96,62 @@
                 <div id="seats-content" class="tab-content hidden">
                     <div id="seat-status" class="hidden mb-4 font-bold text-sm transition-all duration-300 shadow-sm"></div>
 
+                    <!-- ========================================================= -->
+                    <!-- CONFIGURATION RULES PANEL                                 -->
+                    <!-- ========================================================= -->
+                    <div class="bg-indigo-50 border border-indigo-100 rounded-2xl p-5 mb-6 shadow-sm relative overflow-hidden">
+                        <div class="absolute -right-4 -top-4 w-24 h-24 bg-indigo-200 rounded-full opacity-40 blur-2xl pointer-events-none"></div>
+                        <div class="flex items-start relative z-10">
+                            <div class="flex-shrink-0 mt-0.5">
+                                <svg class="h-6 w-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                            <div class="ml-3 sm:ml-4 w-full">
+                                <h3 class="text-sm font-extrabold text-indigo-900 uppercase tracking-wider mb-3">How Floorplan Configuration Works</h3>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                                    <div class="bg-white/60 p-4 rounded-xl border border-indigo-50">
+                                        <strong class="text-indigo-900 block mb-1 flex items-center">
+                                            <svg class="w-4 h-4 mr-1.5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11m0-5.5v-1a1.5 1.5 0 013 0v1m0 0V11m0-5.5a1.5 1.5 0 013 0v3m0 0V11" /></svg>
+                                            Canvas Mechanics
+                                        </strong>
+                                        <ul class="list-disc pl-5 space-y-1 text-indigo-800/80">
+                                            <li><strong>Drag & Drop:</strong> Pull elements from the toolbar directly onto the grid, or use Crosshair mode to rapidly click-to-add.</li>
+                                            <li><strong>Boundaries:</strong> Your event boundaries are strictly defined by the white canvas. Elements cannot be placed in the gray void!</li>
+                                        </ul>
+                                    </div>
+                                    <div class="bg-white/60 p-4 rounded-xl border border-indigo-50">
+                                        <strong class="text-indigo-900 block mb-1 flex items-center">
+                                            <svg class="w-4 h-4 mr-1.5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
+                                            Smart Generators & Groups
+                                        </strong>
+                                        <ul class="list-disc pl-5 space-y-1 text-indigo-800/80">
+                                            <li><strong>Tables & Stages:</strong> Drop a shape onto the map, click it, and use the bottom panel to instantly auto-generate seats around it.</li>
+                                            <li><strong>Grouping:</strong> Click and drag on the map background to select multiple items, then click "Group" to lock them together.</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="bg-white rounded-t-xl border border-gray-200 p-4 shadow-sm relative z-20">
                         
                         <div class="flex flex-col xl:flex-row gap-4 w-full items-start xl:items-center justify-between">
                             
                             <div class="order-1 xl:order-2 flex flex-wrap gap-2 w-full xl:w-auto justify-start xl:justify-end">
-                                <button type="button" onclick="groupSelectedItems()" class="flex items-center px-4 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-lg shadow-sm text-sm font-bold transition-all flex-1 sm:flex-none justify-center">
+                                <button type="button" onclick="groupSelectedItems()" title="Select multiple items and click here to lock them into a single movable group" class="flex items-center px-4 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-lg shadow-sm text-sm font-bold transition-all flex-1 sm:flex-none justify-center">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
                                     Group
                                 </button>
-                                <button type="button" onclick="ungroupSelectedItems()" class="flex items-center px-4 py-2 bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 rounded-lg shadow-sm text-sm font-bold transition-all flex-1 sm:flex-none justify-center">
+                                <button type="button" onclick="ungroupSelectedItems()" title="Break the selected group back into individual movable items" class="flex items-center px-4 py-2 bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 rounded-lg shadow-sm text-sm font-bold transition-all flex-1 sm:flex-none justify-center">
                                     Ungroup
                                 </button>
-                                <button type="button" id="deleteSeatBtn" onclick="removeSelectedItems()" class="flex items-center px-4 py-2 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 rounded-lg shadow-sm text-sm font-bold transition-all flex-1 sm:flex-none justify-center">
+                                <button type="button" id="deleteSeatBtn" onclick="removeSelectedItems()" title="Permanently remove selected items from the floorplan" class="flex items-center px-4 py-2 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 rounded-lg shadow-sm text-sm font-bold transition-all flex-1 sm:flex-none justify-center">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                                     Delete
                                 </button>
-                                <button type="button" id="save-seats" class="flex items-center px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg shadow text-sm font-bold transition-all flex-1 sm:flex-none justify-center w-full sm:w-auto mt-2 sm:mt-0">
+                                <button type="button" id="save-seats" title="Save all floorplan changes to the database" class="flex items-center px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg shadow text-sm font-bold transition-all flex-1 sm:flex-none justify-center w-full sm:w-auto mt-2 sm:mt-0">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
                                     Save Map
                                 </button>
@@ -116,70 +159,76 @@
 
                             <div class="order-2 xl:order-1 flex flex-wrap gap-2 w-full xl:w-auto justify-start border-t xl:border-t-0 border-gray-100 pt-4 xl:pt-0">
                                 <span class="w-full xl:hidden text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Add Elements:</span>
-                                <button type="button" id="show-seat" class="px-4 py-2 text-sm font-bold text-blue-700 bg-blue-50 border border-blue-200 hover:bg-blue-600 hover:text-white rounded-lg shadow-sm transition-all flex-1 sm:flex-none">Seats</button>
-                                <button type="button" id="show-table" class="px-4 py-2 text-sm font-bold text-blue-700 bg-blue-50 border border-blue-200 hover:bg-blue-600 hover:text-white rounded-lg shadow-sm transition-all flex-1 sm:flex-none">Tables</button>
-                                <button type="button" id="show-scene" class="px-4 py-2 text-sm font-bold text-blue-700 bg-blue-50 border border-blue-200 hover:bg-blue-600 hover:text-white rounded-lg shadow-sm transition-all flex-1 sm:flex-none">Stages</button>
+                                <button type="button" id="show-seat" title="Open seating generators" class="px-4 py-2 text-sm font-bold text-blue-700 bg-blue-50 border border-blue-200 hover:bg-blue-600 hover:text-white rounded-lg shadow-sm transition-all flex-1 sm:flex-none">Seats</button>
+                                <button type="button" id="show-table" title="Open table generators (Square, Round, Triangle)" class="px-4 py-2 text-sm font-bold text-blue-700 bg-blue-50 border border-blue-200 hover:bg-blue-600 hover:text-white rounded-lg shadow-sm transition-all flex-1 sm:flex-none">Tables</button>
+                                <button type="button" id="show-scene" title="Open performance stage generators" class="px-4 py-2 text-sm font-bold text-blue-700 bg-blue-50 border border-blue-200 hover:bg-blue-600 hover:text-white rounded-lg shadow-sm transition-all flex-1 sm:flex-none">Stages</button>
                             </div>
                         </div>
 
                         <div class="order-3 w-full mt-4 bg-gray-50 rounded-lg p-3 border border-gray-200 shadow-inner min-h-[60px]">
                             <div id="toolbar-instruction" class="text-sm text-gray-500 italic flex items-center justify-center h-full w-full">
-                                Select a category above to view component configurations.
+                                Select a category above to view component configurations. Drag elements directly onto the canvas.
                             </div>
                             
                             <div class="AddContainer w-full hidden flex flex-wrap items-center gap-2 justify-start" id="seatContainer">
                                 
                                 <div class="flex items-center bg-white border border-gray-300 rounded-md shadow-sm overflow-hidden h-9">
-                                    <button type="button" id="toggle-click-add" class="px-3 h-full text-sm font-bold text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-1.5 border-r border-gray-300 outline-none focus:bg-gray-50">
+                                    <button type="button" id="toggle-click-add" title="Enable crosshair mode: click anywhere on the canvas to rapidly drop sequential seats" class="px-3 h-full text-sm font-bold text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-1.5 border-r border-gray-300 outline-none focus:bg-gray-50">
                                         <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"></path></svg>
                                         Click-to-Add: <span id="click-add-status" class="text-red-500 font-extrabold ml-1">OFF</span>
                                     </button>
-                                    <input type="text" id="click-add-prefix" value="S" placeholder="Prefix" class="w-16 h-full text-sm px-2 outline-none focus:bg-indigo-50 font-bold text-gray-700" title="Seat Prefix">
+                                    <input type="text" id="click-add-prefix" value="S" placeholder="Prefix" class="w-16 h-full text-sm px-2 outline-none focus:bg-indigo-50 font-bold text-gray-700" title="The letter prefix for your seats (e.g. 'A' for A1, A2)">
                                     <div class="w-px h-5 bg-gray-300"></div>
-                                    <input type="number" id="click-add-start" value="1" min="1" class="w-16 h-full text-sm px-2 outline-none focus:bg-indigo-50 font-bold text-gray-700" title="Start Number">
+                                    <input type="number" id="click-add-start" value="1" min="1" class="w-16 h-full text-sm px-2 outline-none focus:bg-indigo-50 font-bold text-gray-700" title="The starting number for your sequence">
                                 </div>
                                 <div class="w-px h-6 bg-gray-300 mx-1"></div>
 
-                                <button type="button" id="add-seat-single" draggable="true" class="px-4 py-1.5 text-sm font-bold text-gray-700 bg-white border border-gray-300 hover:border-blue-400 hover:text-blue-600 rounded-md shadow-sm cursor-grab active:cursor-grabbing">Single</button>
-                                <button type="button" id="add-seat-hline" class="px-4 py-1.5 text-sm font-bold text-gray-700 bg-white border border-gray-300 hover:border-blue-400 hover:bg-blue-50 hover:text-blue-600 rounded-md shadow-sm transition-colors cursor-pointer">Horizontal Row</button>
-                                <button type="button" id="add-seat-vline" class="px-4 py-1.5 text-sm font-bold text-gray-700 bg-white border border-gray-300 hover:border-blue-400 hover:bg-blue-50 hover:text-blue-600 rounded-md shadow-sm transition-colors cursor-pointer">Vertical Row</button>
-                                <button type="button" id="add-seat-grid" class="px-4 py-1.5 text-sm font-bold text-gray-700 bg-white border border-gray-300 hover:border-blue-400 hover:bg-blue-50 hover:text-blue-600 rounded-md shadow-sm transition-colors cursor-pointer">Grid</button>
+                                <button type="button" id="add-seat-single" draggable="true" title="Drag and drop to place a single independent seat" class="px-4 py-1.5 text-sm font-bold text-gray-700 bg-white border border-gray-300 hover:border-blue-400 hover:text-blue-600 rounded-md shadow-sm cursor-grab active:cursor-grabbing">Single</button>
+                                <button type="button" id="add-seat-hline" title="Click to auto-generate a horizontal row of perfectly spaced seats" class="px-4 py-1.5 text-sm font-bold text-gray-700 bg-white border border-gray-300 hover:border-blue-400 hover:bg-blue-50 hover:text-blue-600 rounded-md shadow-sm transition-colors cursor-pointer">Horizontal Row</button>
+                                <button type="button" id="add-seat-vline" title="Click to auto-generate a vertical column of perfectly spaced seats" class="px-4 py-1.5 text-sm font-bold text-gray-700 bg-white border border-gray-300 hover:border-blue-400 hover:bg-blue-50 hover:text-blue-600 rounded-md shadow-sm transition-colors cursor-pointer">Vertical Row</button>
+                                <button type="button" id="add-seat-grid" title="Click to instantly generate a massive grid or block of seats" class="px-4 py-1.5 text-sm font-bold text-gray-700 bg-white border border-gray-300 hover:border-blue-400 hover:bg-blue-50 hover:text-blue-600 rounded-md shadow-sm transition-colors cursor-pointer">Grid</button>
                             </div>
                             
                             <div class="AddContainer w-full hidden flex flex-wrap gap-2 justify-start" id="tableContainer">
-                                <button type="button" id="add-table-square" draggable="true" class="px-4 py-1.5 text-sm font-bold text-gray-700 bg-white border border-gray-300 hover:border-blue-400 hover:text-blue-600 rounded-md shadow-sm cursor-grab active:cursor-grabbing">Square Table</button>
-                                <button type="button" id="add-table-circle" draggable="true" class="px-4 py-1.5 text-sm font-bold text-gray-700 bg-white border border-gray-300 hover:border-blue-400 hover:text-blue-600 rounded-md shadow-sm cursor-grab active:cursor-grabbing">Circular Table</button>
-                                <button type="button" id="add-table-triangle" draggable="true" class="px-4 py-1.5 text-sm font-bold text-gray-700 bg-white border border-gray-300 hover:border-blue-400 hover:text-blue-600 rounded-md shadow-sm cursor-grab active:cursor-grabbing">Triangular Table</button>
+                                <button type="button" id="add-table-square" draggable="true" title="Drag and drop a square table. Select it on the map to auto-wrap chairs around it!" class="px-4 py-1.5 text-sm font-bold text-gray-700 bg-white border border-gray-300 hover:border-blue-400 hover:text-blue-600 rounded-md shadow-sm cursor-grab active:cursor-grabbing">Square Table</button>
+                                <button type="button" id="add-table-circle" draggable="true" title="Drag and drop a circular table. Select it on the map to spawn a perfect ring of seats!" class="px-4 py-1.5 text-sm font-bold text-gray-700 bg-white border border-gray-300 hover:border-blue-400 hover:text-blue-600 rounded-md shadow-sm cursor-grab active:cursor-grabbing">Circular Table</button>
+                                <button type="button" id="add-table-triangle" draggable="true" title="Drag and drop a triangular table element" class="px-4 py-1.5 text-sm font-bold text-gray-700 bg-white border border-gray-300 hover:border-blue-400 hover:text-blue-600 rounded-md shadow-sm cursor-grab active:cursor-grabbing">Triangular Table</button>
                             </div>
                             
                             <div class="AddContainer w-full hidden flex flex-wrap gap-2 justify-start" id="sceneContainer">
-                                <button type="button" id="add-scene-stage" draggable="true" class="px-4 py-1.5 text-sm font-bold text-gray-700 bg-white border border-gray-300 hover:border-blue-400 hover:text-blue-600 rounded-md shadow-sm cursor-grab active:cursor-grabbing">Performance Stage</button>
+                                <button type="button" id="add-scene-stage" draggable="true" title="Drag and drop a stage. Select it on the map to instantly generate massive stadium or concert seating arrays!" class="px-4 py-1.5 text-sm font-bold text-gray-700 bg-white border border-gray-300 hover:border-blue-400 hover:text-blue-600 rounded-md shadow-sm cursor-grab active:cursor-grabbing">Performance Stage</button>
                             </div>
                         </div>
                     </div>
 
                     <div class="relative mt-[-1px] z-10">
-                        <div class="bg-gray-100 rounded-b-xl border border-gray-200 p-0 w-full overflow-hidden relative shadow-inner" style="height: 65vh; min-height: 500px; max-height: 900px;">
+                        <div id="seat-map" class="bg-gray-200 rounded-b-xl border border-gray-200 p-0 w-full overflow-auto relative shadow-inner select-none touch-pan-x touch-pan-y z-[90]" style="height: 65vh; min-height: 500px; max-height: 900px;">
                             
-                            <div class="absolute bottom-4 right-4 z-[110] flex items-center gap-1 bg-white/90 backdrop-blur p-1.5 rounded-lg shadow-md border border-gray-200">
-                                <button type="button" id="zoom-out" class="p-1.5 hover:bg-gray-100 rounded text-gray-700 transition-colors" title="Zoom Out">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM13 10H7"/></svg>
-                                </button>
-                                <span id="zoom-level" class="w-12 text-center text-sm font-extrabold text-gray-800 select-none">100%</span>
-                                <button type="button" id="zoom-in" class="p-1.5 hover:bg-gray-100 rounded text-gray-700 transition-colors" title="Zoom In">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"/></svg>
-                                </button>
-                                <div class="w-px h-5 bg-gray-300 mx-1"></div>
-                                <button type="button" id="zoom-reset" class="p-1.5 hover:bg-gray-100 rounded text-gray-700 transition-colors" title="Reset Zoom">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-                                </button>
-                            </div>
-
-                            <div id="seat-map" class="relative w-full h-full overflow-auto select-none touch-pan-x touch-pan-y shadow-inner z-[90]">
-                                <div id="zoom-container" class="absolute top-0 left-0 origin-top-left transition-transform duration-75 bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:20px_20px]" style="width: 2500px; height: 2500px; z-index: 10;">
-                                    <div id="selection-box" class="selection-box"></div>
+                            <div class="sticky top-auto bottom-4 right-4 z-[110] flex items-center justify-end pointer-events-none pr-4 pb-4">
+                                <div class="flex items-center gap-1 bg-white/90 backdrop-blur p-1.5 rounded-lg shadow-md border border-gray-200 pointer-events-auto">
+                                    <button type="button" id="zoom-out" class="p-1.5 hover:bg-gray-100 rounded text-gray-700 transition-colors" title="Zoom Out (Ctrl + Scroll Down)">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM13 10H7"/></svg>
+                                    </button>
+                                    <span id="zoom-level" class="w-12 text-center text-sm font-extrabold text-gray-800 select-none">100%</span>
+                                    <button type="button" id="zoom-in" class="p-1.5 hover:bg-gray-100 rounded text-gray-700 transition-colors" title="Zoom In (Ctrl + Scroll Up)">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"/></svg>
+                                    </button>
+                                    <div class="w-px h-5 bg-gray-300 mx-1"></div>
+                                    <button type="button" id="zoom-reset" class="p-1.5 hover:bg-gray-100 rounded text-gray-700 transition-colors" title="Reset Zoom & Re-Center">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                                    </button>
                                 </div>
                             </div>
+
+                            <!-- THE PLAYABLE CANVAS BOUNDARY -->
+                            <div id="zoom-container" class="absolute origin-top-left transition-transform duration-75 bg-white shadow-2xl border-2 border-indigo-400 overflow-visible" style="width: @(boundaryWidth)px; height: @(boundaryHeight)px; top: 40px; left: 40px; z-index: 10;">
+                                <div class="absolute inset-0 bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:20px_20px] pointer-events-none opacity-60"></div>
+                                <div class="absolute -top-7 left-[-2px] bg-indigo-500 text-white font-extrabold text-[10px] uppercase tracking-wider px-3 py-1 rounded-t-md shadow-sm">
+                                    Layout Boundary (@(boundaryWidth) x @(boundaryHeight))
+                                </div>
+                                <div id="selection-box" class="selection-box"></div>
+                            </div>
+
                         </div>
                     </div>
 
@@ -225,6 +274,10 @@
         const optionsPanel = document.getElementById("optionsPanel");
         const instructionBar = document.getElementById("toolbar-instruction");
 
+        // Inject boundaries globally for JS clamps
+        const baseW = @(boundaryWidth);
+        const baseH = @(boundaryHeight);
+
         let currentScale = 1;
         const zoomLevelText = document.getElementById('zoom-level');
 
@@ -266,10 +319,10 @@
             }
         }
 
-        zoomContainer.addEventListener('click', function(e) {
+        zoomContainer.addEventListener('mousedown', function(e) {
             if (!isClickToAddMode) return;
             
-            if (e.target === zoomContainer || e.target === seatMap) {
+            if (e.target === zoomContainer || e.target.id === 'layout-boundary') {
                 e.preventDefault();
                 e.stopPropagation();
 
@@ -280,8 +333,12 @@
                 const seatName = u.name;
 
                 const rect = zoomContainer.getBoundingClientRect();
-                const dropX = Math.round(((e.clientX - rect.left) / currentScale) / 10) * 10;
-                const dropY = Math.round(((e.clientY - rect.top) / currentScale) / 10) * 10;
+                let dropX = Math.round(((e.clientX - rect.left) / currentScale) / 10) * 10;
+                let dropY = Math.round(((e.clientY - rect.top) / currentScale) / 10) * 10;
+
+                // Clamp click drops to bounds
+                dropX = Math.max(0, Math.min(dropX, baseW - 60));
+                dropY = Math.max(0, Math.min(dropY, baseH - 60));
 
                 currentSeats.push({
                     id: `temp-${Date.now()}`,
@@ -312,8 +369,8 @@
                 if (i.y + i.h > maxY) maxY = i.y + i.h;
             });
 
-            for (let y = 50; y <= maxY + reqHeight + gap; y += stepY) {
-                for (let x = 50; x <= maxX + reqWidth + gap; x += stepX) {
+            for (let y = 50; y <= Math.min(maxY + reqHeight + gap, baseH - reqHeight); y += stepY) {
+                for (let x = 50; x <= Math.min(maxX + reqWidth + gap, baseW - reqWidth); x += stepX) {
                     let isFree = true;
                     for (let i = 0; i < allItems.length; i++) {
                         const item = allItems[i];
@@ -328,7 +385,7 @@
                     if (isFree) return { x, y };
                 }
             }
-            return { x: 50, y: maxY + gap };
+            return { x: 50, y: Math.min(maxY + gap, baseH - reqHeight) };
         }
 
         document.getElementById('add-seat-hline').addEventListener('click', () => {
@@ -346,7 +403,13 @@
             let currentNum = 1;
             for (let i = 0; i < count; i++) {
                 const u = getUniqueItemName(prefix, currentNum);
-                newSeats.push({ id: `temp-${Date.now()}-${i}`, name: u.name, x: freePos.x + (i * 70), y: freePos.y, available: true });
+                newSeats.push({ 
+                    id: `temp-${Date.now()}-${i}`, 
+                    name: u.name, 
+                    x: Math.max(0, Math.min(freePos.x + (i * 70), baseW - 60)), 
+                    y: freePos.y, 
+                    available: true 
+                });
                 currentNum = u.nextNum;
             }
             createAndInjectGroup(newSeats, 'Horizontal Row');
@@ -367,7 +430,13 @@
             let currentNum = 1;
             for (let i = 0; i < count; i++) {
                 const u = getUniqueItemName(prefix, currentNum);
-                newSeats.push({ id: `temp-${Date.now()}-${i}`, name: u.name, x: freePos.x, y: freePos.y + (i * 70), available: true });
+                newSeats.push({ 
+                    id: `temp-${Date.now()}-${i}`, 
+                    name: u.name, 
+                    x: freePos.x, 
+                    y: Math.max(0, Math.min(freePos.y + (i * 70), baseH - 60)), 
+                    available: true 
+                });
                 currentNum = u.nextNum;
             }
             createAndInjectGroup(newSeats, 'Vertical Row');
@@ -394,7 +463,13 @@
             for (let r = 0; r < rows; r++) {
                 for (let c = 0; c < cols; c++) {
                     const u = getUniqueItemName(prefix, currentNum);
-                    newSeats.push({ id: `temp-${Date.now()}-${r}-${c}`, name: u.name, x: freePos.x + (c * 70), y: freePos.y + (r * 70), available: true });
+                    newSeats.push({ 
+                        id: `temp-${Date.now()}-${r}-${c}`, 
+                        name: u.name, 
+                        x: Math.max(0, Math.min(freePos.x + (c * 70), baseW - 60)), 
+                        y: Math.max(0, Math.min(freePos.y + (r * 70), baseH - 60)), 
+                        available: true 
+                    });
                     currentNum = u.nextNum;
                 }
             }
@@ -428,51 +503,26 @@
         }
 
         function fitLayoutToViewport() {
-            const allItems = currentSeats.concat(currentShapes).concat(currentGroups);
-            if (allItems.length === 0) {
-                setZoom(1);
-                return;
-            }
-
-            const xs = allItems.map(s => parseFloat(s.x) || 0);
-            const ys = allItems.map(s => parseFloat(s.y) || 0);
-            const maxXs = allItems.map(s => (parseFloat(s.x) || 0) + (parseFloat(s.width) || 60)); 
-            const maxYs = allItems.map(s => (parseFloat(s.y) || 0) + (parseFloat(s.height) || 60));
-
-            const minX = Math.min(...xs);
-            const minY = Math.min(...ys);
-            const maxX = Math.max(...maxXs);
-            const maxY = Math.max(...maxYs);
-
-            const padding = 120; 
-            const requiredWidth = Math.max(2500, maxX + padding);
-            const requiredHeight = Math.max(2500, maxY + padding);
-            
-            zoomContainer.style.width = requiredWidth + 'px';
-            zoomContainer.style.height = requiredHeight + 'px';
-
-            const contentWidth = (maxX - minX) + (padding * 2);
-            const contentHeight = (maxY - minY) + (padding * 2);
+            const padding = 100; 
             const viewportWidth = seatMap.clientWidth || window.innerWidth * 0.7;
             const viewportHeight = seatMap.clientHeight || 600;
 
-            const scaleX = viewportWidth / contentWidth;
-            const scaleY = viewportHeight / contentHeight;
-            const optimalScale = Math.max(0.2, Math.min(scaleX, scaleY, 1.1));
+            const scaleX = viewportWidth / (baseW + padding);
+            const scaleY = viewportHeight / (baseH + padding);
+            const optimalScale = Math.max(0.1, Math.min(scaleX, scaleY, 1.2));
             setZoom(optimalScale);
 
-            const centerX = (minX + maxX) / 2;
-            const centerY = (minY + maxY) / 2;
-
             setTimeout(() => {
-                seatMap.scrollLeft = Math.max(0, (centerX * optimalScale) - (viewportWidth / 2));
-                seatMap.scrollTop = Math.max(0, (centerY * optimalScale) - (viewportHeight / 2));
+                const scaledW = baseW * optimalScale;
+                const scaledH = baseH * optimalScale;
+                seatMap.scrollLeft = Math.max(0, (scaledW - viewportWidth) / 2 + 40);
+                seatMap.scrollTop = Math.max(0, (scaledH - viewportHeight) / 2 + 40);
             }, 100);
         }
 
         document.getElementById('zoom-in').addEventListener('click', () => setZoom(currentScale + 0.1));
         document.getElementById('zoom-out').addEventListener('click', () => setZoom(currentScale - 0.1));
-        document.getElementById('zoom-reset').addEventListener('click', () => setZoom(1));
+        document.getElementById('zoom-reset').addEventListener('click', () => { setZoom(1); fitLayoutToViewport(); });
         
         seatMap.addEventListener('wheel', (e) => {
             if (e.ctrlKey || e.metaKey) {
@@ -541,7 +591,6 @@
             instructionBar.classList.add("hidden");
             document.querySelectorAll('.AddContainer').forEach(con => con.classList.add("hidden"));
             document.getElementById(categoryId).classList.remove('hidden');
-
             if (categoryId !== 'seatContainer') turnOffClickToAdd();
         }
 
@@ -571,8 +620,8 @@
                 newSeats.push({
                     id: `temp-${Date.now()}-${i}`,
                     name: u.name,
-                    x: Math.round((cx + (rx * Math.cos(angle)) - (seatW / 2)) / 10) * 10,
-                    y: Math.round((cy + (ry * Math.sin(angle)) - (seatH / 2)) / 10) * 10,
+                    x: Math.max(0, Math.min(Math.round((cx + (rx * Math.cos(angle)) - (seatW / 2)) / 10) * 10, baseW - 60)),
+                    y: Math.max(0, Math.min(Math.round((cy + (ry * Math.sin(angle)) - (seatH / 2)) / 10) * 10, baseH - 60)),
                     available: true
                 });
                 currentNum = u.nextNum;
@@ -610,8 +659,8 @@
                     newSeats.push({
                         id: `temp-${Date.now()}-${counter}`,
                         name: u.name,
-                        x: Math.round((cx + ((baseRx + (r * rowSpacing)) * Math.cos(angle)) - (seatW / 2)) / 10) * 10,
-                        y: Math.round((cy + ((baseRy + (r * rowSpacing)) * Math.sin(angle)) - (seatH / 2)) / 10) * 10,
+                        x: Math.max(0, Math.min(Math.round((cx + ((baseRx + (r * rowSpacing)) * Math.cos(angle)) - (seatW / 2)) / 10) * 10, baseW - 60)),
+                        y: Math.max(0, Math.min(Math.round((cy + ((baseRy + (r * rowSpacing)) * Math.sin(angle)) - (seatH / 2)) / 10) * 10, baseH - 60)),
                         available: true
                     });
                     currentNum = u.nextNum;
@@ -829,8 +878,11 @@
             document.getElementById('opt-confirm').addEventListener('click', async () => {
                 const oldName = data.name;
                 data.name = document.getElementById('opt-name').value;
-                data.x = parseInt(document.getElementById('opt-x').value) || 0;
-                data.y = parseInt(document.getElementById('opt-y').value) || 0;
+                
+                // Clamp specific properties on manual apply
+                data.x = Math.max(0, Math.min(parseInt(document.getElementById('opt-x').value) || 0, baseW - (data.width || 60)));
+                data.y = Math.max(0, Math.min(parseInt(document.getElementById('opt-y').value) || 0, baseH - (data.height || 60)));
+                
                 if (type === 'shape') {
                     data.width = Math.max(40, parseInt(document.getElementById('opt-w').value) || 100);
                     data.height = Math.max(40, parseInt(document.getElementById('opt-h').value) || 100);
@@ -911,20 +963,28 @@
             e.preventDefault();
             const itemType = e.dataTransfer.getData('itemType');
             const rect = zoomContainer.getBoundingClientRect();
-            const dropX = Math.round(((e.clientX - rect.left) / currentScale) / 10) * 10;
-            const dropY = Math.round(((e.clientY - rect.top) / currentScale) / 10) * 10;
+            let dropX = Math.round(((e.clientX - rect.left) / currentScale) / 10) * 10;
+            let dropY = Math.round(((e.clientY - rect.top) / currentScale) / 10) * 10;
+
+            let itemW = 60, itemH = 60;
+            if (itemType === 'stage') { itemW = 300; itemH = 150; }
+            else if (['square', 'circle', 'triangle'].includes(itemType)) { itemW = 100; itemH = 100; }
+
+            // Clamp drop location to bounds
+            dropX = Math.max(0, Math.min(dropX, baseW - itemW));
+            dropY = Math.max(0, Math.min(dropY, baseH - itemH));
 
             if (itemType === 'single') {
                 const u = getUniqueItemName('S', 1);
                 currentSeats.push({ id: `temp-${Date.now()}`, name: u.name, x: dropX, y: dropY, available: true });
             } else if (['square', 'circle', 'triangle', 'stage'].includes(itemType)) {
-                let shapeType = 'rectangle'; let w = 100; let h = 100; let pfx = "Table"; let bg = '#D1D5DB';
+                let shapeType = 'rectangle'; let pfx = "Table"; let bg = '#D1D5DB';
                 if (itemType === 'circle') shapeType = 'ellipse';
                 if (itemType === 'triangle') shapeType = 'triangle';
-                if (itemType === 'stage') { w = 300; h = 150; pfx = "Stage"; bg = '#4B5563'; }
+                if (itemType === 'stage') { pfx = "Stage"; bg = '#4B5563'; }
                 
                 const u = getUniqueItemName(pfx + ' ', 1);
-                currentShapes.push({ id: `temp-${Date.now()}`, name: u.name, x: dropX, y: dropY, width: w, height: h, shapeType: shapeType, backgroundColor: bg });
+                currentShapes.push({ id: `temp-${Date.now()}`, name: u.name, x: dropX, y: dropY, width: itemW, height: itemH, shapeType: shapeType, backgroundColor: bg });
             }
             renderAll();
         });
@@ -1009,7 +1069,6 @@
                 if (groupId) currentSeats.concat(currentShapes).forEach(s => { if (s.groupId === groupId) selectedItems.add(s.name); });
                 else selectedItems.add(dataObj.name);
 
-                // --- CRITICAL FIX: Ensure all partially selected groups lock together before drag begins
                 const activeGroupIds = new Set();
                 currentSeats.concat(currentShapes).forEach(s => {
                     if (selectedItems.has(s.name) && s.groupId) activeGroupIds.add(s.groupId);
@@ -1040,7 +1099,13 @@
                             if (selectedItems.has(s.name)) {
                                 const startPos = startingPositions.get(s.name);
                                 if(startPos) {
-                                    s.x = Math.max(0, startPos.x + dx); s.y = Math.max(0, startPos.y + dy);
+                                    const itemW = s.width || 60;
+                                    const itemH = s.height || 60;
+                                    
+                                    // Clamp dragged items to boundaries
+                                    s.x = Math.max(0, Math.min(startPos.x + dx, baseW - itemW)); 
+                                    s.y = Math.max(0, Math.min(startPos.y + dy, baseH - itemH));
+                                    
                                     const childEl = document.querySelector(`[data-name="${s.name}"]`);
                                     if (childEl) { childEl.style.left = `${s.x}px`; childEl.style.top = `${s.y}px`; }
                                 }
@@ -1106,8 +1171,10 @@
                 const onMouseMove = function(moveEvent) {
                     if (!isResizing) return;
                     const dx = (moveEvent.clientX - startX) / currentScale; const dy = (moveEvent.clientY - startY) / currentScale;
-                    shapeData.width = Math.max(40, Math.round((startW + dx) / 10) * 10);
-                    shapeData.height = Math.max(40, Math.round((startH + dy) / 10) * 10);
+                    
+                    // Clamp resize bounds to canvas edge
+                    shapeData.width = Math.max(40, Math.min(Math.round((startW + dx) / 10) * 10, baseW - shapeData.x));
+                    shapeData.height = Math.max(40, Math.min(Math.round((startH + dy) / 10) * 10, baseH - shapeData.y));
                     parentElement.style.width = `${shapeData.width}px`; parentElement.style.height = `${shapeData.height}px`;
 
                     if (shapeData.groupId) {
@@ -1143,7 +1210,7 @@
         seatMap.addEventListener('mousedown', function(e) {
             if (isClickToAddMode) return;
 
-            if (e.target !== seatMap && e.target !== zoomContainer) return; 
+            if (e.target !== seatMap && e.target !== zoomContainer && e.target.id !== 'layout-boundary') return; 
 
             hideAllOptions(); isBoxSelecting = true;
             const rect = zoomContainer.getBoundingClientRect();
@@ -1182,7 +1249,6 @@
                     }
                 });
 
-                // --- CRITICAL FIX: Ensure all items belonging to any touched group are selected
                 currentSeats.concat(currentShapes).forEach(s => {
                     if (s.groupId) {
                         if (activeGroups.has(s.groupId)) selectedItems.add(s.name);

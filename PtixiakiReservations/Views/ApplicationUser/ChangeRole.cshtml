@@ -4,110 +4,112 @@
 @inject UserManager<ApplicationUser> UserManager
 
 @{
-    ViewData["Title"] = "Change Role";
+    ViewData["Title"] = "Manage User Role";
+
+    // Evaluate current roles server-side to drive the UI logic
+    bool isVenue = await UserManager.IsInRoleAsync(Model, "Venue");
+    bool isEvent = await UserManager.IsInRoleAsync(Model, "Event");
+    bool isSuperOrganizer = await UserManager.IsInRoleAsync(Model, "SuperOrganizer");
+    bool isAdmin = await UserManager.IsInRoleAsync(Model, "Admin");
+
+    // Determine primary display badge
+    string currentRoleName = "Standard User";
+    string badgeColors = "bg-gray-100 text-gray-800 border-gray-200";
+
+    if (isAdmin) { currentRoleName = "Administrator"; badgeColors = "bg-red-100 text-red-800 border-red-200"; }
+    else if (isSuperOrganizer) { currentRoleName = "Super Organizer"; badgeColors = "bg-purple-100 text-purple-800 border-purple-200"; }
+    else if (isVenue) { currentRoleName = "Venue Manager"; badgeColors = "bg-blue-100 text-blue-800 border-blue-200"; }
+    else if (isEvent) { currentRoleName = "Event Organizer"; badgeColors = "bg-green-100 text-green-800 border-green-200"; }
 }
 
-<div class="container mx-auto mt-10 px-4">
-    <div class="p-6 bg-white shadow-md rounded-lg mx-auto max-w-3xl">
-        <hr class="my-4 border-gray-400" />
-        <dl class="space-y-4">
-            <div class="flex flex-col md:flex-row">
-                <dt class="text-sm font-medium text-gray-500 md:w-1/4">
-                    @Html.DisplayNameFor(model => model.FirstName) @Html.DisplayNameFor(model => model.LastName)
-                </dt>
-                <dd class="mt-1 text-sm text-gray-900 md:mt-0 md:w-3/4">
-                    @Html.DisplayFor(model => model.FirstName) @Html.DisplayFor(model => model.LastName)
-                </dd>
-            </div>
-            <div class="flex flex-col md:flex-row">
-                <dt class="text-sm font-medium text-gray-500 md:w-1/4">
-                    @Html.DisplayNameFor(model => model.PhoneNumber)
-                </dt>
-                <dd class="mt-1 text-sm text-gray-900 md:mt-0 md:w-3/4">
-                    @Html.DisplayFor(model => model.PhoneNumber)
-                </dd>
-            </div>
-            <div class="flex flex-col md:flex-row">
-                <dt class="text-sm font-medium text-gray-500 md:w-1/4">
-                    @Html.DisplayNameFor(model => model.Email)
-                </dt>
-                <dd class="mt-1 text-sm text-gray-900 md:mt-0 md:w-3/4">
-                    @Html.DisplayFor(model => model.Email)
-                </dd>
-            </div>
-            @if (await UserManager.IsInRoleAsync(Model, "Venue"))
-            {
-                <div class="flex flex-col md:flex-row">
-                    <dt class="text-sm font-medium text-gray-500 md:w-1/4">
-                        Role: Venue
-                    </dt>
-                    <dd class="mt-1 text-sm text-gray-900 md:mt-0 md:w-3/4">
-                        True
-                        <p class="text-xs text-gray-600">If someone is in this role and you choose that role, it removes the role.</p>
-                    </dd>
-                </div>
-            }
-            @if (await UserManager.IsInRoleAsync(Model, "Event"))
-            {
-                <div class="flex flex-col md:flex-row">
-                    <dt class="text-sm font-medium text-gray-500 md:w-1/4">
-                        Role: Event
-                    </dt>
-                    <dd class="mt-1 text-sm text-gray-900 md:mt-0 md:w-3/4">
-                        True
-                        <p class="text-xs text-gray-600">If someone is in this role and you choose that role, it removes the role.</p>
-                    </dd>
-                </div>
-            }
-            @if (await UserManager.IsInRoleAsync(Model, "SuperOrganizer"))
-            {
-                <div class="flex flex-col md:flex-row">
-                    <dt class="text-sm font-medium text-gray-500 md:w-1/4">
-                        Role: Super Organizer
-                    </dt>
-                    <dd class="mt-1 text-sm text-gray-900 md:mt-0 md:w-3/4">
-                        True
-                        <p class="text-xs text-gray-600">If someone is in this role and you choose that role, it removes the role.</p>
-                    </dd>
-                </div>
-            }
-            @if (await UserManager.IsInRoleAsync(Model, "Admin"))
-            {
-                <div class="flex flex-col md:flex-row">
-                    <dt class="text-sm font-medium text-gray-500 md:w-1/4">
-                        Role: Admin
-                    </dt>
-                    <dd class="mt-1 text-sm text-gray-900 md:mt-0 md:w-3/4">
-                        True
-                        <p class="text-xs text-gray-600">If someone is in this role and you choose that role, it removes the role.</p>
-                    </dd>
-                </div>
-            }
-        </dl>
-        <div class="mt-6 flex flex-col sm:flex-row gap-4">
-            <a asp-action="ChangeRoleAction" asp-route-Id=@Model.Id asp-route-Role="Venue"
-               class="px-4 py-2 bg-blue-500 text-white rounded-md text-center hover:bg-blue-600">
-                Change to Venue
-            </a>
-            <a asp-action="ChangeRoleAction" asp-route-Id=@Model.Id asp-route-Role="Event"
-               class="px-4 py-2 bg-blue-500 text-white rounded-md text-center hover:bg-blue-600">
-                Change to Event
-            </a>
-            <a asp-action="ChangeRoleAction" asp-route-Id=@Model.Id asp-route-Role="SuperOrganizer"
-               class="px-4 py-2 bg-blue-500 text-white rounded-md text-center hover:bg-blue-600">
-                Change to Super Organizer
-            </a>
-            <a asp-action="ChangeRoleAction" asp-route-Id=@Model.Id asp-route-Role="Admin"
-               class="px-4 py-2 bg-blue-500 text-white rounded-md text-center hover:bg-blue-600">
-                Change to Admin
-            </a>
+<div class="max-w-4xl mx-auto py-10 px-4 sm:px-6 lg:px-8">
+    
+    <!-- Header -->
+    <div class="mb-6 flex items-center justify-between">
+        <div>
+            <h1 class="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">Role Management</h1>
+            <p class="mt-1 text-sm text-gray-500">Modify administrative access and platform permissions for this account.</p>
         </div>
-    </div>
-
-    <div class="mt-4 text-center">
-        <a asp-action="Index" asp-controller="ApplicationUser"
-           class="text-sm text-blue-600 hover:underline">
+        <a asp-action="Index" asp-controller="ApplicationUser" class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+            <svg class="mr-2 h-4 w-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
             Back to List
         </a>
+    </div>
+
+    <div class="bg-white shadow-lg sm:rounded-2xl overflow-hidden border border-gray-100">
+        
+        <!-- User Profile Card Header -->
+        <div class="bg-gray-50 px-6 py-6 border-b border-gray-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div class="flex items-center">
+                <div class="h-16 w-16 rounded-full bg-indigo-600 flex items-center justify-center text-white text-2xl font-bold shadow-inner">
+                    @Model.FirstName?.FirstOrDefault()@Model.LastName?.FirstOrDefault()
+                </div>
+                <div class="ml-5">
+                    <h2 class="text-xl font-bold text-gray-900">@Model.FirstName @Model.LastName</h2>
+                    <div class="flex items-center text-sm text-gray-500 mt-1">
+                        <svg class="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                        @Model.Email
+                    </div>
+                    @if (!string.IsNullOrEmpty(Model.PhoneNumber))
+                    {
+                        <div class="flex items-center text-sm text-gray-500 mt-0.5">
+                            <svg class="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
+                            @Model.PhoneNumber
+                        </div>
+                    }
+                </div>
+            </div>
+            
+            <div class="text-left sm:text-right mt-4 sm:mt-0">
+                <span class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Current Active Role</span>
+                <span class="inline-flex items-center px-3.5 py-1.5 rounded-full text-sm font-bold border @badgeColors shadow-sm">
+                    @currentRoleName
+                </span>
+            </div>
+        </div>
+
+        <!-- Role Assignment Interface -->
+        <div class="px-6 py-8">
+            <h3 class="text-lg font-bold text-gray-900 mb-4">Assign New Role</h3>
+            <p class="text-sm text-gray-500 mb-6">
+                Selecting a new role will immediately replace the user's current permissions. If you select the role they already currently hold, their elevated permissions will be revoked, returning them to a standard user.
+            </p>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                
+                <!-- Venue Button -->
+                <a asp-action="ChangeRoleAction" asp-route-Id="@Model.Id" asp-route-Role="Venue"
+                   class="flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all duration-200 
+                          @(isVenue ? "border-gray-300 bg-gray-100 hover:bg-gray-200 text-gray-800" : "border-indigo-100 bg-white hover:border-indigo-500 hover:shadow-md text-indigo-700")">
+                    <span class="font-bold">@(isVenue ? "Change to normal user" : "Change to Venue")</span>
+                    @if (!isVenue) { <span class="text-xs text-gray-500 mt-1 font-medium">Grants venue management access</span> }
+                </a>
+
+                <!-- Event Button -->
+                <a asp-action="ChangeRoleAction" asp-route-Id="@Model.Id" asp-route-Role="Event"
+                   class="flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all duration-200 
+                          @(isEvent ? "border-gray-300 bg-gray-100 hover:bg-gray-200 text-gray-800" : "border-indigo-100 bg-white hover:border-indigo-500 hover:shadow-md text-indigo-700")">
+                    <span class="font-bold">@(isEvent ? "Change to normal user" : "Change to Event")</span>
+                    @if (!isEvent) { <span class="text-xs text-gray-500 mt-1 font-medium">Grants event creation access</span> }
+                </a>
+
+                <!-- Super Organizer Button -->
+                <a asp-action="ChangeRoleAction" asp-route-Id="@Model.Id" asp-route-Role="SuperOrganizer"
+                   class="flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all duration-200 
+                          @(isSuperOrganizer ? "border-gray-300 bg-gray-100 hover:bg-gray-200 text-gray-800" : "border-purple-100 bg-white hover:border-purple-500 hover:shadow-md text-purple-700")">
+                    <span class="font-bold">@(isSuperOrganizer ? "Change to normal user" : "Change to Super Organizer")</span>
+                    @if (!isSuperOrganizer) { <span class="text-xs text-gray-500 mt-1 font-medium">Grants combined capabilities</span> }
+                </a>
+
+                <!-- Admin Button -->
+                <a asp-action="ChangeRoleAction" asp-route-Id="@Model.Id" asp-route-Role="Admin"
+                   class="flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all duration-200 
+                          @(isAdmin ? "border-red-300 bg-red-50 hover:bg-red-100 text-red-800" : "border-red-100 bg-white hover:border-red-500 hover:shadow-md text-red-700")">
+                    <span class="font-bold">@(isAdmin ? "Change to normal user" : "Change to Admin")</span>
+                    @if (!isAdmin) { <span class="text-xs text-gray-500 mt-1 font-medium">Grants full system control</span> }
+                </a>
+
+            </div>
+        </div>
     </div>
 </div>
