@@ -628,16 +628,26 @@ public class EventsController(
         }
     }
 
+    /// <summary>
+    /// Retrieves the designated event and initializes the modification interface.
+    /// Incorporates hierarchical parent data and existing media collections for frontend rendering.
+    /// </summary>
     [Authorize]
     [HttpGet]
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null) return NotFound();
 
+        // 1. CRITICAL: We MUST include the City, ParentEvent, and GalleryImages
         var eventToEdit = await context.Event
             .Include(e => e.Venue)
+                .ThenInclude(v => v.City) 
             .Include(e => e.EventType)
             .Include(e => e.Layout)
+            .Include(e => e.GalleryImages) 
+            .Include(e => e.ParentEvent)
+                .ThenInclude(p => p.GalleryImages) 
+            .AsSplitQuery() 
             .FirstOrDefaultAsync(e => e.Id == id);
 
         if (eventToEdit == null) return NotFound();
@@ -648,9 +658,14 @@ public class EventsController(
 
         if (!isAdmin && !isOwner) return Forbid(); 
 
+        // 2. CRITICAL: This MUST be named VenueList (not Venue) to match the frontend
         ViewBag.VenueList = await context.Venue
+            .Include(v => v.City)
             .Where(v => v.UserId == currentUserId)
-            .Select(v => new SelectListItem { Value = v.Id.ToString(), Text = v.Name })
+            .Select(v => new SelectListItem { 
+                Value = v.Id.ToString(), 
+                Text = v.City != null ? $"{v.Name}, {v.City.Name}" : v.Name 
+            })
             .ToListAsync();
 
         ViewBag.EventTypeList = new SelectList(await context.EventType.ToListAsync(), "Id", "Name", eventToEdit.EventTypeId);
@@ -663,6 +678,15 @@ public class EventsController(
         return View(eventToEdit);
     }
 
+    /// <summary>
+    /// Processes modifications to an existing event, handling relational data updates 
+    /// and executing media transcoding pipelines for incoming image assets.
+    /// </summary>
+    /// <param name="id">The unique identifier of the event being modified.</param>
+    /// <param name="updatedEvent">The bound data model containing updated properties.</param>
+    /// <param name="imageFile">The optional primary poster image upload.</param>
+    /// <param name="galleryFiles">The optional collection of supplemental gallery images.</param>
+    /// <returns>A redirect to the venue events index upon success, or the validation-populated view upon failure.</returns>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [Authorize] 
@@ -670,18 +694,28 @@ public class EventsController(
     {
         if (id != updatedEvent.Id) return NotFound();
 
-        ViewBag.VenueList = await context.Venue.Select(v => new SelectListItem { Value = v.Id.ToString(), Text = v.Name }).ToListAsync();
-        ViewBag.EventTypeList = new SelectList(await context.EventType.ToListAsync(), "Id", "Name");
-        ViewBag.LayoutList = await context.Layout.Where(sa => sa.VenueId == updatedEvent.VenueId).Select(sa => new SelectListItem { Value = sa.Id.ToString(), Text = sa.AreaName }).ToListAsync();
+        var currentUserId = userManager.GetUserId(User);
+
+        ViewBag.VenueList = await context.Venue
+            .Where(v => v.UserId == currentUserId)
+            .Select(v => new SelectListItem { Value = v.Id.ToString(), Text = v.Name })
+            .ToListAsync();
+        ViewBag.EventTypeList = new SelectList(await context.EventType.ToListAsync(), "Id", "Name", updatedEvent.EventTypeId);
+        ViewBag.LayoutList = await context.Layout
+            .Where(sa => sa.VenueId == updatedEvent.VenueId)
+            .Select(sa => new SelectListItem { Value = sa.Id.ToString(), Text = sa.AreaName })
+            .ToListAsync();
 
         if (ModelState.IsValid)
         {
             try
             {
-                var originalEvent = await context.Event.FindAsync(id);
+                var originalEvent = await context.Event
+                    .Include(e => e.GalleryImages)
+                    .FirstOrDefaultAsync(e => e.Id == id);
+                    
                 if (originalEvent == null) return NotFound();
 
-                var currentUserId = userManager.GetUserId(User);
                 if (!User.IsInRole("Admin") && originalEvent.OrganizerId != currentUserId) return Forbid();
 
                 if (imageFile != null && imageFile.Length > 0)
@@ -717,6 +751,10 @@ public class EventsController(
                     catch (Exception)
                     {
                         ModelState.AddModelError("", "Error processing primary image file.");
+                        
+                        updatedEvent.ImagePath = originalEvent.ImagePath;
+                        updatedEvent.GalleryImages = originalEvent.GalleryImages;
+                        updatedEvent.ParentEventId = originalEvent.ParentEventId;
                         return View(updatedEvent);
                     }
                 }
@@ -725,6 +763,8 @@ public class EventsController(
                 {
                     string galleryFolder = Path.Combine(environment.WebRootPath, "images", "events", "gallery");
                     if (!Directory.Exists(galleryFolder)) Directory.CreateDirectory(galleryFolder);
+
+                    originalEvent.GalleryImages ??= new List<EventImage>();
 
                     foreach (var file in galleryFiles)
                     {
@@ -745,9 +785,8 @@ public class EventsController(
                                 await image.SaveAsync(galleryPath, encoder);
                             }
 
-                            context.Add(new EventImage 
+                            originalEvent.GalleryImages.Add(new EventImage 
                             {
-                                EventId = originalEvent.Id,
                                 ImagePath = "/images/events/gallery/" + uniqueGalleryName
                             });
                         }
@@ -781,8 +820,17 @@ public class EventsController(
             }
         }
 
+        var fallbackEvent = await context.Event.Include(e => e.GalleryImages).AsNoTracking().FirstOrDefaultAsync(e => e.Id == id);
+        if (fallbackEvent != null)
+        {
+            updatedEvent.ImagePath = fallbackEvent.ImagePath;
+            updatedEvent.GalleryImages = fallbackEvent.GalleryImages;
+            updatedEvent.ParentEventId = fallbackEvent.ParentEventId;
+        }
+
         return View(updatedEvent);
     }
+
 
     [Authorize]
     public bool CorrectDay(JsonEventModel ev, int i, int everyNum)
@@ -800,50 +848,35 @@ public class EventsController(
     }
 
     [Authorize]
-    public async Task<IActionResult> Delete(int? id, bool dAll)
+    [HttpDelete]
+  
+    public async Task<IActionResult> Delete(int? id)
     {
         if (id == null) return NotFound();
 
-        var ev = await context.Event
-            .Include(r => r.ParentEvent) 
-            .Include(r => r.Venue)
-            .Include(r => r.EventType)
-            .FirstOrDefaultAsync(m => m.Id == id);
+        var ev = await context.Event.FirstOrDefaultAsync(e => e.Id == id);
             
         if (ev == null) return NotFound();
 
         var userId = userManager.GetUserId(User);
-        if (ev.Venue.UserId != userId && !User.IsInRole("Admin")) return Unauthorized();
+        if (ev.OrganizerId != userId && !User.IsInRole("Admin")) return Unauthorized();
 
-        if (dAll)
+
+        if (ev.ParentEventId == null)
         {
-            var targetParentId = ev.ParentEventId ?? ev.Id;
-            var relatedEvents = context.Event
-                .Include(r => r.ParentEvent)
-                .Include(r => r.EventType)
-                .Where(e => e.Id == targetParentId || e.ParentEventId == targetParentId)
-                .ToList();
-
-            foreach (var @event in relatedEvents)
-            {
-                var hasReservations = context.Reservation.Where(r => r.EventId == @event.Id).ToList();
-                context.Reservation.RemoveRange(hasReservations);
-            }
-
-            context.Event.RemoveRange(relatedEvents);
-        }
-        else
-        {
-            var hasReservations = context.Reservation.Where(r => r.EventId == ev.Id).ToList();
-            context.Reservation.RemoveRange(hasReservations);
-            context.Event.Remove(ev);
+            await context.Event
+                .Where(e => e.ParentEventId == id)
+                .ExecuteDeleteAsync();
         }
 
-        await context.SaveChangesAsync();
-        Response.StatusCode = (int)HttpStatusCode.OK;
-        return Json(Response.StatusCode);
+
+        await context.Event
+            .Where(e => e.Id == id)
+            .ExecuteDeleteAsync();
+
+
+        return Ok();
     }
-    
     private bool EventExists(int id) => context.Event.Any(e => e.Id == id);
 
     [Authorize]

@@ -135,7 +135,7 @@
 <!-- ============================================================== -->
 <!-- EVENT DETAILS MODAL DIALOG                                     -->
 <!-- ============================================================== -->
-<div id="event-details-modal" class="fixed inset-0 z-50 hidden bg-gray-900/60 backdrop-blur-sm flex items-center justify-center transition-opacity" aria-modal="true" role="dialog">
+<div id="event-details-modal" class="fixed inset-0 z-[100] hidden bg-gray-900/60 backdrop-blur-sm flex items-center justify-center transition-opacity" aria-modal="true" role="dialog">
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 overflow-hidden transform transition-all border border-gray-200">
         <div class="bg-gradient-to-r from-blue-600 to-indigo-700 px-6 py-4 flex justify-between items-center">
             <h4 class="text-lg font-extrabold text-white truncate pr-4" id="modal-event-title">Event Details</h4>
@@ -148,13 +148,18 @@
             <!-- Event details injected via JS -->
         </div>
         
-        <div class="bg-gray-50 border-t border-gray-100 px-6 py-4 flex justify-end gap-3">
-            <button onclick="closeModal()" type="button" class="px-5 py-2 bg-white border border-gray-300 text-gray-700 font-bold rounded-lg hover:bg-gray-50 transition-colors text-sm shadow-sm">
-                Close
-            </button>
-            <a id="modal-edit-btn" class="hidden cursor-pointer px-5 py-2 bg-indigo-600 text-white font-bold rounded-lg shadow-sm hover:bg-indigo-700 transition-colors text-sm">
-                Edit Configuration
-            </a>
+        <div class="bg-gray-50 border-t border-gray-100 px-6 py-4 flex justify-end items-center gap-3">
+            <div id="modal-action-buttons" class="flex items-center gap-3 w-full sm:w-auto">
+                <button onclick="closeModal()" type="button" class="flex-1 sm:flex-none px-5 py-2.5 bg-white border border-gray-300 text-gray-700 font-bold rounded-lg hover:bg-gray-50 transition-colors text-sm shadow-sm">
+                    Close
+                </button>
+                <button id="modal-delete-btn" type="button" class="hidden flex-1 sm:flex-none px-5 py-2.5 bg-red-600 text-white font-bold rounded-lg shadow-sm hover:bg-red-700 transition-colors text-sm">
+                    Delete Event
+                </button>
+                <a id="modal-edit-btn" class="hidden flex-1 sm:flex-none cursor-pointer px-5 py-2.5 bg-indigo-600 text-white font-bold rounded-lg shadow-sm hover:bg-indigo-700 transition-colors text-sm text-center">
+                    Edit Configuration
+                </a>
+            </div>
         </div>
     </div>
 </div>
@@ -225,20 +230,17 @@
 
         /** 
          * Master Filtering Engine
-         * Evaluates Search string, Ownership rules, and Date thresholds sequentially.
          */
         function filterEvents() {
             const searchTerm = $("#event-search").val().toLowerCase();
-            const ownershipFilter = $("#ownership-filter").val(); // 'mine' or 'all'
-            const dateFilter = $("#date-filter").val(); // 'all', 'upcoming', 'today', 'past'
+            const ownershipFilter = $("#ownership-filter").val(); 
+            const dateFilter = $("#date-filter").val(); 
 
-            // Baseline date calculations (Strip time for accurate Day comparisons)
             const now = new Date();
             const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
 
             filteredEvents = allEvents.filter(function(event) {
                 
-                // 1. Text Search Evaluation
                 let matchesSearch = true;
                 if (searchTerm) {
                     matchesSearch = (
@@ -248,13 +250,11 @@
                     );
                 }
 
-                // 2. Ownership Evaluation
                 let matchesOwnership = true;
                 if (ownershipFilter === 'mine') {
                     matchesOwnership = (event.organizerId === currentUserId);
                 }
 
-                // 3. Temporal Evaluation
                 let matchesDate = true;
                 if (dateFilter !== 'all') {
                     const eventStartRaw = new Date(event.startDateTime);
@@ -269,14 +269,12 @@
                     }
                 }
 
-                // Entity must pass all criteria to survive the filter pipeline
                 return matchesSearch && matchesOwnership && matchesDate;
             });
 
             renderPage();
         }
 
-        /** Computes slice boundaries and orchestrates visual DOM injection */
         function renderPage() {
             const startIndex = (jsCurrentPage - 1) * jsPageSize;
             const endIndex = startIndex + jsPageSize;
@@ -286,7 +284,6 @@
             renderPaginationControls();
         }
 
-        /** Compiles HTML rows for active datatable viewport */
         function renderTable(events) {
             const eventsList = $("#events-list");
             eventsList.empty();
@@ -309,7 +306,6 @@
                 const startDate = new Date(event.startDateTime);
                 const eventStartDay = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate()).getTime();
 
-                // Generate Status Badge Visuals
                 let statusClass, statusText;
                 if (eventStartDay < todayStart) {
                     statusClass = "bg-gray-100 text-gray-700 border-gray-200";
@@ -366,7 +362,6 @@
             });
         }
 
-        /** Rebuilds dynamic sliding pagination interface based on filtered length */
         function renderPaginationControls() {
             const totalPages = Math.ceil(filteredEvents.length / jsPageSize);
             const navContainer = $("#js-pagination-container");
@@ -374,7 +369,6 @@
 
             if (totalPages <= 1) return;
 
-            // Page Status Indicator
             let html = `
                 <div class="text-sm text-gray-700 w-full sm:w-auto text-center sm:text-left mb-4 sm:mb-0">
                     Showing page <span class="font-bold text-gray-900">${jsCurrentPage}</span> of <span class="font-bold text-gray-900">${totalPages}</span>
@@ -384,14 +378,12 @@
                 <div class="flex items-center justify-center space-x-2">
             `;
 
-            // Previous Button
             if (jsCurrentPage > 1) {
                 html += `<button type="button" onclick="changePage(${jsCurrentPage - 1})" class="px-3 py-1.5 border border-gray-300 rounded-md text-sm font-bold text-gray-700 bg-white hover:bg-gray-50 transition-colors shadow-sm">Prev</button>`;
             } else {
                 html += `<button disabled class="px-3 py-1.5 border border-gray-200 rounded-md text-sm font-bold text-gray-400 bg-gray-50 cursor-not-allowed">Prev</button>`;
             }
 
-            // Numbered Sliding Window (Hides on extreme mobile)
             html += `<div class="hidden sm:flex space-x-1">`;
             let startPage = Math.max(1, jsCurrentPage - 2);
             let endPage = Math.min(totalPages, startPage + 4);
@@ -416,7 +408,6 @@
             }
             html += `</div>`;
 
-            // Next Button
             if (jsCurrentPage < totalPages) {
                 html += `<button type="button" onclick="changePage(${jsCurrentPage + 1})" class="px-3 py-1.5 border border-gray-300 rounded-md text-sm font-bold text-gray-700 bg-white hover:bg-gray-50 transition-colors shadow-sm">Next</button>`;
             } else {
@@ -427,16 +418,13 @@
             navContainer.html(html);
         }
 
-        /** State Mutator for pagination commands */
         window.changePage = function(pageNumber) {
             jsCurrentPage = pageNumber;
             renderPage();
-            
-            // Smoothly scroll back to top of table on page change
             document.getElementById('events-container').scrollIntoView({ behavior: 'smooth', block: 'start' });
         };
 
-        /** Populates and engages the Quick View modal dialog */
+        /** Action: Opens specific event context in modal UI */
         window.showEventDetails = function(eventId) {
             const event = allEvents.find(e => e.id === eventId);
             if (!event) return;
@@ -449,19 +437,22 @@
             
             $("#modal-event-title").text(event.name);
 
-            // Authorization Gate
             const editBtn = document.getElementById("modal-edit-btn");
+            const deleteBtn = document.getElementById("modal-delete-btn");
             const isOwner = event.organizerId === currentUserId || event.organizerId === undefined; 
             const canEdit = userIsAdmin || ((userIsEventManager || userIsSuper) && isOwner);
 
             if (canEdit) {
                 editBtn.classList.remove("hidden");
                 editBtn.onclick = (e) => { e.preventDefault(); window.location.assign("/Events/Edit/" + event.id); };
+                
+                deleteBtn.classList.remove("hidden");
+                deleteBtn.onclick = () => { triggerEventDeletion(event.id); };
             } else {
                 editBtn.classList.add("hidden");
+                deleteBtn.classList.add("hidden");
             }
 
-            // Construct Inner Modal HTML
             const detailsHtml = `
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-gray-50 p-5 rounded-xl border border-gray-100">
                     <div class="flex flex-col">
@@ -501,12 +492,45 @@
 
             $("#modal-event-details").html(detailsHtml);
             
-            // Render Modal
             $("body").css("overflow", "hidden");
             $("#event-details-modal").removeClass("hidden");
         };
 
-        /** Closes modal and restores scrolling */
+        /** Prompts user and immediately hits the Delete controller */
+        window.triggerEventDeletion = function(eventId) {
+            const warningMessage = "Are you absolutely sure you want to delete this event?\n\nWARNING: If this is a Master Event, ALL of its Sub-Events will be permanently deleted alongside it. This cannot be undone.";
+            
+            if (confirm(warningMessage)) {
+                
+                const deleteBtn = document.getElementById("modal-delete-btn");
+                const originalText = deleteBtn.innerHTML;
+                deleteBtn.innerHTML = "Deleting...";
+                deleteBtn.disabled = true;
+
+                $.ajax({
+                    url: '/Events/Delete?id=' + eventId,
+                    type: 'DELETE',
+                    success: function() {
+                        // Reset button state immediately upon success for future modal opens
+                        deleteBtn.innerHTML = "Delete Event";
+                        deleteBtn.disabled = false;
+
+                        allEvents = allEvents.filter(e => e.id !== eventId && e.parentEventId !== eventId);
+                        
+                        closeModal();
+                        filterEvents(); 
+                    },
+                    error: function(xhr) {
+                        console.error("Deletion failed:", xhr);
+                        alert("An error occurred while attempting to delete the event. Check server logs.");
+                        
+                        deleteBtn.innerHTML = originalText;
+                        deleteBtn.disabled = false;
+                    }
+                });
+            }
+        };
+
         window.closeModal = function() {
             $("#event-details-modal").addClass("hidden");
             $("body").css("overflow", "auto");

@@ -3,25 +3,20 @@
 @{
     ViewData["Title"] = "Role Requests";
 
-    // Extract pagination and search metadata injected by the Controller
     int currentPage = ViewBag.CurrentPage ?? 1;
     int totalPages = ViewBag.TotalPages ?? 1;
     string searchQuery = ViewBag.SearchQuery as string;
     int totalItems = ViewBag.TotalItems ?? 0;
 }
 
-<!-- Primary Administrative Layout Container -->
 <div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
     
-    <!-- Page Header & Search Controls -->
     <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
         <div>
             <h1 class="text-3xl font-bold text-gray-900">Pending Role Requests</h1>
             <p class="text-sm text-gray-500 mt-1">Review and manage elevated permission requests.</p>
         </div>
 
-        <!-- Search Engine Form -->
-        <!-- Preserves route parameters dynamically for backend filtering -->
         <form method="get" class="flex w-full md:w-auto relative">
             <div class="relative w-full md:w-80">
                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -45,7 +40,9 @@
         </form>
     </div>
 
-    <!-- Data Display Core -->
+    <!-- Required for AJAX POST operations -->
+    @Html.AntiForgeryToken()
+
     <div class="bg-white shadow overflow-hidden sm:rounded-xl mb-8 border border-gray-200">
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
@@ -62,13 +59,11 @@
                     {
                         foreach (var user in Model)
                         {
-                            // LOGIC FIX: Generate a list of requests for the current user.
-                            // This ensures that if a user applies for BOTH Event Organizer and Venue Manager, 
-                            // both requests render as separate rows instead of one hiding the other.
                             var pendingRequests = new List<(string RoleName, string BadgeColor, string FormRoleType, string Reason)>();
 
+                            // CRITICAL FIX: The FormRoleType exactly matches the C# switch statement cases
                             if (user.VenueManagerRequestStatus == "Pending")
-                                pendingRequests.Add(("Venue Manager", "text-blue-700 bg-blue-100 border-blue-200", "VenueManager", user.VenueManagerRequestReason));
+                                pendingRequests.Add(("Venue Manager", "text-blue-700 bg-blue-100 border-blue-200", "Venue", user.VenueManagerRequestReason));
                             
                             if (user.EventManagerRequestStatus == "Pending")
                                 pendingRequests.Add(("Event Organizer", "text-green-700 bg-green-100 border-green-200", "Event", user.EventManagerRequestReason));
@@ -76,10 +71,13 @@
                             if (user.SuperOrganizerRequestStatus == "Pending")
                                 pendingRequests.Add(("Super Organizer", "text-purple-700 bg-purple-100 border-purple-200", "SuperOrganizer", user.SuperOrganizerRequestReason));
 
-                            // Render a distinct row for every pending request the user currently holds
                             foreach (var req in pendingRequests)
                             {
-                                <tr class="hover:bg-gray-50 transition-colors">
+                                string rowId = $"row-{user.Id}-{req.FormRoleType}";
+                                string reasonId = $"reason-{user.Id}-{req.FormRoleType}";
+                                string safeReason = string.IsNullOrWhiteSpace(req.Reason) ? "No reason provided." : req.Reason;
+
+                                <tr id="@rowId" class="hover:bg-gray-50 transition-colors">
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="text-sm font-bold text-gray-900">@user.FirstName @user.LastName</div>
                                         <div class="text-xs text-gray-500 mt-0.5">@user.Email</div>
@@ -92,40 +90,38 @@
                                     </td>
                                     
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        @{ string safeReason = string.IsNullOrWhiteSpace(req.Reason) ? "No reason provided." : req.Reason; }
                                         <button type="button" 
-                                                onclick="showReasonModal('@req.RoleName', this.nextElementSibling.textContent)" 
+                                                onclick="toggleReasonRow('@reasonId', this)" 
                                                 class="text-indigo-600 hover:text-indigo-900 text-sm font-medium underline focus:outline-none transition-colors">
                                             Read Reason
                                         </button>
-                                        <!-- Hidden container strictly used to pass text payload to the JavaScript modal -->
-                                        <div class="hidden">@safeReason</div>
                                     </td>
                                     
                                     <td class="px-6 py-4 whitespace-nowrap text-center">
                                         <div class="flex items-center justify-center space-x-2">
-                                            <!-- Authorization Pipeline: Approve -->
-                                            <form asp-action="ApproveRoleRequest" method="post" class="inline">
-                                                @Html.AntiForgeryToken()
-                                                <input type="hidden" name="userId" value="@user.Id" />
-                                                <input type="hidden" name="roleType" value="@req.FormRoleType" />
-                                                <button type="submit" class="text-white bg-green-600 hover:bg-green-700 px-4 py-2 rounded-md shadow-sm font-semibold text-xs transition-colors flex items-center">
-                                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                                                    Approve
-                                                </button>
-                                            </form>
+                                            <!-- Pointing explicitly to the Admin Controller to ensure perfect routing -->
+                                            <button type="button" 
+                                                    onclick="processRoleAction('@Url.Action("ApproveRoleRequest", "Admin")', '@user.Id', '@req.FormRoleType', '@rowId', '@reasonId', this)" 
+                                                    class="text-white bg-green-600 hover:bg-green-700 px-4 py-2 rounded-md shadow-sm font-semibold text-xs transition-colors flex items-center">
+                                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                                Approve
+                                            </button>
                                             
-                                            <!-- Authorization Pipeline: Reject -->
-                                            <form asp-action="RejectRoleRequest" method="post" class="inline">
-                                                @Html.AntiForgeryToken()
-                                                <input type="hidden" name="userId" value="@user.Id" />
-                                                <input type="hidden" name="roleType" value="@req.FormRoleType" />
-                                                <button type="submit" class="text-white bg-red-600 hover:bg-red-700 px-4 py-2 rounded-md shadow-sm font-semibold text-xs transition-colors flex items-center">
-                                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                                                    Reject
-                                                </button>
-                                            </form>
+                                            <button type="button" 
+                                                    onclick="processRoleAction('@Url.Action("RejectRoleRequest", "Admin")', '@user.Id', '@req.FormRoleType', '@rowId', '@reasonId', this)" 
+                                                    class="text-white bg-red-600 hover:bg-red-700 px-4 py-2 rounded-md shadow-sm font-semibold text-xs transition-colors flex items-center">
+                                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                                Reject
+                                            </button>
                                         </div>
+                                    </td>
+                                </tr>
+                                
+                                <!-- Expandable Context Row -->
+                                <tr id="@reasonId" class="hidden bg-indigo-50/30 border-b border-gray-100">
+                                    <td colspan="4" class="px-6 py-4">
+                                        <div class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Applicant's Stated Reason:</div>
+                                        <p class="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed bg-white p-4 rounded-lg border border-gray-200 shadow-sm">@safeReason</p>
                                     </td>
                                 </tr>
                             }
@@ -133,7 +129,6 @@
                     }
                     else
                     {
-                        <!-- Empty State Fallback -->
                         <tr>
                             <td colspan="4" class="px-6 py-12 text-center text-gray-500">
                                 <svg class="mx-auto h-12 w-12 text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -148,7 +143,6 @@
             </table>
         </div>
 
-        <!-- Pagination Footer Navigation -->
         @if (totalPages > 1)
         {
             <div class="bg-gray-50 px-6 py-4 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -175,7 +169,6 @@
                         </button>
                     }
 
-                    <!-- Dynamic Sliding Pagination Window -->
                     <div class="hidden md:flex space-x-1">
                         @for (int i = 1; i <= totalPages; i++)
                         {
@@ -212,66 +205,67 @@
     </div>
 </div>
 
-<div id="reasonModal" class="fixed inset-0 z-50 hidden bg-gray-900 bg-opacity-60 flex items-center justify-center transition-opacity backdrop-blur-sm" aria-modal="true" role="dialog">
-    <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden transform transition-all border border-gray-200">
-        
-        <div class="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4 flex justify-between items-center">
-            <h4 class="text-lg font-bold text-white" id="modalRoleTitle">Role Request</h4>
-            <button type="button" class="text-indigo-100 hover:text-white transition-colors focus:outline-none" onclick="closeReasonModal()">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-            </button>
-        </div>
-        
-        <div class="p-6 max-h-96 overflow-y-auto">
-            <h3 class="text-xs font-bold text-gray-500 mb-3 uppercase tracking-wider">Applicant's Stated Reason:</h3>
-            <p id="modalReasonText" class="text-gray-800 text-sm whitespace-pre-wrap leading-relaxed bg-gray-50 p-4 rounded-lg border border-gray-200 shadow-inner"></p>
-        </div>
-        
-        <div class="bg-gray-50 border-t border-gray-200 px-6 py-4 flex justify-end">
-            <button type="button" onclick="closeReasonModal()" class="px-6 py-2 bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-100 transition duration-200 font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 shadow-sm">
-                Close
-            </button>
-        </div>
-    </div>
-</div>
-
 @section Scripts {
     <script>
         /**
-         * Injects dynamic request metadata into the modal DOM structure and triggers visibility.
-         * @@param {string} roleName - The human-readable classification of the requested role.
-         * @@param {string} reasonText - The applicant's raw justification text.
+         * Toggles the visibility of the embedded rationale row.
          */
-        function showReasonModal(roleName, reasonText) {
-            document.getElementById('modalRoleTitle').textContent = roleName + ' Request';
-            document.getElementById('modalReasonText').textContent = reasonText;
-            document.getElementById('reasonModal').classList.remove('hidden');
-            
-            // Prevent background body scrolling while modal is engaged
-            document.body.style.overflow = 'hidden';
+        function toggleReasonRow(reasonRowId, btnElement) {
+            const row = document.getElementById(reasonRowId);
+            if (row.classList.contains('hidden')) {
+                row.classList.remove('hidden');
+                btnElement.textContent = 'Hide Reason';
+            } else {
+                row.classList.add('hidden');
+                btnElement.textContent = 'Read Reason';
+            }
         }
 
         /**
-         * Purges active modal state and restores default DOM interactivity.
+         * Dispatches asynchronous request evaluation payloads.
          */
-        function closeReasonModal() {
-            document.getElementById('reasonModal').classList.add('hidden');
-            document.body.style.overflow = 'auto';
-        }
+        async function processRoleAction(endpointUrl, userId, roleType, mainRowId, reasonRowId, buttonElement) {
+            const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+            const originalText = buttonElement.innerHTML;
+            
+            try {
+                buttonElement.innerHTML = '<span class="inline-block animate-spin mr-1">↻</span> Processing...';
+                buttonElement.disabled = true;
 
-        // Binds an event listener to the modal backdrop allowing users to close the dialog by clicking outside the modal boundary
-        document.getElementById('reasonModal').addEventListener('click', function(e) {
-            if (e.target === this) {
-                closeReasonModal();
+                const formData = new FormData();
+                formData.append('userId', userId);
+                formData.append('roleType', roleType);
+
+                const response = await fetch(endpointUrl, {
+                    method: 'POST',
+                    headers: {
+                        'RequestVerificationToken': token
+                    },
+                    body: formData
+                });
+
+                if (response.ok) {
+                    const mainRow = document.getElementById(mainRowId);
+                    const reasonRow = document.getElementById(reasonRowId);
+                    
+                    if(mainRow) mainRow.remove();
+                    if(reasonRow) reasonRow.remove();
+                    
+                    const tbody = document.querySelector('tbody');
+                    if (tbody.querySelectorAll('tr').length === 0) {
+                        location.reload(); 
+                    }
+                } else {
+                    alert('Failed to process authorization action. Please try again.');
+                    buttonElement.innerHTML = originalText;
+                    buttonElement.disabled = false;
+                }
+            } catch (err) {
+                console.error('Request mutation error:', err);
+                alert('An application error occurred.');
+                buttonElement.innerHTML = originalText;
+                buttonElement.disabled = false;
             }
-        });
-        
-        document.addEventListener('keydown', function(event) {
-            if (event.key === "Escape") {
-                closeReasonModal();
-            }
-        });
+        }
     </script>
 }
