@@ -1463,70 +1463,95 @@ public class EventsController(
         }
     }
 
-    [AllowAnonymous]
     [HttpGet]
+    [AllowAnonymous]
     public async Task<IActionResult> getNewestEvents()
     {
-        var ev = await context.Event
-            .Where(e => e.ParentEventId == null && e.EndTime > DateTime.Now)
-            .OrderByDescending(e => e.Id)
-            .Take(5)
-            .Select(e => new {
+        // 1. Fetch your events (adjust your OrderBy / Where clauses to match what you already had)
+        var events = await context.Event
+            .Include(e => e.EventType)
+            .Include(e => e.Venue)
+            .Where(e => e.ParentEventId == null) // Optional: Only show master/standalone events in the carousel
+            .OrderByDescending(e => e.Id) 
+            .Take(12)
+            .ToListAsync();
+
+        // 2. Get all child events in one query to prevent N+1 database performance issues
+        var eventIds = events.Select(e => e.Id).ToList();
+        var childEvents = await context.Event
+            .Where(e => e.ParentEventId != null && eventIds.Contains(e.ParentEventId.Value))
+            .ToListAsync();
+
+        // 3. Project into an anonymous object that includes the minPrice/maxPrice calculations
+        var result = events.Select(e => {
+            var children = childEvents.Where(c => c.ParentEventId == e.Id).ToList();
+            var childPrices = children.Where(c => c.TicketPrice != null).Select(c => c.TicketPrice.Value).ToList();
+            
+            return new {
                 id = e.Id,
                 name = e.Name,
                 startDateTime = e.StartDateTime,
                 endTime = e.EndTime,
-                venueName = e.Venue.Name,
-                cityName = e.Venue.City != null ? e.Venue.City.Name : "N/A",
-                imagePath = !string.IsNullOrEmpty(e.ImagePath) 
-                    ? (e.ImagePath.EndsWith(".webp") ? e.ImagePath : $"/Events/GetCompressedImage?path={e.ImagePath}&width=800") 
-                    : null,
-                eventType = e.EventType != null ? e.EventType.Name : "Default",
-                distinctCities = e.ChildEvents.Where(c => c.Venue != null && c.Venue.City != null).Select(c => c.Venue.City.Id).Distinct().Count(),
-                hasMultipleCities = e.ChildEvents.Where(c => c.Venue != null && c.Venue.City != null).Select(c => c.Venue.City.Id).Distinct().Count() > 1,
-                cityNames = e.ChildEvents.Where(c => c.Venue != null && c.Venue.City != null).Select(c => c.Venue.City.Name).Distinct().ToList(),
+                imagePath = e.ImagePath,
+                eventType = e.EventType != null ? e.EventType.Name : null,
+                venueName = e.Venue != null ? e.Venue.Name : null,
+                cityName = e.Venue?.City?.Name ?? "Unknown", // Adjust based on your City schema
                 ticketPrice = e.TicketPrice,
-                minPrice = e.ChildEvents.Any() ? e.ChildEvents.Min(c => c.TicketPrice) : e.TicketPrice,
-                maxPrice = e.ChildEvents.Any() ? e.ChildEvents.Max(c => c.TicketPrice) : e.TicketPrice
-            })
-            .ToListAsync();
-            
-        return Json(ev);
+                
+                // These properties match exactly what the JavaScript needs
+                childCount = children.Count,
+                minPrice = childPrices.Any() ? childPrices.Min() : (decimal?)null,
+                maxPrice = childPrices.Any() ? childPrices.Max() : (decimal?)null,
+                
+                parentEventId = e.ParentEventId
+            };
+        });
+
+        return Json(result);
     }
 
-    [AllowAnonymous]
     [HttpGet]
-    public IActionResult HomePage() => View();
-
     [AllowAnonymous]
-    [HttpGet]
     public async Task<IActionResult> getRecentEvents()
     {
-        var ev = await context.Event
-            .Where(e => e.ParentEventId == null && e.EndTime > DateTime.Now)
-            .OrderBy(e => e.StartDateTime)
-            .Take(5)
-            .Select(e => new {
+        // Repeat the exact same logic as above, just changing how you fetch the initial 'events' variable
+        var events = await context.Event
+            .Include(e => e.EventType)
+            .Include(e => e.Venue)
+            .Where(e => e.ParentEventId == null)
+            .OrderByDescending(e => e.StartDateTime) // Example: ordering by start date for "Recent"
+            .Take(12)
+            .ToListAsync();
+
+        var eventIds = events.Select(e => e.Id).ToList();
+        var childEvents = await context.Event
+            .Where(e => e.ParentEventId != null && eventIds.Contains(e.ParentEventId.Value))
+            .ToListAsync();
+
+        var result = events.Select(e => {
+            var children = childEvents.Where(c => c.ParentEventId == e.Id).ToList();
+            var childPrices = children.Where(c => c.TicketPrice != null).Select(c => c.TicketPrice.Value).ToList();
+            
+            return new {
                 id = e.Id,
                 name = e.Name,
                 startDateTime = e.StartDateTime,
                 endTime = e.EndTime,
-                venueName = e.Venue.Name,
-                cityName = e.Venue.City != null ? e.Venue.City.Name : "N/A",
-                imagePath = !string.IsNullOrEmpty(e.ImagePath) 
-                    ? (e.ImagePath.EndsWith(".webp") ? e.ImagePath : $"/Events/GetCompressedImage?path={e.ImagePath}&width=800") 
-                    : null,
-                eventType = e.EventType != null ? e.EventType.Name : "Default",
-                distinctCities = e.ChildEvents.Where(c => c.Venue != null && c.Venue.City != null).Select(c => c.Venue.City.Id).Distinct().Count(),
-                hasMultipleCities = e.ChildEvents.Where(c => c.Venue != null && c.Venue.City != null).Select(c => c.Venue.City.Id).Distinct().Count() > 1,
-                cityNames = e.ChildEvents.Where(c => c.Venue != null && c.Venue.City != null).Select(c => c.Venue.City.Name).Distinct().ToList(),
+                imagePath = e.ImagePath,
+                eventType = e.EventType != null ? e.EventType.Name : null,
+                venueName = e.Venue != null ? e.Venue.Name : null,
+                cityName = e.Venue?.City?.Name ?? "Unknown",
                 ticketPrice = e.TicketPrice,
-                minPrice = e.ChildEvents.Any() ? e.ChildEvents.Min(c => c.TicketPrice) : e.TicketPrice,
-                maxPrice = e.ChildEvents.Any() ? e.ChildEvents.Max(c => c.TicketPrice) : e.TicketPrice
-            })
-            .ToListAsync();
-            
-        return Json(ev);
+                
+                childCount = children.Count,
+                minPrice = childPrices.Any() ? childPrices.Min() : (decimal?)null,
+                maxPrice = childPrices.Any() ? childPrices.Max() : (decimal?)null,
+                
+                parentEventId = e.ParentEventId
+            };
+        });
+
+        return Json(result);
     }
 
     [Authorize]
