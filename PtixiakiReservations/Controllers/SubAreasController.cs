@@ -245,7 +245,7 @@ namespace PtixiakiReservations.Controllers
             var layout = await _context.Layout.FindAsync(id);
             _context.Layout.Remove(layout);
             await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction(nameof(VenueLayouts));
         }
 
         // GET: Layouts/VenueLayouts/5
