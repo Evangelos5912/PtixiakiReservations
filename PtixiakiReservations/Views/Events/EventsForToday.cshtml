@@ -598,17 +598,34 @@
                             const isMasterEvent = event.parentEventId == null && event.ParentEventId == null;
                             const canViewSubEvents = @((isSuper || isAdmin || isEventManager).ToString().ToLower());
                             const showSubEventsLink = isMasterEvent && canViewSubEvents;
+                            
                             const childCount = event.childCount || event.ChildCount || 0;
-
                             let priceDisplayHtml = "";
-                            const hasMultiplePrices = (event.minPrice !== null && event.maxPrice !== null && event.minPrice !== event.maxPrice);
 
-                            if (hasMultiplePrices) {
-                                priceDisplayHtml = `€${event.minPrice} - €${event.maxPrice}`;
-                            } else if (event.ticketPrice != null && event.ticketPrice > 0) {
-                                priceDisplayHtml = `€${event.ticketPrice}`;
+                            // If this event has children, display the min/max range of its children.
+                            // Otherwise, display its own ticket price.
+                            if (childCount > 0) {
+                                const minP = event.minPrice !== undefined ? event.minPrice : event.MinPrice;
+                                const maxP = event.maxPrice !== undefined ? event.maxPrice : event.MaxPrice;
+                                const tPrice = event.ticketPrice !== undefined ? event.ticketPrice : event.TicketPrice;
+
+                                if (minP != null && maxP != null) {
+                                    if (minP === maxP) {
+                                        priceDisplayHtml = minP > 0 ? `€${minP}` : "Free";
+                                    } else {
+                                        priceDisplayHtml = `€${minP} - €${maxP}`;
+                                    }
+                                } else {
+                                    // Fallback if the aggregated min/max prices are not present
+                                    priceDisplayHtml = (tPrice != null && tPrice > 0) ? `€${tPrice}` : "Free";
+                                }
                             } else {
-                                priceDisplayHtml = "Free";
+                                const tPrice = event.ticketPrice !== undefined ? event.ticketPrice : event.TicketPrice;
+                                if (tPrice != null && tPrice > 0) {
+                                    priceDisplayHtml = `€${tPrice}`;
+                                } else {
+                                    priceDisplayHtml = "Free";
+                                }
                             }
 
                             let wishlistBadge = `
@@ -899,15 +916,32 @@
                         const cityName = event.distinctCities === 0 ? event.cityName : (event.cityNames ? event.cityNames[0] : 'Unknown');
                         let locationText = hasMultipleCities ? `${distinctCities} Cities` : cityName;
                         
+                        const childCount = event.childCount || event.ChildCount || 0;
                         let priceDisplayHtml = "";
-                        const hasMultiplePrices = (event.minPrice !== null && event.maxPrice !== null && event.minPrice !== event.maxPrice);
 
-                        if (hasMultiplePrices) {
-                            priceDisplayHtml = `€${event.minPrice} - €${event.maxPrice}`;
-                        } else if (event.ticketPrice != null && event.ticketPrice > 0) {
-                            priceDisplayHtml = `€${event.ticketPrice}`;
+                        // If this event has children, display the min/max range of its children.
+                        // Otherwise, display its own ticket price.
+                        if (childCount > 0) {
+                            const minP = event.minPrice !== undefined ? event.minPrice : event.MinPrice;
+                            const maxP = event.maxPrice !== undefined ? event.maxPrice : event.MaxPrice;
+                            const tPrice = event.ticketPrice !== undefined ? event.ticketPrice : event.TicketPrice;
+
+                            if (minP != null && maxP != null) {
+                                if (minP === maxP) {
+                                    priceDisplayHtml = minP > 0 ? `€${minP}` : "Free";
+                                } else {
+                                    priceDisplayHtml = `€${minP} - €${maxP}`;
+                                }
+                            } else {
+                                priceDisplayHtml = (tPrice != null && tPrice > 0) ? `€${tPrice}` : "Free";
+                            }
                         } else {
-                            priceDisplayHtml = "Free";
+                            const tPrice = event.ticketPrice !== undefined ? event.ticketPrice : event.TicketPrice;
+                            if (tPrice != null && tPrice > 0) {
+                                priceDisplayHtml = `€${tPrice}`;
+                            } else {
+                                priceDisplayHtml = "Free";
+                            }
                         }
 
                         const imgBg = event.imagePath ? `url('${event.imagePath}')` : 'none';
