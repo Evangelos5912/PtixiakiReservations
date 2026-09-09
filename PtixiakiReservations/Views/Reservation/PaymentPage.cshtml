@@ -1,0 +1,314 @@
+@{
+    ViewData["Title"] = "Secure Checkout";
+    Layout = "_Layout";
+}
+
+<div class="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8 pb-32">
+    <div class="max-w-6xl mx-auto">
+        
+        <div class="mb-8 flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight flex items-center">
+                    <svg class="w-8 h-8 mr-3 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                    Secure Checkout
+                </h1>
+                <p class="mt-2 text-sm text-gray-500 font-medium">Complete your reservation securely. Encrypted via 256-bit SSL.</p>
+            </div>
+            <div class="hidden sm:flex items-center gap-2 text-gray-400">
+                <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+                <span class="text-xs font-bold uppercase tracking-wider">Verified Secure</span>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            
+            <div class="lg:col-span-7 xl:col-span-8 space-y-6">
+                
+                <!-- Contact Information -->
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+                    <div class="px-6 py-5 border-b border-gray-100 bg-gray-50/50 flex items-center">
+                        <div class="h-8 w-8 rounded-lg bg-indigo-50 border border-indigo-100 flex items-center justify-center mr-3">
+                            <span class="text-indigo-600 font-bold">1</span>
+                        </div>
+                        <h3 class="text-lg font-bold text-gray-900">Contact Details</h3>
+                    </div>
+                    <div class="p-6">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wide">First Name</label>
+                                <input type="text" id="firstName" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-indigo-500 transition-all text-sm font-medium" placeholder="Jane" required>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wide">Last Name</label>
+                                <input type="text" id="lastName" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-indigo-500 transition-all text-sm font-medium" placeholder="Doe" required>
+                            </div>
+                            <div class="sm:col-span-2">
+                                <label class="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wide">Email Address</label>
+                                <input type="email" id="email" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-indigo-500 transition-all text-sm font-medium" placeholder="jane.doe@example.com" required>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Payment Configuration -->
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+                    <div class="px-6 py-5 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
+                        <div class="flex items-center">
+                            <div class="h-8 w-8 rounded-lg bg-indigo-50 border border-indigo-100 flex items-center justify-center mr-3">
+                                <span class="text-indigo-600 font-bold">2</span>
+                            </div>
+                            <h3 class="text-lg font-bold text-gray-900">Payment Method</h3>
+                        </div>
+                        <div class="flex gap-2">
+                            <div class="w-10 h-6 bg-gray-100 rounded border border-gray-200 flex items-center justify-center text-[10px] font-bold text-blue-800">VISA</div>
+                            <div class="w-10 h-6 bg-gray-100 rounded border border-gray-200 flex items-center justify-center text-[10px] font-bold text-red-600">MC</div>
+                        </div>
+                    </div>
+                    <div class="p-6 space-y-5">
+                        
+                        <div class="relative">
+                            <label class="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wide">Card Number</label>
+                            <div class="relative">
+                                <input type="text" id="cardNumber" maxlength="19" class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-indigo-500 transition-all text-sm font-medium font-mono" placeholder="0000 0000 0000 0000">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-5">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wide">Expiration Date</label>
+                                <input type="text" id="cardExpiry" maxlength="5" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-indigo-500 transition-all text-sm font-medium font-mono" placeholder="MM/YY">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wide flex items-center justify-between">
+                                    CVC
+                                    <svg class="h-4 w-4 text-gray-400 cursor-help" fill="none" viewBox="0 0 24 24" stroke="currentColor" title="3 digits on back of card"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                </label>
+                                <input type="text" id="cardCvc" maxlength="4" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-indigo-500 transition-all text-sm font-medium font-mono" placeholder="123">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wide">Name on Card</label>
+                            <input type="text" id="cardName" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-indigo-500 transition-all text-sm font-medium uppercase" placeholder="JANE DOE">
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Order Summary -->
+            <div class="lg:col-span-5 xl:col-span-4">
+                <div class="bg-white rounded-2xl shadow-md border border-gray-200 sticky top-8">
+                    <div class="p-6 border-b border-gray-100">
+                        <h3 class="text-lg font-extrabold text-gray-900 mb-1">Order Summary</h3>
+                        <p class="text-sm text-gray-500 font-medium" id="summary-event-name">Loading Event...</p>
+                    </div>
+                    
+                    <div class="p-6 space-y-4">
+                        <div class="flex items-start justify-between text-sm">
+                            <div class="text-gray-500 font-medium flex items-center">
+                                <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                Date
+                            </div>
+                            <div class="font-bold text-gray-900 text-right" id="summary-date">-</div>
+                        </div>
+                        <div class="flex items-start justify-between text-sm">
+                            <div class="text-gray-500 font-medium flex items-center">
+                                <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                Duration
+                            </div>
+                            <div class="font-bold text-gray-900 text-right" id="summary-duration">-</div>
+                        </div>
+                        <div class="flex items-start justify-between text-sm">
+                            <div class="text-gray-500 font-medium flex items-start mt-0.5">
+                                <svg class="w-4 h-4 mr-2 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                                Seats Selected
+                            </div>
+                            <div class="font-bold text-indigo-600 text-right max-w-[50%] leading-tight" id="summary-seats">
+                                -
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="p-6 bg-gray-50 rounded-b-2xl border-t border-gray-100">
+                        <div class="space-y-3 mb-4">
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-500 font-medium" id="summary-subtotal-label">Subtotal</span>
+                                <span class="font-bold text-gray-900" id="summary-subtotal">€0.00</span>
+                            </div>
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-500 font-medium">Taxes & Fees (24%)</span>
+                                <span class="font-bold text-gray-900" id="summary-tax">€0.00</span>
+                            </div>
+                        </div>
+                        <div class="border-t border-gray-200 pt-4 flex justify-between items-center mb-6">
+                            <span class="text-base font-extrabold text-gray-900 uppercase tracking-wide">Total</span>
+                            <span class="text-2xl font-extrabold text-indigo-600" id="summary-total">€0.00</span>
+                        </div>
+
+                        <button id="processPaymentBtn" class="w-full flex justify-center items-center px-6 py-3.5 bg-indigo-600 text-white font-bold rounded-xl shadow-md hover:bg-indigo-700 transition-all focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 text-lg">
+                            <span id="btnText">Pay Now</span>
+                            <svg id="btnIcon" class="h-5 w-5 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                            <svg id="btnSpinner" class="animate-spin ml-3 h-5 w-5 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                        </button>
+                        <p class="text-center text-xs text-gray-400 font-bold mt-4 flex items-center justify-center">
+                            <svg class="h-3.5 w-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                            Payments are secure and encrypted
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- Success Modal -->
+<div id="successModal" class="fixed inset-0 z-[100] flex items-center justify-center bg-gray-900/60 backdrop-blur-sm hidden opacity-0 transition-opacity duration-300">
+    <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full mx-4 transform scale-95 transition-transform duration-300">
+        <div class="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-5">
+            <svg class="w-8 h-8 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+        </div>
+        <h3 class="text-2xl font-extrabold text-gray-900 text-center mb-2">Payment Successful!</h3>
+        <p class="text-gray-500 text-center font-medium mb-6">Your seats have been securely reserved. Redirecting to your dashboard...</p>
+        <div class="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden">
+            <div class="bg-emerald-500 h-full w-full animate-[progress_1.5s_ease-in-out]"></div>
+        </div>
+    </div>
+</div>
+
+<style>
+    @@keyframes progress {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(0); }
+    }
+</style>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            
+            const urlParams = new URLSearchParams(window.location.search);
+            const eventId = urlParams.get('eventId');
+            const layoutId = urlParams.get('layoutId');
+            const duration = urlParams.get('duration');
+            const resDateStr = urlParams.get('resDate');
+            const seatIdsRaw = urlParams.get('seatIds');
+
+            const seatIds = seatIdsRaw ? seatIdsRaw.split(',') : [];
+            const seatCount = seatIds.length;
+
+            if (resDateStr) {
+                const dateObj = new Date(resDateStr);
+                document.getElementById('summary-date').textContent = dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+            }
+            
+            document.getElementById('summary-duration').textContent = duration || '-';
+            document.getElementById('summary-seats').textContent = seatCount > 0 ? `${seatCount} Seat${seatCount > 1 ? 's' : ''}` : '-';
+
+            // Simulated pricing schema
+            const pricePerSeat = 15.00;
+            const subtotal = seatCount * pricePerSeat;
+            const tax = subtotal * 0.24; 
+            const total = subtotal + tax;
+
+            document.getElementById('summary-subtotal-label').textContent = `Subtotal (${seatCount} × €${pricePerSeat.toFixed(2)})`;
+            document.getElementById('summary-subtotal').textContent = `€${subtotal.toFixed(2)}`;
+            document.getElementById('summary-tax').textContent = `€${tax.toFixed(2)}`;
+            document.getElementById('summary-total').textContent = `€${total.toFixed(2)}`;
+            document.getElementById('btnText').textContent = `Pay €${total.toFixed(2)}`;
+
+            if (eventId) {
+                document.getElementById('summary-event-name').textContent = `Event ID Reference: #${eventId}`;
+            }
+
+            // Input formatters
+            const cardNumberInput = document.getElementById('cardNumber');
+            cardNumberInput.addEventListener('input', function (e) {
+                let value = e.target.value.replace(/\D/g, '');
+                let formatted = value.match(/.{1,4}/g)?.join(' ') || '';
+                e.target.value = formatted;
+            });
+
+            const cardExpiryInput = document.getElementById('cardExpiry');
+            cardExpiryInput.addEventListener('input', function (e) {
+                let value = e.target.value.replace(/\D/g, '');
+                if (value.length > 2) {
+                    value = value.substring(0, 2) + '/' + value.substring(2, 4);
+                }
+                e.target.value = value;
+            });
+
+            // Mock Submission Process
+            const processBtn = document.getElementById('processPaymentBtn');
+            const modal = document.getElementById('successModal');
+
+            processBtn.addEventListener('click', function () {
+                const fName = document.getElementById('firstName').value;
+                const lName = document.getElementById('lastName').value;
+                const email = document.getElementById('email').value;
+                const cNum = document.getElementById('cardNumber').value;
+
+                if (!fName || !lName || !email || cNum.length < 16) {
+                    showNotification("Please complete all required fields.", "error");
+                    return;
+                }
+
+                if (seatCount === 0) {
+                    showNotification("No seats selected. Cannot process payment.", "error");
+                    return;
+                }
+
+                processBtn.disabled = true;
+                document.getElementById('btnText').textContent = "Processing...";
+                document.getElementById('btnIcon').classList.add('hidden');
+                document.getElementById('btnSpinner').classList.remove('hidden');
+
+                // Simulation delay
+                setTimeout(() => {
+                    modal.classList.remove('hidden');
+                    
+                    setTimeout(() => {
+                        modal.classList.remove('opacity-0');
+                        modal.firstElementChild.classList.remove('scale-95');
+                    }, 50);
+
+                    // Execute final reservation logic routing
+                    setTimeout(() => {
+                        $.ajax({
+                            url: `/Reservation/MakeRes`,
+                            type: "POST",
+                            contentType: "application/json",
+                            data: JSON.stringify({
+                                seatIds: seatIds,
+                                eventId: eventId,
+                                layoutId: layoutId,
+                                duration: duration,
+                                resDate: resDateStr
+                            }),
+                            success: function() {
+                                window.location.href = "/Reservation/Index";
+                            },
+                            error: function() {
+                                window.location.href = "/Reservation/Index";
+                            }
+                        });
+                    }, 1500);
+
+                }, 2000);
+            });
+
+            function showNotification(message, type = 'info') {
+                $('.notification').remove();
+                let bgColor = type === 'success' ? 'bg-emerald-500' : type === 'error' ? 'bg-red-500' : 'bg-indigo-500';
+                const notification = $(`<div class="notification fixed top-6 right-6 ${bgColor} text-white font-bold px-6 py-4 rounded-xl shadow-lg z-[120] border border-white/20 animate-fade-in-up">${message}</div>`);
+                $('body').append(notification);
+                setTimeout(() => notification.fadeOut(() => notification.remove()), 4000);
+            }
+        });
+    </script>
+}

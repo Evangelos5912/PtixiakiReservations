@@ -595,4 +595,11 @@ public class ReservationController(
         return _context.Reservation.Any(e => e.ID == id); 
     }
 
+    [HttpGet]
+    [Authorize]
+    public IActionResult PaymentPage()
+    {
+        return View();
+    }
+
 }

@@ -21,6 +21,7 @@ public class Event
     public ApplicationUser? Organizer { get; set; }
     public int? ParentEventId { get; set; }
     [ForeignKey("ParentEventId")] public Event ParentEvent { get; set; }
+    public double? TicketPrice {get; set;}
     public string? ImagePath { get; set; }
     [NotMapped]
     public string DisplayImagePath => ImagePath ?? ParentEvent?.ImagePath;
