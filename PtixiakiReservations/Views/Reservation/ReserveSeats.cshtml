@@ -184,9 +184,9 @@
                         Cancel
                     </a>
                     <button id="confirm-reservation" class="px-8 py-2.5 bg-indigo-600 text-white font-bold rounded-xl shadow-md hover:bg-indigo-700 transition-all flex items-center justify-center focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                        <span>Complete Reservation</span>
+                        <span>Proceed to Payment</span>
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
                         </svg>
                     </button>
                 </div>
@@ -248,10 +248,6 @@
             fitLayoutToViewport();
         }
 
-        /** 
-         * Automatically calculates the bounding box of ALL mapped objects, 
-         * expands the canvas if necessary, and scales/pans the viewport to frame them nicely.
-         */
         function fitLayoutToViewport() {
             if (!fabricCanvas) return;
 
@@ -259,7 +255,6 @@
             
             if (allItems.length === 0) return;
 
-            // Calculate extreme boundaries of all placed items
             const xs = allItems.map(s => parseFloat(s.x) || parseFloat(s.X) || 0);
             const ys = allItems.map(s => parseFloat(s.y) || parseFloat(s.Y) || 0);
             const maxXs = allItems.map(s => (parseFloat(s.x) || parseFloat(s.X) || 0) + (parseFloat(s.width) || 60));
@@ -281,12 +276,10 @@
             fabricCanvas.setWidth(viewportWidth);
             fabricCanvas.setHeight(viewportHeight);
 
-            // Determine zoom level
             const scaleX = viewportWidth / contentWidth;
             const scaleY = viewportHeight / contentHeight;
             const optimalScale = Math.max(0.1, Math.min(scaleX, scaleY, 1.2)); 
 
-            // Center camera strictly around the deployed items
             const centerX = (minX + maxX) / 2;
             const centerY = (minY + maxY) / 2; 
             
@@ -309,7 +302,6 @@
 
             fabricCanvas = new fabric.Canvas('seatCanvas', { selection: false });
 
-            // Implements drag-to-pan across empty background sectors
             fabricCanvas.on('mouse:down', function (opt) {
                 const evt = opt.e;
                 if (!opt.target || (opt.target && opt.target.selectable === false && !opt.target.seatId)) {
@@ -424,7 +416,7 @@
                     }
 
                     $(this).prop('disabled', true)
-                        .html('<svg class="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Processing...');
+                        .html('<svg class="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Proceeding...');
 
                     const startTime = $("#useEventStartTime").is(":checked") ? $("#startTime").val() : $("#reservationStartTime").val();
                     const endTime = $("#useEventEndTime").is(":checked") ? $("#endTime").val() : $("#reservationEndTime").val();
@@ -435,35 +427,23 @@
 
                     if (difference <= 0) {
                         showNotification('End time must be after start time.', 'error');
-                        $(this).prop('disabled', false).html('<span>Complete Reservation</span><svg class="h-5 w-5 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>');
+                        $(this).prop('disabled', false).html('<span>Proceed to Payment</span><svg class="h-5 w-5 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>');
                         return;
                     }
 
                     const duration = `${Math.floor(difference / 3600000).toString().padStart(2, '0')}:${Math.floor((difference % 3600000) / 60000).toString().padStart(2, '0')}:${Math.floor((difference % 60000) / 1000).toString().padStart(2, '0')}`;
                     const reservationDate = `${$("#eventDate").val()}T${startTime}`;
 
-                    $.ajax({
-                        url: `/Reservation/MakeRes`,
-                        type: "POST",
-                        contentType: "application/json",
-                        data: JSON.stringify({
-                            seatIds: selectedSeats,
-                            eventId: eventId,
-                            layoutId: layoutId,
-                            duration: duration,
-                            resDate: reservationDate
-                        }),
-                        success: function() {
-                            showNotification('Reservation successful!', 'success');
-                            setTimeout(() => window.location.href = "/Reservation/Index", 1500);
-                        },
-                        error: function(xhr) {
-                            $("#confirm-reservation").prop('disabled', false).html('<span>Complete Reservation</span><svg class="h-5 w-5 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>');
-                            let msg = "Failed to reserve seats.";
-                            try { msg = JSON.parse(xhr.responseText) || msg; } catch(e) { msg = xhr.responseText || msg; }
-                            showNotification(msg, 'error');
-                        }
+                    const queryParams = new URLSearchParams({
+                        eventId: eventId,
+                        layoutId: layoutId,
+                        duration: duration,
+                        resDate: reservationDate,
+                        seatIds: selectedSeats.join(',')
                     });
+
+                    window.location.href = `/Reservation/PaymentPage?${queryParams.toString()}`;
+
                 } else {
                     showNotification('Please select at least one seat.', 'warning');
                 }
@@ -477,7 +457,6 @@
         function renderMap(canvas, seats, shapes, groups) {
             canvas.clear();
 
-            // 1. Render Logical Group Regions
             if (groups) {
                 groups.forEach(group => {
                     const childNames = new Set();
@@ -509,7 +488,6 @@
                 });
             }
 
-            // 2. Render Aesthetic Shapes
             if (shapes) {
                 shapes.forEach(shape => {
                     let fabricShape;
@@ -555,7 +533,6 @@
                 });
             }
 
-            // 3. Render Selectable Seats
             if (seats) {
                 seats.forEach(seat => {
                     seatNames[seat.id] = seat.name;
@@ -609,10 +586,10 @@
 
             if (selectedSeats.includes(seatId)) {
                 selectedSeats = selectedSeats.filter(id => id !== seatId);
-                rect.set('fill', '#10b981'); // Emerald for open
+                rect.set('fill', '#10b981'); 
             } else {
                 selectedSeats.push(seatId);
-                rect.set('fill', '#4f46e5'); // Indigo for selected
+                rect.set('fill', '#4f46e5'); 
             }
 
             updateSelectionSummary();

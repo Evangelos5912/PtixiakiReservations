@@ -1,0 +1,236 @@
+@model IEnumerable<PtixiakiReservations.Models.ViewModels.EventReservationViewModel>
+
+@{
+    ViewData["Title"] = "Event Reservations";
+    var eventName = ViewBag.EventName as string;
+    var eventId = ViewBag.EventId;
+    var totalRevenue = (decimal)ViewBag.TotalRevenue;
+    var totalRecords = (int)ViewBag.TotalRecords;
+    var currentPage = (int)ViewBag.CurrentPage;
+    var totalPages = (int)ViewBag.TotalPages;
+    var searchTerm = ViewBag.SearchTerm as string;
+}
+
+@Html.AntiForgeryToken()
+
+<div class="min-h-screen bg-gray-50/50 py-8 px-4 sm:px-6 lg:px-8 pb-32">
+    <div class="max-w-7xl mx-auto">
+        
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
+            <div>
+                <nav class="flex text-sm text-gray-500 mb-2" aria-label="Breadcrumb">
+                    <ol class="inline-flex items-center space-x-1 md:space-x-3">
+                        <li class="inline-flex items-center">
+                            <a href="@Url.Action("Index", "Events")" class="hover:text-indigo-600 transition-colors font-medium !no-underline">Events Management</a>
+                        </li>
+                        <li>
+                            <div class="flex items-center">
+                                <svg class="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" /></svg>
+                                <span class="ml-1 text-gray-700 font-bold md:ml-2">Reservations Ledger</span>
+                            </div>
+                        </li>
+                    </ol>
+                </nav>
+                <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">Reservation Roster</h1>
+                <p class="mt-1 text-gray-500 text-sm">Managing attendees for <span class="font-bold text-gray-700">@eventName</span></p>
+            </div>
+            <div class="hidden sm:block">
+                <a href="@Url.Action("Edit", "Events", new { id = eventId })" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors shadow-sm !no-underline">
+                    <svg class="h-4 w-4 mr-2 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                    Back to Event
+                </a>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div class="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl p-6 text-white shadow-lg relative overflow-hidden">
+                <div class="absolute right-0 top-0 w-32 h-32 bg-white opacity-10 rounded-full -mr-10 -mt-10 blur-2xl"></div>
+                <div class="relative z-10">
+                    <p class="text-emerald-100 text-sm font-bold uppercase tracking-wider mb-1 flex items-center">
+                        <svg class="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        Gross Event Revenue
+                    </p>
+                    <h3 class="text-4xl font-extrabold tracking-tight">€@totalRevenue.ToString("N2")</h3>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm flex flex-col justify-center">
+                <p class="text-gray-500 text-sm font-bold uppercase tracking-wider mb-1 flex items-center">
+                    <svg class="w-4 h-4 mr-1.5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+                    Total Seats Reserved
+                </p>
+                <h3 class="text-3xl font-extrabold text-gray-900 tracking-tight">@totalRecords <span class="text-lg font-medium text-gray-400">Transactions</span></h3>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="px-6 py-5 border-b border-gray-100 bg-gray-50/30">
+                <form method="get" action="@Url.Action("EventReservations", "Events")" class="flex flex-col sm:flex-row gap-4">
+                    <input type="hidden" name="id" value="@eventId" />
+                    <div class="relative flex-grow">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                        </div>
+                        <input type="text" name="searchTerm" value="@searchTerm" placeholder="Search by exact Username or Email address..." class="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all text-sm font-medium text-gray-900 shadow-sm" />
+                    </div>
+                    <div class="flex gap-2 shrink-0">
+                        <button type="submit" class="px-6 py-2.5 bg-gray-900 text-white font-bold rounded-lg shadow-sm hover:bg-gray-800 transition-colors text-sm">
+                            Search Records
+                        </button>
+                        @if (!string.IsNullOrEmpty(searchTerm))
+                        {
+                            <a href="@Url.Action("EventReservations", "Events", new { id = eventId })" class="px-4 py-2.5 bg-white text-gray-700 border border-gray-300 font-bold rounded-lg shadow-sm hover:bg-gray-50 transition-colors text-sm text-center !no-underline">
+                                Clear
+                            </a>
+                        }
+                    </div>
+                </form>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-4 text-left text-xs font-extrabold text-gray-500 uppercase tracking-wider">Trans. ID</th>
+                            <th scope="col" class="px-6 py-4 text-left text-xs font-extrabold text-gray-500 uppercase tracking-wider">Patron Account</th>
+                            <th scope="col" class="px-6 py-4 text-left text-xs font-extrabold text-gray-500 uppercase tracking-wider">Contact</th>
+                            <th scope="col" class="px-6 py-4 text-center text-xs font-extrabold text-gray-500 uppercase tracking-wider">Reserved Seat</th>
+                            <th scope="col" class="px-6 py-4 text-right text-xs font-extrabold text-gray-500 uppercase tracking-wider">Amount Captured</th>
+                            <th scope="col" class="px-6 py-4 text-right text-xs font-extrabold text-gray-500 uppercase tracking-wider">Timestamp</th>
+                            <th scope="col" class="px-6 py-4 text-right text-xs font-extrabold text-gray-500 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-100" id="reservations-tbody">
+                        @if (!Model.Any())
+                        {
+                            <tr>
+                                <td colspan="7" class="px-6 py-12 text-center">
+                                    <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 mb-4">
+                                        <svg class="w-6 h-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" /></svg>
+                                    </div>
+                                    <h3 class="text-sm font-bold text-gray-900">No records found</h3>
+                                    <p class="text-sm text-gray-500 mt-1">There are no reservations matching the current criteria.</p>
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            foreach (var item in Model)
+                            {
+                                <tr class="hover:bg-gray-50/50 transition-colors" id="row-@item.ReservationId">
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                        #@item.ReservationId.ToString("D6")
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex items-center">
+                                            <div class="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-xs mr-3">
+                                                @(string.IsNullOrEmpty(item.UserName) || item.UserName == "Unknown User" ? "?" : item.UserName.Substring(0, 1).ToUpper())
+                                            </div>
+                                            <span class="text-sm font-bold text-gray-900">@item.UserName</span>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600 font-medium">
+                                        <a href="mailto:@item.Email" class="hover:text-indigo-600 transition-colors">@item.Email</a>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-center text-sm">
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-100">
+                                            @item.SeatName
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-right font-extrabold text-emerald-600">
+                                        €@item.TotalPaid.ToString("N2")
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-500 font-medium">
+                                        @item.ReservationDate.ToString("MMM dd, HH:mm")
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm">
+                                        <button type="button" onclick="deleteReservation('@item.ReservationId', this)" class="inline-flex items-center px-3 py-1.5 bg-red-50 text-red-700 hover:bg-red-100 border border-red-200 rounded-lg text-xs font-bold transition-colors shadow-sm cursor-pointer">
+                                            Delete
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            @if (totalPages > 1)
+            {
+                <div class="px-6 py-4 border-t border-gray-100 bg-gray-50 flex items-center justify-between">
+                    <div class="hidden sm:block">
+                        <p class="text-sm text-gray-700 font-medium">
+                            Showing page <span class="font-bold text-gray-900">@currentPage</span> of <span class="font-bold text-gray-900">@totalPages</span>
+                        </p>
+                    </div>
+                    <div class="flex-1 flex justify-between sm:justify-end gap-2">
+                        @if (currentPage > 1)
+                        {
+                            <a href="@Url.Action("EventReservations", "Events", new { id = eventId, searchTerm = searchTerm, page = currentPage - 1 })" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-bold rounded-md text-gray-700 bg-white hover:bg-gray-50 transition-colors shadow-sm !no-underline">
+                                Previous
+                            </a>
+                        }
+                        else
+                        {
+                            <button disabled class="relative inline-flex items-center px-4 py-2 border border-gray-200 text-sm font-bold rounded-md text-gray-400 bg-gray-50 cursor-not-allowed">
+                                Previous
+                            </button>
+                        }
+
+                        @if (currentPage < totalPages)
+                        {
+                            <a href="@Url.Action("EventReservations", "Events", new { id = eventId, searchTerm = searchTerm, page = currentPage + 1 })" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-bold rounded-md text-gray-700 bg-white hover:bg-gray-50 transition-colors shadow-sm !no-underline">
+                                Next
+                            </a>
+                        }
+                        else
+                        {
+                            <button disabled class="relative inline-flex items-center px-4 py-2 border border-gray-200 text-sm font-bold rounded-md text-gray-400 bg-gray-50 cursor-not-allowed">
+                                Next
+                            </button>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+        
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function deleteReservation(reservationId, buttonElement) {
+            if (!confirm("Are you sure you want to delete this reservation? This will free up the assigned seat.")) {
+                return;
+            }
+
+            const token = $('input[name="__RequestVerificationToken"]').val();
+            const btn = $(buttonElement);
+            btn.prop('disabled', true).text('Deleting...');
+
+            $.ajax({
+                url: `/Events/DeleteReservation`,
+                type: 'POST',
+                data: { reservationId: reservationId },
+                headers: { "RequestVerificationToken": token },
+                success: function(response) {
+                    if (response.success) {
+                        location.reload();
+                    } else {
+                        alert(response.message || "Failed to delete reservation.");
+                        btn.prop('disabled', false).text('Delete');
+                    }
+                },
+                error: function(xhr) {
+                    let msg = "An error occurred while deleting the reservation.";
+                    try {
+                        const json = JSON.parse(xhr.responseText);
+                        if (json.message) msg = json.message;
+                    } catch(e) {}
+                    alert(msg);
+                    btn.prop('disabled', false).text('Delete');
+                }
+            });
+        }
+    </script>
+}

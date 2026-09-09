@@ -97,8 +97,13 @@
 
                                     <!-- Content -->
                                     <div class="absolute bottom-0 left-0 w-full p-8 text-white z-10">
-                                        <span class="px-3 py-1 text-xs font-bold uppercase tracking-wider bg-blue-600/90 backdrop-blur-sm rounded-full shadow-sm" x-text="event.eventType"></span>
-                                        <h2 class="text-3xl font-extrabold mt-3 drop-shadow-md line-clamp-2" x-text="event.name"></h2>
+                                        <div class="flex items-center gap-2 mb-2">
+                                            <span class="px-3 py-1 text-xs font-bold uppercase tracking-wider bg-blue-600/90 backdrop-blur-sm rounded-full shadow-sm" x-show="event.eventType" x-text="event.eventType"></span>
+                                            <span class="px-3 py-1 text-xs font-bold uppercase tracking-wider bg-emerald-500/90 backdrop-blur-sm rounded-full shadow-sm" 
+                                                  x-text="(event.minPrice !== null && event.maxPrice !== null && event.minPrice !== event.maxPrice) ? '€' + event.minPrice + ' - €' + event.maxPrice : (event.ticketPrice > 0 ? '€' + event.ticketPrice : 'Free')">
+                                            </span>
+                                        </div>
+                                        <h2 class="text-3xl font-extrabold mt-1 drop-shadow-md line-clamp-2" x-text="event.name"></h2>
                                         <div class="flex items-center gap-3 text-gray-200 text-sm mt-2 font-medium">
                                             <span x-text="formatDate(event.startDateTime)"></span>
                                             <span class="text-gray-400">&bull;</span>
@@ -463,7 +468,6 @@
                         this.loading = false;
                         this.resumeAutoplay();
                     } else {
-                        // Empty state fallback
                         this.loading = false;
                     }
                 } catch (error) {
@@ -701,19 +705,35 @@
                         <svg class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                     </div>`;
 
+                let priceDisplayHtml = "";
+                const hasMultiplePrices = (event.minPrice !== null && event.maxPrice !== null && event.minPrice !== event.maxPrice);
+
+                if (hasMultiplePrices) {
+                    priceDisplayHtml = `€${event.minPrice} - €${event.maxPrice}`;
+                } else if (event.ticketPrice != null && event.ticketPrice > 0) {
+                    priceDisplayHtml = `€${event.ticketPrice}`;
+                } else {
+                    priceDisplayHtml = "Free";
+                }
+
+                const categoryHtml = event.eventType ? `<span class="text-xs font-bold text-blue-700 dark:text-blue-300 uppercase tracking-wider bg-blue-50 dark:bg-blue-900/30 px-2 py-1 rounded-md border border-blue-100 dark:border-blue-800">${event.eventType}</span>` : '';
+
                 const cardHtml = `
                     <div class="w-full sm:w-1/2 lg:w-1/3 flex-shrink-0 px-3">
                         <a href="/Events/Details/${event.id}" class="event-card-link block bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer h-full border border-gray-100 dark:border-gray-700 relative !no-underline">
                             ${imageSection}
                             ${wishlistBadge}
                             <div class="p-5">
-                                <p class="text-xs font-bold text-blue-600 dark:text-blue-400 mb-1 uppercase tracking-wider">${event.eventType || 'Event'}</p>
+                                <div class="flex flex-wrap items-center gap-2 mb-2">
+                                    ${categoryHtml}
+                                    <span class="text-xs font-bold text-emerald-700 dark:text-emerald-300 uppercase tracking-wider bg-emerald-50 dark:bg-emerald-900/30 px-2 py-1 rounded-md border border-emerald-100 dark:border-emerald-800">${priceDisplayHtml}</span>
+                                </div>
                                 <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2 line-clamp-2">${event.name}</h3>
                                 <div class="flex items-center text-sm text-gray-500 dark:text-gray-400 mb-1">
                                     <svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                                     ${formattedStartDate} - ${formattedEndDate}
                                 </div>
-                                <div class="tooltip-container relative inline-block mt-3 mr-3 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 rounded-md text-sm font-bold px-2 py-1 z-30">
+                                <div class="tooltip-container relative inline-block mt-3 mr-3 bg-gray-50 dark:bg-gray-800/50 text-gray-600 dark:text-gray-300 rounded-md text-sm font-bold px-2 py-1 z-30 border border-gray-200 dark:border-gray-700">
                                     ${cityBadgeHtml}
                                 </div>
                             </div>
@@ -788,19 +808,35 @@
                         <svg class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                     </div>`;
 
+                let priceDisplayHtml = "";
+                const hasMultiplePrices = (event.minPrice !== null && event.maxPrice !== null && event.minPrice !== event.maxPrice);
+
+                if (hasMultiplePrices) {
+                    priceDisplayHtml = `€${event.minPrice} - €${event.maxPrice}`;
+                } else if (event.ticketPrice != null && event.ticketPrice > 0) {
+                    priceDisplayHtml = `€${event.ticketPrice}`;
+                } else {
+                    priceDisplayHtml = "Free";
+                }
+
+                const categoryHtml = event.eventType ? `<span class="text-xs font-bold text-blue-700 dark:text-blue-300 uppercase tracking-wider bg-blue-50 dark:bg-blue-900/30 px-2 py-1 rounded-md border border-blue-100 dark:border-blue-800">${event.eventType}</span>` : '';
+
                 const cardHtml = `
                     <div class="w-full sm:w-1/2 lg:w-1/3 flex-shrink-0 px-3">
                         <a href="/Events/Details/${event.id}" class="event-card-link block bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer h-full border border-gray-100 dark:border-gray-700 relative !no-underline">
                             ${imageSection}
                             ${wishlistBadge}
                             <div class="p-5">
-                                <p class="text-xs font-bold text-blue-600 dark:text-blue-400 mb-1 uppercase tracking-wider">${event.eventType || 'Event'}</p>
+                                <div class="flex flex-wrap items-center gap-2 mb-2">
+                                    ${categoryHtml}
+                                    <span class="text-xs font-bold text-emerald-700 dark:text-emerald-300 uppercase tracking-wider bg-emerald-50 dark:bg-emerald-900/30 px-2 py-1 rounded-md border border-emerald-100 dark:border-emerald-800">${priceDisplayHtml}</span>
+                                </div>
                                 <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2 line-clamp-2">${event.name}</h3>
                                 <div class="flex items-center text-sm text-gray-500 dark:text-gray-400 mb-1">
                                     <svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                                     ${formattedStartDate} - ${formattedEndDate}
                                 </div>
-                                <div class="tooltip-container relative inline-block mt-3 mr-3 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 rounded-md text-sm font-bold px-2 py-1 z-30">
+                                <div class="tooltip-container relative inline-block mt-3 mr-3 bg-gray-50 dark:bg-gray-800/50 text-gray-600 dark:text-gray-300 rounded-md text-sm font-bold px-2 py-1 z-30 border border-gray-200 dark:border-gray-700">
                                     ${cityBadgeHtml}
                                 </div>
                             </div>

@@ -148,15 +148,18 @@
             <!-- Event details injected via JS -->
         </div>
         
-        <div class="bg-gray-50 border-t border-gray-100 px-6 py-4 flex justify-end items-center gap-3">
-            <div id="modal-action-buttons" class="flex items-center gap-3 w-full sm:w-auto">
+        <div class="bg-gray-50 border-t border-gray-100 px-6 py-4 flex justify-between items-center gap-3">
+            <div id="modal-reservations-link-container">
+                <!-- Injected via JS if authorized -->
+            </div>
+            <div id="modal-action-buttons" class="flex items-center gap-3 w-full sm:w-auto ml-auto">
                 <button onclick="closeModal()" type="button" class="flex-1 sm:flex-none px-5 py-2.5 bg-white border border-gray-300 text-gray-700 font-bold rounded-lg hover:bg-gray-50 transition-colors text-sm shadow-sm">
                     Close
                 </button>
                 <button id="modal-delete-btn" type="button" class="hidden flex-1 sm:flex-none px-5 py-2.5 bg-red-600 text-white font-bold rounded-lg shadow-sm hover:bg-red-700 transition-colors text-sm">
                     Delete Event
                 </button>
-                <a id="modal-edit-btn" class="hidden flex-1 sm:flex-none cursor-pointer px-5 py-2.5 bg-indigo-600 text-white font-bold rounded-lg shadow-sm hover:bg-indigo-700 transition-colors text-sm text-center">
+                <a id="modal-edit-btn" class="hidden flex-1 sm:flex-none cursor-pointer px-5 py-2.5 bg-indigo-600 text-white font-bold rounded-lg shadow-sm hover:bg-indigo-700 transition-colors text-sm text-center !no-underline">
                     Edit Configuration
                 </a>
             </div>
@@ -351,7 +354,7 @@
                                 <button onclick="showEventDetails(${event.id})" class="inline-flex items-center px-3 py-1.5 bg-white border border-gray-300 rounded-lg text-xs font-bold text-gray-700 hover:bg-gray-50 shadow-sm transition-colors">
                                     Quick View
                                 </button>
-                                <a href="/Events/Details/${event.id}" class="inline-flex items-center px-3 py-1.5 bg-indigo-50 border border-indigo-200 rounded-lg text-xs font-bold text-indigo-700 hover:bg-indigo-100 shadow-sm transition-colors">
+                                <a href="/Events/Details/${event.id}" class="inline-flex items-center px-3 py-1.5 bg-indigo-50 border border-indigo-200 rounded-lg text-xs font-bold text-indigo-700 hover:bg-indigo-100 shadow-sm transition-colors !no-underline">
                                     Full Page
                                 </a>
                             </div>
@@ -448,9 +451,18 @@
                 
                 deleteBtn.classList.remove("hidden");
                 deleteBtn.onclick = () => { triggerEventDeletion(event.id); };
+
+                // Render Reservations ledger link in quickview modal footer for authorized event managers
+                $("#modal-reservations-link-container").html(`
+                    <a href="/Events/EventReservations/${event.id}" class="inline-flex items-center text-sm font-bold text-indigo-600 hover:text-indigo-800 transition-colors !no-underline">
+                        <svg class="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                        View Reservations Roster →
+                    </a>
+                `);
             } else {
                 editBtn.classList.add("hidden");
                 deleteBtn.classList.add("hidden");
+                $("#modal-reservations-link-container").empty();
             }
 
             const detailsHtml = `
@@ -511,7 +523,6 @@
                     url: '/Events/Delete?id=' + eventId,
                     type: 'DELETE',
                     success: function() {
-                        // Reset button state immediately upon success for future modal opens
                         deleteBtn.innerHTML = "Delete Event";
                         deleteBtn.disabled = false;
 

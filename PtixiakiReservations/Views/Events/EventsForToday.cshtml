@@ -8,23 +8,13 @@
     var currentUser = SignInManager.IsSignedIn(User) ? await UserManager.GetUserAsync(User) : null;
     var userRoles = currentUser != null ? await UserManager.GetRolesAsync(currentUser) : new List<string>();
     
-    /** 
-     * Authorization parameters establishing boolean visibility states 
-     * for administrative and organizational DOM elements.
-     */
     var isAdmin = userRoles.Contains("Admin");
     var isSuper = userRoles.Contains("SuperOrganizer");
     var isEventManager = userRoles.Contains("Event");
 }
 
-<!-- 
-  =======================================================================
-  STYLESHEET: V3 Color Space Mapping & Functional Component Rules
-  =======================================================================
--->
 <style>
     :root {
-        /* Preserves explicit hexadecimal color definitions matching established UI guidelines */
         --color-blue-50: #eff6ff;
         --color-blue-100: #dbeafe;
         --color-blue-300: #93c5fd; 
@@ -46,10 +36,6 @@
         --color-gray-900: #111827;
     }
 
-    /** 
-     * Tooltip Interface
-     * Generates a floating z-indexed container for aggregated string metadata.
-     */
     .tooltip-container { position: relative; display: inline-block; cursor: help; }
     .tooltip-text {
         visibility: hidden; opacity: 0; background-color: #1f2937; color: #fff;
@@ -65,10 +51,6 @@
     .tooltip-container:hover .tooltip-text,
     .tooltip-container2:hover .tooltip-text { visibility: visible; opacity: 1; }
 
-    /** 
-     * Event Card Structural Grid
-     * Enforces responsive flex-column behavior with an established visual boundary thickness.
-     */
     .event-card {
         position: relative;
         display: flex;
@@ -91,25 +73,16 @@
     .event-content { flex-grow: 1; display: flex; flex-direction: column; }
     .event-footer { margin-top: auto; }
     
-    /** Temporal specific overlay states */
     .event-today:hover { box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.15), 0 4px 6px -2px rgba(16, 185, 129, 0.05); }
     .event-upcoming:hover { box-shadow: 0 10px 15px -3px rgba(96, 165, 250, 0.15), 0 4px 6px -2px rgba(96, 165, 250, 0.05); }
     .event-past { background-color: #f8fafc; opacity: 0.85; border-top-color: var(--color-gray-400); }
     .event-past:hover { box-shadow: 0 10px 15px -3px rgba(148, 163, 184, 0.15), 0 4px 6px -2px rgba(148, 163, 184, 0.05); }
 
-    /** 
-     * Autocomplete Dropdown
-     * Maintains absolute z-index prioritization over adjacent inputs.
-     */
     #autocomplete-dropdown { box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1); border-radius: 0.75rem; border: 1px solid #e5e7eb; }
     .autocomplete-item { padding: 0.75rem 1.25rem; cursor: pointer; transition: background-color 0.2s ease; }
     .autocomplete-item:hover, .autocomplete-item.active { background-color: #f3f4f6; }
     .highlight { font-weight: 700; color: #3b82f6; }
 
-    /** 
-     * Wishlist Action Badge
-     * Restricts visual load on desktop viewports by binding visibility to parent hover execution.
-     */
     .wishlist-badge { visibility: visible; opacity: 1; transition: all 0.2s ease; }
     @@media (min-width: 1024px) {
         .wishlist-badge { visibility: hidden; opacity: 0; }
@@ -117,15 +90,9 @@
     }
 </style>
 
-<!-- 
-  =======================================================================
-  MAIN LAYOUT DOM ARCHITECTURE
-  =======================================================================
--->
 <div class="w-full bg-gray-50 min-h-screen pb-12">
     @Html.AntiForgeryToken()
     
-    <!-- Application Global Navigation Header -->
     <div class="w-full bg-gradient-to-r from-blue-700 to-indigo-800 shadow-md">
         <div class="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
             <h1 class="text-3xl font-extrabold text-white tracking-tight">Discover Events</h1>
@@ -133,18 +100,15 @@
         </div>
     </div>
     
-    <!-- Hero Section: Featured dual-slide carousel -->
     <div class="hidden sm:block w-full pb-2 mt-5">
         <div class="relative w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="relative w-full overflow-hidden rounded-2xl shadow-lg" style="height: 20rem;">
                 <div id="dual-hero-track" class="flex h-full gap-6 transition-transform duration-1000 ease-in-out" style="transform: translateX(0);">
-                    <!-- Dynamic slides injected via asynchronous event fetching -->
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Advanced Search & Filtering Interface -->
     <div class="relative z-40 w-full max-w-5xl mx-auto px-4 mt-6 sm:-mt-12 mb-12">
         <div class="bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] w-full border border-gray-200">
             
@@ -153,9 +117,6 @@
                     <svg class="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                     Search Criteria
                 </h3>
-                <button id="panel-button" class="text-gray-400 hover:text-gray-700 focus:outline-none transition-colors">
-                    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
-                </button>
             </div>
 
             <div id="panel-body" class="p-6">
@@ -206,14 +167,8 @@
         </div>
     </div>
 
-    <!-- 
-      =======================================================================
-      DYNAMIC EVENT RESULTS GRID
-      =======================================================================
-    -->
     <div class="w-full px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
 
-        <!-- Result Evaluation Headers and Configuration Limiters -->
         <div id="events-count" class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">
             <h2 class="text-2xl font-extrabold text-gray-900 tracking-tight">
                 Results <span class="text-blue-600 font-bold ml-2 bg-blue-50 px-3 py-1 rounded-full text-lg" id="filtered-count">0</span>
@@ -241,16 +196,13 @@
             </div>
         </div>
 
-        <!-- Render Target for Generated DOM Iterations -->
         <div id="events-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 py-4"></div>
 
-        <!-- System Latency Loading Visualization -->
         <div id="loading-indicator" class="text-center py-20 hidden">
             <div class="inline-block h-12 w-12 rounded-full border-4 border-gray-200 border-t-blue-600 animate-spin"></div>
             <p class="mt-4 text-lg font-medium text-gray-500">Discovering events...</p>
         </div>
 
-        <!-- Empty Query Handling View -->
         <div id="no-results" class="hidden text-center py-20 bg-white rounded-3xl shadow-sm border border-gray-100">
             <div class="max-w-md mx-auto">
                 <div class="bg-gray-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -266,7 +218,6 @@
             </div>
         </div>
 
-        <!-- Component Iteration Pagination Link Structures -->
         <div class="mt-12 flex justify-center pb-12">
             <nav id="pagination" class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px @(ViewBag.TotalPages > 1 ? "" : "hidden")" aria-label="Pagination">
                 <button id="prev-page" class="pagination-prev relative inline-flex items-center px-4 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
@@ -290,14 +241,8 @@
 </div>
 
 @section Scripts {
-    <!-- 
-      =======================================================================
-      JAVASCRIPT: Logic Controllers & Async Evaluation Cycles
-      =======================================================================
-    -->
     <script>
         $(document).ready(function () {
-            /** Maintains operational scope references globally scoped to user initialization */
             const currentUserId = '@UserManager.GetUserId(User)';
             let currentPage = 1;
             let pageSize = 12;
@@ -313,9 +258,6 @@
             let currentAutocompleteIndex = -1;
             let maxAutocompleteResults = 8;
 
-            /**
-             * Initializes the Flatpickr framework binding it to specific internal DOM elements.
-             */
             dateRangePicker = flatpickr("#date-range", {
                 mode: "range",
                 dateFormat: "Y-m-d",
@@ -344,16 +286,12 @@
                 window.location.href = '@Url.Action("EventsForToday", "Events")';
             });
 
-            // Hydrates select inputs with JSON records upon DOM initialization
             loadEventTypes();
 
             $('#events-container').addClass('hidden');
             $('#loading-indicator').removeClass('hidden');
             performSearch();
 
-            /**
-             * Implements debounce limiters terminating consecutive duplicate search requests
-             */
             $('#search-term').on('input', function() {
                 const query = $(this).val().trim();
                 if (autocompleteTimeout) clearTimeout(autocompleteTimeout);
@@ -378,9 +316,6 @@
                 performSearch();
             });
 
-            /**
-             * Manages logical overrides for keyboard execution paths targeting specific DOM index locations.
-             */
             $('#search-term').on('keydown', function(e) {
                 const dropdown = $('#autocomplete-dropdown');
                 const isVisible = !dropdown.hasClass('hidden');
@@ -424,10 +359,6 @@
                     });
             }
 
-            /**
-             * Processes Ajax callbacks parsing backend object values for local DOM hydration.
-             * Utilizes functional mockup generations mitigating runtime faults.
-             */
             function fetchAutocompleteResults(query) {
                 $.ajax({
                     url: '/Events/GetAutocompleteResults',
@@ -508,9 +439,6 @@
                 }
             }
 
-            /**
-             * Implements logical text string mapping highlighting sub-parameters against input requests.
-             */
             function highlightMatch(text, query) {
                 if (!query) return text;
                 const regex = new RegExp('(' + query.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&') + ')', 'gi');
@@ -529,10 +457,6 @@
                 return results;
             }
 
-            /**
-             * Parses explicit input form values checking execution readiness flags.
-             * Restricts requests mitigating blank payload generations.
-             */
             function validateSearch() {
                 const eventType = $('#event-type').val();
                 const dateRange = $('#date-range').val();
@@ -570,7 +494,6 @@
                 setTimeout(function() { performSearch(); }, 500);
             });
 
-            // Evaluation block tracking state-bound page changes
             $('#prev-page').click(function() {
                 if (currentPage > 1) {
                     currentPage--;
@@ -597,10 +520,6 @@
                 setTimeout(performSearch, 300);
             });
 
-            /**
-             * Central JSON processing loop evaluating form conditions, querying endpoint arrays,
-             * establishing conditional DOM boundaries, and injecting rendering templates.
-             */
             function performSearch() {
                 let startDate = null;
                 let endDate = null;
@@ -615,7 +534,6 @@
                 const eventTypeId = $('#event-type').val();
                 const searchTerm = $('#search-term').val().trim();
                 
-                // Evaluates boolean constraint logic checking parameter overrides
                 const isSearchActive = (eventTypeId !== '' || startDate !== null || searchTerm !== '');
 
                 searchParams = {
@@ -656,10 +574,6 @@
                             container.append(cardHtml);
                         });
 
-                        /**
-                         * Evaluates target variables interpreting individual record states into 
-                         * formatted HTML node strings, preventing nested anchor corruption on UI roles.
-                         */
                         function buildEventCard(event, timeClass) {
                             const startDate = new Date(event.startDateTime || event.StartDateTime);
                             const endDate = new Date(event.endTime || event.EndTime);
@@ -681,13 +595,22 @@
                             const eventName = event.name || event.Name || 'Unnamed Event';
                             const eventId = event.id || event.Id;
 
-                            // Security state evaluation restricting administrative footer generation
                             const isMasterEvent = event.parentEventId == null && event.ParentEventId == null;
                             const canViewSubEvents = @((isSuper || isAdmin || isEventManager).ToString().ToLower());
                             const showSubEventsLink = isMasterEvent && canViewSubEvents;
                             const childCount = event.childCount || event.ChildCount || 0;
 
-                            // Pre-compiles absolute target layer avoiding async collision on replacement
+                            let priceDisplayHtml = "";
+                            const hasMultiplePrices = (event.minPrice !== null && event.maxPrice !== null && event.minPrice !== event.maxPrice);
+
+                            if (hasMultiplePrices) {
+                                priceDisplayHtml = `€${event.minPrice} - €${event.maxPrice}`;
+                            } else if (event.ticketPrice != null && event.ticketPrice > 0) {
+                                priceDisplayHtml = `€${event.ticketPrice}`;
+                            } else {
+                                priceDisplayHtml = "Free";
+                            }
+
                             let wishlistBadge = `
                             <div class="wishlist-badge cursor-help absolute top-7 left-7 bg-white/90 backdrop-blur-sm border border-gray-100 text-indigo-800 p-2 z-20 rounded-full shadow-sm hover:bg-white transition-colors wishlist-id-${eventId}">
                                 <button type="button" onclick="window.wishlistAction(event, ${eventId})" class="border-none bg-transparent p-0 cursor-pointer flex items-center justify-center">
@@ -713,7 +636,6 @@
                                     });
                             }
 
-                            // Dynamic Chronological Status Badges
                             let statusBadgeHtml = "";
                             if (timeClass === "event-today") {
                                 statusBadgeHtml = `<div class="bg-green-500/95 backdrop-blur-sm text-white text-[10px] font-extrabold px-3 py-1.5 rounded-full shadow-sm tracking-wide uppercase border border-green-400">TODAY</div>`;
@@ -730,7 +652,6 @@
 
                             const cityNamesList = event.cityNames ? event.cityNames.join(', ') : '';
                             
-                            // Displays contextual metadata indicating multi-property values
                             let cityBadgeHtml = hasMultipleCities 
                                 ? `<p>${distinctCities} Cities</p><span class="tooltip-text" role="tooltip">${cityNamesList}</span>` 
                                 : `<p>${cityName}</p>`;
@@ -741,14 +662,16 @@
                                 ? `<p class="text-sm font-medium text-gray-600">Multiple Locations</p>` 
                                 : `<p class="text-sm font-medium text-gray-600">${venueName}</p>`;
 
-                            // Primary Card Element returned resolving structural HTML blocks
+                            const categoryBadgeHtml = event.eventType ? `
+                                <div class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-gray-100 text-gray-600 border border-gray-200">
+                                    ${event.eventType}
+                                </div>` : '';
+
                             return `
                             <div class="event-card ${timeClass} border border-gray-200 shadow-md transition-all">
                                 <a href="/Events/Details/${eventId}" class="block !no-underline text-current flex-grow relative p-5 pb-0">
                                     
-                                    <!-- Image Bounds Enforcing Aspect Ratios While Retaining Absolute Floating Capabilities -->
                                     <div class="relative h-40 w-full shrink-0 mb-4 z-10">
-                                        
                                         <div class="absolute inset-0 overflow-hidden rounded-xl bg-gray-100">
                                             ${hasImage ? 
                                                 `<img src="${imgPath}" alt="${eventName}" class="w-full h-full object-cover transform hover:scale-105 transition-transform duration-300" />` : 
@@ -756,7 +679,6 @@
                                             }
                                         </div>
                                         
-                                        <!-- Vertical Badge Hierarchy explicitly positioned above image bounds -->
                                         <div class="absolute top-2 right-2 z-50 flex flex-col items-end gap-2">
                                             ${statusBadgeHtml}
                                             <div class="tooltip-container2 cursor-help bg-white/95 backdrop-blur-sm border border-gray-100 text-indigo-800 text-[10px] font-extrabold px-3 py-1.5 rounded-full shadow-sm uppercase tracking-wide">
@@ -779,6 +701,15 @@
                                                 <span class="tooltip-text" role="tooltip">Master event</span>
                                             </div>` : ''}
                                         </div>
+                                        
+                                        <div class="flex items-center gap-2 mb-3">
+                                            ${categoryBadgeHtml}
+                                            <div class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                                <svg class="w-3.5 h-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" /></svg>
+                                                ${priceDisplayHtml}
+                                            </div>
+                                        </div>
+                                        
                                         <div class="flex items-start mb-3">
                                             <svg class="h-5 w-5 text-gray-500 mr-2 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                                             <div>${dateDisplayHtml}</div>
@@ -792,7 +723,6 @@
 
                                 ${wishlistBadge}
                                 
-                                <!-- Segregated Admin Link Container guarding against nested anchor rendering failures -->
                                 ${showSubEventsLink ? `
                                 <div class="px-5 pb-5 mt-auto">
                                     <div class="event-footer flex justify-between items-center pt-4 border-t border-gray-100">
@@ -813,9 +743,6 @@
                     });
             }
 
-            /**
-             * Handles asynchronous addition and removal mutations updating backend models and UI toggles globally.
-             */
             window.wishlistAction = function(e, eventId) {
                 e.preventDefault();
                 e.stopPropagation();
@@ -867,9 +794,6 @@
                 });
             }
 
-            /**
-             * Generates string-based timeline classifications comparing dynamic metadata blocks.
-             */
             function getEventTimeClass(startDate, endDate) {
                 const today = new Date();
                 today.setHours(0, 0, 0, 0);
@@ -887,10 +811,6 @@
                 }
             }
 
-            /** 
-             * Structures UI nodes dynamically generating scalable pagination logic configurations
-             * @@param {boolean} show - Dictates absolute container layout visibility limits
-             */
             function updatePagination(show = true) {
                 const paginationContainer = $('#pagination');
                 const pageNumbersContainer = $('#page-numbers');
@@ -949,7 +869,6 @@
     </script>
     
     <script>
-        // Implements structural CSS mutations managing dynamic UI panel states
         document.getElementById("panel-button").addEventListener("click", function () {
             const panel = document.getElementById("panel-body");
             panel.classList.toggle("hidden");
@@ -957,9 +876,6 @@
     </script>
 
     <script>
-        /** 
-         * Dual-slide side-by-side hero carousel execution engine internally tracking dynamic event loads
-         */
         document.addEventListener("DOMContentLoaded", function () {
             async function populateDualCarousel() {
                 try {
@@ -983,8 +899,24 @@
                         const cityName = event.distinctCities === 0 ? event.cityName : (event.cityNames ? event.cityNames[0] : 'Unknown');
                         let locationText = hasMultipleCities ? `${distinctCities} Cities` : cityName;
                         
+                        let priceDisplayHtml = "";
+                        const hasMultiplePrices = (event.minPrice !== null && event.maxPrice !== null && event.minPrice !== event.maxPrice);
+
+                        if (hasMultiplePrices) {
+                            priceDisplayHtml = `€${event.minPrice} - €${event.maxPrice}`;
+                        } else if (event.ticketPrice != null && event.ticketPrice > 0) {
+                            priceDisplayHtml = `€${event.ticketPrice}`;
+                        } else {
+                            priceDisplayHtml = "Free";
+                        }
+
                         const imgBg = event.imagePath ? `url('${event.imagePath}')` : 'none';
                         const fallbackBg = event.imagePath ? '' : 'bg-gradient-to-br from-gray-700 to-gray-900';
+
+                        const categoryBadgeHtml = event.eventType ? `
+                            <span class="bg-blue-600 text-white text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full w-max shadow-md">
+                                ${event.eventType}
+                            </span>` : '';
 
                         const slideHtml = `
                             <a href="/Events/Details/${event.id}" 
@@ -993,9 +925,12 @@
                                <div class="absolute inset-0 bg-cover bg-center transition-transform duration-1000 group-hover:scale-105 ${fallbackBg}" style="background-image: ${imgBg};"></div>
                                <div class="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent opacity-90"></div>
                                <div class="absolute inset-0 p-8 flex flex-col justify-start text-white">
-                                   <span class="bg-blue-600 text-white text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full w-max mb-4 shadow-md">
-                                       ${event.eventType || 'Event'}
-                                   </span>
+                                   <div class="flex items-center gap-2 mb-4">
+                                       ${categoryBadgeHtml}
+                                       <span class="bg-emerald-500 text-white text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full w-max shadow-md">
+                                           ${priceDisplayHtml}
+                                       </span>
+                                   </div>
                                    <h3 class="text-3xl font-extrabold mb-3 line-clamp-2 leading-tight drop-shadow-md">${event.name}</h3>
                                    <div class="flex items-center gap-6 text-sm text-gray-200 font-medium drop-shadow-sm">
                                        <span class="flex items-center">

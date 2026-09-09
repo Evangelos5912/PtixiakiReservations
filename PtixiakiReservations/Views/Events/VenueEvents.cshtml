@@ -18,7 +18,7 @@
                 </div>
 
                 <div class="mt-4 md:mt-0">
-                    <a href="@Url.Action("Index", "Venue")"
+                    <a href="@Url.Action("MyVenues", "Venue")"
                        class="inline-flex items-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-indigo-700 bg-white hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 shadow-sm transition-colors">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -39,7 +39,7 @@
                     <h2 class="text-xl font-semibold text-gray-800">Events Calendar</h2>
                 </div>
                 <p class="mt-1 text-sm text-gray-500">
-                    Click on an event to make a reservation
+                    Click on an event to view details and make a reservation
                 </p>
             </div>
 
@@ -64,7 +64,6 @@
             <div class="px-6 py-4">
                 <h3 class="text-lg font-medium text-gray-800 mb-2">Event Types</h3>
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4" id="event-legend">
-                    <!-- Legend items will be populated dynamically -->
                     <div class="flex items-center">
                         <span class="w-4 h-4 rounded-full bg-indigo-500 mr-2"></span>
                         <span class="text-sm text-gray-600">Default</span>
@@ -79,7 +78,6 @@
 <link href="//cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.4.0/fullcalendar.print.css" rel="stylesheet" media="print" />
 
 <style>
-    /* Custom FullCalendar Styling */
     .fc-toolbar h2 {
         font-size: 1.5rem;
         font-weight: 600;
@@ -147,30 +145,28 @@
 
             var events = [];
             var eventColors = {
-                // We'll populate this with event types and colors
-                'Default': '#4f46e5'  // Indigo color as default
+                'Default': '#4f46e5'
             };
 
-            // Event colors for different event types
             var colorOptions = [
-                '#4f46e5', // Indigo
-                '#10b981', // Emerald
-                '#f59e0b', // Amber
-                '#ef4444', // Red
-                '#8b5cf6', // Violet
-                '#ec4899', // Pink
-                '#06b6d4', // Cyan
-                '#84cc16'  // Lime
+                '#4f46e5', 
+                '#10b981', 
+                '#f59e0b', 
+                '#ef4444', 
+                '#8b5cf6', 
+                '#ec4899', 
+                '#06b6d4', 
+                '#84cc16'  
             ];
 
             $.ajax({
                 type: "GET",
                 url: '@Url.Action("GetEvents2", "Events", new { venueId = Model.Id })',
+                dataType: 'json',
                 success: function (data) {
                     var colorIndex = 0;
 
                     $.each(data, function (i, v) {
-                        // Assign consistent colors to event types
                         if (v.eventType && !eventColors[v.eventType]) {
                             eventColors[v.eventType] = colorOptions[colorIndex % colorOptions.length];
                             colorIndex++;
@@ -186,19 +182,16 @@
                         });
                     });
 
-                    // Build the legend
                     buildEventLegend(eventColors);
 
-                    // Generate calendar with events
-                    GenerateCalender(events);
-
-                    // Hide loading, show calendar
+                    // Ensure element is visible prior to initialization for accurate dimension calculation.
                     $('#calendar-loading').hide();
                     $('#calender').show();
+
+                    GenerateCalender(events);
                 },
                 error: function (error) {
                     $('#calendar-loading').hide();
-                    // Show error message in a nicer way
                     $('#calendar-container').html(`
                         <div class="text-center py-16">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-red-500 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -211,14 +204,12 @@
                             </button>
                         </div>
                     `);
-                },
-                accept: 'application/json'
+                }
             });
 
             function buildEventLegend(eventColors) {
                 var legendHtml = '';
 
-                // Create legend items for each event type
                 Object.keys(eventColors).forEach(function(eventType) {
                     legendHtml += `
                         <div class="flex items-center">
@@ -252,31 +243,24 @@
                     eventLimit: true,
                     events: events,
                     eventClick: function (calEvent, jsEvent, view) {
-                        // Add a subtle animation effect when clicking
-                        $(this).css('transform', 'scale(0.95)');
-                        setTimeout(() => {
-                            $(this).css('transform', 'scale(1)');
-                            var url = "/Reservation/Create?VenueId=" + @Model.Id + "&EventId=" + calEvent.id;
+                        var $element = $(this);
+
+                        $element.css('transform', 'scale(0.95)');
+                        setTimeout(function() {
+                            $element.css('transform', 'scale(1)');
+                            var url = "/Events/Details/" + calEvent.id;
                             window.location.href = url;
                         }, 100);
                     },
                     eventRender: function(event, element) {
-                        // Add tooltip with event details
                         if (event.eventType) {
                             element.attr('title', 'Type: ' + event.eventType);
                         }
 
-                        // Add more interactive elements to each event
                         element.css('border-left', '4px solid ' + (event.color || '#4f46e5'));
                     },
                     viewRender: function(view, element) {
-                        // Add animations when changing views
                         element.hide().fadeIn(300);
-                    },
-                    loading: function(isLoading) {
-                        if (isLoading) {
-                            // Additional loading state handling if needed
-                        }
                     }
                 });
             }
