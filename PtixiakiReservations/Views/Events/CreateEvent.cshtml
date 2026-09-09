@@ -10,19 +10,6 @@
         <!-- Page Header -->
         <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
             <div>
-                <nav class="flex text-sm text-gray-500 mb-2" aria-label="Breadcrumb">
-                    <ol class="inline-flex items-center space-x-1 md:space-x-3">
-                        <li class="inline-flex items-center">
-                            <a href="@Url.Action("Index", "Events")" class="hover:text-indigo-600 transition-colors font-medium">Events Page</a>
-                        </li>
-                        <li>
-                            <div class="flex items-center">
-                                <svg class="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" /></svg>
-                                <span class="ml-1 text-gray-700 font-bold md:ml-2">Create</span>
-                            </div>
-                        </li>
-                    </ol>
-                </nav>
                 <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">Create New Event</h1>
                 <p class="mt-1 text-gray-500 text-sm">Schedule new standalone events, master containers, or individual sub-events.</p>
             </div>
@@ -96,9 +83,6 @@
                         <label class="flex-1 text-center py-2.5 cursor-pointer transition-all rounded-lg" id="labelChild">
                             <input type="radio" id="radioChild" name="eventMode" value="child" class="sr-only" onchange="toggleEventMode('child', true)">
                             <span class="text-white font-medium flex items-center justify-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                                </svg>
                                 Sub-Event (Child)
                             </span>
                         </label>
@@ -654,58 +638,92 @@
             }
 
             function enforceParentConstraints() {
-                if (!radioChild.checked || !hiddenIdInput.value) return;
+                if (!radioChild.checked || !hiddenIdInput.value) return false;
 
                 const minISO = startInput.getAttribute('min');
                 const maxISO = startInput.getAttribute('max');
 
-                if (minISO && startInput.value < minISO) startInput.value = minISO;
-                if (maxISO && startInput.value > maxISO) startInput.value = maxISO;
-                if (minISO && endInput.value < minISO) endInput.value = minISO;
-                if (maxISO && endInput.value > maxISO) endInput.value = maxISO;
+                if (!minISO || !maxISO) return false;
 
-                if (multiStartDate.min && multiStartDate.value < multiStartDate.min) multiStartDate.value = multiStartDate.min;
-                if (multiStartDate.max && multiStartDate.value > multiStartDate.max) multiStartDate.value = multiStartDate.max;
-                if (multiEndDate.min && multiEndDate.value < multiEndDate.min) multiEndDate.value = multiEndDate.min;
-                if (multiEndDate.max && multiEndDate.value > multiEndDate.max) multiEndDate.value = multiEndDate.max;
+                let alerted = false;
 
-                const pStartTime = minISO ? minISO.split('T')[1].substring(0, 5) : null;
-                const pEndTime = maxISO ? maxISO.split('T')[1].substring(0, 5) : null;
+                // --- Single Day Mode ---
+                if (!isMultiDay.checked) {
+                    if (startInput.value && startInput.value < minISO) {
+                        alert(`Sub-events cannot start before the Master Event (${minISO.replace('T', ' ')})`);
+                        startInput.value = minISO;
+                        alerted = true;
+                    } else if (startInput.value && startInput.value > maxISO) {
+                        alert(`Sub-events cannot start after the Master Event (${maxISO.replace('T', ' ')})`);
+                        startInput.value = maxISO;
+                        alerted = true;
+                    }
 
-                if (pStartTime && multiStartDate.value === multiStartDate.min && multiStartTime.value < pStartTime) multiStartTime.value = pStartTime;
-                if (pEndTime && multiEndDate.value === multiEndDate.max && multiDailyEndTime.value > pEndTime) multiDailyEndTime.value = pEndTime;
+                    if (endInput.value && endInput.value < minISO) {
+                        alert(`Sub-events cannot end before the Master Event (${minISO.replace('T', ' ')})`);
+                        endInput.value = minISO;
+                        alerted = true;
+                    } else if (endInput.value && endInput.value > maxISO) {
+                        alert(`Sub-events cannot end after the Master Event (${maxISO.replace('T', ' ')})`);
+                        endInput.value = maxISO;
+                        alerted = true;
+                    }
+                } 
+                // --- Multi Day Mode ---
+                else {
+                    const pDateMin = minISO.split('T')[0];
+                    const pTimeMin = minISO.split('T')[1].substring(0, 5);
+                    const pDateMax = maxISO.split('T')[0];
+                    const pTimeMax = maxISO.split('T')[1].substring(0, 5);
+
+                    if (multiStartDate.value && multiStartDate.value < pDateMin) {
+                        alert(`Start Date cannot be earlier than Master Event (${pDateMin})`);
+                        multiStartDate.value = pDateMin;
+                        alerted = true;
+                    } else if (multiStartDate.value && multiStartDate.value > pDateMax) {
+                        alert(`Start Date cannot be later than Master Event (${pDateMax})`);
+                        multiStartDate.value = pDateMax;
+                        alerted = true;
+                    }
+
+                    if (multiEndDate.value && multiEndDate.value < pDateMin) {
+                        alert(`End Date cannot be earlier than Master Event (${pDateMin})`);
+                        multiEndDate.value = pDateMin;
+                        alerted = true;
+                    } else if (multiEndDate.value && multiEndDate.value > pDateMax) {
+                        alert(`End Date cannot be later than Master Event (${pDateMax})`);
+                        multiEndDate.value = pDateMax;
+                        alerted = true;
+                    }
+
+                    if (multiStartDate.value === pDateMin && multiStartTime.value && multiStartTime.value < pTimeMin) {
+                        alert(`Time on the first day cannot be earlier than Master Event (${pTimeMin})`);
+                        multiStartTime.value = pTimeMin;
+                        alerted = true;
+                    }
+                    if (multiEndDate.value === pDateMax && multiDailyEndTime.value && multiDailyEndTime.value > pTimeMax) {
+                        alert(`Time on the last day cannot be later than Master Event (${pTimeMax})`);
+                        multiDailyEndTime.value = pTimeMax;
+                        alerted = true;
+                    }
+                }
+                
+                return alerted;
             }
 
+            // Bind unified boundary checking to single day inputs
             [startInput, endInput].forEach(input => {
                 if(input) {
-                    input.addEventListener('change', function() {
-                        if (radioChild.checked && hiddenIdInput.value) {
-                            if (this.min && this.value < this.min) {
-                                alert(`Sub-Events cannot start before the Master Event (${this.min.replace('T', ' ')})`);
-                                this.value = this.min;
-                            }
-                            if (this.max && this.value > this.max) {
-                                alert(`Sub-Events cannot end after the Master Event (${this.max.replace('T', ' ')})`);
-                                this.value = this.max;
-                            }
-                        }
-                    });
+                    input.addEventListener('change', enforceParentConstraints);
                 }
             });
 
-            [multiStartDate, multiEndDate].forEach(input => {
+            // Bind unified boundary checking to multi-day inputs
+            [multiStartDate, multiEndDate, multiStartTime, multiDailyEndTime].forEach(input => {
                 if(input) {
                     input.addEventListener('change', function() {
-                        if (radioChild.checked && hiddenIdInput.value) {
-                            if (this.min && this.value < this.min) {
-                                alert(`Date cannot be earlier than Master Event start (${this.min})`);
-                                this.value = this.min;
-                            }
-                            if (this.max && this.value > this.max) {
-                                alert(`Date cannot be later than Master Event end (${this.max})`);
-                                this.value = this.max;
-                            }
-                        }
+                        const blocked = enforceParentConstraints();
+                        if (!blocked) updatePreview();
                     });
                 }
             });
@@ -888,8 +906,6 @@
                 previewDates.splice(index, 1); 
                 renderPreviewTable();
             };
-            
-            [multiStartDate, multiEndDate, multiStartTime, multiDailyEndTime].forEach(i => { if(i) i.oninput = updatePreview; });
 
             // ==========================================
             // MAIN SUBMISSION HANDLER
@@ -902,7 +918,9 @@
                     return; 
                 }
 
-                enforceParentConstraints();
+                // Rigidly enforce time boundaries before parsing data
+                const blocked = enforceParentConstraints();
+                if (blocked) return;
 
                 const eventNameInput = document.getElementById('Name');
                 if (!eventNameInput.value.trim()) {
@@ -952,32 +970,6 @@
                     const s = new Date(startInput.value);
                     const e = new Date(endInput.value);
                     if (isNaN(s) || isNaN(e) || s >= e) { alert("Event must end after it starts."); return; }
-                }
-
-                if (isChild && hiddenIdInput.value) {
-                    const parentMin = startInput.getAttribute('min');
-                    const parentMax = startInput.getAttribute('max');
-                    
-                    if (parentMin && parentMax) {
-                        const pStart = new Date(parentMin);
-                        const pEnd = new Date(parentMax);
-                        
-                        if (isMultiDay.checked) {
-                            const firstStart = new Date(`${multiStartDate.value}T${multiStartTime.value}`);
-                            const lastEnd = new Date(`${multiEndDate.value}T${multiDailyEndTime.value}`);
-                            if (firstStart < pStart || lastEnd > pEnd) {
-                                alert(`Sub-events must stay entirely within the Master Event's timeframe.\nStarts: ${pStart.toLocaleString()}\nEnds: ${pEnd.toLocaleString()}`);
-                                return;
-                            }
-                        } else {
-                            const childStart = new Date(startInput.value);
-                            const childEnd = new Date(endInput.value);
-                            if (childStart < pStart || childEnd > pEnd) {
-                                alert(`Sub-events must stay entirely within the Master Event's timeframe.\nStarts: ${pStart.toLocaleString()}\nEnds: ${pEnd.toLocaleString()}`);
-                                return;
-                            }
-                        }
-                    }
                 }
 
                 allScheduleInputs.forEach(i => { if(i) i.disabled = false; });

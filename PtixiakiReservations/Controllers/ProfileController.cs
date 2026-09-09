@@ -8,6 +8,10 @@ using PtixiakiReservations.Models;
 using PtixiakiReservations.Models.ViewModels;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Hosting;
+using System.IO;
+
 
 namespace PtixiakiReservations.Controllers
 {
@@ -16,13 +20,16 @@ namespace PtixiakiReservations.Controllers
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly ApplicationDbContext _context;
+        private readonly IWebHostEnvironment _env;
 
         public ProfileController(
             UserManager<ApplicationUser> userManager,
-            ApplicationDbContext context)
+            ApplicationDbContext context,
+            IWebHostEnvironment env)
         {
             _userManager = userManager;
             _context = context;
+            _env = env;
         }
 
         // GET: /Profile
@@ -160,7 +167,7 @@ namespace PtixiakiReservations.Controllers
             return View(reservations);
         }
 
-// GET: /Profile/RequestRoles
+        // GET: /Profile/RequestRoles
         public IActionResult RequestRoles()
         {
             var model = new RoleRequestViewModel 
@@ -173,7 +180,7 @@ namespace PtixiakiReservations.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> RequestRoles(RoleRequestViewModel model)
+        public async Task<IActionResult> RequestRoles(RoleRequestViewModel model, IFormFile? pdfDocument)
         {
             if (!ModelState.IsValid)
             {
@@ -186,13 +193,57 @@ namespace PtixiakiReservations.Controllers
                 return NotFound();
             }
 
+            // --- 1. HANDLE PDF UPLOAD ---
+            string? savedDocumentPath = null;
+
+            if (pdfDocument != null && pdfDocument.Length > 0)
+            {
+                // Security Check 1: Ensure it is actually a PDF
+                if (pdfDocument.ContentType != "application/pdf" && !pdfDocument.FileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
+                {
+                    ModelState.AddModelError("", "Only PDF documents are allowed for verification.");
+                    return View(model);
+                }
+
+                // Security Check 2: Max 5MB file size to prevent server crashing
+                if (pdfDocument.Length > 5242880) 
+                {
+                    ModelState.AddModelError("", "The PDF document must be smaller than 5MB.");
+                    return View(model);
+                }
+
+                string uploadsFolder = Path.Combine(_env.ContentRootPath, "SecureDocuments", "RoleRequests");
+                
+                // Create the folder if it doesn't exist yet
+                if (!Directory.Exists(uploadsFolder))
+                {
+                    Directory.CreateDirectory(uploadsFolder);
+                }
+
+                // Create a unique file name so users don't overwrite each other's files
+                string uniqueFileName = Guid.NewGuid().ToString() + "_" + Path.GetFileName(pdfDocument.FileName);
+                string filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+                // Save the file to the hard drive
+                using (var fileStream = new FileStream(filePath, FileMode.Create))
+                {
+                    await pdfDocument.CopyToAsync(fileStream);
+                }
+
+                // CRITICAL FIX: The string saved to the database MUST match the actual folder!
+                // NO LEADING SLASH!
+                savedDocumentPath = "SecureDocuments/RoleRequests/" + uniqueFileName;
+            }
+
+            // --- 2. UPDATE USER ROLES & ASSIGN PDF PATH ---
             switch (model.SelectedRoleRequest)
             {
                 case "Venue":
                     user.HasRequestedVenueManagerRole = true;
                     user.VenueManagerRequestStatus = "Pending";
                     user.VenueManagerRequestDate = DateTime.UtcNow;
-                    user.VenueManagerRequestReason = model.Reason; // Save their reason!
+                    user.VenueManagerRequestReason = model.Reason;
+                    if (savedDocumentPath != null) user.VenueManagerRequestDocumentPath = savedDocumentPath;
                     break;
                     
                 case "Event":
@@ -200,6 +251,7 @@ namespace PtixiakiReservations.Controllers
                     user.EventManagerRequestStatus = "Pending";
                     user.EventManagerRequestDate = DateTime.UtcNow;
                     user.EventManagerRequestReason = model.Reason;
+                    if (savedDocumentPath != null) user.EventManagerRequestDocumentPath = savedDocumentPath;
                     break;
                     
                 case "SuperOrganizer":
@@ -207,13 +259,13 @@ namespace PtixiakiReservations.Controllers
                     user.SuperOrganizerRequestStatus = "Pending";
                     user.SuperOrganizerRequestDate = DateTime.UtcNow;
                     user.SuperOrganizerRequestReason = model.Reason;
+                    if (savedDocumentPath != null) user.SuperOrganizerRequestDocumentPath = savedDocumentPath;
                     break;
                     
                 default:
                     ModelState.AddModelError("", "Invalid role selected.");
                     return View(model);
             }
-
 
             var result = await _userManager.UpdateAsync(user);
             if (!result.Succeeded)
@@ -222,12 +274,19 @@ namespace PtixiakiReservations.Controllers
                 {
                     ModelState.AddModelError(string.Empty, error.Description);
                 }
-
                 return View(model);
             }
 
-            TempData["SuccessMessage"] =
-                "Your request to become a venue manager has been submitted and is pending approval.";
+            // --- 3. DYNAMIC SUCCESS MESSAGE ---
+            string displayRole = model.SelectedRoleRequest switch
+            {
+                "Venue" => "Venue Manager",
+                "Event" => "Event Organizer",
+                "SuperOrganizer" => "Super Organizer",
+                _ => "requested role"
+            };
+
+            TempData["SuccessMessage"] = $"Your request to become a {displayRole} has been submitted and is pending approval.";
             return RedirectToAction(nameof(Index));
         }
     }

@@ -14,10 +14,9 @@ using PtixiakiReservations.Models;
 namespace PtixiakiReservations.Controllers
 {
     /// <summary>
-    /// Manages administrative operations for Event Types (Categories).
-    /// Handles database records as well as physical disk I/O for category imagery.
+    /// Manages administrative operations for Event Types (Categories), including image asset management.
     /// </summary>
-    [Authorize(Roles = "Admin")] // Restrict the entire controller to administrative personnel
+    [Authorize(Roles = "Admin")]
     public class EventTypeController : Controller
     {       
         private readonly ApplicationDbContext _context;
@@ -35,43 +34,36 @@ namespace PtixiakiReservations.Controllers
         }
 
         /// <summary>
-        /// Retrieves a paginated and searchable directory of all registered event types.
-        /// Execution is deferred so the database handles filtering and counting efficiently.
+        /// Retrieves a paginated and searchable list of event types.
         /// </summary>
-        /// <param name="searchQuery">Optional text to filter event types by name.</param>
-        /// <param name="pageNumber">The current page index representing the data offset.</param>
         [HttpGet]
         public async Task<IActionResult> ManageEventType(string searchQuery = null, int pageNumber = 1)
         {
             const int pageSize = 10; 
 
-            // 1. Initialize deferred query execution against the EventType table
             var query = _context.EventType.AsQueryable();
 
-            // 2. Apply search filters dynamically if a search string is provided
+            // Apply search filters.
             if (!string.IsNullOrWhiteSpace(searchQuery))
             {
                 var normalizedQuery = searchQuery.ToLower().Trim();
-                
-                // Using EF Core's built-in translation to execute the LIKE query in SQL
                 query = query.Where(et => et.Name.ToLower().Contains(normalizedQuery));
             }
 
-            // 3. Calculate pagination metadata boundaries
+            // Calculate pagination metadata.
             int totalItems = await query.CountAsync();
             int totalPages = totalItems > 0 ? (int)Math.Ceiling(totalItems / (double)pageSize) : 1;
 
-            // Enforce safe boundary limits to prevent out-of-bounds page requests
             pageNumber = Math.Max(1, Math.Min(pageNumber, totalPages));
 
-            // 4. Extract the exact subset of records required for the current view
+            // Retrieve paginated records.
             var eventTypes = await query
-                .OrderBy(et => et.Name) // Deterministic sorting required for SQL Skip/Take
+                .OrderBy(et => et.Name) 
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();
 
-            // 5. Inject pagination metadata into the ViewBag for frontend UI rendering
+            // Populate view context.
             ViewBag.CurrentPage = pageNumber;
             ViewBag.TotalPages = totalPages;
             ViewBag.SearchQuery = searchQuery;
@@ -81,7 +73,7 @@ namespace PtixiakiReservations.Controllers
         }
 
         /// <summary>
-        /// Renders the standalone event type creation form.
+        /// Renders the event type creation interface.
         /// </summary>
         [HttpGet]
         public IActionResult CreateEventType()
@@ -90,15 +82,12 @@ namespace PtixiakiReservations.Controllers
         }
 
         /// <summary>
-        /// Processes the creation of a new event type, including physical disk I/O for uploaded imagery.
+        /// Validates and creates a new event type, processing any associated image uploads.
         /// </summary>
-        /// <param name="ETName">The string identifier for the new category.</param>
-        /// <param name="imageFile">The multipart form file representing the category's display image.</param>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CreateEventType(string ETName, IFormFile? imageFile)
         {
-            // Guard clause enforcing required naming
             if (string.IsNullOrWhiteSpace(ETName))
             {
                 ModelState.AddModelError("ETName", "Event Type Name is required.");
@@ -107,40 +96,33 @@ namespace PtixiakiReservations.Controllers
 
             string imagePath = null;
             
-            // Process the uploaded image file if provided by the user
+            // Process image upload.
             if (imageFile != null && imageFile.Length > 0)
             {
                 try
                 {
-                    // Map the virtual path to the physical server directory
                     string uploadsFolder = Path.Combine(_environment.WebRootPath, "images/eventTypes");
                     
-                    // Ensure the directory exists before attempting to write to it
                     if (!Directory.Exists(uploadsFolder)) 
                         Directory.CreateDirectory(uploadsFolder);
 
-                    // Generate a cryptographically unique filename to prevent overwriting existing assets
                     string uniqueFileName = Guid.NewGuid().ToString() + "_" + Path.GetFileName(imageFile.FileName);
                     string filePath = Path.Combine(uploadsFolder, uniqueFileName);
 
-                    // Stream the file asynchronously to the disk
                     using (var fileStream = new FileStream(filePath, FileMode.Create))
                     {
                         await imageFile.CopyToAsync(fileStream);
                     }
 
-                    // Store the relative virtual path in the database for frontend rendering
                     imagePath = "/images/eventTypes/" + uniqueFileName;
                 }
                 catch (Exception ex)
                 {
-                    // Log disk I/O failures to prevent silent application crashes
                     _logger.LogError(ex, "Error saving event type image to disk.");
                     return BadRequest(new { success = false, message = "Error saving image." });
                 }
             }
             
-            // Construct and track the new entity
             _context.EventType.Add(new EventType { Name = ETName.Trim(), ImagePath = imagePath });
             await _context.SaveChangesAsync();
             
@@ -148,10 +130,8 @@ namespace PtixiakiReservations.Controllers
         }
 
         /// <summary>
-        /// Permanently removes an event type from the platform.
-        /// Note: In a strict production environment, you might also want to delete the physical image file here.
+        /// Permanently removes an event type from the database.
         /// </summary>
-        /// <param name="id">The unique integer identifier of the target event type.</param>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteEventType(int id)
@@ -168,9 +148,8 @@ namespace PtixiakiReservations.Controllers
         }
 
         /// <summary>
-        /// Retrieves a specific event type and renders the modification interface.
+        /// Retrieves a specific event type and renders the edit interface.
         /// </summary>
-        /// <param name="ETId">The unique integer identifier of the target event type.</param>
         [HttpGet]
         public async Task<IActionResult> EditEventType(int ETId)
         {
@@ -185,11 +164,8 @@ namespace PtixiakiReservations.Controllers
         }
 
         /// <summary>
-        /// Commits modifications to an existing event type, including replacing its display image.
+        /// Commits modifications to an existing event type, including image replacement.
         /// </summary>
-        /// <param name="ETId">The primary key of the event type being edited.</param>
-        /// <param name="ETName">The new category name being applied.</param>
-        /// <param name="imageFile">An optional new image file replacing the old asset.</param>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> EditEventType(int ETId, string ETName, IFormFile? imageFile)
@@ -198,18 +174,17 @@ namespace PtixiakiReservations.Controllers
 
             if (et != null)
             {
-                // Validate Name Input
                 if (string.IsNullOrWhiteSpace(ETName))
                 {
                     ModelState.AddModelError("ETName", "Event Type Name is required.");
-                    return View(et); // Return the model back to the view so data isn't lost
+                    return View(et); 
                 }
                 else
                 {
                     et.Name = ETName.Trim();
                 }
                 
-                // Process image replacement if a new file was uploaded
+                // Process image replacement.
                 if (imageFile != null && imageFile.Length > 0)
                 {
                     try
@@ -226,7 +201,6 @@ namespace PtixiakiReservations.Controllers
                             await imageFile.CopyToAsync(fileStream);
                         }
 
-                        // Update the entity's path to point to the newly uploaded image
                         et.ImagePath = "/images/eventTypes/" + uniqueFileName;
                     }
                     catch (Exception ex)
@@ -248,16 +222,13 @@ namespace PtixiakiReservations.Controllers
         }
 
         /// <summary>
-        /// Public API Endpoint: Exposes a lightweight JSON payload of all categories.
-        /// Used dynamically by the frontend (e.g., JavaScript Dropdowns or Booking Interfaces) 
-        /// to render category options without requiring administrative authorization.
+        /// Exposes a lightweight JSON payload of all categories for frontend client use.
         /// </summary>
-        [AllowAnonymous] // Ensures standard users and guests can query this list
+        [AllowAnonymous] 
         [HttpGet]
         public async Task<IActionResult> GetCategories()
         {
             var categories = await _context.EventType
-                // Projecting to an anonymous type to strip out unnecessary database metadata and minimize payload size
                 .Select(c => new { id = c.Id, name = c.Name, imagePath = c.ImagePath })
                 .ToListAsync();
 
