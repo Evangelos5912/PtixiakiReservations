@@ -25,8 +25,7 @@ using SixLabors.ImageSharp.Formats.Webp;
 namespace PtixiakiReservations.Controllers;
 
 /// <summary>
-/// Manages event lifecycle operations, hierarchical sub-events, 
-/// Elasticsearch indexing, and media processing.
+/// Manages event lifecycles, hierarchical structures, media transcoding, and Elasticsearch indexing.
 /// </summary>
 public class EventsController(
     ApplicationDbContext context,
@@ -51,7 +50,7 @@ public class EventsController(
     }
 
     /// <summary>
-    /// Dynamically transcodes images to WebP format.
+    /// Dynamically transcodes and compresses images to WebP format.
     /// </summary>
     [AllowAnonymous]
     [HttpGet]
@@ -463,7 +462,7 @@ public class EventsController(
         bool isStandalone = IsStandalone == "true" || IsStandalone == "on" || IsStandalone == "true,false" || isMultiDay;
         bool isChild = newEvent.ParentEventId.HasValue;
 
-        // Validates venue and layout dependencies based on the designated event mode.
+        // Validate dependencies for standalone or child events.
         if (isChild || isStandalone)
         {
             if (newEvent.VenueId == null || newEvent.VenueId == 0 || newEvent.LayoutId == null || newEvent.LayoutId == 0)
@@ -480,6 +479,17 @@ public class EventsController(
             newEvent.LayoutId = null;
         }
 
+        // Verify parent constraints.
+        Event parentEvent = null;
+        if (isChild)
+        {
+            parentEvent = await context.Event.AsNoTracking().FirstOrDefaultAsync(e => e.Id == newEvent.ParentEventId.Value);
+            if (parentEvent == null)
+            {
+                return BadRequest(new { success = false, message = "The assigned Master Event does not exist." });
+            }
+        }
+
         PtixiakiReservations.Models.Venue venue = null;
         if (newEvent.VenueId.HasValue)
         {
@@ -490,7 +500,7 @@ public class EventsController(
         var userId = userManager.GetUserId(User);
         newEvent.OrganizerId = userId;
 
-        // Processes and stores the primary image asset.
+        // Process and store the primary image asset.
         if (imageFile != null && imageFile.Length > 0)
         {
             try
@@ -522,7 +532,7 @@ public class EventsController(
             }
         }
 
-        // Processes and stores gallery image assets.
+        // Process and store gallery image assets.
         if (galleryFiles != null && galleryFiles.Count > 0)
         {
             string galleryFolder = Path.Combine(environment.WebRootPath, "images", "events", "gallery");
@@ -582,6 +592,21 @@ public class EventsController(
                 {
                     if (DateTime.TryParse(dateString, out DateTime date))
                     {
+                        var eventStart = date.Date.Add(startTimeSpan);
+                        var eventEnd = date.Date.Add(endTimeSpan);
+
+                        // Validate sub-event bounds for multi-day schedules.
+                        if (isChild && parentEvent != null)
+                        {
+                            if (eventStart < parentEvent.StartDateTime || eventEnd > parentEvent.EndTime)
+                            {
+                                return BadRequest(new { 
+                                    success = false, 
+                                    message = $"Sub-event timeframe securely blocked. It falls strictly outside the Master Event's allowed timeframe ({parentEvent.StartDateTime:MMM d, yyyy h:mm tt} - {parentEvent.EndTime:MMM d, yyyy h:mm tt})." 
+                                });
+                            }
+                        }
+
                         var eventForDay = new Event
                         {
                             Name = newEvent.Name + " Day " + count,
@@ -589,8 +614,8 @@ public class EventsController(
                             VenueId = newEvent.VenueId, 
                             EventTypeId = newEvent.EventTypeId,
                             LayoutId = newEvent.LayoutId, 
-                            StartDateTime = date.Date.Add(startTimeSpan),
-                            EndTime = date.Date.Add(endTimeSpan),
+                            StartDateTime = eventStart,
+                            EndTime = eventEnd,
                             ImagePath = newEvent.ImagePath,
                             OrganizerId = userId,
                             ParentEventId = newEvent.ParentEventId ?? fatherEvent?.Id
@@ -605,6 +630,19 @@ public class EventsController(
             {
                 if (newEvent.StartDateTime == DateTime.MinValue) newEvent.StartDateTime = DateTime.Now;
                 if (newEvent.EndTime == DateTime.MinValue) newEvent.EndTime = newEvent.StartDateTime.AddHours(2);
+
+                // Validate sub-event bounds for single-day schedules.
+                if (isChild && parentEvent != null)
+                {
+                    if (newEvent.StartDateTime < parentEvent.StartDateTime || newEvent.EndTime > parentEvent.EndTime)
+                    {
+                        return BadRequest(new { 
+                            success = false, 
+                            message = $"Sub-event timeframe securely blocked. It falls strictly outside the Master Event's allowed timeframe ({parentEvent.StartDateTime:MMM d, yyyy h:mm tt} - {parentEvent.EndTime:MMM d, yyyy h:mm tt})." 
+                        });
+                    }
+                }
+
                 context.Add(newEvent);
             }
 
@@ -629,8 +667,7 @@ public class EventsController(
     }
 
     /// <summary>
-    /// Retrieves the designated event and initializes the modification interface.
-    /// Incorporates hierarchical parent data and existing media collections for frontend rendering.
+    /// Initializes the modification interface for an existing event.
     /// </summary>
     [Authorize]
     [HttpGet]
@@ -638,7 +675,7 @@ public class EventsController(
     {
         if (id == null) return NotFound();
 
-        // 1. CRITICAL: We MUST include the City, ParentEvent, and GalleryImages
+        // Include required relational data for the edit interface.
         var eventToEdit = await context.Event
             .Include(e => e.Venue)
                 .ThenInclude(v => v.City) 
@@ -658,7 +695,7 @@ public class EventsController(
 
         if (!isAdmin && !isOwner) return Forbid(); 
 
-        // 2. CRITICAL: This MUST be named VenueList (not Venue) to match the frontend
+        // Populate ViewBag collections for dropdown selections.
         ViewBag.VenueList = await context.Venue
             .Include(v => v.City)
             .Where(v => v.UserId == currentUserId)
@@ -679,14 +716,8 @@ public class EventsController(
     }
 
     /// <summary>
-    /// Processes modifications to an existing event, handling relational data updates 
-    /// and executing media transcoding pipelines for incoming image assets.
+    /// Processes updates to an existing event, including schedule boundaries and media transcoding.
     /// </summary>
-    /// <param name="id">The unique identifier of the event being modified.</param>
-    /// <param name="updatedEvent">The bound data model containing updated properties.</param>
-    /// <param name="imageFile">The optional primary poster image upload.</param>
-    /// <param name="galleryFiles">The optional collection of supplemental gallery images.</param>
-    /// <returns>A redirect to the venue events index upon success, or the validation-populated view upon failure.</returns>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [Authorize] 
@@ -717,6 +748,24 @@ public class EventsController(
                 if (originalEvent == null) return NotFound();
 
                 if (!User.IsInRole("Admin") && originalEvent.OrganizerId != currentUserId) return Forbid();
+
+                // Ensure updated timeframe remains within parent bounds.
+                if (originalEvent.ParentEventId != null)
+                {
+                    var parent = await context.Event.AsNoTracking().FirstOrDefaultAsync(e => e.Id == originalEvent.ParentEventId);
+                    if (parent != null)
+                    {
+                        if (updatedEvent.StartDateTime < parent.StartDateTime || updatedEvent.EndTime > parent.EndTime)
+                        {
+                            ModelState.AddModelError("", $"Sub-event timeframe strictly falls outside the Master Event's allowed timeframe ({parent.StartDateTime:MMM d, yyyy h:mm tt} - {parent.EndTime:MMM d, yyyy h:mm tt}).");
+                            
+                            updatedEvent.ImagePath = originalEvent.ImagePath;
+                            updatedEvent.GalleryImages = originalEvent.GalleryImages;
+                            updatedEvent.ParentEventId = originalEvent.ParentEventId;
+                            return View(updatedEvent);
+                        }
+                    }
+                }
 
                 if (imageFile != null && imageFile.Length > 0)
                 {
@@ -831,7 +880,6 @@ public class EventsController(
         return View(updatedEvent);
     }
 
-
     [Authorize]
     public bool CorrectDay(JsonEventModel ev, int i, int everyNum)
     {
@@ -849,7 +897,6 @@ public class EventsController(
 
     [Authorize]
     [HttpDelete]
-  
     public async Task<IActionResult> Delete(int? id)
     {
         if (id == null) return NotFound();
@@ -861,7 +908,6 @@ public class EventsController(
         var userId = userManager.GetUserId(User);
         if (ev.OrganizerId != userId && !User.IsInRole("Admin")) return Unauthorized();
 
-
         if (ev.ParentEventId == null)
         {
             await context.Event
@@ -869,14 +915,13 @@ public class EventsController(
                 .ExecuteDeleteAsync();
         }
 
-
         await context.Event
             .Where(e => e.Id == id)
             .ExecuteDeleteAsync();
 
-
         return Ok();
     }
+    
     private bool EventExists(int id) => context.Event.Any(e => e.Id == id);
 
     [Authorize]

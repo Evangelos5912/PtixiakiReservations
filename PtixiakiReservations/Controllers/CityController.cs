@@ -24,8 +24,7 @@ namespace PtixiakiReservations.Controllers
         }
 
         /// <summary>
-        /// Retrieves a paginated and searchable directory of all registered cities.
-        /// Execution is deferred so the database handles filtering and counting efficiently.
+        /// Retrieves a paginated and searchable list of registered cities.
         /// </summary>
         /// <param name="searchQuery">Optional text to filter cities by name.</param>
         /// <param name="pageNumber">The current page index representing the data offset.</param>
@@ -34,33 +33,29 @@ namespace PtixiakiReservations.Controllers
         {
             const int pageSize = 10; 
 
-            // 1. Initialize deferred query execution against the City table
             var query = _context.City.AsQueryable();
 
-            // 2. Apply search filters dynamically if a search string is provided
+            // Apply search filters.
             if (!string.IsNullOrWhiteSpace(searchQuery))
             {
                 var normalizedQuery = searchQuery.ToLower().Trim();
-                
-                // Using EF Core's built-in translation to execute the LIKE query in SQL
                 query = query.Where(c => c.Name.ToLower().Contains(normalizedQuery));
             }
 
-            // 3. Calculate pagination metadata boundaries
+            // Calculate pagination metadata.
             int totalItems = await query.CountAsync();
             int totalPages = totalItems > 0 ? (int)Math.Ceiling(totalItems / (double)pageSize) : 1;
 
-            // Enforce safe boundary limits to prevent out-of-bounds page requests
             pageNumber = Math.Max(1, Math.Min(pageNumber, totalPages));
 
-            // 4. Extract the exact subset of records required for the current view
+            // Retrieve paginated records.
             var cities = await query
-                .OrderBy(c => c.Name) // Deterministic sorting required for SQL Skip/Take
+                .OrderBy(c => c.Name) 
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();
 
-            // 5. Inject pagination metadata into the ViewBag for frontend UI rendering
+            // Populate view context.
             ViewBag.CurrentPage = pageNumber;
             ViewBag.TotalPages = totalPages;
             ViewBag.SearchQuery = searchQuery;
@@ -70,7 +65,7 @@ namespace PtixiakiReservations.Controllers
         }
 
         /// <summary>
-        /// Renders the standalone city creation form.
+        /// Renders the city creation interface.
         /// </summary>
         [HttpGet]
         public IActionResult CreateCity()
@@ -79,14 +74,13 @@ namespace PtixiakiReservations.Controllers
         }
 
         /// <summary>
-        /// Processes the creation of a new operational city.
-        /// Includes database-level validation to prevent identical geographic entries.
+        /// Validates and creates a new city, ensuring no duplicate entries exist.
         /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CreateCity(string CityName)
         {
-            // Guard clause to prevent empty submissions bypassing frontend HTML5 validation
+            // Prevent empty submissions.
             if (string.IsNullOrWhiteSpace(CityName))
             {
                 return View();
@@ -94,7 +88,7 @@ namespace PtixiakiReservations.Controllers
 
             var cleanCityName = CityName.Trim();
 
-            // Security Mechanism: Prevent duplicate city entries
+            // Prevent duplicate entries.
             bool cityExists = await _context.City
                 .AnyAsync(c => c.Name.ToLower() == cleanCityName.ToLower());
 
@@ -105,13 +99,13 @@ namespace PtixiakiReservations.Controllers
                 return RedirectToAction(nameof(ManageCities));
             }
 
-            // If it exists, return the view (you can optionally add a ModelState error here)
+            // Return view with error if duplicate exists.
             ModelState.AddModelError("CityName", "This city already exists.");
             return View();
         }
 
         /// <summary>
-        /// Permanently removes a city from the platform's operational geographic limits.
+        /// Permanently removes a city from the database.
         /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -129,7 +123,7 @@ namespace PtixiakiReservations.Controllers
         }
 
         /// <summary>
-        /// Retrieves a specific city and renders the modification interface.
+        /// Retrieves a specific city and renders the edit interface.
         /// </summary>
         [HttpGet]
         public async Task<IActionResult> EditCity(int CityId)
@@ -145,7 +139,7 @@ namespace PtixiakiReservations.Controllers
         }
 
         /// <summary>
-        /// Commits modifications to an existing city entity.
+        /// Commits modifications to an existing city.
         /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]

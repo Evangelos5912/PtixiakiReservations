@@ -19,7 +19,8 @@
         </div>
 
         <div class="p-6 sm:p-10">
-            <form asp-action="RequestRoles" method="post" class="space-y-8">
+            <!-- CRITICAL: enctype="multipart/form-data" is required for file uploads -->
+            <form asp-action="RequestRoles" method="post" enctype="multipart/form-data" class="space-y-8">
                 <div asp-validation-summary="ModelOnly" class="text-red-500 text-sm font-bold bg-red-50 p-4 rounded-lg border border-red-100 hidden"></div>
 
                 <!-- Role Selection Cards -->
@@ -92,6 +93,35 @@
                     <span asp-validation-for="Reason" class="text-sm text-red-500 font-bold mt-2 block"></span>
                 </div>
 
+                <!-- PDF Verification Document Upload -->
+                <div>
+                    <div class="flex items-center mb-4">
+                        <div class="h-8 w-8 rounded-lg bg-pink-50 border border-pink-100 flex items-center justify-center mr-3">
+                            <svg class="h-4 w-4 text-pink-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                        </div>
+                        <div>
+                            <h2 class="text-lg font-bold text-gray-900">Verification Document <span class="text-gray-400 font-normal text-sm ml-1">(Optional)</span></h2>
+                        </div>
+                    </div>
+                    
+                    <div class="w-full border-2 border-gray-300 border-dashed rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors p-6 text-center">
+                        <label for="pdfDocument" class="cursor-pointer flex flex-col items-center">
+                            <svg class="w-10 h-10 text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
+                            <span class="font-bold text-indigo-600 hover:text-indigo-500">Click to upload a PDF file</span>
+                            <span class="text-[11px] text-gray-500 mt-1 uppercase tracking-wider">Only .pdf files are accepted</span>
+                            <!-- Important: Name attribute added so C# controller can bind it as an IFormFile -->
+                            <input id="pdfDocument" name="pdfDocument" type="file" class="sr-only" accept=".pdf" onchange="updateFileName(this)">
+                        </label>
+                        <div id="file-name-display" class="hidden mt-4 inline-flex items-center px-3 py-1.5 rounded-lg bg-white border border-gray-200 shadow-sm">
+                            <svg class="w-4 h-4 text-red-500 mr-2" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd" /></svg>
+                            <span id="file-name-text" class="text-sm font-bold text-gray-700 truncate max-w-[200px] sm:max-w-xs"></span>
+                            <button type="button" onclick="clearFile()" class="ml-2 text-gray-400 hover:text-red-500 transition-colors">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Actions -->
                 <div class="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-6 border-t border-gray-100">
                     <a asp-action="Index" class="w-full sm:w-auto text-center px-6 py-2.5 bg-white border border-gray-300 text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition-colors text-sm shadow-sm">
@@ -118,5 +148,30 @@
                 valSummary.classList.remove('hidden');
             }
         });
+
+        // Handle PDF file selection display
+        function updateFileName(input) {
+            const displayBlock = document.getElementById('file-name-display');
+            const textSpan = document.getElementById('file-name-text');
+            
+            if (input.files && input.files.length > 0) {
+                const file = input.files[0];
+                if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith('.pdf')) {
+                    alert("Please select a valid PDF file.");
+                    clearFile();
+                    return;
+                }
+                textSpan.textContent = file.name;
+                displayBlock.classList.remove('hidden');
+            } else {
+                displayBlock.classList.add('hidden');
+            }
+        }
+
+        function clearFile() {
+            const input = document.getElementById('pdfDocument');
+            input.value = '';
+            document.getElementById('file-name-display').classList.add('hidden');
+        }
     </script>
 }
