@@ -8,6 +8,9 @@
     
     // Determine if this event acts as a master container for multiple sub-schedules
     var hasSchedules = Model.ParentEventId == null && Model.ChildEvents != null && Model.ChildEvents.Any();
+    
+    // Determine if this is an empty Master Event (No Venue, No Children yet)
+    var isEmptyMasterEvent = Model.ParentEventId == null && Model.VenueId == null && (!Model.ChildEvents?.Any() ?? true);
 }
 
 <div class="container mx-auto px-4 py-8 max-w-7xl">
@@ -189,7 +192,29 @@
                 <!-- Call to Action Panel -->
                 <div>
                     <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-8 sticky top-24">
-                        @if(Model.ParentEventId != null || Model.ChildEvents == null || !Model.ChildEvents.Any()){
+                        
+                        @if(isEmptyMasterEvent)
+                        {
+                            <!-- State A: Master Event with no Sub-Events yet -->
+                            <div class="text-center">
+                                <div class="bg-amber-50 border border-amber-200 rounded-xl p-5 mb-5 shadow-sm">
+                                    <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-amber-100 mb-3">
+                                        <svg class="h-6 w-6 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                        </svg>
+                                    </div>
+                                    <h3 class="text-lg font-bold text-amber-900 mb-1">No Schedules Available</h3>
+                                    <p class="text-sm font-medium text-amber-700">There are no current available sub-events for this master event.</p>
+                                </div>
+                                
+                                <button disabled class="w-full block text-center px-6 py-4 bg-gray-100 text-gray-400 font-bold text-lg rounded-lg border border-gray-200 shadow-sm cursor-not-allowed transition-all duration-200">
+                                    Check Back Later
+                                </button>
+                            </div>
+                        }
+                        else if(!hasSchedules)
+                        {
+                            <!-- State B: Standard Standalone Event OR Sub-Event -->
                             <div class="text-center">
                                 <h3 class="text-2xl font-bold text-gray-900 mb-2">Reserve Your Spot</h3>
                                 <p class="text-gray-600 mb-6">Select your preferred seats and secure your tickets now.</p>
@@ -205,9 +230,13 @@
                                 </p>
                             </div>
                         }
-                        else{
+                        else
+                        {
+                            <!-- State C: Master Event WITH child Sub-Events -->
                             <div class="text-center">
                                 <h3 class="text-2xl font-bold text-gray-900 mb-2">Reserve Your Spot</h3>
+                                <p class="text-gray-600 mb-6">Multiple times and locations available.</p>
+
                                 <a href="#available-schedules"
                                 class="w-full block text-center px-6 py-4 bg-blue-600 text-white font-semibold text-lg rounded-lg shadow-md hover:bg-blue-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 transform hover:-translate-y-1">
                                     Select a Schedule

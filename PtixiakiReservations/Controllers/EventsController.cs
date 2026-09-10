@@ -270,7 +270,6 @@ public class EventsController(
                 e.Name.ToLower().Contains(term) || 
                 (e.Venue != null && e.Venue.Name.ToLower().Contains(term)) || 
                 (e.Venue != null && e.Venue.City != null && e.Venue.City.Name.ToLower().Contains(term)) ||
-                // Fixed: Search dynamically deep-inspects sub-event names and attributes
                 e.ChildEvents.Any(c => 
                     c.Name.ToLower().Contains(term) || 
                     (c.Venue != null && c.Venue.Name.ToLower().Contains(term)) ||
@@ -634,7 +633,6 @@ public class EventsController(
                         var eventForDay = new Event
                         {
                             Name = newEvent.Name + " Day " + count,
-                            // Fixed: Sub-events inherit core descriptive data directly from the parent
                             Description = (isChild && parentEvent != null) ? parentEvent.Description : newEvent.Description,
                             EventTypeId = (isChild && parentEvent != null) ? parentEvent.EventTypeId : newEvent.EventTypeId,
                             ImagePath = (isChild && parentEvent != null && string.IsNullOrEmpty(newEvent.ImagePath)) ? parentEvent.ImagePath : newEvent.ImagePath,
@@ -669,7 +667,6 @@ public class EventsController(
                         });
                     }
                     
-                    // Fixed: Sub-events inherit core descriptive data directly from the parent
                     newEvent.Description = parentEvent.Description;
                     newEvent.EventTypeId = parentEvent.EventTypeId;
                     if (string.IsNullOrEmpty(newEvent.ImagePath)) newEvent.ImagePath = parentEvent.ImagePath;
@@ -845,7 +842,6 @@ public class EventsController(
                     string galleryFolder = Path.Combine(environment.WebRootPath, "images", "events", "gallery");
                     if (!Directory.Exists(galleryFolder)) Directory.CreateDirectory(galleryFolder);
 
-                    // FIX: Delete old gallery images from Database and Disk if new ones are provided
                     if (originalEvent.GalleryImages != null && originalEvent.GalleryImages.Any())
                     {
                         foreach (var oldImg in originalEvent.GalleryImages)
@@ -942,64 +938,88 @@ public class EventsController(
     }
 
     
+    /// <summary>
+    /// Permanently removes an event and cascades deletions down to Wishlists, Reservations, Sub-Events, and Gallery Images.
+    /// Utilizes high-performance ExecuteDeleteAsync bulk commands to bypass RAM constraints and RESTRICT locks.
+    /// </summary>
     [Authorize]
     [HttpDelete]
     public async Task<IActionResult> Delete(int? id)
     {
         if (id == null) return NotFound();
 
-        var ev = await context.Event
-            .Include(e => e.ChildEvents) 
-            .Include(e => e.GalleryImages) 
-            .FirstOrDefaultAsync(e => e.Id == id);
+        var ev = await context.Event.AsNoTracking().FirstOrDefaultAsync(e => e.Id == id);
             
         if (ev == null) return NotFound();
 
         var userId = userManager.GetUserId(User);
         if (ev.OrganizerId != userId && !User.IsInRole("Admin")) return Unauthorized();
 
-        var eventIdsToDelete = new List<int> { ev.Id };
-        if (ev.ChildEvents != null && ev.ChildEvents.Any())
-        {
-            eventIdsToDelete.AddRange(ev.ChildEvents.Select(c => c.Id));
-        }
-
-        // --- FIXED: Remove Wishlist references before deleting the event ---
-        var wishlistsToDelete = await context.Set<Wishlist>()
-            .Where(w => eventIdsToDelete.Contains(w.EventId))
-            .ToListAsync();
-
-        if (wishlistsToDelete.Any())
-        {
-            context.Set<Wishlist>().RemoveRange(wishlistsToDelete);
-        }
-
-        var reservationsToDelete = await context.Reservation
-            .Where(r => eventIdsToDelete.Contains(r.EventId))
-            .ToListAsync();
-
-        if (reservationsToDelete.Any())
-        {
-            context.Reservation.RemoveRange(reservationsToDelete);
-        }
-
-        // Clean up child events
-        if (ev.ChildEvents != null && ev.ChildEvents.Any())
-        {
-            context.Event.RemoveRange(ev.ChildEvents);
-        }
-
-        context.Event.Remove(ev);
-
         try 
         {
-            await context.SaveChangesAsync();
+            // 1. Gather all Event IDs (The target event + any children if it's a master)
+            var allEventIds = new List<int> { ev.Id };
+            
+            var childEventIds = await context.Event
+                .Where(e => e.ParentEventId == id)
+                .Select(e => e.Id)
+                .ToListAsync();
+                
+            if (childEventIds.Any())
+            {
+                allEventIds.AddRange(childEventIds);
+            }
+
+            // 2. Harvest physical file paths to delete from disk later
+            var eventImagePaths = await context.Event
+                .Where(e => allEventIds.Contains(e.Id))
+                .Select(e => e.ImagePath)
+                .ToListAsync();
+                
+            var galleryImagePaths = await context.Event
+                .Where(e => allEventIds.Contains(e.Id))
+                .SelectMany(e => e.GalleryImages)
+                .Select(g => g.ImagePath)
+                .ToListAsync();
+
+            // =======================================================================
+            // 3. EXECUTE BULK DB DELETIONS (Translates directly to raw SQL)
+            // =======================================================================
+            
+            // Delete Wishlists (safely bypasses RESTRICT foreign key constraint)
+            await context.Set<Wishlist>().Where(w => allEventIds.Contains(w.EventId)).ExecuteDeleteAsync();
+            
+            // Delete Reservations
+            await context.Reservation.Where(r => allEventIds.Contains(r.EventId)).ExecuteDeleteAsync();
+            
+            // Delete Gallery Images (safely bypasses RESTRICT foreign key constraint)
+            await context.Event.Where(e => allEventIds.Contains(e.Id)).SelectMany(e => e.GalleryImages).ExecuteDeleteAsync();
+            
+            // Delete Child Events
+            if (childEventIds.Any())
+            {
+                await context.Event.Where(e => childEventIds.Contains(e.Id)).ExecuteDeleteAsync();
+            }
+            
+            // Delete Master Event
+            await context.Event.Where(e => e.Id == id).ExecuteDeleteAsync();
+
+            // =======================================================================
+            // 4. CLEAN UP PHYSICAL DISK STORAGE
+            // =======================================================================
+            var allPathsToDelete = eventImagePaths.Concat(galleryImagePaths).Where(p => !string.IsNullOrEmpty(p)).ToList();
+            foreach (var path in allPathsToDelete)
+            {
+                string fullPath = Path.Combine(environment.WebRootPath, path.TrimStart('/', '\\'));
+                if (System.IO.File.Exists(fullPath)) System.IO.File.Delete(fullPath);
+            }
+
             return Ok();
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Failed to delete event.");
-            return BadRequest(new { success = false, message = "Could not delete event due to constrained related data." });
+            logger.LogError(ex, "Failed to execute memory-safe cascading deletion for Event ID {Id}", id);
+            return BadRequest(new { success = false, message = "Could not delete event due to constrained related data: " + ex.Message });
         }
     }
     
@@ -1067,7 +1087,6 @@ public class EventsController(
                     e.Name.ToLower().Contains(term) ||
                     (e.Venue != null && e.Venue.Name.ToLower().Contains(term)) ||
                     (e.Venue != null && e.Venue.City != null && e.Venue.City.Name.ToLower().Contains(term)) ||
-                    // Fixed: Search dynamically deep-inspects sub-event names and attributes
                     e.ChildEvents.Any(c => 
                         c.Name.ToLower().Contains(term) || 
                         (c.Venue != null && c.Venue.Name.ToLower().Contains(term)) ||
@@ -1742,8 +1761,7 @@ public class EventsController(
             return BadRequest(new { success = false, message = "Cannot delete reservation: The attendee has already checked in." });
         }
 
-        context.Reservation.Remove(reservation);
-        await context.SaveChangesAsync();
+        await context.Reservation.Where(r => r.ID == reservationId).ExecuteDeleteAsync();
 
         return Json(new { success = true, message = "Reservation successfully deleted." });
     }
