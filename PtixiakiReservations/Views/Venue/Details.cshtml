@@ -123,7 +123,7 @@
                         </div>
                         <div>
                             <h3 class="text-sm font-medium text-gray-500">Venue Official URL</h3>
-                            <a href="@Model.VenueUrl" class="text-lg font-semibold text-gray-900">@Model.VenueUrl</a>
+                            <a href="@Model.VenueUrl" class="text-lg font-semibold text-blue-500">@Model.VenueUrl</a>
             
                         </div>
                     </div>
@@ -141,18 +141,13 @@
                         </div>
                         <div>
                             <h3 class="text-sm font-medium text-gray-500">Social Media</h3>
-                            <a href="@Model.SocialMediaUrl" lass="text-lg font-semibold text-gray-900">@Model.SocialMediaUrl</a>
+                            <a href="@Model.SocialMediaUrl" class="text-lg font-semibold text-blue-500">@Model.SocialMediaUrl</a>
             
                         </div>
                     </div>
                 </div>
             }
 
-            <!-- Map Section -->
-            <div class="px-6 pb-6">
-                <h3 class="text-lg font-medium text-gray-900 mb-3">Location</h3>
-                <div class="w-full h-64 bg-gray-200 border border-gray-300 rounded-lg overflow-hidden" id="map"></div>
-            </div>
 
             <!-- Actions Section -->
             <div class="bg-gray-50 px-6 py-4 flex flex-wrap gap-3 justify-between items-center border-t border-gray-200">
@@ -240,41 +235,3 @@
     </div>
 </div>
 
-@section Scripts {
-    <script>
-        var geocoder;
-        var map;
-        var address = document.getElementById("address")?.innerHTML + " "
-            + document.getElementById("address2")?.innerHTML + " "
-            + document.getElementById("address3")?.innerHTML;
-
-        console.log(address);
-
-        function initMap() {
-            var map = new google.maps.Map(document.getElementById('map'), {
-                zoom: 8,
-                center: { lat: -34.397, lng: 150.644 }
-            });
-            // Uncomment below code to use Google Maps API (needs API key)
-            // geocoder = new google.maps.Geocoder();
-            // codeAddress(geocoder, map);
-        }
-
-        // Uncomment below if enabling geocoding
-        /*  
-        function codeAddress(geocoder, map) {
-            geocoder.geocode({ 'address': address }, function (results, status) {
-                if (status === 'OK') {
-                    map.setCenter(results[0].geometry.location);
-                    var marker = new google.maps.Marker({
-                        map: map,
-                        position: results[0].geometry.location
-                    });
-                } else {
-                    alert('Geocode was not successful for the following reason: ' + status);
-                }
-            });
-        }
-        */
-    </script>
-}
