@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Hosting;
 using System.IO;
-
+using System.Collections.Generic;
 
 namespace PtixiakiReservations.Controllers
 {
@@ -19,15 +19,18 @@ namespace PtixiakiReservations.Controllers
     public class ProfileController : Controller
     {
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly ApplicationDbContext _context;
         private readonly IWebHostEnvironment _env;
 
         public ProfileController(
             UserManager<ApplicationUser> userManager,
+            SignInManager<ApplicationUser> signInManager,
             ApplicationDbContext context,
             IWebHostEnvironment env)
         {
             _userManager = userManager;
+            _signInManager = signInManager;
             _context = context;
             _env = env;
         }
@@ -230,8 +233,6 @@ namespace PtixiakiReservations.Controllers
                     await pdfDocument.CopyToAsync(fileStream);
                 }
 
-                // CRITICAL FIX: The string saved to the database MUST match the actual folder!
-                // NO LEADING SLASH!
                 savedDocumentPath = "SecureDocuments/RoleRequests/" + uniqueFileName;
             }
 
@@ -288,6 +289,120 @@ namespace PtixiakiReservations.Controllers
 
             TempData["SuccessMessage"] = $"Your request to become a {displayRole} has been submitted and is pending approval.";
             return RedirectToAction(nameof(Index));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteAccount()
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+            {
+                return Json(new { success = false, message = "User account not found." });
+            }
+
+            try
+            {
+                var userId = user.Id;
+
+                // 1. Gather all associated structural IDs (Venues & Layouts)
+                var venueIds = await _context.Venue.Where(v => v.UserId == userId).Select(v => v.Id).ToListAsync();
+                var layoutIds = venueIds.Any() ? await _context.Layout.Where(l => venueIds.Contains(l.VenueId)).Select(l => l.Id).ToListAsync() : new List<int>();
+
+                // 2. Gather all Event IDs (Events the user organized directly OR events happening inside the user's venues/layouts)
+                var organizerEventIds = await _context.Event.Where(e => e.OrganizerId == userId).Select(e => e.Id).ToListAsync();
+                var venueEventIds = venueIds.Any() ? await _context.Event.Where(e => e.VenueId.HasValue && venueIds.Contains(e.VenueId.Value)).Select(e => e.Id).ToListAsync() : new List<int>();
+                
+                var masterEventIds = organizerEventIds.Concat(venueEventIds).Distinct().ToList();
+                var childEventIds = masterEventIds.Any() ? await _context.Event.Where(e => e.ParentEventId.HasValue && masterEventIds.Contains(e.ParentEventId.Value)).Select(e => e.Id).ToListAsync() : new List<int>();
+                
+                var allEventIds = masterEventIds.Concat(childEventIds).Distinct().ToList();
+
+                // 3. Harvest physical file paths before destroying DB references
+                var eventImagePaths = allEventIds.Any() ? await _context.Event.Where(e => allEventIds.Contains(e.Id)).Select(e => e.ImagePath).ToListAsync() : new List<string>();
+                var galleryImagePaths = allEventIds.Any() ? await _context.Event.Where(e => allEventIds.Contains(e.Id)).SelectMany(e => e.GalleryImages).Select(g => g.ImagePath).ToListAsync() : new List<string>();
+                var venueImagePaths = venueIds.Any() ? await _context.Venue.Where(v => venueIds.Contains(v.Id)).Select(v => v.imgUrl).ToListAsync() : new List<string>();
+                
+                var documentPaths = new List<string> 
+                { 
+                    user.VenueManagerRequestDocumentPath, 
+                    user.EventManagerRequestDocumentPath, 
+                    user.SuperOrganizerRequestDocumentPath 
+                };
+
+                // =======================================================================
+                // 4. MEMORY-SAFE BULK DELETIONS (Bottom-Up to prevent FK Restrict crashes)
+                // =======================================================================
+
+                // A. Delete Wishlists (User's personal wishlists + ANY wishlists tied to the destroyed events)
+                await _context.Set<Wishlist>().Where(w => w.UserId == userId || allEventIds.Contains(w.EventId)).ExecuteDeleteAsync();
+
+                // B. Delete Reservations (User's personal reservations + ANY reservations tied to the destroyed events)
+                await _context.Reservation.Where(r => r.UserId == userId || allEventIds.Contains(r.EventId)).ExecuteDeleteAsync();
+
+                // C. Delete Events & Event Images
+                if (allEventIds.Any())
+                {
+                    await _context.Event.Where(e => allEventIds.Contains(e.Id)).SelectMany(e => e.GalleryImages).ExecuteDeleteAsync();
+                    if (childEventIds.Any()) await _context.Event.Where(e => childEventIds.Contains(e.Id)).ExecuteDeleteAsync();
+                    if (masterEventIds.Any()) await _context.Event.Where(e => masterEventIds.Contains(e.Id)).ExecuteDeleteAsync();
+                }
+
+                // D. Delete Layout Items & Layouts
+                if (layoutIds.Any())
+                {
+                    await _context.Seat.Where(s => layoutIds.Contains(s.LayoutId)).ExecuteDeleteAsync();
+                    await _context.NonSelectable.Where(ns => layoutIds.Contains(ns.LayoutId)).ExecuteDeleteAsync();
+                    await _context.UnitGroup.Where(ug => layoutIds.Contains(ug.LayoutId)).ExecuteDeleteAsync();
+                    await _context.Layout.Where(l => layoutIds.Contains(l.Id)).ExecuteDeleteAsync();
+                }
+
+                // E. Delete Venue Categories & Venues
+                if (venueIds.Any())
+                {
+                    await _context.VenueCategory.Where(vc => venueIds.Contains(vc.VenueId)).ExecuteDeleteAsync();
+                    await _context.Venue.Where(v => venueIds.Contains(v.Id)).ExecuteDeleteAsync();
+                }
+
+                // =======================================================================
+                // 5. DESTROY IDENTITY AND CLEAR FILES
+                // =======================================================================
+
+                // AspNetCore Identity automatically deletes attached Roles/Claims inside this method
+                var deleteResult = await _userManager.DeleteAsync(user);
+                if (!deleteResult.Succeeded)
+                {
+                    throw new Exception("Identity system failed to destroy the primary user record.");
+                }
+
+                // Only clean up physical disk files if the database transaction fully succeeded
+                var imagePathsToDelete = eventImagePaths.Concat(galleryImagePaths).Where(p => !string.IsNullOrEmpty(p)).ToList();
+                foreach (var path in imagePathsToDelete)
+                {
+                    var fullPath = Path.Combine(_env.WebRootPath, path.TrimStart('/', '\\'));
+                    if (System.IO.File.Exists(fullPath)) System.IO.File.Delete(fullPath);
+                }
+
+                foreach (var path in venueImagePaths.Where(p => !string.IsNullOrEmpty(p)))
+                {
+                    var fullPath = Path.Combine(_env.WebRootPath, "images", path.TrimStart('/', '\\'));
+                    if (System.IO.File.Exists(fullPath)) System.IO.File.Delete(fullPath);
+                }
+
+                foreach (var docPath in documentPaths.Where(p => !string.IsNullOrEmpty(p)))
+                {
+                    var fullPath = Path.Combine(_env.ContentRootPath, docPath);
+                    if (System.IO.File.Exists(fullPath)) System.IO.File.Delete(fullPath);
+                }
+
+                await _signInManager.SignOutAsync();
+                
+                return Json(new { success = true, redirectUrl = "/" });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "System exception encountered during deletion: " + ex.Message });
+            }
         }
     }
 }

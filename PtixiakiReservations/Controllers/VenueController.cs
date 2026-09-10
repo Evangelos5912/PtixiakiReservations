@@ -417,17 +417,122 @@ namespace PtixiakiReservations.Controllers
 
         /// <summary>
         /// Executes a permanent, cascading structural deletion of a venue entity.
+        /// Restricts access to Venue Owners or System Administrators.
         /// </summary>
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,Venue,SuperOrganizer")]
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
+        [Obsolete]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var venue = await _context.Venue.FindAsync(id);
+            if (venue == null) return NotFound();
+
+            var currentUserId = _userManager.GetUserId(User);
+            if (!User.IsInRole("Admin") && venue.UserId != currentUserId)
+            {
+                return Forbid();
+            }
+
+            var layouts = await _context.Layout.Where(l => l.VenueId == id).ToListAsync();
+            var layoutIds = layouts.Select(l => l.Id).ToList();
+
+            var associatedEvents = await _context.Event
+                .Where(e => e.VenueId == id || (e.LayoutId.HasValue && layoutIds.Contains(e.LayoutId.Value)))
+                .Include(e => e.GalleryImages) 
+                .Include(e => e.ChildEvents)
+                    .ThenInclude(c => c.GalleryImages) 
+                .ToListAsync();
+
+            if (associatedEvents.Any())
+            {
+                var allEventIds = new List<int>();
+                var allGalleryImages = new List<EventImage>();
+                
+                foreach (var ev in associatedEvents)
+                {
+                    allEventIds.Add(ev.Id);
+
+                    if (ev.GalleryImages != null && ev.GalleryImages.Any()) 
+                    {
+                        allGalleryImages.AddRange(ev.GalleryImages);
+                    }
+
+                    if (ev.ChildEvents != null && ev.ChildEvents.Any())
+                    {
+                        allEventIds.AddRange(ev.ChildEvents.Select(c => c.Id));
+                        
+                        foreach (var child in ev.ChildEvents)
+                        {
+                            if (child.GalleryImages != null && child.GalleryImages.Any())
+                            {
+                                allGalleryImages.AddRange(child.GalleryImages);
+                            }
+                        }
+                    }
+                }
+
+                if (allGalleryImages.Any()) 
+                {
+                    _context.RemoveRange(allGalleryImages);
+                }
+
+                // FIX: Delete Wishlist records before deleting Events to prevent RESTRICT FK constraint
+                var associatedWishlists = await _context.Set<Wishlist>()
+                    .Where(w => allEventIds.Contains(w.EventId))
+                    .ToListAsync();
+
+                if (associatedWishlists.Any())
+                {
+                    _context.Set<Wishlist>().RemoveRange(associatedWishlists);
+                }
+
+                var associatedReservations = await _context.Reservation
+                    .Where(r => allEventIds.Contains(r.EventId))
+                    .ToListAsync();
+
+                if (associatedReservations.Any()) 
+                {
+                    _context.Reservation.RemoveRange(associatedReservations);
+                }
+        
+                var childEvents = associatedEvents.SelectMany(e => e.ChildEvents ?? new List<Event>()).ToList();
+                if (childEvents.Any()) 
+                {
+                    _context.Event.RemoveRange(childEvents);
+                }
+
+                _context.Event.RemoveRange(associatedEvents);
+            }
+
+            if (layoutIds.Any())
+            {
+                var seats = await _context.Seat.Where(s => layoutIds.Contains(s.LayoutId)).ToListAsync();
+                if (seats.Any()) _context.Seat.RemoveRange(seats);
+
+                var nonSelectables = await _context.NonSelectable.Where(ns => layoutIds.Contains(ns.LayoutId)).ToListAsync();
+                if (nonSelectables.Any()) _context.NonSelectable.RemoveRange(nonSelectables);
+
+                var unitGroups = await _context.UnitGroup.Where(ug => layoutIds.Contains(ug.LayoutId)).ToListAsync();
+                if (unitGroups.Any()) _context.UnitGroup.RemoveRange(unitGroups);
+
+                _context.Layout.RemoveRange(layouts);
+            }
+
+            var venueCategories = await _context.VenueCategory.Where(vc => vc.VenueId == id).ToListAsync();
+            if (venueCategories.Any()) _context.VenueCategory.RemoveRange(venueCategories);
+
+            if (!string.IsNullOrEmpty(venue.imgUrl))
+            {
+                string imagePath = Path.Combine(HostingEnviromnet.WebRootPath, "images", venue.imgUrl.TrimStart('/', '\\'));
+                if (System.IO.File.Exists(imagePath)) System.IO.File.Delete(imagePath);
+            }
+
             _context.Venue.Remove(venue);
+
             await _context.SaveChangesAsync();
             
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction(nameof(MyVenues));
         }
         
         /// <summary>

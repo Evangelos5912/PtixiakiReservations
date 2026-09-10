@@ -1,12 +1,17 @@
-﻿using System.Linq;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using PtixiakiReservations.Data;
 using PtixiakiReservations.Models;
 using PtixiakiReservations.Models.ViewModels;
@@ -17,10 +22,19 @@ namespace PtixiakiReservations.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _usermanager;
-        public LayoutsController(ApplicationDbContext context, UserManager<ApplicationUser> usermanager)
+        private readonly IWebHostEnvironment _environment;
+        private readonly ILogger<LayoutsController> _logger;
+
+        public LayoutsController(
+            ApplicationDbContext context, 
+            UserManager<ApplicationUser> usermanager,
+            IWebHostEnvironment environment,
+            ILogger<LayoutsController> logger)
         {
             _context = context;
             _usermanager = usermanager;
+            _environment = environment;
+            _logger = logger;
         }
 
         [Authorize(Roles = "Venue,Admin,SuperOrganizer")]
@@ -113,8 +127,6 @@ namespace PtixiakiReservations.Controllers
                     Top = layout.Top,
                     Left = layout.Left,
                     VenueId = layout.VenueId 
-                    // NOTE: If you migrate to Layouts, this would be: 
-                    // VenueLayoutId = layout.LayoutId
                 };
                 _context.Add(newLayout);
             }
@@ -170,8 +182,6 @@ namespace PtixiakiReservations.Controllers
         }
 
         // POST: Layouts/Edit/5
-        // To protect from overposting attacks, please enable the specific properties you want to bind to, for 
-        // more details see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         public async Task<IActionResult> Edit(int id,Layout layoutEdit)
         {
@@ -190,8 +200,6 @@ namespace PtixiakiReservations.Controllers
                 layout.Top = layoutEdit.Top;
                 layout.Left = layoutEdit.Left;
 
-
-
                 try
                 {                   
                     _context.Update(layout);
@@ -200,7 +208,6 @@ namespace PtixiakiReservations.Controllers
                 catch (DbUpdateConcurrencyException)
                 {
                     if (!LayoutExists(layout.Id)) return NotFound();
-
                     throw;
                 }
                 
@@ -221,6 +228,7 @@ namespace PtixiakiReservations.Controllers
             var layout = await _context.Layout
                 .Include(s => s.Venue)
                 .FirstOrDefaultAsync(m => m.Id == id);
+                
             if (layout == null)
             {
                 return NotFound();
@@ -229,23 +237,79 @@ namespace PtixiakiReservations.Controllers
             return View(layout);
         }
 
-        // POST: Layouts/Delete/5
+        /// <summary>
+        /// Permanently removes a layout from the database, cascading deletes to all associated Events, Wishlists, Reservations, and Sub-components.
+        /// Uses high-performance bulk operations (ExecuteDeleteAsync) to prevent RAM OOM crashes.
+        /// </summary>
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var seats = _context.Seat.Where(s => s.LayoutId == id).ToList();
-            if (seats != null)
+            var layout = await _context.Layout.FindAsync(id);
+            if (layout == null) return NotFound();
+
+            var venueId = layout.VenueId;
+
+            try
             {
-                foreach (var s in seats)
+                // 1. Gather Event IDs directly tied to this Layout
+                var directEventIds = await _context.Event.Where(e => e.LayoutId == id).Select(e => e.Id).ToListAsync();
+                
+                // Fetch Child Events spawned from those Master Events
+                var childEventIds = await _context.Event
+                    .Where(e => e.ParentEventId.HasValue && directEventIds.Contains(e.ParentEventId.Value))
+                    .Select(e => e.Id)
+                    .ToListAsync();
+                    
+                var allEventIds = directEventIds.Concat(childEventIds).Distinct().ToList();
+
+                // 2. Harvest physical file paths before we wipe the DB records
+                var eventImagePaths = await _context.Event.Where(e => allEventIds.Contains(e.Id)).Select(e => e.ImagePath).ToListAsync();
+                var galleryImagePaths = await _context.Event.Where(e => allEventIds.Contains(e.Id)).SelectMany(e => e.GalleryImages).Select(g => g.ImagePath).ToListAsync();
+
+                // =======================================================================
+                // 3. EXECUTE BULK DB DELETIONS (Translates directly to raw SQL)
+                // =======================================================================
+
+                if (allEventIds.Any())
                 {
-                    var result = new SeatController(_context, _usermanager).DeleteConfirmed(s.Id);
+                    // Clear out Wishlists and Reservations to prevent RESTRICT FK crashes
+                    await _context.Set<Wishlist>().Where(w => allEventIds.Contains(w.EventId)).ExecuteDeleteAsync();
+                    await _context.Reservation.Where(r => allEventIds.Contains(r.EventId)).ExecuteDeleteAsync();
+                    await _context.Event.Where(e => allEventIds.Contains(e.Id)).SelectMany(e => e.GalleryImages).ExecuteDeleteAsync();
+
+                    if (childEventIds.Any())
+                        await _context.Event.Where(e => childEventIds.Contains(e.Id)).ExecuteDeleteAsync();
+                    
+                    if (directEventIds.Any())
+                        await _context.Event.Where(e => directEventIds.Contains(e.Id)).ExecuteDeleteAsync();
+                }
+
+                // Delete all internal structure items for the Layout
+                await _context.Seat.Where(s => s.LayoutId == id).ExecuteDeleteAsync();
+                await _context.NonSelectable.Where(ns => ns.LayoutId == id).ExecuteDeleteAsync();
+                await _context.UnitGroup.Where(ug => ug.LayoutId == id).ExecuteDeleteAsync();
+
+                // Delete the layout itself
+                _context.Layout.Remove(layout);
+                await _context.SaveChangesAsync();
+
+                // =======================================================================
+                // 4. CLEAN UP PHYSICAL DISK STORAGE
+                // =======================================================================
+                var allPathsToDelete = eventImagePaths.Concat(galleryImagePaths).Where(p => !string.IsNullOrEmpty(p)).ToList();
+                foreach (var path in allPathsToDelete)
+                {
+                    string fullPath = Path.Combine(_environment.WebRootPath, path.TrimStart('/', '\\'));
+                    if (System.IO.File.Exists(fullPath)) System.IO.File.Delete(fullPath);
                 }
             }
-            var layout = await _context.Layout.FindAsync(id);
-            _context.Layout.Remove(layout);
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(VenueLayouts));
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to execute memory-safe cascading deletion for Layout ID {Id}", id);
+            }
+
+            return RedirectToAction(nameof(VenueLayouts), new { venueId = venueId });
         }
 
         // GET: Layouts/VenueLayouts/5
@@ -292,7 +356,6 @@ namespace PtixiakiReservations.Controllers
         [Authorize(Roles = "Venue,Admin,SuperOrganizer")]
         public async Task<IActionResult> Duplicate([FromBody] DuplicateLayoutRequest request)
         {
-            // Βρίσκουμε το original layout
             var originalLayout = await _context.Layout
                 .FirstOrDefaultAsync(sa => sa.Id == request.Id);
 
@@ -301,7 +364,6 @@ namespace PtixiakiReservations.Controllers
                 return NotFound();
             }
 
-            // Δημιουργούμε νέο layout
             var duplicatedLayout = new Layout
             {
                 AreaName = request.Name,
@@ -315,16 +377,12 @@ namespace PtixiakiReservations.Controllers
             };
 
             _context.Layout.Add(duplicatedLayout);
-
-            // Save για να πάρει νέο ID
             await _context.SaveChangesAsync();
 
-            // Παίρνουμε όλα τα seats
             var originalSeats = await _context.Seat
                 .Where(s => s.LayoutId == originalLayout.Id)
                 .ToListAsync();
 
-            // Κάνουμε duplicate τα seats
             foreach (var seat in originalSeats)
             {
                 var duplicatedSeat = new Seat

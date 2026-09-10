@@ -387,7 +387,7 @@
             </svg>
         </div>
         <div class="ml-3">
-            <p class="text-sm text-emerald-800 font-bold">Event provisioned successfully!</p>
+            <p class="text-sm text-emerald-800 font-bold" id="successMessageText">Event provisioned successfully!</p>
         </div>
     </div>
 </div>
@@ -398,9 +398,7 @@
         from { opacity: 0; transform: translateY(10px); }
         to { opacity: 1; transform: translateY(0); }
     }
-    .animate-fade-in-up {
-        animation: fadeInUp 0.4s ease-out forwards;
-    }
+    .animate-fade-in-up { animation: fadeInUp 0.4s ease-out forwards; }
 </style>
 
 @section Scripts {
@@ -1007,7 +1005,7 @@
 
                     const data = await response.json(); 
                     const successAlert = document.getElementById('successMessage');
-                    const alertText = successAlert.querySelector('p'); 
+                    const alertText = document.getElementById('successMessageText'); 
                     successAlert.classList.remove('hidden');
                     
                     const currentParentId = isMaster ? data.eventId : hiddenIdInput.value;
@@ -1129,9 +1127,21 @@
                         <td class="namingData px-6 py-4 whitespace-nowrap flex items-center space-x-2">
                             <label class="hidden SubIdLabels">${ev.id}</label>
                             <input type="checkbox" class="h-4 w-4 hidden renameCheckboxes rounded border-gray-300 text-indigo-600"/>
-                            <input type="text" id="edit-input-${ev.id}" value="${ev.name}" data-original-value="${ev.name}" onkeydown="if(event.key === 'Enter') { event.preventDefault(); saveEditName(${ev.id}); }" onfocus="showEditButtons(${ev.id})" class="renameField font-bold text-gray-900 border border-transparent hover:border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full max-w-[200px] transition-colors">
-                            <button type="button" id="save-btn-${ev.id}" onclick="saveEditName(${ev.id})" class="hidden bg-emerald-500 hover:bg-emerald-600 text-white px-2 py-1 rounded text-xs transition-colors font-bold shadow-sm">Save</button>
-                            <button type="button" id="cancel-btn-${ev.id}" onclick="cancelEditName(${ev.id})" class="hidden text-gray-500 hover:text-gray-700 px-2 py-1 text-xs transition-colors font-bold">Cancel</button>
+                            
+                            <!-- Display Mode -->
+                            <div id="display-name-${ev.id}" class="flex items-center gap-2 w-full max-w-[200px]">
+                                <span class="font-bold text-gray-900 truncate">${ev.name}</span>
+                                <button type="button" onclick="enableInlineEdit(${ev.id})" class="text-gray-400 hover:text-indigo-600 transition-colors" title="Rename Sub-Event">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                                </button>
+                            </div>
+                            
+                            <!-- Edit Mode -->
+                            <div id="edit-mode-${ev.id}" class="hidden items-center gap-2 w-full max-w-[250px]">
+                                <input type="text" id="edit-input-${ev.id}" value="${ev.name}" data-original-value="${ev.name}" onkeydown="if(event.key === 'Enter') { event.preventDefault(); saveEditName(${ev.id}); }" class="renameField font-bold text-gray-900 border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full transition-colors">
+                                <button type="button" id="save-btn-${ev.id}" onclick="saveEditName(${ev.id})" class="bg-emerald-500 hover:bg-emerald-600 text-white px-2 py-1 rounded text-xs transition-colors font-bold shadow-sm">Save</button>
+                                <button type="button" id="cancel-btn-${ev.id}" onclick="cancelEditName(${ev.id})" class="text-gray-500 hover:text-gray-700 px-2 py-1 text-xs transition-colors font-bold">Cancel</button>
+                            </div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             <div class="font-bold text-gray-700">${ev.date}</div>
@@ -1152,7 +1162,13 @@
             document.getElementById('ConfirmMultiRenameBtn').classList.toggle('hidden', !checked);
             document.querySelectorAll('.renameCheckboxes').forEach(cb => cb.classList.toggle('hidden', !checked));
             document.querySelectorAll('.renameField').forEach(f => f.disabled = checked);
-            if (checked) { document.querySelectorAll('.SubIdLabels').forEach(lbl => cancelEditName(lbl.textContent)); }
+            
+            if (checked) { 
+                document.querySelectorAll('.SubIdLabels').forEach(lbl => cancelEditName(lbl.textContent)); 
+                document.querySelectorAll('[id^="display-name-"] button').forEach(btn => btn.classList.add('hidden'));
+            } else {
+                document.querySelectorAll('[id^="display-name-"] button').forEach(btn => btn.classList.remove('hidden'));
+            }
         };
 
         window.showRenameModal = function() {
@@ -1191,24 +1207,29 @@
             } catch (e) { console.error("Error bulk rename", e); }
         };
 
-        window.showEditButtons = function(id) {
-            document.getElementById(`save-btn-${id}`).classList.remove('hidden');
-            document.getElementById(`cancel-btn-${id}`).classList.remove('hidden');
+        // Inline Single Edit Functions
+        window.enableInlineEdit = function(id) {
+            document.getElementById(`display-name-${id}`).classList.add('hidden');
+            const editMode = document.getElementById(`edit-mode-${id}`);
+            editMode.classList.remove('hidden');
+            editMode.classList.add('flex');
+            document.getElementById(`edit-input-${id}`).focus();
         };
 
         window.saveEditName = async function(id) {
             const inputField = document.getElementById(`edit-input-${id}`);
             const newName = inputField.value.trim();
             if (!newName) { alert("Name cannot be empty."); return; }
-            if (!confirm("Rename this specific sub-event?")) { cancelEditName(id); return; }
 
             try {
                 const res = await fetch(`/Events/EditSubSelectedName?id=${id}&NewName=${encodeURIComponent(newName)}`, { method: 'POST' });
                 if (res.ok) {
                     inputField.setAttribute('data-original-value', newName);
-                    document.getElementById(`save-btn-${id}`).classList.add('hidden');
-                    document.getElementById(`cancel-btn-${id}`).classList.add('hidden');
-                    inputField.blur();
+                    document.querySelector(`#display-name-${id} span`).textContent = newName;
+                    
+                    document.getElementById(`edit-mode-${id}`).classList.add('hidden');
+                    document.getElementById(`edit-mode-${id}`).classList.remove('flex');
+                    document.getElementById(`display-name-${id}`).classList.remove('hidden');
                 } else alert("Failed to rename the event.");
             } catch (e) { console.error("Error renaming", e); }
         };
@@ -1217,16 +1238,16 @@
             const inputField = document.getElementById(`edit-input-${id}`);
             if(inputField) {
                 inputField.value = inputField.getAttribute('data-original-value');
-                document.getElementById(`save-btn-${id}`).classList.add('hidden');
-                document.getElementById(`cancel-btn-${id}`).classList.add('hidden');
-                inputField.blur();
+                document.getElementById(`edit-mode-${id}`).classList.add('hidden');
+                document.getElementById(`edit-mode-${id}`).classList.remove('flex');
+                document.getElementById(`display-name-${id}`).classList.remove('hidden');
             }
         };
 
         window.deleteSubEvent = async function(id) {
             if (!confirm("Are you sure you want to delete this specific sub-event?")) return;
             try {
-                const res = await fetch(`/Events/Delete?id=${id}&dAll=false`);
+                const res = await fetch(`/Events/Delete?id=${id}&dAll=false`, { method: 'DELETE' });
                 if (res.ok) updateSubEventsList(document.getElementById('ParentEventId').value);
             } catch (e) { console.error("Error deleting", e); }
         };
