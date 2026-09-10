@@ -269,7 +269,13 @@ public class EventsController(
             eventsQuery = eventsQuery.Where(e => 
                 e.Name.ToLower().Contains(term) || 
                 (e.Venue != null && e.Venue.Name.ToLower().Contains(term)) || 
-                (e.Venue != null && e.Venue.City != null && e.Venue.City.Name.ToLower().Contains(term))
+                (e.Venue != null && e.Venue.City != null && e.Venue.City.Name.ToLower().Contains(term)) ||
+                // Fixed: Search dynamically deep-inspects sub-event names and attributes
+                e.ChildEvents.Any(c => 
+                    c.Name.ToLower().Contains(term) || 
+                    (c.Venue != null && c.Venue.Name.ToLower().Contains(term)) ||
+                    (c.Venue != null && c.Venue.City != null && c.Venue.City.Name.ToLower().Contains(term))
+                )
             );
             ViewBag.SearchTerm = searchTerm; 
         }
@@ -628,14 +634,16 @@ public class EventsController(
                         var eventForDay = new Event
                         {
                             Name = newEvent.Name + " Day " + count,
-                            Description = newEvent.Description,
+                            // Fixed: Sub-events inherit core descriptive data directly from the parent
+                            Description = (isChild && parentEvent != null) ? parentEvent.Description : newEvent.Description,
+                            EventTypeId = (isChild && parentEvent != null) ? parentEvent.EventTypeId : newEvent.EventTypeId,
+                            ImagePath = (isChild && parentEvent != null && string.IsNullOrEmpty(newEvent.ImagePath)) ? parentEvent.ImagePath : newEvent.ImagePath,
+                            
                             TicketPrice = newEvent.TicketPrice,
                             VenueId = newEvent.VenueId, 
-                            EventTypeId = newEvent.EventTypeId,
                             LayoutId = newEvent.LayoutId, 
                             StartDateTime = eventStart,
                             EndTime = eventEnd,
-                            ImagePath = newEvent.ImagePath,
                             OrganizerId = userId,
                             ParentEventId = newEvent.ParentEventId ?? fatherEvent?.Id
                         };
@@ -660,6 +668,11 @@ public class EventsController(
                             message = $"Sub-event timeframe securely blocked. It falls strictly outside the Master Event's allowed timeframe ({parentEvent.StartDateTime:MMM d, yyyy h:mm tt} - {parentEvent.EndTime:MMM d, yyyy h:mm tt})." 
                         });
                     }
+                    
+                    // Fixed: Sub-events inherit core descriptive data directly from the parent
+                    newEvent.Description = parentEvent.Description;
+                    newEvent.EventTypeId = parentEvent.EventTypeId;
+                    if (string.IsNullOrEmpty(newEvent.ImagePath)) newEvent.ImagePath = parentEvent.ImagePath;
                 }
 
                 context.Add(newEvent);
@@ -832,6 +845,18 @@ public class EventsController(
                     string galleryFolder = Path.Combine(environment.WebRootPath, "images", "events", "gallery");
                     if (!Directory.Exists(galleryFolder)) Directory.CreateDirectory(galleryFolder);
 
+                    // FIX: Delete old gallery images from Database and Disk if new ones are provided
+                    if (originalEvent.GalleryImages != null && originalEvent.GalleryImages.Any())
+                    {
+                        foreach (var oldImg in originalEvent.GalleryImages)
+                        {
+                            string oldPath = Path.Combine(environment.WebRootPath, oldImg.ImagePath.TrimStart('/', '\\'));
+                            if (System.IO.File.Exists(oldPath)) System.IO.File.Delete(oldPath);
+                        }
+                        context.RemoveRange(originalEvent.GalleryImages);
+                        originalEvent.GalleryImages.Clear();
+                    }
+
                     originalEvent.GalleryImages ??= new List<EventImage>();
 
                     foreach (var file in galleryFiles)
@@ -916,31 +941,66 @@ public class EventsController(
         return correctDay;
     }
 
+    
     [Authorize]
     [HttpDelete]
     public async Task<IActionResult> Delete(int? id)
     {
         if (id == null) return NotFound();
 
-        var ev = await context.Event.FirstOrDefaultAsync(e => e.Id == id);
+        var ev = await context.Event
+            .Include(e => e.ChildEvents) 
+            .Include(e => e.GalleryImages) 
+            .FirstOrDefaultAsync(e => e.Id == id);
             
         if (ev == null) return NotFound();
 
         var userId = userManager.GetUserId(User);
         if (ev.OrganizerId != userId && !User.IsInRole("Admin")) return Unauthorized();
 
-        if (ev.ParentEventId == null)
+        var eventIdsToDelete = new List<int> { ev.Id };
+        if (ev.ChildEvents != null && ev.ChildEvents.Any())
         {
-            await context.Event
-                .Where(e => e.ParentEventId == id)
-                .ExecuteDeleteAsync();
+            eventIdsToDelete.AddRange(ev.ChildEvents.Select(c => c.Id));
         }
 
-        await context.Event
-            .Where(e => e.Id == id)
-            .ExecuteDeleteAsync();
+        // --- FIXED: Remove Wishlist references before deleting the event ---
+        var wishlistsToDelete = await context.Set<Wishlist>()
+            .Where(w => eventIdsToDelete.Contains(w.EventId))
+            .ToListAsync();
 
-        return Ok();
+        if (wishlistsToDelete.Any())
+        {
+            context.Set<Wishlist>().RemoveRange(wishlistsToDelete);
+        }
+
+        var reservationsToDelete = await context.Reservation
+            .Where(r => eventIdsToDelete.Contains(r.EventId))
+            .ToListAsync();
+
+        if (reservationsToDelete.Any())
+        {
+            context.Reservation.RemoveRange(reservationsToDelete);
+        }
+
+        // Clean up child events
+        if (ev.ChildEvents != null && ev.ChildEvents.Any())
+        {
+            context.Event.RemoveRange(ev.ChildEvents);
+        }
+
+        context.Event.Remove(ev);
+
+        try 
+        {
+            await context.SaveChangesAsync();
+            return Ok();
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to delete event.");
+            return BadRequest(new { success = false, message = "Could not delete event due to constrained related data." });
+        }
     }
     
     private bool EventExists(int id) => context.Event.Any(e => e.Id == id);
@@ -1007,7 +1067,9 @@ public class EventsController(
                     e.Name.ToLower().Contains(term) ||
                     (e.Venue != null && e.Venue.Name.ToLower().Contains(term)) ||
                     (e.Venue != null && e.Venue.City != null && e.Venue.City.Name.ToLower().Contains(term)) ||
+                    // Fixed: Search dynamically deep-inspects sub-event names and attributes
                     e.ChildEvents.Any(c => 
+                        c.Name.ToLower().Contains(term) || 
                         (c.Venue != null && c.Venue.Name.ToLower().Contains(term)) ||
                         (c.Venue != null && c.Venue.City != null && c.Venue.City.Name.ToLower().Contains(term))
                     )
@@ -1159,7 +1221,9 @@ public class EventsController(
     {
         try
         {
+            var userId = userManager.GetUserId(User);
             var events = await context.Event
+                .Where(e => e.OrganizerId == userId) // Fixed: Database-level filtering for optimization
                 .OrderByDescending(e => e.StartDateTime)
                 .Select(e => new {
                     id = e.Id,
@@ -1170,6 +1234,7 @@ public class EventsController(
                     venue = e.Venue != null ? new { name = e.Venue.Name } : null,
                     eventType = e.EventType != null ? new { name = e.EventType.Name } : null,
                     organizerId = e.OrganizerId,
+                    parentEventId = e.ParentEventId, // Fixed: Added Parent ID tracking for frontend UI render checks
                     ticketPrice = e.TicketPrice,
                     minPrice = e.ChildEvents.Any() ? e.ChildEvents.Min(c => c.TicketPrice) : e.TicketPrice,
                     maxPrice = e.ChildEvents.Any() ? e.ChildEvents.Max(c => c.TicketPrice) : e.TicketPrice
@@ -1254,10 +1319,12 @@ public class EventsController(
         try
         {
             var userId = userManager.GetUserId(User);
-            var originalEvent = await context.Event.Include(e => e.Venue).FirstOrDefaultAsync(e => e.Id == id);
+            var originalEvent = await context.Event.FirstOrDefaultAsync(e => e.Id == id);
             
             if (originalEvent == null) return NotFound();
-            if (originalEvent.Venue.UserId != userId && !User.IsInRole("Admin")) return Unauthorized();
+            
+            // Fixed: Check owner on event Organizer instead of Venue (which threw 500 Null Reference crashes if missing)
+            if (originalEvent.OrganizerId != userId && !User.IsInRole("Admin")) return Unauthorized();
 
             originalEvent.Name = NewName;
             await context.SaveChangesAsync();
@@ -1303,7 +1370,7 @@ public class EventsController(
                 name = e.Name, 
                 date = e.StartDateTime.ToString("dddd, MMM d, yyyy"),
                 time = e.StartDateTime.ToString("h:mm tt") + " - " + e.EndTime.ToString("h:mm tt"),
-                layout = e.Layout.AreaName,
+                layout = e.Layout != null ? e.Layout.AreaName : "No Layout",
                 ticketPrice = e.TicketPrice
             })
             .ToListAsync();
@@ -1318,10 +1385,10 @@ public class EventsController(
         try
         {
             var userId = userManager.GetUserId(User);
-            var childEvent = await context.Event.Include(e => e.Venue).FirstOrDefaultAsync(e => e.Id == data.ChildId);
+            var childEvent = await context.Event.FirstOrDefaultAsync(e => e.Id == data.ChildId);
 
             if (childEvent == null) return NotFound(new { success = false, message = "Requested identifier missing." });
-            if (childEvent.Venue.UserId != userId && !User.IsInRole("Admin")) return Unauthorized();
+            if (childEvent.OrganizerId != userId && !User.IsInRole("Admin")) return Unauthorized();
 
             childEvent.ParentEventId = data.ParentId;
             await context.SaveChangesAsync();
@@ -1382,11 +1449,11 @@ public class EventsController(
     [HttpPost]
     public async Task<IActionResult> DuplicateSubEvent(int id)
     {
-        var ev = await context.Event.Include(e => e.Venue).AsNoTracking().FirstOrDefaultAsync(e => e.Id == id);
+        var ev = await context.Event.AsNoTracking().FirstOrDefaultAsync(e => e.Id == id);
         if (ev == null) return NotFound();
 
         var userId = userManager.GetUserId(User);
-        if (ev.Venue.UserId != userId && !User.IsInRole("Admin")) return Unauthorized();
+        if (ev.OrganizerId != userId && !User.IsInRole("Admin")) return Unauthorized();
 
         var newEvent = new Event
         {
@@ -1398,6 +1465,7 @@ public class EventsController(
             VenueId = ev.VenueId,
             LayoutId = ev.LayoutId,
             ParentEventId = ev.ParentEventId,
+            OrganizerId = userId,
             ImagePath = ev.ImagePath
         };
 
@@ -1442,10 +1510,10 @@ public class EventsController(
     {
         try
         {
-            var eventsToRename = await context.Event.Include(e => e.Venue).Where(e => ids.Contains(e.Id)).ToListAsync();
+            var eventsToRename = await context.Event.Where(e => ids.Contains(e.Id)).ToListAsync();
             var userId = userManager.GetUserId(User);
 
-            if (eventsToRename.Any(e => e.Venue.UserId != userId) && !User.IsInRole("Admin")) return Unauthorized();
+            if (eventsToRename.Any(e => e.OrganizerId != userId) && !User.IsInRole("Admin")) return Unauthorized();
 
             var count = 1;
             foreach (var ev in eventsToRename)
@@ -1484,12 +1552,20 @@ public class EventsController(
 
         var eventIds = events.Select(e => e.Id).ToList();
         var childEvents = await context.Event
+            .Include(e => e.Venue)
+                .ThenInclude(v => v.City)
             .Where(e => e.ParentEventId != null && eventIds.Contains(e.ParentEventId.Value))
             .ToListAsync();
 
         var result = events.Select(e => {
             var children = childEvents.Where(c => c.ParentEventId == e.Id).ToList();
             var childPrices = children.Where(c => c.TicketPrice != null).Select(c => c.TicketPrice.Value).ToList();
+            
+            // Find distinct cities of all child events
+            var childCities = children.Where(c => c.Venue?.City?.Name != null)
+                                      .Select(c => c.Venue.City.Name)
+                                      .Distinct()
+                                      .ToList();
             
             return new {
                 id = e.Id,
@@ -1505,6 +1581,9 @@ public class EventsController(
                 childCount = children.Count,
                 minPrice = childPrices.Any() ? childPrices.Min() : (double?)null,
                 maxPrice = childPrices.Any() ? childPrices.Max() : (double?)null,
+                
+                distinctCities = childCities.Count,
+                cityNames = childCities,
                 
                 parentEventId = e.ParentEventId
             };
@@ -1528,12 +1607,20 @@ public class EventsController(
 
         var eventIds = events.Select(e => e.Id).ToList();
         var childEvents = await context.Event
+            .Include(e => e.Venue)
+                .ThenInclude(v => v.City)
             .Where(e => e.ParentEventId != null && eventIds.Contains(e.ParentEventId.Value))
             .ToListAsync();
 
         var result = events.Select(e => {
             var children = childEvents.Where(c => c.ParentEventId == e.Id).ToList();
             var childPrices = children.Where(c => c.TicketPrice != null).Select(c => c.TicketPrice.Value).ToList();
+            
+            // Find distinct cities of all child events
+            var childCities = children.Where(c => c.Venue?.City?.Name != null)
+                                      .Select(c => c.Venue.City.Name)
+                                      .Distinct()
+                                      .ToList();
             
             return new {
                 id = e.Id,
@@ -1549,6 +1636,9 @@ public class EventsController(
                 childCount = children.Count,
                 minPrice = childPrices.Any() ? childPrices.Min() : (double?)null,
                 maxPrice = childPrices.Any() ? childPrices.Max() : (double?)null,
+                
+                distinctCities = childCities.Count,
+                cityNames = childCities,
                 
                 parentEventId = e.ParentEventId
             };

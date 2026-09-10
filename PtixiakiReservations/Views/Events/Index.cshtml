@@ -24,6 +24,9 @@
 <div class="bg-gradient-to-br from-gray-50 to-blue-50/50 min-h-screen py-8 px-4 sm:px-6 lg:px-8 font-sans">
     <div class="max-w-7xl mx-auto space-y-6">
         
+        <!-- Anti-Forgery Token for secure AJAX interactions -->
+        @Html.AntiForgeryToken()
+
         <!-- Contextual Page Header & Call to Action -->
         <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
             <div class="bg-gradient-to-r from-blue-600 to-indigo-700 px-6 sm:px-8 py-8">
@@ -249,13 +252,14 @@
                     matchesSearch = (
                         (event.name && event.name.toLowerCase().includes(searchTerm)) ||
                         (event.eventType && event.eventType.name.toLowerCase().includes(searchTerm)) ||
-                        (event.venue && event.venue.name.toLowerCase().includes(searchTerm))
+                        (event.venue && event.venue.name && event.venue.name.toLowerCase().includes(searchTerm))
                     );
                 }
 
+                // Robust Ownership Evaluation: Converts both IDs to lowercase to bypass Identity casing mismatches
                 let matchesOwnership = true;
                 if (ownershipFilter === 'mine') {
-                    matchesOwnership = (event.organizerId === currentUserId);
+                    matchesOwnership = (event.organizerId && currentUserId && event.organizerId.toLowerCase() === currentUserId.toLowerCase());
                 }
 
                 let matchesDate = true;
@@ -327,7 +331,20 @@
                 const rowHtml = `
                     <tr class="hover:bg-indigo-50/30 transition-colors group">
                         <td class="px-6 py-4">
-                            <div class="text-sm font-bold text-gray-900 group-hover:text-indigo-700 transition-colors">${event.name}</div>
+                            <!-- Display Mode -->
+                            <div id="display-name-${event.id}" class="flex items-center gap-2 w-full max-w-[250px]">
+                                <div class="text-sm font-bold text-gray-900 group-hover:text-indigo-700 transition-colors truncate">${event.name}</div>
+                                <button type="button" onclick="enableInlineEdit(${event.id})" class="text-gray-400 hover:text-indigo-600 transition-colors shrink-0" title="Rename Event">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                                </button>
+                            </div>
+                            
+                            <!-- Inline Edit Mode -->
+                            <div id="edit-mode-${event.id}" class="hidden items-center gap-2 w-full max-w-[300px]">
+                                <input type="text" id="edit-input-${event.id}" value="${event.name}" data-original-value="${event.name}" onkeydown="if(event.key === 'Enter') { event.preventDefault(); saveEditName(${event.id}); }" class="font-bold text-gray-900 border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full transition-colors">
+                                <button type="button" onclick="saveEditName(${event.id})" class="bg-emerald-500 hover:bg-emerald-600 text-white px-2 py-1 rounded text-xs transition-colors font-bold shadow-sm shrink-0">Save</button>
+                                <button type="button" onclick="cancelEditName(${event.id})" class="text-gray-500 hover:text-gray-700 px-2 py-1 text-xs transition-colors font-bold shrink-0">Cancel</button>
+                            </div>
                         </td>
                         <td class="px-6 py-4">
                             <div class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-gray-100 text-gray-600 border border-gray-200">
@@ -341,7 +358,7 @@
                         <td class="px-6 py-4">
                             <div class="text-sm font-medium text-gray-700 flex items-center">
                                 <svg class="w-4 h-4 mr-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                                ${event.venue ? event.venue.name : 'TBA'}
+                                ${event.venue ? event.venue.name : '-'}
                             </div>
                         </td>
                         <td class="px-6 py-4">
@@ -442,7 +459,9 @@
 
             const editBtn = document.getElementById("modal-edit-btn");
             const deleteBtn = document.getElementById("modal-delete-btn");
-            const isOwner = event.organizerId === currentUserId || event.organizerId === undefined; 
+            
+            // Bypass Identity casing issues securely
+            const isOwner = (event.organizerId && currentUserId && event.organizerId.toLowerCase() === currentUserId.toLowerCase()); 
             const canEdit = userIsAdmin || ((userIsEventManager || userIsSuper) && isOwner);
 
             if (canEdit) {
@@ -508,7 +527,7 @@
             $("#event-details-modal").removeClass("hidden");
         };
 
-        /** Prompts user and immediately hits the Delete controller */
+        /** Prompts user and hits the Delete controller, securing the request with CSRF token */
         window.triggerEventDeletion = function(eventId) {
             const warningMessage = "Are you absolutely sure you want to delete this event?\n\nWARNING: If this is a Master Event, ALL of its Sub-Events will be permanently deleted alongside it. This cannot be undone.";
             
@@ -519,13 +538,18 @@
                 deleteBtn.innerHTML = "Deleting...";
                 deleteBtn.disabled = true;
 
+                // Bind CSRF verification
+                const token = $('input[name="__RequestVerificationToken"]').val();
+
                 $.ajax({
-                    url: '/Events/Delete?id=' + eventId,
+                    url: `/Events/Delete?id=${eventId}`,
                     type: 'DELETE',
+                    headers: { "RequestVerificationToken": token },
                     success: function() {
                         deleteBtn.innerHTML = "Delete Event";
                         deleteBtn.disabled = false;
 
+                        // Safely purge state memory
                         allEvents = allEvents.filter(e => e.id !== eventId && e.parentEventId !== eventId);
                         
                         closeModal();
@@ -533,12 +557,63 @@
                     },
                     error: function(xhr) {
                         console.error("Deletion failed:", xhr);
-                        alert("An error occurred while attempting to delete the event. Check server logs.");
+                        alert("Deletion blocked: Ensure you possess administrative ownership permissions.");
                         
                         deleteBtn.innerHTML = originalText;
                         deleteBtn.disabled = false;
                     }
                 });
+            }
+        };
+
+        /** Inline Edit Module */
+        window.enableInlineEdit = function(id) {
+            document.getElementById(`display-name-${id}`).classList.add('hidden');
+            const editMode = document.getElementById(`edit-mode-${id}`);
+            editMode.classList.remove('hidden');
+            editMode.classList.add('flex');
+            document.getElementById(`edit-input-${id}`).focus();
+        };
+
+        window.saveEditName = async function(id) {
+            const inputField = document.getElementById(`edit-input-${id}`);
+            const newName = inputField.value.trim();
+            if (!newName) { alert("Name cannot be empty."); return; }
+
+            const token = $('input[name="__RequestVerificationToken"]').val();
+
+            try {
+                const res = await fetch(`/Events/EditSubSelectedName?id=${id}&NewName=${encodeURIComponent(newName)}`, { 
+                    method: 'POST',
+                    headers: { "RequestVerificationToken": token }
+                });
+                
+                if (res.ok) {
+                    inputField.setAttribute('data-original-value', newName);
+                    document.querySelector(`#display-name-${id} div`).textContent = newName;
+                    
+                    // Update state memory
+                    const ev = allEvents.find(e => e.id === id);
+                    if (ev) ev.name = newName;
+                    
+                    document.getElementById(`edit-mode-${id}`).classList.add('hidden');
+                    document.getElementById(`edit-mode-${id}`).classList.remove('flex');
+                    document.getElementById(`display-name-${id}`).classList.remove('hidden');
+                } else {
+                    alert("Failed to update the event name.");
+                }
+            } catch (e) { 
+                console.error("Renaming exception:", e); 
+            }
+        };
+
+        window.cancelEditName = function(id) {
+            const inputField = document.getElementById(`edit-input-${id}`);
+            if(inputField) {
+                inputField.value = inputField.getAttribute('data-original-value');
+                document.getElementById(`edit-mode-${id}`).classList.add('hidden');
+                document.getElementById(`edit-mode-${id}`).classList.remove('flex');
+                document.getElementById(`display-name-${id}`).classList.remove('hidden');
             }
         };
 

@@ -21,6 +21,9 @@
 <div class="bg-gradient-to-br from-gray-50 to-blue-50/50 min-h-screen py-8 px-4 sm:px-6 lg:px-8 font-sans">
     <div class="max-w-7xl mx-auto">
         
+        <!-- Anti-Forgery Token for AJAX deletions -->
+        @Html.AntiForgeryToken()
+
         <!-- ============================================================== -->
         <!-- DASHBOARD HEADER & KPI STATISTICS                              -->
         <!-- ============================================================== -->
@@ -60,7 +63,7 @@
                         </div>
                         <div class="ml-4">
                             <p class="text-xs font-bold text-gray-500 uppercase tracking-wider">@(currentFilter == "all" ? "Total Venues" : "My Venues")</p>
-                            <p class="text-xl font-extrabold text-gray-900">@(ViewBag.TotalCount ?? Model.Count())</p>
+                            <p id="kpi-venue-count" class="text-xl font-extrabold text-gray-900">@(ViewBag.TotalCount ?? Model.Count())</p>
                         </div>
                     </div>
 
@@ -86,7 +89,7 @@
                         </div>
                         <div class="ml-4">
                             <p class="text-xs font-bold text-gray-500 uppercase tracking-wider">Events</p>
-                            <p class="text-xl font-extrabold text-gray-900">@(ViewBag.EventCount ?? 0)</p>
+                            <p id="kpi-event-count" class="text-xl font-extrabold text-gray-900">@(ViewBag.EventCount ?? 0)</p>
                         </div>
                     </div>
                 </div>
@@ -178,7 +181,8 @@
                     imagePath = ViewBag.ImagePaths[item.Id];
                 }
 
-                <div class="group bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-all duration-200 transform hover:-translate-y-1">
+                <div class="group bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-all duration-200 transform hover:-translate-y-1 relative" 
+                     id="venue-card-@item.Id">
                     <!-- Image with overlay -->
                     <div class="relative h-48 w-full overflow-hidden">
                         <img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
@@ -262,13 +266,22 @@
                                 </svg>
                             </a>
 
-                            <a asp-action="Edit" asp-route-id="@item.Id"
-                               class="inline-flex items-center text-sm font-bold text-gray-600 hover:text-gray-800 transition-colors">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="mr-1 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                </svg>
-                                Edit
-                            </a>
+                            <div class="flex items-center gap-3">
+                                <a asp-action="Edit" asp-route-id="@item.Id"
+                                   class="inline-flex items-center text-sm font-bold text-gray-600 hover:text-gray-800 transition-colors">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="mr-1 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                    </svg>
+                                    Edit
+                                </a>
+                                
+                                <button type="button" onclick="confirmVenueDeletion(@item.Id, '@item.Name')" 
+                                        class="inline-flex items-center text-sm font-bold text-red-500 hover:text-red-700 transition-colors bg-red-50 hover:bg-red-100 px-2.5 py-1.5 rounded-lg border border-red-100">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -428,5 +441,43 @@
                 executeSearch();
             }
         });
+
+        /** Deletion Handler with Warning Prompt */
+        function confirmVenueDeletion(venueId, venueName) {
+            const msg = `CRITICAL WARNING:\n\nAre you absolutely sure you want to delete "${venueName}"?\n\nThis will permanently destroy ALL associated Layouts, Events, Sub-Events, Reservations, and Floorplan Configurations tied to this location. This action CANNOT be reversed.`;
+            
+            if (confirm(msg)) {
+                const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+                
+                // Visual feedback
+                const card = document.getElementById(`venue-card-${venueId}`);
+                
+                if (card) {
+                    card.style.opacity = '0.5';
+                    card.style.pointerEvents = 'none';
+                }
+
+                $.ajax({
+                    url: '/Venue/Delete',
+                    type: 'POST',
+                    data: {
+                        id: venueId,
+                        __RequestVerificationToken: token
+                    },
+                    success: function() {
+                        // Reload the page to accurately recalculate all KPIs (Venues, Cities, Events)
+                        window.location.reload();
+                    },
+                    error: function(xhr) {
+                        console.error("Failed to delete venue:", xhr);
+                        alert("Deletion Blocked: You must be the owner of this venue or a System Administrator to delete it.");
+                        if (card) {
+                            card.style.opacity = '1';
+                            card.style.pointerEvents = 'auto';
+                        }
+                    }
+                });
+            }
+        }
     </script>
 }

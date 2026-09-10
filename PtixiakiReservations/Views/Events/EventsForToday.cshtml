@@ -258,6 +258,13 @@
             let currentAutocompleteIndex = -1;
             let maxAutocompleteResults = 8;
 
+            // Parse URL parameters for cross-page navigation mapping
+            const urlParams = new URLSearchParams(window.location.search);
+
+            if (urlParams.has('searchTerm')) {
+                $('#search-term').val(urlParams.get('searchTerm'));
+            }
+
             dateRangePicker = flatpickr("#date-range", {
                 mode: "range",
                 dateFormat: "Y-m-d",
@@ -273,6 +280,37 @@
             $('#filtered-count').text(totalRecords);
             updatePagination(totalPages > 1);
 
+            // Refactor loadEventTypes to return a promise for sequential initialization
+            function loadEventTypes() {
+                return $.getJSON('/Events/GetEventTypes')
+                    .done(function(data) {
+                        const dropdown = $('#event-type');
+                        $.each(data, function(i, item) {
+                            dropdown.append($('<option>', {
+                                value: item.id,
+                                text: item.name
+                            }));
+                        });
+                        
+                        // Bind URL category parameter if present
+                        if (urlParams.has('eventTypeId')) {
+                            dropdown.val(urlParams.get('eventTypeId'));
+                        }
+                    })
+                    .fail(function(error) {
+                        console.error('Failed to load event types:', error);
+                    });
+            }
+
+            $('#events-container').addClass('hidden');
+            $('#loading-indicator').removeClass('hidden');
+
+            // Coordinate initial load: fetch categories, apply params, then search
+            loadEventTypes().always(function() {
+                validateSearch();
+                performSearch();
+            });
+
             $('#reset-date').click(function() {
                 dateRangePicker.clear();
                 validateSearch();
@@ -285,12 +323,6 @@
                 validateSearch();
                 window.location.href = '@Url.Action("EventsForToday", "Events")';
             });
-
-            loadEventTypes();
-
-            $('#events-container').addClass('hidden');
-            $('#loading-indicator').removeClass('hidden');
-            performSearch();
 
             $('#search-term').on('input', function() {
                 const query = $(this).val().trim();
@@ -342,22 +374,6 @@
                     $('#autocomplete-dropdown').addClass('hidden');
                 }
             });
-
-            function loadEventTypes() {
-                $.getJSON('/Events/GetEventTypes')
-                    .done(function(data) {
-                        const dropdown = $('#event-type');
-                        $.each(data, function(i, item) {
-                            dropdown.append($('<option>', {
-                                value: item.id,
-                                text: item.name
-                            }));
-                        });
-                    })
-                    .fail(function(error) {
-                        console.error('Failed to load event types:', error);
-                    });
-            }
 
             function fetchAutocompleteResults(query) {
                 $.ajax({
@@ -602,8 +618,6 @@
                             const childCount = event.childCount || event.ChildCount || 0;
                             let priceDisplayHtml = "";
 
-                            // If this event has children, display the min/max range of its children.
-                            // Otherwise, display its own ticket price.
                             if (childCount > 0) {
                                 const minP = event.minPrice !== undefined ? event.minPrice : event.MinPrice;
                                 const maxP = event.maxPrice !== undefined ? event.maxPrice : event.MaxPrice;
@@ -616,7 +630,6 @@
                                         priceDisplayHtml = `€${minP} - €${maxP}`;
                                     }
                                 } else {
-                                    // Fallback if the aggregated min/max prices are not present
                                     priceDisplayHtml = (tPrice != null && tPrice > 0) ? `€${tPrice}` : "Free";
                                 }
                             } else {
@@ -627,6 +640,33 @@
                                     priceDisplayHtml = "Free";
                                 }
                             }
+
+                            // Resolve hierarchical location bounds
+                            const distinctCities = event.distinctCities || event.DistinctCities || 0;
+                            const cityNames = event.cityNames || event.CityNames || [];
+                            const baseCity = event.cityName || event.CityName || 'Unknown';
+
+                            let locationText = baseCity;
+                            let tooltipHtml = '';
+
+                            if (childCount > 0) {
+                                if (distinctCities > 1) {
+                                    locationText = distinctCities + ' Cities';
+                                    tooltipHtml = `<span class="tooltip-text" role="tooltip">${cityNames.join(', ')}</span>`;
+                                } else if (distinctCities === 1 && cityNames.length > 0) {
+                                    locationText = cityNames[0];
+                                }
+                            }
+
+                            const cityBadgeHtml = tooltipHtml !== '' 
+                                ? `<div class="flex items-center gap-1"><p>${locationText}</p>${tooltipHtml}</div>` 
+                                : `<p>${locationText}</p>`;
+
+                            const hasMultipleVenues = event.hasMultipleVenues || event.HasMultipleVenues || false;
+                            const venueName = event.venueName || event.VenueName || (event.venue ? event.venue.name : 'No Venue');
+                            let venueDisplayHtml = hasMultipleVenues 
+                                ? `<p class="text-sm font-medium text-gray-600">Multiple Locations</p>` 
+                                : `<p class="text-sm font-medium text-gray-600">${venueName}</p>`;
 
                             let wishlistBadge = `
                             <div class="wishlist-badge cursor-help absolute top-7 left-7 bg-white/90 backdrop-blur-sm border border-gray-100 text-indigo-800 p-2 z-20 rounded-full shadow-sm hover:bg-white transition-colors wishlist-id-${eventId}">
@@ -661,23 +701,6 @@
                             } else {
                                 statusBadgeHtml = `<div class="bg-gray-600/95 backdrop-blur-sm text-white text-[10px] font-extrabold px-3 py-1.5 rounded-full shadow-sm tracking-wide uppercase border border-gray-500">ENDED</div>`;
                             }
-
-                            const hasMultipleCities = event.hasMultipleCities || event.HasMultipleCities || false;
-                            const distinctCities = event.distinctCities || event.DistinctCities || 0;
-                            let cityName = event.cityNames || event.cityNames[0];
-                            if (event.distinctCities === 0) cityName = event.cityName;
-
-                            const cityNamesList = event.cityNames ? event.cityNames.join(', ') : '';
-                            
-                            let cityBadgeHtml = hasMultipleCities 
-                                ? `<p>${distinctCities} Cities</p><span class="tooltip-text" role="tooltip">${cityNamesList}</span>` 
-                                : `<p>${cityName}</p>`;
-
-                            const hasMultipleVenues = event.hasMultipleVenues || event.HasMultipleVenues || false;
-                            const venueName = event.venueName || event.VenueName || (event.venue ? event.venue.name : 'No Venue');
-                            let venueDisplayHtml = hasMultipleVenues 
-                                ? `<p class="text-sm font-medium text-gray-600">Multiple Locations</p>` 
-                                : `<p class="text-sm font-medium text-gray-600">${venueName}</p>`;
 
                             const categoryBadgeHtml = event.eventType ? `
                                 <div class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-gray-100 text-gray-600 border border-gray-200">
@@ -722,8 +745,8 @@
                                         <div class="flex items-center gap-2 mb-3">
                                             ${categoryBadgeHtml}
                                             <div class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                                <svg class="w-3.5 h-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" /></svg>
-                                                ${priceDisplayHtml}
+                                                
+                                                €${priceDisplayHtml} 
                                             </div>
                                         </div>
                                         
@@ -911,16 +934,34 @@
 
                     events.forEach((event) => {
                         const formattedStartDate = new Date(event.startDateTime).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-                        const hasMultipleCities = event.hasMultipleCities || false;
-                        const distinctCities = event.distinctCities || 0;
-                        const cityName = event.distinctCities === 0 ? event.cityName : (event.cityNames ? event.cityNames[0] : 'Unknown');
-                        let locationText = hasMultipleCities ? `${distinctCities} Cities` : cityName;
                         
+                        // Resolve hierarchical location bounds for carousel
                         const childCount = event.childCount || event.ChildCount || 0;
+                        const distinctCities = event.distinctCities || event.DistinctCities || 0;
+                        const cityNames = event.cityNames || event.CityNames || [];
+                        const baseCity = event.cityName || event.CityName || 'Unknown';
+
+                        let locationText = baseCity;
+                        let tooltipHtml = '';
+
+                        if (childCount > 0) {
+                            if (distinctCities > 1) {
+                                locationText = distinctCities + ' Cities';
+                                tooltipHtml = `<span class="tooltip-text cursor-help" role="tooltip">${cityNames.join(', ')}</span>`;
+                            } else if (distinctCities === 1 && cityNames.length > 0) {
+                                locationText = cityNames[0];
+                            }
+                        }
+
+                        const locationDisplayHtml = tooltipHtml !== '' 
+                            ? `<div class="flex items-center gap-1"><p>${locationText}</p>${tooltipHtml}</div>` 
+                            : `<p>${locationText}</p>`;
+
+                        
+
                         let priceDisplayHtml = "";
 
-                        // If this event has children, display the min/max range of its children.
-                        // Otherwise, display its own ticket price.
+                        // Parse price range from bounds
                         if (childCount > 0) {
                             const minP = event.minPrice !== undefined ? event.minPrice : event.MinPrice;
                             const maxP = event.maxPrice !== undefined ? event.maxPrice : event.MaxPrice;
@@ -969,7 +1010,7 @@
                                    <div class="flex items-center gap-6 text-sm text-gray-200 font-medium drop-shadow-sm">
                                        <span class="flex items-center">
                                            <svg class="h-5 w-5 mr-2 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /></svg>
-                                           ${locationText}
+                                           ${locationDisplayHtml}
                                        </span>
                                        <span class="flex items-center">
                                            <svg class="h-5 w-5 mr-2 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
