@@ -353,6 +353,7 @@
                             <th class="px-8 py-4 font-semibold">Event Name</th>
                             <th class="px-6 py-4 font-semibold">Location</th>
                             <th class="px-6 py-4 font-semibold">Layout</th>
+                            <th class="px-6 py-4 font-semibold">Price</th> <!-- New Price Header -->
                             <th class="px-8 py-4 font-semibold text-center">Action</th>
                         </tr>
                     </thead>
@@ -380,6 +381,14 @@
                             <td class="px-6 py-4 text-sm text-gray-600 break-words">
                                 @(child.Layout?.AreaName ?? "Main Layout")
                             </td>
+                            
+                            <!-- Dynamic Price Column -->
+                            <td class="px-6 py-4">
+                                <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-bold @(child.TicketPrice.HasValue && child.TicketPrice.Value > 0 ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-gray-100 text-gray-700 border border-gray-200")">
+                                    @(child.TicketPrice.HasValue && child.TicketPrice.Value > 0 ? $"€{child.TicketPrice.Value:0.00}" : "Free")
+                                </span>
+                            </td>
+
                             <td class="px-8 py-4 text-right">
                                 <a href="@Url.Action("Details", "Events", new { id = child.Id })" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
                                     View & Reserve

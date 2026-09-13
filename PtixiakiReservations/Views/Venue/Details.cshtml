@@ -169,7 +169,7 @@
                     View Layouts <span class="ml-1 bg-white text-purple-700 rounded-full h-5 w-5 inline-flex items-center justify-center text-xs font-bold">@layoutCount</span>
                 </a>
 
-                <a asp-action="Index" asp-route-id="@Html.DisplayFor(model => model.City)"
+                <a href="@Url.Action("MyVenues", "Venue")" 
                    class="flex items-center px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />

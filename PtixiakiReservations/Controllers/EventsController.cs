@@ -38,15 +38,55 @@ public class EventsController(
 {
     [Authorize]
     [HttpGet]
-    public async Task<IActionResult> Index(int page = 1, int pageSize = 12)
+    public async Task<IActionResult> Index(string filter = "mine", string searchString = null, int page = 1, int pageSize = 12)
     {
-        var query = context.Event.AsQueryable();
-        int totalCount = await query.CountAsync();
-
+        var currentUserId = userManager.GetUserId(User);
+        
+        // Preserve state parameters for the frontend UI router
+        ViewBag.CurrentFilter = filter;
+        ViewBag.SearchString = searchString;
         ViewBag.CurrentPage = page;
         ViewBag.PageSize = pageSize;
-        ViewBag.TotalPages = totalCount == 0 ? 1 : (int)Math.Ceiling((double)totalCount / pageSize);
-        return View();
+
+   
+        var query = context.Event
+            .Include(e => e.Venue)
+                .ThenInclude(v => v.City)
+            .Include(e => e.EventType)
+            .Include(e => e.ChildEvents) 
+            .Where(e => e.ParentEventId == null)
+            .AsQueryable();
+
+   
+        if (filter != "all")
+        {
+            
+            query = query.Where(e => e.OrganizerId == currentUserId);
+        }
+
+  
+        if (!string.IsNullOrWhiteSpace(searchString))
+        {
+            var term = searchString.ToLower().Trim();
+            query = query.Where(e => 
+                e.Name.ToLower().Contains(term) || 
+                (e.Venue != null && e.Venue.Name.ToLower().Contains(term)) ||
+                (e.Venue != null && e.Venue.City != null && e.Venue.City.Name.ToLower().Contains(term)));
+        }
+
+    
+        int totalCount = await query.CountAsync();
+        ViewBag.TotalCount = totalCount;
+        ViewBag.TotalPages = totalCount > 0 ? (int)Math.Ceiling((double)totalCount / pageSize) : 1;
+
+        
+        var events = await query
+            .OrderByDescending(e => e.StartDateTime)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        return View(events);
     }
 
     /// <summary>
@@ -1234,15 +1274,22 @@ public class EventsController(
         return Json(new { success = true, events = generatedEvents });
     }
 
-    [HttpGet]
     [Authorize]
-    public async Task<IActionResult> GetUserEvents()
+    [HttpGet]
+    public async Task<IActionResult> GetUserEvents(string filter = "mine")
     {
         try
         {
             var userId = userManager.GetUserId(User);
-            var events = await context.Event
-                .Where(e => e.OrganizerId == userId) // Fixed: Database-level filtering for optimization
+            
+            var query = context.Event.AsQueryable();
+
+            if (filter != "all")
+            {
+                query = query.Where(e => e.OrganizerId == userId || (e.Venue != null && e.Venue.UserId == userId));
+            }
+
+            var events = await query
                 .OrderByDescending(e => e.StartDateTime)
                 .Select(e => new {
                     id = e.Id,
@@ -1253,7 +1300,7 @@ public class EventsController(
                     venue = e.Venue != null ? new { name = e.Venue.Name } : null,
                     eventType = e.EventType != null ? new { name = e.EventType.Name } : null,
                     organizerId = e.OrganizerId,
-                    parentEventId = e.ParentEventId, // Fixed: Added Parent ID tracking for frontend UI render checks
+                    parentEventId = e.ParentEventId, 
                     ticketPrice = e.TicketPrice,
                     minPrice = e.ChildEvents.Any() ? e.ChildEvents.Min(c => c.TicketPrice) : e.TicketPrice,
                     maxPrice = e.ChildEvents.Any() ? e.ChildEvents.Max(c => c.TicketPrice) : e.TicketPrice
