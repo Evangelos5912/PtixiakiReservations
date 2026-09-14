@@ -15,7 +15,7 @@ public class NonSelectableController(ApplicationDbContext context, UserManager<A
 {
     // 1. MASTER SAVE (Matches: fetch('/NonSelectable/SaveElements'))
     [HttpPost]
-    [Authorize(Roles = "Admin,VenueManager,SuperOrganizer")]
+    [Authorize(Roles = "Admin,Venue,SuperOrganizer")]
     public async Task<IActionResult> SaveElements(int layoutId, [FromBody] List<NonSelectable> elements)
     {
         var existing = await context.NonSelectable
@@ -59,7 +59,7 @@ public class NonSelectableController(ApplicationDbContext context, UserManager<A
     // 3. UPDATE SINGLE SHAPE (Renamed to match: fetch('/NonSelectable/UpdateElement'))
     [HttpPost]
     [ValidateAntiForgeryToken] 
-    [Authorize(Roles = "Admin,VenueManager,SuperOrganizer")]
+    [Authorize(Roles = "Admin,Venue,SuperOrganizer")]
     public async Task<IActionResult> UpdateElement([FromBody] NonSelectableUpdateDto request)
     {
         if (request == null || request.Id <= 0)
@@ -101,7 +101,7 @@ public class NonSelectableController(ApplicationDbContext context, UserManager<A
 
     // 4. DELETE MULTIPLE SHAPES (Added to match: fetch('/NonSelectable/DeleteElements'))
     [HttpPost]
-    [Authorize(Roles = "Admin,VenueManager,SuperOrganizer")]
+    [Authorize(Roles = "Admin,Venue,SuperOrganizer")]
     public async Task<IActionResult> DeleteElements([FromBody] DeleteMultipleElementsRequest request)
     {
         if (request == null || request.Names == null || !request.Names.Any())

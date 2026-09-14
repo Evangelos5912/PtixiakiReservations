@@ -37,7 +37,7 @@ namespace PtixiakiReservations.Controllers
             _logger = logger;
         }
 
-        [Authorize(Roles = "VenueManager,Admin,SuperOrganizer")]
+        [Authorize(Roles = "Venue,Admin,SuperOrganizer")]
         public async Task<IActionResult> Index()
         {
             var layouts = await _context.Layout
@@ -54,7 +54,7 @@ namespace PtixiakiReservations.Controllers
             return View();
         }
 
-        [Authorize(Roles = "VenueManager,Admin,SuperOrganizer")]
+        [Authorize(Roles = "Venue,Admin,SuperOrganizer")]
         public async Task<IActionResult> ChooseLayout(int venueId, int eventId, string duration, string resDate)
         {
             var venue = await _context.Venue.FindAsync(venueId);
@@ -72,7 +72,7 @@ namespace PtixiakiReservations.Controllers
         }
         
         // GET: Layouts/Details/5
-        [Authorize(Roles = "VenueManager,Admin,SuperOrganizer")]
+        [Authorize(Roles = "Venue,Admin,SuperOrganizer")]
         public async Task<IActionResult> Details(int? id, int? venueId)
         {
             if (id == null)
@@ -96,7 +96,7 @@ namespace PtixiakiReservations.Controllers
         }
 
         // GET: Layouts/Create
-        [Authorize(Roles = "VenueManager,Admin,SuperOrganizer")]
+        [Authorize(Roles = "Venue,Admin,SuperOrganizer")]
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] JsonLayoutModel[] layouts)
         {
@@ -136,7 +136,7 @@ namespace PtixiakiReservations.Controllers
             await _context.SaveChangesAsync();
             return Ok(new { message = "Successfully created all sub-areas" });
         }
-        [Authorize(Roles = "VenueManager,Admin,SuperOrganizer")]
+        [Authorize(Roles = "Venue,Admin,SuperOrganizer")]
         [HttpPost]
         public async Task<IActionResult> CreateFromVenue([FromBody]JsonLayoutModel[] layouts)
         {
@@ -167,7 +167,7 @@ namespace PtixiakiReservations.Controllers
         }
 
         // GET: Layouts/Edit/5
-        [Authorize(Roles = "VenueManager,Admin,SuperOrganizer")]
+        [Authorize(Roles = "Venue,Admin,SuperOrganizer")]
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -186,7 +186,7 @@ namespace PtixiakiReservations.Controllers
 
         // POST: Layouts/Edit/5
         [HttpPost]
-        [Authorize(Roles = "VenueManager,Admin,SuperOrganizer")]
+        [Authorize(Roles = "Venue,Admin,SuperOrganizer")]
         public async Task<IActionResult> Edit(int id,Layout layoutEdit)
         {
             var layout = _context.Layout.SingleOrDefault(s => s.Id == id);
@@ -222,7 +222,7 @@ namespace PtixiakiReservations.Controllers
         }
 
         // GET: Layouts/Delete/5
-        [Authorize(Roles = "VenueManager,Admin,SuperOrganizer")]
+        [Authorize(Roles = "Venue,Admin,SuperOrganizer")]
         public async Task<IActionResult> Delete(int? id)
         
         {
@@ -248,7 +248,7 @@ namespace PtixiakiReservations.Controllers
         /// Uses high-performance bulk operations (ExecuteDeleteAsync) to prevent RAM OOM crashes.
         /// </summary>
         [HttpPost, ActionName("Delete")]
-        [Authorize(Roles = "VenueManager,Admin,SuperOrganizer")]
+        [Authorize(Roles = "Venue,Admin,SuperOrganizer")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
@@ -320,7 +320,7 @@ namespace PtixiakiReservations.Controllers
         }
 
         // GET: Layouts/VenueLayouts/5
-        [Authorize(Roles = "VenueManager,Admin,SuperOrganizer")]
+        [Authorize(Roles = "Venue,Admin,SuperOrganizer")]
         public async Task<IActionResult> VenueLayouts(int venueId)
         {
             if (venueId == 0)
@@ -345,7 +345,7 @@ namespace PtixiakiReservations.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "VenueManager,Admin,SuperOrganizer")]
+        [Authorize(Roles = "Venue,Admin,SuperOrganizer")]
         public JsonResult GetLayouts(int venueId)
         {
             var layouts = _context.Layout
@@ -355,14 +355,14 @@ namespace PtixiakiReservations.Controllers
 
             return Json(layouts);
         }
-        [Authorize(Roles = "VenueManager,Admin,SuperOrganizer")]
+        [Authorize(Roles = "Venue,Admin,SuperOrganizer")]
         private bool LayoutExists(int id)
         {
             return _context.Layout.Any(e => e.Id == id);
         }
 
         [HttpPost]
-        [Authorize(Roles = "VenueManager,Admin,SuperOrganizer")]
+        [Authorize(Roles = "Venue,Admin,SuperOrganizer")]
         public async Task<IActionResult> Duplicate([FromBody] DuplicateLayoutRequest request)
         {
             var originalLayout = await _context.Layout
