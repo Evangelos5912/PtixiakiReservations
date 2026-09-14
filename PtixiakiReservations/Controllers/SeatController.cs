@@ -21,7 +21,7 @@ public class SeatController(ApplicationDbContext context, UserManager<Applicatio
     {
         return View();
     }
-
+    [Authorize]
     [HttpGet]
     public JsonResult get_data(int? LayoutId, int? eventId)
     {
@@ -66,6 +66,7 @@ public class SeatController(ApplicationDbContext context, UserManager<Applicatio
 
     [HttpPost]
     [ValidateAntiForgeryToken] 
+    [Authorize(Roles = "Admin,VenueManager,SuperOrganizer")]
     public async Task<IActionResult> UpdateSeat([FromBody] SeatUpdateDto request)
     {
         if (request == null || request.Id <= 0)
@@ -97,6 +98,8 @@ public class SeatController(ApplicationDbContext context, UserManager<Applicatio
     }
 
     // GET: Table/Details/5
+    [HttpGet]
+    [Authorize]
     public async Task<IActionResult> Details(int? id)
     {
         if (id == null)
@@ -114,6 +117,8 @@ public class SeatController(ApplicationDbContext context, UserManager<Applicatio
 
         return View(seat);
     }
+
+    [Authorize(Roles = "Admin,VenueManager,SuperOrganizer")]
 
     public async Task<IActionResult> Single(int? id)
     {
@@ -133,6 +138,7 @@ public class SeatController(ApplicationDbContext context, UserManager<Applicatio
     }
 
     // GET: Table/Create
+    [Authorize(Roles = "Admin,VenueManager,SuperOrganizer")]
     public IActionResult Create(int? layoutId)
     {
         if (layoutId == null)
@@ -148,6 +154,7 @@ public class SeatController(ApplicationDbContext context, UserManager<Applicatio
 
     [HttpPost]     
     [Route("Seat/CreateTableMap")]
+    [Authorize(Roles = "Admin,VenueManager,SuperOrganizer")]
     public async Task<IActionResult> CreateTableMap(int layoutId, [FromBody] List<Seat> layoutElements)
     {
         try
@@ -203,6 +210,7 @@ public class SeatController(ApplicationDbContext context, UserManager<Applicatio
     }
     
     // GET: Table/Edit/5
+    [Authorize(Roles = "Admin,VenueManager,SuperOrganizer")]
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null)
@@ -222,6 +230,7 @@ public class SeatController(ApplicationDbContext context, UserManager<Applicatio
     // POST: Table/Edit/5
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = "Admin,VenueManager,SuperOrganizer")]
     public async Task<IActionResult> Edit(int id, [Bind("ID,ReservationId,VenueId")] Seat Seat)
     {
         if (id != Seat.Id)
@@ -252,7 +261,7 @@ public class SeatController(ApplicationDbContext context, UserManager<Applicatio
         ViewData["VenueId"] = new SelectList(context.Venue, "ID", "ID", Seat.LayoutId);
         return View(Seat);
     }
-
+    [Authorize]
     public async Task<IActionResult> ChangeAvailable(int ID, bool Flag)
     {
         Seat Seat = context.Seat.FirstOrDefault(t => t.Id == ID);
@@ -283,6 +292,7 @@ public class SeatController(ApplicationDbContext context, UserManager<Applicatio
     }
 
     [HttpPost]
+    [Authorize(Roles = "Admin,VenueManager,SuperOrganizer")]
     public async Task<IActionResult> DeleteMultipleSeats([FromBody] DeleteMultipleSeatsRequest request)
     {
         var seatsToRemove = await context.Seat
@@ -299,6 +309,7 @@ public class SeatController(ApplicationDbContext context, UserManager<Applicatio
     }
     
     // GET: Table/Delete/5
+    [Authorize(Roles = "Admin,VenueManager,SuperOrganizer")]
     public async Task<IActionResult> Delete(int? id)
     {
         if (id == null)
@@ -317,6 +328,7 @@ public class SeatController(ApplicationDbContext context, UserManager<Applicatio
     }
 
     // POST: Table/Delete/5
+    [Authorize(Roles = "Admin,VenueManager,SuperOrganizer")]
     [HttpPost, ActionName("Delete")]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
@@ -335,7 +347,7 @@ public class SeatController(ApplicationDbContext context, UserManager<Applicatio
 
         return RedirectToAction("ListOfMySeats");
     }
-
+    [Authorize]
     private bool SeatExists(int id)
     {
         return context.Seat.Any(e => e.Id == id);
@@ -350,6 +362,7 @@ public class SeatController(ApplicationDbContext context, UserManager<Applicatio
     [HttpPost]
     [ValidateAntiForgeryToken]
     [Route("Seat/SaveCompleteLayout")]
+    [Authorize(Roles = "Admin,VenueManager,SuperOrganizer")]
     public async Task<IActionResult> SaveCompleteLayout(int layoutId, [FromBody] LayoutPayloadViewModel payload)
     {
         if (payload == null) return BadRequest("Invalid layout data.");
@@ -446,6 +459,7 @@ public class SeatController(ApplicationDbContext context, UserManager<Applicatio
     }
 
     [HttpGet]
+    [Authorize]
     [Route("Seat/GetCompleteLayout")]
     public async Task<IActionResult> GetCompleteLayout(int layoutId)
     {

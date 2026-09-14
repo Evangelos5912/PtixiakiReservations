@@ -67,7 +67,7 @@ namespace PtixiakiReservations.Controllers
         /// <param name="searchString">Text payload matching against Venue Name or City.</param>
         /// <param name="page">Current pagination index.</param>
         /// <param name="pageSize">Volume constraint per page.</param>
-        [Authorize(Roles = "Admin,Venue,SuperOrganizer")]
+        [Authorize(Roles = "Admin,VenueManager,SuperOrganizer")]
         public async Task<IActionResult> MyVenues(string filter = "mine", string searchString = null, int page = 1, int pageSize = 12)
         {
             string userId = _userManager.GetUserId(HttpContext.User);
@@ -137,7 +137,7 @@ namespace PtixiakiReservations.Controllers
         /// <summary>
         /// Retrieves detailed configuration state for a specific venue modification.
         /// </summary>
-        [Authorize(Roles = "Admin,Venue,SuperOrganizer")]
+        [Authorize(Roles = "Admin,VenueManager,SuperOrganizer")]
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null) return NotFound();
@@ -187,7 +187,7 @@ namespace PtixiakiReservations.Controllers
         /// </summary>
         [HttpPost]
         [Obsolete]
-        [Authorize(Roles = "Admin,Venue,SuperOrganizer")]
+        [Authorize(Roles = "Admin,VenueManager,SuperOrganizer")]
         public async Task<IActionResult> Edit(VenueViewModel model)
         {
             if (model == null)
@@ -292,7 +292,7 @@ namespace PtixiakiReservations.Controllers
         /// <summary>
         /// Renders the venue creation interface pre-populated with active geographic options.
         /// </summary>
-        [Authorize(Roles = "Admin,Venue,SuperOrganizer")]
+        [Authorize(Roles = "Admin,VenueManager,SuperOrganizer")]
         public IActionResult Create()
         {
             ViewBag.ListOfCity = _context.City.ToList();
@@ -405,6 +405,7 @@ namespace PtixiakiReservations.Controllers
         /// <summary>
         /// Accesses the destructive deletion interface.
         /// </summary>
+        [Authorize(Roles = "Admin,VenueManager,SuperOrganizer")]
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null) return NotFound();
@@ -419,7 +420,7 @@ namespace PtixiakiReservations.Controllers
         /// Executes a permanent, cascading structural deletion of a venue entity.
         /// Restricts access to Venue Owners or System Administrators.
         /// </summary>
-        [Authorize(Roles = "Admin,Venue,SuperOrganizer")]
+        [Authorize(Roles = "Admin,VenueManager,SuperOrganizer")]
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         [Obsolete]
@@ -540,7 +541,7 @@ namespace PtixiakiReservations.Controllers
         /// Commonly consumed by asynchronous frontend interfaces (AJAX).
         /// </summary>
         [HttpGet]
-        [Authorize(Roles = "Admin,Venue,SuperOrganizer")]
+        [Authorize(Roles = "Admin,VenueManager,SuperOrganizer")]
         public IActionResult GetVenuesForUser()
         {
             string userId = _userManager.GetUserId(HttpContext.User);

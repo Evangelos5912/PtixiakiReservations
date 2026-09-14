@@ -458,7 +458,7 @@ public class EventsController(
         return new JsonResult(eventsTypes);
     }
 
-    [Authorize]
+    [Authorize(Roles = "Admin,Event,SuperOrganizer")]
     public async Task<IActionResult> VenueEvents(int venueId)
     {
         var venue = await context.Venue.FirstOrDefaultAsync(v => v.Id == venueId);
@@ -466,7 +466,7 @@ public class EventsController(
         return View(venue);
     }
 
-    [Authorize]
+    [Authorize(Roles = "Admin,Event,SuperOrganizer")]
     [HttpGet]
     public async Task<IActionResult> CreateEvent()
     {
@@ -502,7 +502,7 @@ public class EventsController(
         }
     }
 
-    [Authorize]
+    [Authorize(Roles = "Admin,Event,SuperOrganizer")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> CreateEvent(
@@ -738,7 +738,7 @@ public class EventsController(
     /// <summary>
     /// Initializes the modification interface for an existing event.
     /// </summary>
-    [Authorize]
+    [Authorize(Roles = "Admin,Event,SuperOrganizer")]
     [HttpGet]
     public async Task<IActionResult> Edit(int? id)
     {
@@ -789,7 +789,7 @@ public class EventsController(
     /// </summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [Authorize] 
+    [Authorize(Roles = "Admin,Event,SuperOrganizer")]
     public async Task<IActionResult> Edit(int id, Event updatedEvent, IFormFile? imageFile, IFormFileCollection? galleryFiles)
     {
         if (id != updatedEvent.Id) return NotFound();
@@ -982,7 +982,7 @@ public class EventsController(
     /// Permanently removes an event and cascades deletions down to Wishlists, Reservations, Sub-Events, and Gallery Images.
     /// Utilizes high-performance ExecuteDeleteAsync bulk commands to bypass RAM constraints and RESTRICT locks.
     /// </summary>
-    [Authorize]
+    [Authorize(Roles = "Admin,Event,SuperOrganizer")]
     [HttpDelete]
     public async Task<IActionResult> Delete(int? id)
     {
@@ -1274,7 +1274,7 @@ public class EventsController(
         return Json(new { success = true, events = generatedEvents });
     }
 
-    [Authorize]
+    [Authorize(Roles = "Admin,Event,SuperOrganizer")]
     [HttpGet]
     public async Task<IActionResult> GetUserEvents(string filter = "mine")
     {
@@ -1378,7 +1378,7 @@ public class EventsController(
         return Json(layouts);
     }
 
-    [Authorize]
+    [Authorize(Roles = "Admin,Event,SuperOrganizer")]
     [HttpPost]
     public async Task<IActionResult> EditSubSelectedName(int id, string NewName)
     {
@@ -1402,7 +1402,7 @@ public class EventsController(
         return Json(new { success = true, message = "Update query successfully processed." });
     }
 
-    [Authorize] 
+    [Authorize(Roles = "Admin,Event,SuperOrganizer")] 
     [HttpGet]
     public async Task<IActionResult> SearchParentEvents(string query)
     {
@@ -1424,7 +1424,7 @@ public class EventsController(
     }
 
     [HttpGet]
-    [Authorize]
+    [Authorize(Roles = "Admin,Event,SuperOrganizer")]
     public async Task<IActionResult> GetSubEvents(int parentId)
     {
         var subEvents = await context.Event
@@ -1444,7 +1444,7 @@ public class EventsController(
         return Json(subEvents);
     }
 
-    [Authorize]
+    [Authorize(Roles = "Admin,Event,SuperOrganizer")]
     [HttpPost]
     public async Task<IActionResult> UpdateParentEvent([FromBody] LinkEventDto data)
     {
@@ -1511,7 +1511,7 @@ public class EventsController(
         return Json(venues);
     }
 
-    [Authorize]
+    [Authorize(Roles = "Admin,Event,SuperOrganizer")]
     [HttpPost]
     public async Task<IActionResult> DuplicateSubEvent(int id)
     {
@@ -1570,7 +1570,7 @@ public class EventsController(
         return Json(ev);
     }
 
-    [Authorize]
+    [Authorize(Roles = "Admin,Event,SuperOrganizer")]
     [HttpPost]
     public async Task<IActionResult> MultiSubRename([FromForm] List<int> ids, [FromForm] string NewName)
     {
@@ -1713,7 +1713,7 @@ public class EventsController(
         return Json(result);
     }
 
-    [Authorize]
+    [Authorize(Roles = "Admin,Event,SuperOrganizer")]
     [HttpGet]
     public async Task<IActionResult> EventReservations(int id, string searchTerm = "", int page = 1, int pageSize = 15)
     {
@@ -1779,7 +1779,7 @@ public class EventsController(
         return View(reservations);
     }
 
-    [Authorize]
+    [Authorize(Roles = "Admin,Event,SuperOrganizer")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteReservation(int reservationId)
