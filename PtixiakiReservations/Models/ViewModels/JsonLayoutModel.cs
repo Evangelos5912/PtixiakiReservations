@@ -9,6 +9,7 @@ namespace PtixiakiReservations.Models.ViewModels
     {
         public decimal Top { get; set; }
         public decimal Left { get; set; }
+        public string? Desc {get; set;}
         public string AreaName { get; set; }
 
         public decimal Rotate { get; set; }

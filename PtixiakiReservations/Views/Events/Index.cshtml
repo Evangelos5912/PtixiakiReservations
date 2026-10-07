@@ -217,7 +217,7 @@
         /** Fetches raw event JSON payload from server memory */
         function loadEvents() {
             $.ajax({
-                url: '/Events/GetUserEvents',
+                url: '/Events/GetUserEvents?filter=all',
                 type: 'GET',
                 success: function(data) {
                     allEvents = data.events;

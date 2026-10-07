@@ -7,6 +7,7 @@ using PtixiakiReservations.Data;
 using PtixiakiReservations.Models;
 using Microsoft.AspNetCore.Identity;
 using System.Collections.Generic;
+using Microsoft.AspNetCore.Authorization;
 
 namespace PtixiakiReservations.Controllers;
 

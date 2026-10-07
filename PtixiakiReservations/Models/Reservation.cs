@@ -17,6 +17,6 @@ namespace PtixiakiReservations.Models
         public bool IsPastReservation { get; set; }
         public bool? Attended { get; set; }
         public string? Review { get; set; }
-        public int? Rating { get; set; }
+        public double? Rating { get; set; }
     }
 }

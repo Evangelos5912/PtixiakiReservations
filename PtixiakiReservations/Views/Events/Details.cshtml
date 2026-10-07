@@ -11,6 +11,8 @@
     
     // Determine if this is an empty Master Event (No Venue, No Children yet)
     var isEmptyMasterEvent = Model.ParentEventId == null && Model.VenueId == null && (!Model.ChildEvents?.Any() ?? true);
+
+    var reviews = ViewBag.EventReviews as List<PtixiakiReservations.Models.Reservation> ?? new List<PtixiakiReservations.Models.Reservation>();
 }
 
 <div class="container mx-auto px-4 py-8 max-w-7xl">
@@ -73,6 +75,11 @@
                         <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-blue-600 transition-all duration-300 ease-out group-hover:w-full"></span>
                     </a>
                 }
+
+                <a href="#community-reviews" class="text-sm font-bold text-gray-600 hover:text-blue-600 uppercase tracking-wider transition-colors relative group py-1">
+                    Reviews (@reviews.Count)
+                    <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-blue-600 transition-all duration-300 ease-out group-hover:w-full"></span>
+                </a>
             </nav>
         </div>
 
@@ -107,7 +114,6 @@
                     </div>
 
                     @{
-                        // Venue resolution logic: Inherit from children if master event lacks dedicated venue
                         bool hasMultipleVenues = false;
                         PtixiakiReservations.Models.Venue displayVenue = null; 
                         
@@ -121,7 +127,6 @@
                             if (childVenues.Any())
                             {
                                 var distinctVenueIds = childVenues.Select(v => v.Id).Distinct().ToList();
-                                
                                 if (distinctVenueIds.Count > 1) hasMultipleVenues = true;
                                 else displayVenue = childVenues.First();
                             }
@@ -192,10 +197,8 @@
                 <!-- Call to Action Panel -->
                 <div>
                     <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-8 sticky top-24">
-                        
                         @if(isEmptyMasterEvent)
                         {
-                            <!-- State A: Master Event with no Sub-Events yet -->
                             <div class="text-center">
                                 <div class="bg-amber-50 border border-amber-200 rounded-xl p-5 mb-5 shadow-sm">
                                     <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-amber-100 mb-3">
@@ -206,45 +209,33 @@
                                     <h3 class="text-lg font-bold text-amber-900 mb-1">No Schedules Available</h3>
                                     <p class="text-sm font-medium text-amber-700">There are no current available sub-events for this master event.</p>
                                 </div>
-                                
-                                <button disabled class="w-full block text-center px-6 py-4 bg-gray-100 text-gray-400 font-bold text-lg rounded-lg border border-gray-200 shadow-sm cursor-not-allowed transition-all duration-200">
+                                <button disabled class="w-full block text-center px-6 py-4 bg-gray-100 text-gray-400 font-bold text-lg rounded-lg border border-gray-200 shadow-sm cursor-not-allowed">
                                     Check Back Later
                                 </button>
                             </div>
                         }
                         else if(!hasSchedules)
                         {
-                            <!-- State B: Standard Standalone Event OR Sub-Event -->
                             <div class="text-center">
                                 <h3 class="text-2xl font-bold text-gray-900 mb-2">Reserve Your Spot</h3>
                                 <p class="text-gray-600 mb-6">Select your preferred seats and secure your tickets now.</p>
-                                
                                 <a href="@Url.Action("ReserveSeats", "Reservation", new { eventId = Model.Id })"
-                                class="w-full block text-center px-6 py-4 bg-blue-600 text-white font-semibold text-lg rounded-lg shadow-md hover:bg-blue-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 transform hover:-translate-y-1">
+                                class="w-full block text-center px-6 py-4 bg-blue-600 text-white font-semibold text-lg rounded-lg shadow-md hover:bg-blue-700 transition-all">
                                     Reserve Seats
                                 </a>
-                                
-                                <p class="text-sm text-gray-500 mt-4 flex items-center justify-center">
-                                    <svg class="w-4 h-4 mr-1 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
-                                    Secure checkout available
-                                </p>
                             </div>
                         }
                         else
                         {
-                            <!-- State C: Master Event WITH child Sub-Events -->
                             <div class="text-center">
                                 <h3 class="text-2xl font-bold text-gray-900 mb-2">Reserve Your Spot</h3>
                                 <p class="text-gray-600 mb-6">Multiple times and locations available.</p>
-
                                 <a href="#available-schedules"
-                                class="w-full block text-center px-6 py-4 bg-blue-600 text-white font-semibold text-lg rounded-lg shadow-md hover:bg-blue-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 transform hover:-translate-y-1">
+                                class="w-full block text-center px-6 py-4 bg-blue-600 text-white font-semibold text-lg rounded-lg shadow-md hover:bg-blue-700 transition-all">
                                     Select a Schedule
                                 </a>
                             </div>
                         }
-                        
-                        <!-- Dynamic Wishlist Container injected via JS -->
                         <div class="mt-6 text-center wishlist-container"></div>
                     </div>
                 </div>
@@ -257,7 +248,6 @@
                 <h3 class="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">Description</h3>
                 <div class="relative">
                     <p id="event-description" class="text-gray-600 mb-2 break-words leading-relaxed whitespace-pre-wrap custom-line-clamp">@displayDescription</p>
-                    
                     <button id="toggle-description-btn" class="hidden text-blue-600 hover:text-blue-800 font-medium text-sm focus:outline-none flex items-center transition-colors mt-2">
                         <span>Read More</span>
                         <svg class="w-4 h-4 ml-1 transform transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
@@ -266,14 +256,13 @@
             </div>
             }
             
-            <!-- Dynamic Image Gallery -->
+            <!-- Gallery -->
             <div class="relative w-full h-[300px] md:h-[450px] lg:h-[600px] group overflow-hidden bg-gray-100 rounded-xl mt-8" id="gallery-container" data-event-id="@Model.Id" data-event-type="@Model.EventType?.Name">
                 <div id="carousel-track" class="flex w-full h-full overflow-x-auto scroll-smooth snap-x snap-mandatory scrollbar-hide">
                     <div id="gallery-fallback" class="w-full h-full flex-none flex items-center justify-center bg-gray-100">
                         <div class="animate-pulse text-indigo-500 font-bold text-lg">Loading images...</div>
                     </div>
                 </div>
-
                 <button id="btn-prev" type="button" class="hidden absolute left-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white p-2 rounded-full shadow-lg transition-all opacity-0 group-hover:opacity-100 z-10">
                     <svg class="w-6 h-6 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
                 </button>
@@ -282,167 +271,138 @@
                 </button>
             </div>
            
-            <!-- Organizer Details -->
+            <!-- Organizer -->
             @if(Model.Organizer != null){
                 <div id="OrganizerInfo" class="mt-8 lg:w-1/2 rounded-xl border border-gray-200 bg-gray-50 shadow-sm p-6 scroll-mt-24">
                     <div class="flex items-center mb-4 border-b border-gray-200 pb-3">
                         <div class="bg-indigo-100 p-2 rounded-full mr-3 text-indigo-600">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
                         </div>
                         <div>
                             <h3 class="text-lg font-bold text-gray-900">Organizer</h3>
                             <p class="text-indigo-600 font-medium text-sm">@Model.Organizer.FirstName @Model.Organizer.LastName</p>
                         </div>
                     </div>
-                    
-                    <div class="space-y-3">
-                        <div class="grid grid-cols-3 items-center">
-                            <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Phone:</h3>
-                            <p class="col-span-2 text-gray-900 font-medium">@(string.IsNullOrWhiteSpace(Model.Organizer.PhoneNumber) ? "Not Provided" : Model.Organizer.PhoneNumber)</p>
+                </div>
+            }
+
+            <!-- 1. STYLIZED CONDITIONAL REVIEW FORM (AJAX) -->
+            @if (ViewBag.EligibleToReview == true && ViewBag.ReviewReservationId != null)
+            {
+                <div class="mt-12 pt-8 border-t border-gray-200">
+                    <div class="bg-gradient-to-br from-indigo-50 via-blue-50 to-indigo-100 rounded-2xl p-8 border border-indigo-200 shadow-sm">
+                        <div class="flex items-center mb-4">
+                            <div class="bg-indigo-600 text-white p-2.5 rounded-xl shadow-sm mr-3">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.690h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-bold text-gray-900">How was your experience?</h3>
+                                <p class="text-sm text-gray-600">Our records show you attended this event. Share your thoughts!</p>
+                            </div>
                         </div>
-                        <div class="grid grid-cols-3 items-center">
-                            <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Email:</h3>
-                            <p class="col-span-2 text-gray-900 font-medium break-words">@Model.Organizer.Email</p>
-                        </div>
-                        <div class="grid grid-cols-3 items-center">
-                            <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Address:</h3>
-                            <p class="col-span-2 text-gray-900 font-medium">@(string.IsNullOrWhiteSpace(Model.Organizer.Address) ? "Not Provided" : Model.Organizer.Address)</p>
-                        </div>
-                        <div class="grid grid-cols-3 items-center">
-                            <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Zip Code:</h3>
-                            <p class="col-span-2 text-gray-900 font-medium">@(string.IsNullOrWhiteSpace(Model.Organizer.PostalCode) ? "Not Provided" : Model.Organizer.PostalCode)</p>
-                        </div>
+                        
+                        <form id="ajaxReviewForm" class="space-y-6 bg-white p-6 rounded-xl shadow-sm border border-gray-100 mt-4">
+                            <input type="hidden" name="reservationId" value="@ViewBag.ReviewReservationId" />
+                            
+                            <!-- Attendance Checkbox Toggle -->
+                            <div class="flex items-center justify-between border-b border-gray-100 pb-4">
+                                <div>
+                                    <p class="font-bold text-gray-900 text-sm">Did you attend this event?</p>
+                                    <p class="text-xs text-gray-500">Confirm attendance to unlock the rating options.</p>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" name="attended" value="true" class="sr-only peer" id="attendedToggle" onchange="toggleReviewForm()">
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                                </label>
+                            </div>
+
+                            <!-- Hidden Review Fields -->
+                            <div id="reviewFields" class="hidden space-y-5 pt-2">
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-2">Rate your experience</label>
+                                    <div class="flex items-center space-x-4 bg-gray-50 p-4 rounded-xl border border-gray-200">
+                                        <input type="range" name="rating" id="ratingSlider" min="0.5" max="5.0" step="0.5" value="5.0" 
+                                               class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                                               oninput="document.getElementById('ratingDisplay').innerText = parseFloat(this.value).toFixed(1)">
+                                        <div class="font-black text-xl text-yellow-500 w-16 text-center bg-white py-1 px-2 rounded-lg shadow-sm border border-gray-100">
+                                            <span id="ratingDisplay">5.0</span>★
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-2">Leave a comment (Optional)</label>
+                                    <textarea name="review" rows="3" class="w-full border border-gray-300 rounded-xl shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 p-3 text-sm text-gray-900" placeholder="Tell us what you enjoyed most..."></textarea>
+                                </div>
+
+                                <button type="submit" id="submitReviewBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-xl transition-all shadow-md text-sm">
+                                    Submit Review
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             }
+
+            <!-- 2. STYLIZED COMMUNITY REVIEWS SECTION -->
+            <div id="community-reviews" class="mt-16 pt-8 border-t border-gray-200 scroll-mt-24">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-2xl font-extrabold text-gray-900 flex items-center">
+                        <svg class="w-6 h-6 mr-2 text-yellow-500" fill="currentColor" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                        Community Reviews
+                    </h3>
+                    <span class="bg-indigo-50 text-indigo-700 font-bold px-3 py-1 rounded-full text-sm border border-indigo-100">
+                        @reviews.Count @(reviews.Count == 1 ? "Review" : "Reviews")
+                    </span>
+                </div>
+
+                @if (!reviews.Any())
+                {
+                    <div class="bg-gray-50 rounded-2xl p-10 text-center border border-gray-200">
+                        <svg class="w-12 h-12 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                        <p class="text-gray-500 font-medium">No reviews yet. Be the first to share your feedback after attending!</p>
+                    </div>
+                }
+                else
+                {
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        @foreach (var rev in reviews)
+                        {
+                            <div class="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+                                <div>
+                                    <div class="flex justify-between items-start mb-3">
+                                        <div class="flex items-center space-x-3">
+                                            <div class="h-10 w-10 rounded-full bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-sm">
+                                                @(rev.ApplicationUser?.FirstName?.Substring(0, 1).ToUpper() ?? "A")
+                                            </div>
+                                            <div>
+                                                <h4 class="font-bold text-gray-900 text-sm">@(rev.ApplicationUser?.FirstName ?? "Verified") @(rev.ApplicationUser?.LastName ?? "Attendee")</h4>
+                                                <p class="text-[11px] text-gray-400 font-medium">Attended on @rev.Date.ToString("MMM dd, yyyy")</p>
+                                            </div>
+                                        </div>
+                                        <div class="bg-amber-50 text-amber-800 font-extrabold px-2.5 py-1 rounded-lg text-xs border border-amber-200 flex items-center shadow-xs">
+                                            <span>@rev.Rating?.ToString("0.0")</span>
+                                            <span class="ml-1 text-amber-500">★</span>
+                                        </div>
+                                    </div>
+                                    @if (!string.IsNullOrEmpty(rev.Review))
+                                    {
+                                        <p class="text-gray-600 text-sm leading-relaxed mt-2 italic">"@rev.Review"</p>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
             
         </div>
     </div>
     
-    <!-- Sub-Schedules Pagination Table (For Master Events) -->
-    @if(hasSchedules){
-        var schedulePageSize = 10;
-        var schedulePage = 1;
-        var orderedChildEvents = Model.ChildEvents.OrderBy(s => s.StartDateTime).ToList();
-        var totalSchedulePages = (int)Math.Ceiling(orderedChildEvents.Count / (double)schedulePageSize);
-
-        if (int.TryParse(Context.Request.Query["schedulePage"], out var requestedSchedulePage))
-        {
-            schedulePage = requestedSchedulePage;
-        }
-
-        schedulePage = Math.Clamp(schedulePage, 1, totalSchedulePages);
-
-        var pagedChildEvents = orderedChildEvents
-            .Skip((schedulePage - 1) * schedulePageSize)
-            .Take(schedulePageSize)
-            .ToList();
-
-        <div id="available-schedules" class="overflow-x-auto mt-10 rounded-xl shadow-lg scroll-mt-24">
-            <div class="bg-gray-50 px-8 py-5 border-b border-gray-200 flex justify-between items-center">
-                <h2 class="text-xl font-bold text-gray-800">Available Schedules</h2>
-                <span class="bg-blue-100 text-blue-800 text-lg font-semibold px-3 py-1 rounded-full">
-                    @Model.ChildEvents.Count
-                </span>
-            </div>
-                <table class="w-full text-left border-collapse">
-                    <thead>
-                        <tr class="bg-white text-gray-500 text-xs uppercase tracking-wider border-b border-gray-200">
-                            <th class="px-6 py-4 font-semibold">Date</th>
-                            <th class="px-6 py-4 font-semibold">Time</th>
-                            <th class="px-8 py-4 font-semibold">Event Name</th>
-                            <th class="px-6 py-4 font-semibold">Location</th>
-                            <th class="px-6 py-4 font-semibold">Layout</th>
-                            <th class="px-6 py-4 font-semibold">Price</th> <!-- New Price Header -->
-                            <th class="px-8 py-4 font-semibold text-center">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-100">
-                    @foreach(var child in pagedChildEvents){
-                        <tr class="hover:bg-blue-50/50 transition-colors group bg-white border-b border-gray-200 mt-5 ">
-                            <td class="px-6 py-4">
-                                <div class="flex items-center text-sm text-gray-600">
-                                    <svg class="w-4 h-4 mr-1.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                                    @child.StartDateTime.ToString("MMM d, yyyy")
-                                </div>
-                            </td>
-                            <td class="px-6 py-4">
-                                <div class="flex items-center text-sm text-gray-600">
-                                    <svg class="w-4 h-4 mr-1.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                    @child.StartDateTime.ToString("h:mm tt")
-                                </div>
-                            </td>
-                            <td class="px-8 py-4">
-                                <p class="font-medium text-gray-900 break-words">@child.Name</p>
-                            </td>
-                            <td class="px-6 py-4 text-sm text-gray-600 break-words">
-                                @(child.Venue?.Name ?? "Main Location")
-                            </td>
-                            <td class="px-6 py-4 text-sm text-gray-600 break-words">
-                                @(child.Layout?.AreaName ?? "Main Layout")
-                            </td>
-                            
-                            <!-- Dynamic Price Column -->
-                            <td class="px-6 py-4">
-                                <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-bold @(child.TicketPrice.HasValue && child.TicketPrice.Value > 0 ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-gray-100 text-gray-700 border border-gray-200")">
-                                    @(child.TicketPrice.HasValue && child.TicketPrice.Value > 0 ? $"€{child.TicketPrice.Value:0.00}" : "Free")
-                                </span>
-                            </td>
-
-                            <td class="px-8 py-4 text-right">
-                                <a href="@Url.Action("Details", "Events", new { id = child.Id })" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
-                                    View & Reserve
-                                </a>
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-            
-            @if (totalSchedulePages > 1)
-            {
-                <div class="bg-white px-8 py-5 border-t border-gray-200 flex items-center justify-center gap-2">
-                    @if (schedulePage > 1)
-                    {
-                        <a href="@(Url.Action("Details", "Events", new { id = Model.Id, schedulePage = schedulePage - 1 }) + "#available-schedules")"
-                           class="px-3 py-2 text-sm font-medium rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors">
-                            Previous
-                        </a>
-                    }
-
-                    @for (var pageNumber = 1; pageNumber <= totalSchedulePages; pageNumber++)
-                    {
-                        if (pageNumber == schedulePage)
-                        {
-                            <span class="min-w-10 px-3 py-2 text-sm font-semibold rounded-md bg-blue-600 text-white text-center">
-                                @pageNumber
-                            </span>
-                        }
-                        else
-                        {
-                            <a href="@(Url.Action("Details", "Events", new { id = Model.Id, schedulePage = pageNumber }) + "#available-schedules")"
-                               class="min-w-10 px-3 py-2 text-sm font-medium rounded-md border border-gray-300 text-gray-700 text-center hover:bg-gray-50 transition-colors">
-                                @pageNumber
-                            </a>
-                        }
-                    }
-
-                    @if (schedulePage < totalSchedulePages)
-                    {
-                        <a href="@(Url.Action("Details", "Events", new { id = Model.Id, schedulePage = schedulePage + 1 }) + "#available-schedules")"
-                           class="px-3 py-2 text-sm font-medium rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors">
-                            Next
-                        </a>
-                    }
-                </div>
-            }
-        </div>
-    }
-
     <!-- Navigation Utility -->
-    <div class="mt-8">
-        <a href="@Url.Action("EventsForToday", "Events")" class="inline-flex items-center text-blue-600 hover:text-blue-800 transition-colors font-medium">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <div class="mt-8 mb-8 pb-8 text-center">
+        <a href="@Url.Action("EventsForToday", "Events")" class="inline-flex items-center px-6 py-3 bg-white border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition-colors shadow-sm font-bold text-sm">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
             Back to Events
@@ -453,7 +413,6 @@
 <style>
     html { scroll-behavior: smooth; }
     .scrollbar-hide::-webkit-scrollbar { display: none; }
-
     .custom-line-clamp {
         display: -webkit-box;
         -webkit-line-clamp: 10;
@@ -462,9 +421,7 @@
     }
 </style>
 
-<!-- Shared Client State -->
 <script>
-    // Required to bind the global wishlist function cleanly
     const currentUserId = '@UserManager.GetUserId(User)' || '';
 </script>
 
@@ -472,29 +429,20 @@
 <script type="module">
     import { getEventSvg } from "/js/event-svg.js";
 
-    // 1. Gallery Slider Logic
     const track = document.getElementById('carousel-track');
     const btnPrev = document.getElementById('btn-prev');
     const btnNext = document.getElementById('btn-next');
     if (btnPrev && btnNext && track) {
-        btnPrev.addEventListener('click', function() {
-            track.scrollBy({ left: -track.offsetWidth, behavior: 'smooth' });
-        });
-        btnNext.addEventListener('click', function() {
-            track.scrollBy({ left: track.offsetWidth, behavior: 'smooth' });
-        });
+        btnPrev.addEventListener('click', () => track.scrollBy({ left: -track.offsetWidth, behavior: 'smooth' }));
+        btnNext.addEventListener('click', () => track.scrollBy({ left: track.offsetWidth, behavior: 'smooth' }));
     }
 
-    // 2. DOM Initialization
     $(document).ready(function () {
         const eventId = '@Model.Id';
         const wishlistContainer = $('.wishlist-container');
-
-        // Setup the default un-wishlisted state structure 
         let defaultWishlistState = `
         <div class="flex items-center justify-center space-x-3 mt-2">
             <h4 class="text-gray-600 text-sm font-bold uppercase tracking-wider">Add to Wishlist</h4>
-            
             <div id="wishlist-id-${eventId}" class="cursor-pointer flex justify-center items-center bg-white p-2 rounded-full shadow-sm border border-gray-200 hover:shadow-md hover:bg-gray-50 transition-all">
                 <button type="button" onclick="window.wishlistAction(event, ${eventId})" class="focus:outline-none flex items-center justify-center">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#eab308" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -502,176 +450,79 @@
                     </svg>
                 </button>
             </div>
-        </div>
-        `;
-
+        </div>`;
         wishlistContainer.html(defaultWishlistState);
 
-        // Asynchronously check database state and override if already wishlisted
         if (currentUserId !== '') {
-            let wParams = { eventId: eventId, userId: currentUserId };
-            $.getJSON('/Wishlist/returnItem', wParams)
-                .done(function(isWishlisted) {
+            $.getJSON('/Wishlist/returnItem', { eventId: eventId, userId: currentUserId })
+                .done(isWishlisted => {
                     if (isWishlisted === true) {
                         $('#wishlist-id-' + eventId).html(`
                             <button type="button" onclick="window.wishlistAction(event, ${eventId})" class="focus:outline-none">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#eab308" stroke="#eab308" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
                                 </svg>
-                            </button>
-                        `);
+                            </button>`);
                     }
                 });
         }
     });
 
-    /**
-     * Handles state toggle for the Wishlist feature.
-     * Triggers POST/DELETE operations to the backend dynamically.
-     */
     window.wishlistAction = function(e, eventId) {
         e.preventDefault();
         e.stopPropagation();
-
-        if (!currentUserId || currentUserId === '') {
-            alert("You must be logged in to use this feature.");
-            return;
-        }
+        if (!currentUserId || currentUserId === '') { alert("You must be logged in."); return; }
 
         let token = $('input[name="__RequestVerificationToken"]').val();
         let wParams = { eventId: eventId, userId: currentUserId };
 
-        $.getJSON('/Wishlist/returnItem', wParams)
-            .done(function(isWishlisted) {
-                if (!isWishlisted) {
-                    // Item is currently NOT wishlisted -> Submit POST to Add
-                    $.ajax({
-                        url: '/Wishlist/addWishlistEvent',
-                        type: 'POST',
-                        data: wParams,
-                        headers: { "RequestVerificationToken": token },
-                        success: function(success) {
-                            if (success === true) {
-                                $('#wishlist-id-' + eventId).html(`
-                                <button type="button" onclick="window.wishlistAction(event, ${eventId})" class="focus:outline-none">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#eab308" stroke="#eab308" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-                                    </svg>
-                                </button>`);
-                            }
-                        },
-                        error: function() { console.error("Failed to add to wishlist."); }
-                    });
-                } else {
-                    // Item IS wishlisted -> Submit DELETE to Remove
-                    $.ajax({
-                        url: '/Wishlist/deleteWishlistEvent',
-                        type: 'DELETE',
-                        data: wParams,
-                        headers: { "RequestVerificationToken": token },
-                        success: function(success) {
-                            if (success === true) {
-                                $('#wishlist-id-' + eventId).html(`
-                                <button type="button" onclick="window.wishlistAction(event, ${eventId})" class="focus:outline-none">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#eab308" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-                                    </svg>
-                                </button>`);
-                            }
-                        },
-                        error: function() { console.error("Failed to remove from wishlist."); }
-                    });
+        $.getJSON('/Wishlist/returnItem', wParams).done(isWishlisted => {
+            let url = !isWishlisted ? '/Wishlist/addWishlistEvent' : '/Wishlist/deleteWishlistEvent';
+            let type = !isWishlisted ? 'POST' : 'DELETE';
+            $.ajax({
+                url: url, type: type, data: wParams, headers: { "RequestVerificationToken": token },
+                success: success => {
+                    if (success === true) {
+                        location.reload();
+                    }
                 }
             });
+        });
     }
 
-    // 3. Dynamic UI Loading (Gallery & Visuals)
-    async function loadGallery() {
-        const container = document.getElementById('gallery-container');
-        if (!container) return;
-
-        const eventId = container.dataset.eventId;
-        const eventType = container.dataset.eventType || "";
-        const track = document.getElementById('carousel-track');
-        
-        const apiUrl = `@Url.Action("GetEventGallery", "Events")?eventId=${eventId}`;
-
-        try {
-            const response = await fetch(apiUrl);
-            if (!response.ok) throw new Error(`Server returned ${response.status}`);
-
-            const data = await response.json();
-
-            if (data.success && data.images && data.images.length > 0) {
-                track.innerHTML = ''; 
-                
-                data.images.forEach(path => {
-                    const slide = document.createElement('div');
-                    slide.className = 'w-full h-full flex-none snap-center flex items-center justify-center';
-                    slide.innerHTML = '<img src="' + path + '" class="max-w-full max-h-full object-contain drop-shadow-md" />';
-                    track.appendChild(slide);
-                });
-
-                if (data.images.length > 1) {
-                    document.getElementById('btn-prev').classList.remove('hidden');
-                    document.getElementById('btn-next').classList.remove('hidden');
-                }
-            } else {
-                track.innerHTML = `
-                    <div class="w-full h-full flex-none flex items-center justify-center bg-gray-100">
-                        <div class="event-icon h-24 w-24 text-gray-400">
-                            ${getEventSvg(eventType.toLowerCase())}
-                        </div>
-                    </div>`;
-            }
-        } catch (error) {
-            console.error("Gallery Load Failed:", error);
-            track.innerHTML = `
-                <div class="w-full h-full flex-none flex flex-col items-center justify-center bg-red-50 text-red-500 p-6 text-center">
-                    <span class="font-bold">Error loading gallery</span>
-                    <span class="text-sm mt-1 text-red-400">${error.message}</span>
-                </div>`;
+    window.toggleReviewForm = function() {
+        const toggle = document.getElementById('attendedToggle');
+        const reviewFields = document.getElementById('reviewFields');
+        if (toggle && reviewFields) {
+            if (toggle.checked) reviewFields.classList.remove('hidden');
+            else reviewFields.classList.add('hidden');
         }
     }
 
-    loadGallery();
+    // AJAX Submission handler to keep the user on the Event Details page
+    $('#ajaxReviewForm').on('submit', function (e) {
+        e.preventDefault();
 
-    document.querySelectorAll(".event-icon:not(#carousel-track .event-icon)").forEach(el => {
-        const type = el.dataset.type || "";
-        el.innerHTML = getEventSvg(type.toLowerCase());
-    });
+        const form = $(this);
+        const submitBtn = $('#submitReviewBtn');
+        const token = $('input[name="__RequestVerificationToken"]').val();
 
-    // 4. Content truncation toggle system
-    const descEl = document.getElementById('event-description');
-    const toggleBtn = document.getElementById('toggle-description-btn');
-    
-    if (descEl && toggleBtn) {
+        submitBtn.prop('disabled', true).text('Submitting...');
 
-        setTimeout(() => {
-            descEl.classList.remove('custom-line-clamp');
-            const fullHeight = descEl.scrollHeight;
-            
-            descEl.classList.add('custom-line-clamp');
-            const clampedHeight = descEl.clientHeight;
-            
-            if (fullHeight > clampedHeight + 10) toggleBtn.classList.remove('hidden');
-        }, 100);
-
-        toggleBtn.addEventListener('click', function() {
-            const isClamped = descEl.classList.contains('custom-line-clamp');
-            const span = toggleBtn.querySelector('span');
-            const icon = toggleBtn.querySelector('svg');
-            
-            if (isClamped) {
-                descEl.classList.remove('custom-line-clamp');
-                span.innerText = 'Read Less';
-                icon.classList.add('rotate-180');
-            } else {
-                descEl.classList.add('custom-line-clamp');
-                span.innerText = 'Read More';
-                icon.classList.remove('rotate-180');
+        $.ajax({
+            url: '/Reservation/SubmitReview',
+            type: 'POST',
+            data: form.serialize(),
+            headers: { "RequestVerificationToken": token },
+            success: function () {
+                location.reload();
+            },
+            error: function (xhr) {
+                console.error("Review submission failed", xhr);
+                alert("Failed to submit review. Please try again.");
+                submitBtn.prop('disabled', false).text('Submit Review');
             }
         });
-    }
+    });
 </script>
 }

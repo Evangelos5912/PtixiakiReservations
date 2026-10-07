@@ -192,12 +192,13 @@
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             
+            // Prioritize URL parameters, fallback to injected ViewBag values
             const urlParams = new URLSearchParams(window.location.search);
-            const eventId = urlParams.get('eventId');
-            const layoutId = urlParams.get('layoutId');
-            const duration = urlParams.get('duration');
-            const resDateStr = urlParams.get('resDate');
-            const seatIdsRaw = urlParams.get('seatIds');
+            const eventId = urlParams.get('eventId') || '@ViewBag.EventId';
+            const layoutId = urlParams.get('layoutId') || '@ViewBag.LayoutId';
+            const duration = urlParams.get('duration') || '@ViewBag.Duration';
+            const resDateStr = urlParams.get('resDate') || '@ViewBag.ResDate';
+            const seatIdsRaw = urlParams.get('seatIds') || '@ViewBag.SeatIdsRaw';
 
             const seatIds = seatIdsRaw ? seatIdsRaw.split(',') : [];
             const seatCount = seatIds.length;
@@ -210,8 +211,9 @@
             document.getElementById('summary-duration').textContent = duration || '-';
             document.getElementById('summary-seats').textContent = seatCount > 0 ? `${seatCount} Seat${seatCount > 1 ? 's' : ''}` : '-';
 
-            // Simulated pricing schema
-            const pricePerSeat = 15.00;
+            // Real Dynamic Price Injected from Controller
+            const pricePerSeat = @(ViewBag.TicketPrice ?? 0.0);
+            
             const subtotal = seatCount * pricePerSeat;
             const tax = subtotal * 0.24; 
             const total = subtotal + tax;
@@ -222,7 +224,12 @@
             document.getElementById('summary-total').textContent = `€${total.toFixed(2)}`;
             document.getElementById('btnText').textContent = `Pay €${total.toFixed(2)}`;
 
-            if (eventId) {
+            // Real Event Name Injected from Controller
+            const actualEventName = '@Html.Raw(ViewBag.EventName?.Replace("'", "\\'"))';
+            
+            if (actualEventName) {
+                document.getElementById('summary-event-name').textContent = actualEventName;
+            } else if (eventId) {
                 document.getElementById('summary-event-name').textContent = `Event ID Reference: #${eventId}`;
             }
 

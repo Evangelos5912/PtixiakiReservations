@@ -11,6 +11,8 @@
     var isAdmin = userRoles.Contains("Admin");
     var isSuper = userRoles.Contains("SuperOrganizer");
     var isEventManager = userRoles.Contains("Event");
+
+    var ratingsData = ViewBag.RatingsData as Dictionary<int, dynamic> ?? new Dictionary<int, dynamic>();
 }
 
 <style>
@@ -258,7 +260,6 @@
             let currentAutocompleteIndex = -1;
             let maxAutocompleteResults = 8;
 
-            // Parse URL parameters for cross-page navigation mapping
             const urlParams = new URLSearchParams(window.location.search);
 
             if (urlParams.has('searchTerm')) {
@@ -280,7 +281,6 @@
             $('#filtered-count').text(totalRecords);
             updatePagination(totalPages > 1);
 
-            // Refactor loadEventTypes to return a promise for sequential initialization
             function loadEventTypes() {
                 return $.getJSON('/Events/GetEventTypes')
                     .done(function(data) {
@@ -292,7 +292,6 @@
                             }));
                         });
                         
-                        // Bind URL category parameter if present
                         if (urlParams.has('eventTypeId')) {
                             dropdown.val(urlParams.get('eventTypeId'));
                         }
@@ -305,7 +304,6 @@
             $('#events-container').addClass('hidden');
             $('#loading-indicator').removeClass('hidden');
 
-            // Coordinate initial load: fetch categories, apply params, then search
             loadEventTypes().always(function() {
                 validateSearch();
                 performSearch();
@@ -530,8 +528,7 @@
 
             $('#page-numbers').on('click', '.page-button', function(e) {
                 e.preventDefault();
-                currentPage = parseInt($(this).data('page'));
-                $('#events-container').addClass('hidden');
+                currentPage = parseInt($(this).data('page'));$('#events-container').addClass('hidden');
                 $('#loading-indicator').removeClass('hidden');
                 setTimeout(performSearch, 300);
             });
@@ -641,7 +638,18 @@
                                 }
                             }
 
-                            // Resolve hierarchical location bounds
+                            // Rating Badge resolution if passed from Search endpoint
+                            let ratingBadgeHtml = "";
+                            const avgRating = event.avgRating || event.AvgRating;
+                            const reviewCount = event.reviewCount || event.ReviewCount;
+                            if (avgRating && reviewCount > 0) {
+                                ratingBadgeHtml = `
+                                <div class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                                    <span class="text-amber-500 mr-1">★</span>
+                                    ${parseFloat(avgRating).toFixed(1)} (${reviewCount})
+                                </div>`;
+                            }
+
                             const distinctCities = event.distinctCities || event.DistinctCities || 0;
                             const cityNames = event.cityNames || event.CityNames || [];
                             const baseCity = event.cityName || event.CityName || 'Unknown';
@@ -742,12 +750,12 @@
                                             </div>` : ''}
                                         </div>
                                         
-                                        <div class="flex items-center gap-2 mb-3">
+                                        <div class="flex items-center gap-2 mb-3 flex-wrap">
                                             ${categoryBadgeHtml}
                                             <div class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                                
-                                                €${priceDisplayHtml} 
+                                                ${priceDisplayHtml} 
                                             </div>
+                                            ${ratingBadgeHtml}
                                         </div>
                                         
                                         <div class="flex items-start mb-3">
@@ -806,7 +814,7 @@
                                 if (success === true) {
                                     $(`.wishlist-id-${eventId}`).html(`
                                     <button type="button" onclick="window.wishlistAction(event, ${eventId})" class="border-none bg-transparent p-0 cursor-pointer flex items-center justify-center">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="#eab308" stroke="#eab308" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#eab308" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                             <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
                                         </svg>
                                     </button>`);
@@ -935,7 +943,6 @@
                     events.forEach((event) => {
                         const formattedStartDate = new Date(event.startDateTime).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
                         
-                        // Resolve hierarchical location bounds for carousel
                         const childCount = event.childCount || event.ChildCount || 0;
                         const distinctCities = event.distinctCities || event.DistinctCities || 0;
                         const cityNames = event.cityNames || event.CityNames || [];
@@ -957,11 +964,8 @@
                             ? `<div class="flex items-center gap-1"><p>${locationText}</p>${tooltipHtml}</div>` 
                             : `<p>${locationText}</p>`;
 
-                        
-
                         let priceDisplayHtml = "";
 
-                        // Parse price range from bounds
                         if (childCount > 0) {
                             const minP = event.minPrice !== undefined ? event.minPrice : event.MinPrice;
                             const maxP = event.maxPrice !== undefined ? event.maxPrice : event.MaxPrice;

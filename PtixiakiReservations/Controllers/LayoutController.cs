@@ -123,6 +123,7 @@ namespace PtixiakiReservations.Controllers
                 Layout newLayout = new Layout
                 {
                     AreaName = layout.AreaName,
+                    Desc = layout.Desc,
                     Height = layout.Height,
                     Width = layout.Width,
                     Rotate = layout.Rotate,

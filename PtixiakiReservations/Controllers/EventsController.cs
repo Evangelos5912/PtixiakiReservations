@@ -349,7 +349,14 @@ public class EventsController(
             .Select(g => new { ParentId = g.Key, Count = g.Count() })
             .ToDictionaryAsync(x => x.ParentId, x => x.Count);
 
+        var ratingsData = await context.Reservation
+            .Where(r => masterIds.Contains(r.EventId) && r.Rating != null)
+            .GroupBy(r => r.EventId)
+            .Select(g => new { EventId = g.Key, AvgRating = g.Average(r => r.Rating.Value), Count = g.Count() })
+            .ToDictionaryAsync(x => x.EventId, x => new { x.AvgRating, x.Count });
+
         ViewBag.ChildCounts = childCounts;
+        ViewBag.RatingsData = ratingsData; 
 
         return View(eventsList);
     }
@@ -358,7 +365,7 @@ public class EventsController(
     {
         if (id == null) return NotFound();
 
-        var eventDetails = await context.Event
+        var @event = await context.Event
             .Include(e => e.Organizer)
             .Include(e => e.EventType)
             .Include(e => e.GalleryImages) 
@@ -373,9 +380,37 @@ public class EventsController(
             .AsSplitQuery() 
             .FirstOrDefaultAsync(m => m.Id == id);
 
-        if (eventDetails == null) return NotFound();
+        if (@event == null) return NotFound();
 
-        return View(eventDetails);
+        var eventReviews = await context.Reservation
+            .Include(r => r.ApplicationUser)
+            .Where(r => r.EventId == @event.Id && r.Rating != null)
+            .OrderByDescending(r => r.ID)
+            .ToListAsync();
+
+        ViewBag.EventReviews = eventReviews;
+
+        ViewBag.EligibleToReview = false;
+        ViewBag.ReviewReservationId = null;
+
+        var userId = userManager.GetUserId(User);
+        if (!string.IsNullOrEmpty(userId))
+        {
+            var userReservations = await context.Reservation
+                .Where(r => r.UserId == userId && r.EventId == @event.Id && r.Rating == null)
+                .ToListAsync();
+
+            var pastReservation = userReservations
+                .FirstOrDefault(r => r.Date <= DateTime.Now.AddHours(2)); // Relaxed window for testing
+
+            if (pastReservation != null)
+            {
+                ViewBag.EligibleToReview = true;
+                ViewBag.ReviewReservationId = pastReservation.ID; 
+            }
+        }
+
+        return View(@event);
     }
 
     [HttpGet]
@@ -1164,7 +1199,13 @@ public class EventsController(
                     cityNames = e.ChildEvents.Where(c => c.Venue != null && c.Venue.City != null).Select(c => c.Venue.City.Name).Distinct().ToList(),
                     ticketPrice = e.TicketPrice,
                     minPrice = e.ChildEvents.Any() ? e.ChildEvents.Min(c => c.TicketPrice) : e.TicketPrice,
-                    maxPrice = e.ChildEvents.Any() ? e.ChildEvents.Max(c => c.TicketPrice) : e.TicketPrice
+                    maxPrice = e.ChildEvents.Any() ? e.ChildEvents.Max(c => c.TicketPrice) : e.TicketPrice,
+                    
+                    // --- NEW: Inject Average Rating and Review Count into JSON ---
+                    avgRating = context.Reservation.Where(r => r.EventId == e.Id && r.Rating != null).Any() 
+                        ? context.Reservation.Where(r => r.EventId == e.Id && r.Rating != null).Average(r => (double?)r.Rating) 
+                        : null,
+                    reviewCount = context.Reservation.Count(r => r.EventId == e.Id && r.Rating != null)
                 })
                 .ToListAsync();
 
@@ -1274,7 +1315,7 @@ public class EventsController(
         return Json(new { success = true, events = generatedEvents });
     }
 
-    [Authorize(Roles = "Admin,Event,SuperOrganizer")]
+        [Authorize(Roles = "Admin,Event,SuperOrganizer")]
     [HttpGet]
     public async Task<IActionResult> GetUserEvents(string filter = "mine")
     {
