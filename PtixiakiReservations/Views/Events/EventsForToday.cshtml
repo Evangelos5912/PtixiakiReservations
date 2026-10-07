@@ -638,7 +638,7 @@
                                 }
                             }
 
-                            // Rating Badge resolution if passed from Search endpoint
+                            // Rating Badge resolution (handles standalone vs child-aggregated ratings)
                             let ratingBadgeHtml = "";
                             const avgRating = event.avgRating || event.AvgRating;
                             const reviewCount = event.reviewCount || event.ReviewCount;

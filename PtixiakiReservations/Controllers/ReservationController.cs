@@ -508,27 +508,46 @@ public class ReservationController(
     }
 
     [HttpPost]
-    public async Task<IActionResult> SubmitReview(int reservationId, bool attended, double rating, string review)
+    [Authorize]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> SubmitReview(int reservationId, bool attended, int? rating, string review)
     {
+        // Use _userManager (with underscore)
         var userId = _userManager.GetUserId(User);
-        
+        if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+        // Use _context (with underscore)
         var reservation = await _context.Reservation
             .FirstOrDefaultAsync(r => r.ID == reservationId && r.UserId == userId);
 
-        if (reservation != null)
+        if (reservation == null) return NotFound("Reservation not found.");
+
+        // Enforce "One review per user per event"
+        bool alreadyReviewed = await _context.Reservation
+            .AnyAsync(r => r.UserId == userId && r.EventId == reservation.EventId && r.Rating != null && r.ID != reservationId);
+
+        if (alreadyReviewed)
         {
-            reservation.Attended = attended;
-
-            if (attended)
-            {
-                reservation.Rating = rating; 
-                reservation.Review = review;
-            }
-
-            await _context.SaveChangesAsync();
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                return BadRequest(new { success = false, message = "You have already submitted a review for this event." });
+            
+            TempData["ErrorMessage"] = "You have already submitted a review for this event.";
+            return RedirectToAction("Details", "Events", new { id = reservation.EventId });
         }
 
-        return RedirectToAction(nameof(Details), new { id = reservationId });
+        reservation.Attended = attended;
+        reservation.Rating = rating;
+        reservation.Review = review;
+
+        _context.Update(reservation);
+        await _context.SaveChangesAsync();
+
+        if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+        {
+            return Ok(new { success = true });
+        }
+
+        return RedirectToAction("Details", "Events", new { id = reservation.EventId });
     }
 
     [HttpGet("reservation/{ID}/ics")]

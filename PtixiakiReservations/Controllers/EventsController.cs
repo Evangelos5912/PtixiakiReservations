@@ -377,6 +377,7 @@ public class EventsController(
                 .ThenInclude(c => c.Layout)
             .Include(e => e.ChildEvents) 
                 .ThenInclude(c => c.Venue)
+                    .ThenInclude(v => v.City)
             .AsSplitQuery() 
             .FirstOrDefaultAsync(m => m.Id == id);
 
@@ -396,17 +397,14 @@ public class EventsController(
         var userId = userManager.GetUserId(User);
         if (!string.IsNullOrEmpty(userId))
         {
-            var userReservations = await context.Reservation
-                .Where(r => r.UserId == userId && r.EventId == @event.Id && r.Rating == null)
-                .ToListAsync();
+            var userReservation = await context.Reservation
+                .Where(r => r.UserId == userId && r.EventId == @event.Id)
+                .FirstOrDefaultAsync();
 
-            var pastReservation = userReservations
-                .FirstOrDefault(r => r.Date <= DateTime.Now.AddHours(2)); // Relaxed window for testing
-
-            if (pastReservation != null)
+            if (userReservation != null && !userReservation.Rating.HasValue)
             {
                 ViewBag.EligibleToReview = true;
-                ViewBag.ReviewReservationId = pastReservation.ID; 
+                ViewBag.ReviewReservationId = userReservation.ID; 
             }
         }
 
@@ -1201,11 +1199,32 @@ public class EventsController(
                     minPrice = e.ChildEvents.Any() ? e.ChildEvents.Min(c => c.TicketPrice) : e.TicketPrice,
                     maxPrice = e.ChildEvents.Any() ? e.ChildEvents.Max(c => c.TicketPrice) : e.TicketPrice,
                     
-                    // --- NEW: Inject Average Rating and Review Count into JSON ---
-                    avgRating = context.Reservation.Where(r => r.EventId == e.Id && r.Rating != null).Any() 
-                        ? context.Reservation.Where(r => r.EventId == e.Id && r.Rating != null).Average(r => (double?)r.Rating) 
-                        : null,
-                    reviewCount = context.Reservation.Count(r => r.EventId == e.Id && r.Rating != null)
+                    // --- STANDALONE VS CHILD-AGGREGATED RATING CALCULATION ---
+                    avgRating = e.ChildEvents.Any()
+                        ? e.ChildEvents
+                            .Select(c => new {
+                                Avg = context.Reservation.Where(r => r.EventId == c.Id && r.Rating != null).Average(r => (double?)r.Rating),
+                                Count = context.Reservation.Count(r => r.EventId == c.Id && r.Rating != null)
+                            })
+                            .Where(x => x.Count > 0)
+                            .OrderByDescending(x => x.Avg)
+                            .Select(x => (double?)x.Avg)
+                            .FirstOrDefault()
+                        : (context.Reservation.Where(r => r.EventId == e.Id && r.Rating != null).Any()
+                            ? context.Reservation.Where(r => r.EventId == e.Id && r.Rating != null).Average(r => (double?)r.Rating)
+                            : (double?)null),
+
+                    reviewCount = e.ChildEvents.Any()
+                        ? e.ChildEvents
+                            .Select(c => new {
+                                Avg = context.Reservation.Where(r => r.EventId == c.Id && r.Rating != null).Average(r => (double?)r.Rating),
+                                Count = context.Reservation.Count(r => r.EventId == c.Id && r.Rating != null)
+                            })
+                            .Where(x => x.Count > 0)
+                            .OrderByDescending(x => x.Avg)
+                            .Select(x => (int?)x.Count)
+                            .FirstOrDefault()
+                        : context.Reservation.Count(r => r.EventId == e.Id && r.Rating != null)
                 })
                 .ToListAsync();
 
