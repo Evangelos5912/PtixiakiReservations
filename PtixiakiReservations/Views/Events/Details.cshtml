@@ -16,6 +16,13 @@
     bool isReviewableNode = (Model.VenueId != null && !hasSchedules) || Model.ParentEventId != null;
 
     var reviews = ViewBag.EventReviews as List<PtixiakiReservations.Models.Reservation> ?? new List<PtixiakiReservations.Models.Reservation>();
+
+    // Safely collect gallery images (fallback to parent if it's a sub-event)
+    var galleryImages = Model.GalleryImages?.ToList() ?? new List<PtixiakiReservations.Models.EventImage>();
+    if (!galleryImages.Any() && Model.ParentEvent?.GalleryImages != null)
+    {
+        galleryImages = Model.ParentEvent.GalleryImages.ToList();
+    }
 }
 
 <div class="container mx-auto px-4 py-8 max-w-7xl">
@@ -30,20 +37,37 @@
         </div>
 
         <!-- Event Hero Image -->
-        <div class="overflow-hidden h-64 md:h-96">
+        <div class="overflow-hidden h-64 md:h-96 bg-gray-900 relative">
            @{
-                var finalPath = !string.IsNullOrEmpty(Model.DisplayImagePath) 
-                    ? Model.DisplayImagePath 
-                    : Model.ParentEvent?.DisplayImagePath;
+                string rawPath = !string.IsNullOrEmpty(Model.ImagePath) 
+                    ? Model.ImagePath 
+                    : (!string.IsNullOrEmpty(Model.ParentEvent?.ImagePath) 
+                        ? Model.ParentEvent.ImagePath 
+                        : Model.EventType?.ImagePath);
+
+                string finalPath = null;
+                if (!string.IsNullOrEmpty(rawPath))
+                {
+                    finalPath = rawPath.Replace("\\", "/");
+                    if (!finalPath.StartsWith("/") && !finalPath.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+                    {
+                        finalPath = "/" + finalPath;
+                    }
+                }
             }
 
             @if (!string.IsNullOrEmpty(finalPath))
             {
-                <img src="@finalPath" class="w-full h-full object-cover transform hover:scale-105 transition-transform duration-300" />
+                <img src="@finalPath" alt="@Model.Name" class="w-full h-full object-cover transform hover:scale-105 transition-transform duration-500" onerror="this.onerror=null; this.src='/images/default-event.png';" />
             }
             else
             {
-                <img src="@Model.EventType?.ImagePath" alt="@Model.EventType?.Name" class="w-full h-full object-cover transform hover:scale-105 transition-transform duration-300" />
+                <div class="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-gray-800 to-indigo-900 text-white">
+                    <svg class="h-16 w-16 text-indigo-400 mb-2 opacity-75" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <span class="text-sm font-semibold text-gray-300">No poster image uploaded</span>
+                </div>
             }
         </div>
 
@@ -262,20 +286,36 @@
             </div>
             }
             
-            <!-- Gallery -->
-            <div class="relative w-full h-[300px] md:h-[450px] lg:h-[600px] group overflow-hidden bg-gray-100 rounded-xl mt-8" id="gallery-container" data-event-id="@Model.Id" data-event-type="@Model.EventType?.Name">
-                <div id="carousel-track" class="flex w-full h-full overflow-x-auto scroll-smooth snap-x snap-mandatory scrollbar-hide">
-                    <div id="gallery-fallback" class="w-full h-full flex-none flex items-center justify-center bg-gray-100">
-                        <div class="animate-pulse text-indigo-500 font-bold text-lg">Loading images...</div>
+            <!-- Dynamic Event Gallery Images -->
+            @if (galleryImages.Any())
+            {
+                <div class="relative w-full h-[300px] md:h-[450px] lg:h-[600px] group overflow-hidden bg-gray-100 rounded-xl mt-8" id="gallery-container">
+                    <div id="carousel-track" class="flex w-full h-full overflow-x-auto scroll-smooth snap-x snap-mandatory scrollbar-hide">
+                        @foreach(var img in galleryImages)
+                        {
+                            string gPath = img.ImagePath?.Replace("\\", "/");
+                            if (!string.IsNullOrEmpty(gPath) && !gPath.StartsWith("/") && !gPath.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+                            {
+                                gPath = "/" + gPath;
+                            }
+
+                            <div class="w-full h-full flex-none snap-center">
+                                <img src="@gPath" class="w-full h-full object-cover" loading="lazy" />
+                            </div>
+                        }
                     </div>
+                    
+                    @if (galleryImages.Count > 1)
+                    {
+                        <button id="btn-prev" type="button" class="hidden absolute left-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white p-2 rounded-full shadow-lg transition-all opacity-0 group-hover:opacity-100 z-10 md:block">
+                            <svg class="w-6 h-6 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                        </button>
+                        <button id="btn-next" type="button" class="hidden absolute right-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white p-2 rounded-full shadow-lg transition-all opacity-0 group-hover:opacity-100 z-10 md:block">
+                            <svg class="w-6 h-6 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                        </button>
+                    }
                 </div>
-                <button id="btn-prev" type="button" class="hidden absolute left-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white p-2 rounded-full shadow-lg transition-all opacity-0 group-hover:opacity-100 z-10">
-                    <svg class="w-6 h-6 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-                </button>
-                <button id="btn-next" type="button" class="hidden absolute right-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white p-2 rounded-full shadow-lg transition-all opacity-0 group-hover:opacity-100 z-10">
-                    <svg class="w-6 h-6 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                </button>
-            </div>
+            }
            
             <!-- Organizer Details -->
             @if(Model.Organizer != null){
@@ -571,43 +611,48 @@
 </script>
 
 @section Scripts {
-<script type="module">
-    import { getEventSvg } from "/js/event-svg.js";
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const track = document.getElementById('carousel-track');
+        const btnPrev = document.getElementById('btn-prev');
+        const btnNext = document.getElementById('btn-next');
+        
+        if (btnPrev && btnNext && track) {
+            btnPrev.addEventListener('click', () => track.scrollBy({ left: -track.offsetWidth, behavior: 'smooth' }));
+            btnNext.addEventListener('click', () => track.scrollBy({ left: track.offsetWidth, behavior: 'smooth' }));
+        }
 
-    const track = document.getElementById('carousel-track');
-    const btnPrev = document.getElementById('btn-prev');
-    const btnNext = document.getElementById('btn-next');
-    if (btnPrev && btnNext && track) {
-        btnPrev.addEventListener('click', () => track.scrollBy({ left: -track.offsetWidth, behavior: 'smooth' }));
-        btnNext.addEventListener('click', () => track.scrollBy({ left: track.offsetWidth, behavior: 'smooth' }));
-    }
-
-    $(document).ready(function () {
         const eventId = '@Model.Id';
-        const wishlistContainer = $('.wishlist-container');
-        let defaultWishlistState = `
-        <div class="flex items-center justify-center space-x-3 mt-2">
-            <h4 class="text-gray-600 text-sm font-bold uppercase tracking-wider">Add to Wishlist</h4>
-            <div id="wishlist-id-${eventId}" class="cursor-pointer flex justify-center items-center bg-white p-2 rounded-full shadow-sm border border-gray-200 hover:shadow-md hover:bg-gray-50 transition-all">
-                <button type="button" onclick="window.wishlistAction(event, ${eventId})" class="focus:outline-none flex items-center justify-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#eab308" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-                    </svg>
-                </button>
-            </div>
-        </div>`;
-        wishlistContainer.html(defaultWishlistState);
+        const wishlistContainer = document.querySelector('.wishlist-container');
+        
+        if (wishlistContainer) {
+            wishlistContainer.innerHTML = `
+            <div class="flex items-center justify-center space-x-3 mt-2">
+                <h4 class="text-gray-600 text-sm font-bold uppercase tracking-wider">Add to Wishlist</h4>
+                <div id="wishlist-id-${eventId}" class="cursor-pointer flex justify-center items-center bg-white p-2 rounded-full shadow-sm border border-gray-200 hover:shadow-md hover:bg-gray-50 transition-all">
+                    <button type="button" onclick="window.wishlistAction(event, ${eventId})" class="focus:outline-none flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#eab308" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                        </svg>
+                    </button>
+                </div>
+            </div>`;
+        }
 
         if (currentUserId !== '') {
-            $.getJSON('/Wishlist/returnItem', { eventId: eventId, userId: currentUserId })
-                .done(isWishlisted => {
+            fetch(`/Wishlist/returnItem?eventId=${eventId}&userId=${currentUserId}`)
+                .then(response => response.json())
+                .then(isWishlisted => {
                     if (isWishlisted === true) {
-                        $('#wishlist-id-' + eventId).html(`
-                            <button type="button" onclick="window.wishlistAction(event, ${eventId})" class="focus:outline-none">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#eab308" stroke="#eab308" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-                                </svg>
-                            </button>`);
+                        const target = document.getElementById(`wishlist-id-${eventId}`);
+                        if (target) {
+                            target.innerHTML = `
+                                <button type="button" onclick="window.wishlistAction(event, ${eventId})" class="focus:outline-none">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#eab308" stroke="#eab308" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                    </svg>
+                                </button>`;
+                        }
                     }
                 });
         }
@@ -616,23 +661,40 @@
     window.wishlistAction = function(e, eventId) {
         e.preventDefault();
         e.stopPropagation();
-        if (!currentUserId || currentUserId === '') { alert("You must be logged in."); return; }
+        
+        if (!currentUserId || currentUserId === '') { 
+            alert("You must be logged in."); 
+            return; 
+        }
 
-        let token = $('input[name="__RequestVerificationToken"]').val();
-        let wParams = { eventId: eventId, userId: currentUserId };
+        let token = document.querySelector('input[name="__RequestVerificationToken"]').value;
 
-        $.getJSON('/Wishlist/returnItem', wParams).done(isWishlisted => {
-            let url = !isWishlisted ? '/Wishlist/addWishlistEvent' : '/Wishlist/deleteWishlistEvent';
-            let type = !isWishlisted ? 'POST' : 'DELETE';
-            $.ajax({
-                url: url, type: type, data: wParams, headers: { "RequestVerificationToken": token },
-                success: success => {
+        fetch(`/Wishlist/returnItem?eventId=${eventId}&userId=${currentUserId}`)
+            .then(res => res.json())
+            .then(isWishlisted => {
+                let url = !isWishlisted ? '/Wishlist/addWishlistEvent' : '/Wishlist/deleteWishlistEvent';
+                let method = !isWishlisted ? 'POST' : 'DELETE';
+                
+                const formData = new URLSearchParams();
+                formData.append('eventId', eventId);
+                formData.append('userId', currentUserId);
+
+                fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'RequestVerificationToken': token
+                    },
+                    body: formData.toString()
+                })
+                .then(response => response.json())
+                .then(success => {
                     if (success === true) {
                         location.reload();
                     }
-                }
+                })
+                .catch(err => console.error(err));
             });
-        });
     }
 
     window.toggleReviewForm = function() {
@@ -644,30 +706,41 @@
         }
     }
 
-    // AJAX Submission handler to keep the user on the Event Details page
-    $('#ajaxReviewForm').on('submit', function (e) {
-        e.preventDefault();
+    const reviewForm = document.getElementById('ajaxReviewForm');
+    if (reviewForm) {
+        reviewForm.addEventListener('submit', function (e) {
+            e.preventDefault();
 
-        const form = $(this);
-        const submitBtn = $('#submitReviewBtn');
-        const token = $('input[name="__RequestVerificationToken"]').val();
+            const submitBtn = document.getElementById('submitReviewBtn');
+            const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+            
+            submitBtn.disabled = true;
+            submitBtn.innerText = 'Submitting...';
 
-        submitBtn.prop('disabled', true).text('Submitting...');
+            const formData = new URLSearchParams(new FormData(this));
 
-        $.ajax({
-            url: '/Reservation/SubmitReview',
-            type: 'POST',
-            data: form.serialize(),
-            headers: { "RequestVerificationToken": token },
-            success: function () {
-                location.reload();
-            },
-            error: function (xhr) {
-                console.error("Review submission failed", xhr);
+            fetch('/Reservation/SubmitReview', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'RequestVerificationToken': token
+                },
+                body: formData.toString()
+            })
+            .then(response => {
+                if (response.ok) {
+                    location.reload();
+                } else {
+                    throw new Error('Failed');
+                }
+            })
+            .catch(error => {
+                console.error("Review submission failed", error);
                 alert("Failed to submit review. You may have already reviewed this event.");
-                submitBtn.prop('disabled', false).text('Submit Review');
-            }
+                submitBtn.disabled = false;
+                submitBtn.innerText = 'Submit Review';
+            });
         });
-    });
+    }
 </script>
 }
