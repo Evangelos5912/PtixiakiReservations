@@ -6,7 +6,6 @@ using System.Net;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -37,10 +36,35 @@ namespace PtixiakiReservations.Controllers
             _logger = logger;
         }
 
+        /// <summary>
+        /// Helper method to verify if the current user owns the venue associated with the layout.
+        /// Admins bypass this check automatically.
+        /// </summary>
+        private async Task<bool> IsAuthorizedToManageLayout(int venueId)
+        {
+            if (User.IsInRole("Admin")) return true;
+
+            var userId = _usermanager.GetUserId(User);
+            var venue = await _context.Venue.AsNoTracking().FirstOrDefaultAsync(v => v.Id == venueId);
+            
+            return venue != null && venue.UserId == userId;
+        }
+
         [Authorize(Roles = "Venue,Admin,SuperOrganizer")]
         public async Task<IActionResult> Index()
         {
-            var layouts = await _context.Layout
+            var userId = _usermanager.GetUserId(User);
+            var isAdmin = User.IsInRole("Admin");
+
+            var query = _context.Layout.Include(l => l.Venue).AsQueryable();
+
+            // Filter layouts by owned venues unless user is Admin
+            if (!isAdmin)
+            {
+                query = query.Where(l => l.Venue.UserId == userId);
+            }
+
+            var layouts = await query
                 .Select(sa => new
                 {
                     sa.Id,
@@ -58,10 +82,7 @@ namespace PtixiakiReservations.Controllers
         public async Task<IActionResult> ChooseLayout(int venueId, int eventId, string duration, string resDate)
         {
             var venue = await _context.Venue.FindAsync(venueId);
-            if (venue == null)
-            {
-                return NotFound();
-            }
+            if (venue == null) return NotFound();
 
             ViewData["EventId"] = eventId;
             ViewData["VenueId"] = venueId;
@@ -75,27 +96,27 @@ namespace PtixiakiReservations.Controllers
         [Authorize(Roles = "Venue,Admin,SuperOrganizer")]
         public async Task<IActionResult> Details(int? id, int? venueId)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            if (id == null) return NotFound();
 
             var layout = await _context.Layout
                 .Include(s => s.Venue)
                 .FirstOrDefaultAsync(m => m.Id == id);
-            if (layout == null)
+                
+            if (layout == null) return NotFound();
+
+            // Check authorization constraint
+            if (!await IsAuthorizedToManageLayout(layout.VenueId))
             {
-                return NotFound();
+                return Forbid();
             }
 
-            // Pass venueId to the view for proper back navigation
             ViewBag.VenueId = venueId ?? layout.VenueId;
             ViewBag.VenueName = layout.Venue?.Name;
 
             return View(layout);
         }
 
-        // GET: Layouts/Create
+        // POST: Layouts/Create
         [Authorize(Roles = "Venue,Admin,SuperOrganizer")]
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] JsonLayoutModel[] layouts)
@@ -107,17 +128,18 @@ namespace PtixiakiReservations.Controllers
 
             var userId = _usermanager.GetUserId(HttpContext.User);
 
-            // Get all valid Venue IDs for this user once to avoid hitting DB in a loop
             var userVenueIds = await _context.Venue
                 .Where(v => v.UserId == userId)
                 .Select(v => v.Id)
                 .ToListAsync();
 
+            var isAdmin = User.IsInRole("Admin");
+
             foreach (var layout in layouts)
             {
-                if (!userVenueIds.Contains(layout.VenueId))
+                if (!isAdmin && !userVenueIds.Contains(layout.VenueId))
                 {
-                    return Forbid(); // User trying to add areas to someone else's venue
+                    return Forbid(); 
                 }
 
                 Layout newLayout = new Layout
@@ -137,6 +159,7 @@ namespace PtixiakiReservations.Controllers
             await _context.SaveChangesAsync();
             return Ok(new { message = "Successfully created all sub-areas" });
         }
+
         [Authorize(Roles = "Venue,Admin,SuperOrganizer")]
         [HttpPost]
         public async Task<IActionResult> CreateFromVenue([FromBody]JsonLayoutModel[] layouts)
@@ -146,7 +169,10 @@ namespace PtixiakiReservations.Controllers
                 ViewBag.Error = "Something went wrong";
                 return View("Error");
             }
+            
             var venue = await _context.Venue.FirstOrDefaultAsync(v => v.ApplicationUser.Id == _usermanager.GetUserId(HttpContext.User));
+            if (venue == null && !User.IsInRole("Admin")) return Forbid();
+
             foreach (var layout in layouts)
             {
                 Layout newLayout = new Layout
@@ -157,7 +183,7 @@ namespace PtixiakiReservations.Controllers
                     Rotate = layout.Rotate,
                     Top = layout.Top,
                     Left = layout.Left,
-                    VenueId = venue.Id
+                    VenueId = venue.Id // Admin bypassing this specific quick-create flow might require explicit VenueId injection in complex setups
                 };
                 _context.Add(newLayout);
             }
@@ -171,16 +197,16 @@ namespace PtixiakiReservations.Controllers
         [Authorize(Roles = "Venue,Admin,SuperOrganizer")]
         public async Task<IActionResult> Edit(int? id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            if (id == null) return NotFound();
 
             var layout = await _context.Layout.FindAsync(id);
-            if (layout == null)
+            if (layout == null) return NotFound();
+
+            if (!await IsAuthorizedToManageLayout(layout.VenueId))
             {
-                return NotFound();
+                return Forbid();
             }
+
             ViewData["VenueId"] = new SelectList(_context.Venue, "Id", "Id", layout.VenueId);
             return View(layout);
         }
@@ -188,12 +214,15 @@ namespace PtixiakiReservations.Controllers
         // POST: Layouts/Edit/5
         [HttpPost]
         [Authorize(Roles = "Venue,Admin,SuperOrganizer")]
-        public async Task<IActionResult> Edit(int id,Layout layoutEdit)
+        public async Task<IActionResult> Edit(int id, Layout layoutEdit)
         {
-            var layout = _context.Layout.SingleOrDefault(s => s.Id == id);
-            if (id != layout.Id)
+            var layout = await _context.Layout.SingleOrDefaultAsync(s => s.Id == id);
+            
+            if (layout == null || id != layout.Id) return NotFound();
+            
+            if (!await IsAuthorizedToManageLayout(layout.VenueId))
             {
-                return NotFound();
+                return Forbid();
             }
            
             if (ModelState.IsValid)
@@ -225,20 +254,18 @@ namespace PtixiakiReservations.Controllers
         // GET: Layouts/Delete/5
         [Authorize(Roles = "Venue,Admin,SuperOrganizer")]
         public async Task<IActionResult> Delete(int? id)
-        
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            if (id == null) return NotFound();
 
             var layout = await _context.Layout
                 .Include(s => s.Venue)
                 .FirstOrDefaultAsync(m => m.Id == id);
                 
-            if (layout == null)
+            if (layout == null) return NotFound();
+
+            if (!await IsAuthorizedToManageLayout(layout.VenueId))
             {
-                return NotFound();
+                return Forbid();
             }
 
             return View(layout);
@@ -258,12 +285,15 @@ namespace PtixiakiReservations.Controllers
 
             var venueId = layout.VenueId;
 
+            if (!await IsAuthorizedToManageLayout(venueId))
+            {
+                return Forbid();
+            }
+
             try
             {
-                // 1. Gather Event IDs directly tied to this Layout
                 var directEventIds = await _context.Event.Where(e => e.LayoutId == id).Select(e => e.Id).ToListAsync();
                 
-                // Fetch Child Events spawned from those Master Events
                 var childEventIds = await _context.Event
                     .Where(e => e.ParentEventId.HasValue && directEventIds.Contains(e.ParentEventId.Value))
                     .Select(e => e.Id)
@@ -271,17 +301,13 @@ namespace PtixiakiReservations.Controllers
                     
                 var allEventIds = directEventIds.Concat(childEventIds).Distinct().ToList();
 
-                // 2. Harvest physical file paths before we wipe the DB records
                 var eventImagePaths = await _context.Event.Where(e => allEventIds.Contains(e.Id)).Select(e => e.ImagePath).ToListAsync();
                 var galleryImagePaths = await _context.Event.Where(e => allEventIds.Contains(e.Id)).SelectMany(e => e.GalleryImages).Select(g => g.ImagePath).ToListAsync();
 
-                // =======================================================================
-                // 3. EXECUTE BULK DB DELETIONS (Translates directly to raw SQL)
-                // =======================================================================
+             
 
                 if (allEventIds.Any())
                 {
-                    // Clear out Wishlists and Reservations to prevent RESTRICT FK crashes
                     await _context.Set<Wishlist>().Where(w => allEventIds.Contains(w.EventId)).ExecuteDeleteAsync();
                     await _context.Reservation.Where(r => allEventIds.Contains(r.EventId)).ExecuteDeleteAsync();
                     await _context.Event.Where(e => allEventIds.Contains(e.Id)).SelectMany(e => e.GalleryImages).ExecuteDeleteAsync();
@@ -293,18 +319,14 @@ namespace PtixiakiReservations.Controllers
                         await _context.Event.Where(e => directEventIds.Contains(e.Id)).ExecuteDeleteAsync();
                 }
 
-                // Delete all internal structure items for the Layout
                 await _context.Seat.Where(s => s.LayoutId == id).ExecuteDeleteAsync();
                 await _context.NonSelectable.Where(ns => ns.LayoutId == id).ExecuteDeleteAsync();
                 await _context.UnitGroup.Where(ug => ug.LayoutId == id).ExecuteDeleteAsync();
 
-                // Delete the layout itself
                 _context.Layout.Remove(layout);
                 await _context.SaveChangesAsync();
 
-                // =======================================================================
-                // 4. CLEAN UP PHYSICAL DISK STORAGE
-                // =======================================================================
+            
                 var allPathsToDelete = eventImagePaths.Concat(galleryImagePaths).Where(p => !string.IsNullOrEmpty(p)).ToList();
                 foreach (var path in allPathsToDelete)
                 {
@@ -324,15 +346,14 @@ namespace PtixiakiReservations.Controllers
         [Authorize(Roles = "Venue,Admin,SuperOrganizer")]
         public async Task<IActionResult> VenueLayouts(int venueId)
         {
-            if (venueId == 0)
-            {
-                return NotFound();
-            }
+            if (venueId == 0) return NotFound();
 
             var venue = await _context.Venue.FindAsync(venueId);
-            if (venue == null)
+            if (venue == null) return NotFound();
+
+            if (!await IsAuthorizedToManageLayout(venueId))
             {
-                return NotFound();
+                return Forbid();
             }
 
             var layouts = await _context.Layout
@@ -347,15 +368,21 @@ namespace PtixiakiReservations.Controllers
 
         [HttpGet]
         [Authorize(Roles = "Venue,Admin,SuperOrganizer")]
-        public JsonResult GetLayouts(int venueId)
+        public async Task<JsonResult> GetLayouts(int venueId)
         {
-            var layouts = _context.Layout
+            if (!await IsAuthorizedToManageLayout(venueId))
+            {
+                return Json(new { error = "Unauthorized" });
+            }
+
+            var layouts = await _context.Layout
                 .Where(sa => sa.VenueId == venueId)
                 .Select(sa => new { id = sa.Id, areaName = sa.AreaName, desc = sa.Desc })
-                .ToList();
+                .ToListAsync();
 
             return Json(layouts);
         }
+
         [Authorize(Roles = "Venue,Admin,SuperOrganizer")]
         private bool LayoutExists(int id)
         {
@@ -369,9 +396,11 @@ namespace PtixiakiReservations.Controllers
             var originalLayout = await _context.Layout
                 .FirstOrDefaultAsync(sa => sa.Id == request.Id);
 
-            if (originalLayout == null)
+            if (originalLayout == null) return NotFound();
+
+            if (!await IsAuthorizedToManageLayout(originalLayout.VenueId))
             {
-                return NotFound();
+                return Forbid();
             }
 
             var duplicatedLayout = new Layout
@@ -407,12 +436,28 @@ namespace PtixiakiReservations.Controllers
                 _context.Seat.Add(duplicatedSeat);
             }
 
+            var originalShapes = await _context.NonSelectable
+                .Where(ns => ns.LayoutId == originalLayout.Id)
+                .ToListAsync();
+
+            foreach(var shape in originalShapes)
+            {
+                _context.NonSelectable.Add(new NonSelectable
+                {
+                    Name = shape.Name,
+                    X = shape.X,
+                    Y = shape.Y,
+                    ShapeType = shape.ShapeType,
+                    Width = shape.Width,
+                    Height = shape.Height,
+                    BackgroundColor = shape.BackgroundColor,
+                    LayoutId = duplicatedLayout.Id
+                });
+            }
+
             await _context.SaveChangesAsync();
 
-            return Ok(new
-            {
-                success = true
-            });
+            return Ok(new { success = true });
         }
     }
 }
