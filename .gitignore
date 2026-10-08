@@ -111,3 +111,4 @@ docker-compose.override.yml
 !.gitignore
 PtixiakiReservations/appsettings.json
 PtixiakiReservations/appsettings.Development.json
+PtixiakiReservations/.env
