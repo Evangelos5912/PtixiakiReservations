@@ -9,16 +9,26 @@ services:
       - "80:5000" 
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
-      
       - ConnectionStrings__DefaultConnection=Host=${DB_HOST};Port=${DB_PORT};Database=${DB_NAME};Username=${DB_USER};Password=${DB_PASS};Include Error Detail=true
-      
       - ElasticSettings__Uri=http://elasticsearch:9200
-      
       - EmailSettings__SenderEmail=${EMAIL_ADDRESS}
       - EmailSettings__SenderPassword=${EMAIL_PASSWORD}
-      
     depends_on:
       - elasticsearch
+      - postgres
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: ptixiaki_postgres
+    restart: always
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASS}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
 
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.13.0
@@ -34,4 +44,5 @@ services:
       - elastic_data:/usr/share/elasticsearch/data
 
 volumes:
+  postgres_data:
   elastic_data:
