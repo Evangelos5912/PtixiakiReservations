@@ -17,6 +17,6 @@ public class Venue
     public string? SocialMediaUrl { get; set; }
     public string UserId { get; set; }
     [ForeignKey("UserId")] public ApplicationUser ApplicationUser { get; set; }
-    public string imgUrl { get; set; }
+    public string? imgUrl { get; set; }
     public ICollection<VenueCategory> VenueCategory { get; set; }
 }

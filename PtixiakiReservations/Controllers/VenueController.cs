@@ -12,6 +12,9 @@ using Microsoft.EntityFrameworkCore;
 using PtixiakiReservations.Data;
 using PtixiakiReservations.Models;
 using PtixiakiReservations.Models.ViewModels;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Processing;
+using SixLabors.ImageSharp.Formats.Webp;
 
 namespace PtixiakiReservations.Controllers
 {
@@ -21,6 +24,7 @@ namespace PtixiakiReservations.Controllers
     /// </summary>
     public class VenueController : Controller
     {
+        private readonly IWebHostEnvironment _environment;
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<ApplicationRole> _roleManager;
@@ -31,11 +35,13 @@ namespace PtixiakiReservations.Controllers
 
         [Obsolete]
         public VenueController(
+            IWebHostEnvironment environment,
             ApplicationDbContext context,
             IHostingEnvironment hostingEnviromnet, 
             UserManager<ApplicationUser> userManager,
             RoleManager<ApplicationRole> roleManager)
         {
+            _environment = environment;
             _roleManager = roleManager;
             _userManager = userManager;
             _context = context;
@@ -72,26 +78,22 @@ namespace PtixiakiReservations.Controllers
         {
             string userId = _userManager.GetUserId(HttpContext.User);
             
-            // Preserve state parameters for the frontend UI router
             ViewBag.CurrentFilter = filter;
             ViewBag.SearchString = searchString;
             ViewBag.CurrentPage = page;
             ViewBag.PageSize = pageSize;
 
-            // 1. Initialize eager-loaded query execution sequence
             var query = _context.Venue
                 .Include(v => v.City)
                 .Include(v => v.VenueCategory)
                     .ThenInclude(vc => vc.EventType)
                 .AsQueryable();
 
-            // 2. Apply Ownership Filter
             if (filter != "all") 
             {
                 query = query.Where(v => v.UserId == userId);
             }
 
-            // 3. Apply Text-Based Search Filter (Translates to SQL LIKE)
             if (!string.IsNullOrWhiteSpace(searchString))
             {
                 var normalizedSearch = searchString.ToLower().Trim();
@@ -100,33 +102,40 @@ namespace PtixiakiReservations.Controllers
                     v.City.Name.ToLower().Contains(normalizedSearch));
             }
 
-            // 4. Compute aggregate KPIs for the filtered dataset prior to pagination truncation
             int totalCount = await query.CountAsync();
             ViewBag.TotalCount = totalCount;
             ViewBag.TotalPages = totalCount > 0 ? (int)Math.Ceiling((double)totalCount / pageSize) : 1;
             ViewBag.CityCount = await query.Select(v => v.CityId).Distinct().CountAsync();
 
-            // 5. Apply pagination constraints and fetch exact dataset into memory
             var venues = await query
                 .OrderBy(v => v.Name)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();
 
-            // 6. Aggregate secondary statistics and resolve static file paths
             var layoutCounts = new Dictionary<int, int>();
             var imagePaths = new Dictionary<int, string>();
             
             foreach (var venue in venues)
             {
                 layoutCounts[venue.Id] = await _context.Layout.CountAsync(sa => sa.VenueId == venue.Id);
-                imagePaths[venue.Id] = GetImagePath(venue.imgUrl);
+                
+                // Mirroring the robust image path resolution used by the Events controller
+                if (!string.IsNullOrEmpty(venue.imgUrl))
+                {
+                    imagePaths[venue.Id] = venue.imgUrl.EndsWith(".webp") 
+                        ? (venue.imgUrl.StartsWith("/") ? venue.imgUrl : "/" + venue.imgUrl.TrimStart('/')) 
+                        : $"/Events/GetCompressedImage?path={venue.imgUrl}&width=800";
+                }
+                else
+                {
+                    imagePaths[venue.Id] = "/images/image.jpg";
+                }
             }
 
             ViewBag.LayoutCounts = layoutCounts;
             ViewBag.ImagePaths = imagePaths;
 
-            // Global event cross-reference count based on currently filtered venues
             ViewBag.EventCount = await _context.Event
                 .Where(e => query.Any(v => v.Id == e.VenueId))
                 .CountAsync();
@@ -183,19 +192,12 @@ namespace PtixiakiReservations.Controllers
         }
 
         /// <summary>
-        /// Commits physical metadata and file I/O changes for a specific venue entity.
+        /// Commits physical metadata and WebP image transcoding changes for a specific venue entity.
         /// </summary>
         [HttpPost]
-        [Obsolete]
         [Authorize(Roles = "Admin,Venue,SuperOrganizer")]
         public async Task<IActionResult> Edit(VenueViewModel model)
         {
-            if (model == null)
-            {
-                ViewBag.Error = "Invalid model state submission.";
-                return View("Error");
-            }
-
             var venue = await _context.Venue
                 .Include(v => v.VenueCategory)
                 .FirstOrDefaultAsync(v => v.Id == model.Id);
@@ -211,27 +213,37 @@ namespace PtixiakiReservations.Controllers
 
             if (ModelState.IsValid)
             {
-                string uniqueFileName = null;
+                string uniqueFileName = venue.imgUrl;
+
                 try
                 {
-                    // Evaluate and process binary file uploads for venue imagery
-                    if (model.Photo == null)
+                    if (model.Photo != null && model.Photo.Length > 0)
                     {
-                        uniqueFileName = venue.imgUrl;
-                    }
-                    else
-                    {
-                        string uploadsFolder = Path.Combine(HostingEnviromnet.WebRootPath, "images");
-                        uniqueFileName = Guid.NewGuid().ToString() + "_" + model.Photo.FileName;
-                        string filePath = Path.Combine(uploadsFolder, uniqueFileName);
-                        
-                        using (var fileStream = new FileStream(filePath, FileMode.Create))
+                        if (!string.IsNullOrEmpty(venue.imgUrl))
                         {
-                            model.Photo.CopyTo(fileStream);
+                            string oldFilePath = Path.Combine(_environment.WebRootPath, venue.imgUrl.TrimStart('/'));
+                            if (System.IO.File.Exists(oldFilePath)) System.IO.File.Delete(oldFilePath);
+                        }
+
+                        string uploadsFolder = Path.Combine(_environment.WebRootPath, "images", "venues");
+                        if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
+
+                        uniqueFileName = "/images/venues/" + Guid.NewGuid().ToString() + ".webp";
+                        string filePath = Path.Combine(_environment.WebRootPath, uniqueFileName.TrimStart('/'));
+
+                        using (var image = await SixLabors.ImageSharp.Image.LoadAsync(model.Photo.OpenReadStream()))
+                        {
+                            if (image.Width > 1920)
+                            {
+                                int newHeight = (int)((double)image.Height / image.Width * 1920);
+                                image.Mutate(x => x.Resize(1920, newHeight));
+                            }
+
+                            var encoder = new SixLabors.ImageSharp.Formats.Webp.WebpEncoder { Quality = 80 };
+                            await image.SaveAsync(filePath, encoder);
                         }
                     }
 
-                    // Apply standard textual metadata modifications
                     venue.Name = model.Name;
                     venue.Phone = model.Phone;
                     venue.PostalCode = model.PostalCode;
@@ -239,13 +251,8 @@ namespace PtixiakiReservations.Controllers
                     venue.SocialMediaUrl = model.SocialMediaUrl;
                     venue.CityId = model.CityId;
                     venue.Address = model.Address;
+                    venue.imgUrl = uniqueFileName;
 
-                    if (uniqueFileName != null)
-                    {
-                        venue.imgUrl = uniqueFileName;
-                    }
-
-                    // Reconstruct many-to-many event category associations
                     if (venue.VenueCategory != null && venue.VenueCategory.Any())
                     {
                         _context.VenueCategory.RemoveRange(venue.VenueCategory);
@@ -263,7 +270,6 @@ namespace PtixiakiReservations.Controllers
                     }
                     else
                     {
-                        // Fallback constraint to ensure venue is universally accessible if not strictly categorized
                         _context.VenueCategory.Add(new VenueCategory
                         {
                             VenueId = venue.Id,
@@ -274,10 +280,12 @@ namespace PtixiakiReservations.Controllers
                     _context.Update(venue);
                     await _context.SaveChangesAsync();
                 }
-                catch (DbUpdateConcurrencyException)
+                catch (Exception ex)
                 {
-                    if (!VenueExists(venue.Id)) return NotFound();
-                    throw;
+                    ModelState.AddModelError("", "Error processing image data: " + ex.Message);
+                    PopulateVenueFormLists(model.CityId, selectedEventTypeIds);
+                    ViewBag.ImagePath = GetImagePath(venue.imgUrl);
+                    return View(model);
                 }
 
                 TempData["SuccessMessage"] = "Venue updated successfully";
@@ -301,12 +309,9 @@ namespace PtixiakiReservations.Controllers
             return View();
         }
 
-        /// <summary>
-        /// Processes form payloads to construct and assign a new structural venue identity.
-        /// </summary>
+        [Authorize(Roles = "Admin,Venue,SuperOrganizer")]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Obsolete]
         public async Task<IActionResult> Create(VenueViewModel model)
         {
             if (ModelState.IsValid)
@@ -314,19 +319,34 @@ namespace PtixiakiReservations.Controllers
                 var userId = _userManager.GetUserId(User);
                 string uniqueFileName = null;
 
-                // Handle binary file I/O operations safely
-                if (model.Photo != null)
+                if (model.Photo != null && model.Photo.Length > 0)
                 {
-                    string uploadsFolder = Path.Combine(HostingEnviromnet.WebRootPath, "images");
-                    
-                    if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
-
-                    uniqueFileName = Guid.NewGuid().ToString() + "_" + model.Photo.FileName;
-                    string filePath = Path.Combine(uploadsFolder, uniqueFileName);
-                    
-                    using (var fileStream = new FileStream(filePath, FileMode.Create))
+                    try
                     {
-                        model.Photo.CopyTo(fileStream);
+                        string uploadsFolder = Path.Combine(_environment.WebRootPath, "images", "venues");
+                        if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
+
+                        uniqueFileName = "/images/venues/" + Guid.NewGuid().ToString() + ".webp";
+                        string filePath = Path.Combine(_environment.WebRootPath, uniqueFileName.TrimStart('/'));
+
+                        using (var image = await SixLabors.ImageSharp.Image.LoadAsync(model.Photo.OpenReadStream()))
+                        {
+                            if (image.Width > 1920)
+                            {
+                                int newHeight = (int)((double)image.Height / image.Width * 1920);
+                                image.Mutate(x => x.Resize(1920, newHeight));
+                            }
+
+                            var encoder = new SixLabors.ImageSharp.Formats.Webp.WebpEncoder { Quality = 80 };
+                            await image.SaveAsync(filePath, encoder);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        ModelState.AddModelError("", "Error processing image data: " + ex.Message);
+                        ViewBag.ListOfCity = _context.City.ToList();
+                        ViewBag.EventTypes = new MultiSelectList(_context.EventType.ToList(), "Id", "Name", model.SelectedEventTypeIds);
+                        return View(model);
                     }
                 }
 
@@ -346,7 +366,6 @@ namespace PtixiakiReservations.Controllers
                 _context.Add(newVenue);
                 await _context.SaveChangesAsync();
 
-                // Assign complex categorization vectors
                 if (model.SelectedEventTypeIds != null && model.SelectedEventTypeIds.Any())
                 {
                     var categoriesToAttach = model.SelectedEventTypeIds.Select(typeId => new VenueCategory
@@ -370,13 +389,11 @@ namespace PtixiakiReservations.Controllers
                 return RedirectToAction(nameof(Details), new { id = newVenue.Id });
             }
 
-            // Restore dropdown contexts upon validation failure
-            ViewBag.ListOfCity = new SelectList(_context.City.ToList(), "Id", "Name", model.CityId);
+            ViewBag.ListOfCity = _context.City.ToList();
             ViewBag.EventTypes = new MultiSelectList(_context.EventType.ToList(), "Id", "Name", model.SelectedEventTypeIds);
             
             return View(model);
         }
-
         /// <summary>
         /// Retrieves the comprehensive public profile of an established venue.
         /// </summary>
@@ -392,8 +409,16 @@ namespace PtixiakiReservations.Controllers
         
             if (venue == null) return NotFound();
 
+            // Mirroring the Events controller image resolution style for Details view
+            string detailImagePath = "/images/image.jpg";
+            if (!string.IsNullOrEmpty(venue.imgUrl))
+            {
+                detailImagePath = venue.imgUrl.EndsWith(".webp") 
+                    ? (venue.imgUrl.StartsWith("/") ? venue.imgUrl : "/" + venue.imgUrl.TrimStart('/')) 
+                    : $"/Events/GetCompressedImage?path={venue.imgUrl}&width=1000";
+            }
 
-            ViewBag.ImagePath = GetImagePath(venue.imgUrl);
+            ViewBag.ImagePath = detailImagePath;
         
             return View(venue);
         }

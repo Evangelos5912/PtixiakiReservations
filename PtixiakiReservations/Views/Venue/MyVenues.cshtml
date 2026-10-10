@@ -169,7 +169,7 @@
             @foreach (var item in Model)
             {
                 var layoutCount = 0;
-                string imagePath = "~/images/image.jpg"; // Default fallback
+                string rawImagePath = "~/images/image.jpg"; 
 
                 if (ViewBag.LayoutCounts != null && ViewBag.LayoutCounts.ContainsKey(item.Id))
                 {
@@ -178,8 +178,11 @@
 
                 if (ViewBag.ImagePaths != null && ViewBag.ImagePaths.ContainsKey(item.Id))
                 {
-                    imagePath = ViewBag.ImagePaths[item.Id];
+                    rawImagePath = ViewBag.ImagePaths[item.Id];
                 }
+
+                // Resolve the WebP or uploaded image path properly for the browser
+                string imagePath = Url.Content(rawImagePath);
 
                 <div class="group bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-all duration-200 transform hover:-translate-y-1 relative" 
                      id="venue-card-@item.Id">
