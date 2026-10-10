@@ -142,12 +142,13 @@ try
         options.Cookie.SameSite = Microsoft.AspNetCore.Http.SameSiteMode.Lax;
     });
 
+    builder.Services.AddSignalR();
+
     // Build the app
     var app = builder.Build();
 
     // Configure the HTTP Request Pipeline
 
-// ΜΗΝ τρέχεις seeding όταν τρέχει EF Core CLI
 if (!builder.Environment.IsEnvironment("EF"))
 {
     using (var scope = app.Services.CreateScope())
@@ -185,12 +186,8 @@ if (!builder.Environment.IsEnvironment("EF"))
     else
     {
         app.UseExceptionHandler("/Home/Error");
-        // Don't redirect to HTTPS when behind a proxy
-        // app.UseHsts();
     }
 
-    // Don't use HTTPS redirection when behind a reverse proxy like Traefik
-    // app.UseHttpsRedirection();
 
     app.UseStaticFiles();
     app.MapStaticAssets();
@@ -200,13 +197,11 @@ if (!builder.Environment.IsEnvironment("EF"))
     app.UseAuthentication();
     app.UseAuthorization();
 
-    // CHANGED: Set the default root route to point directly to HomePage
     app.MapControllerRoute(
         name: "default",
         pattern: "{controller=Events}/{action=HomePage}/{id?}");
     app.MapRazorPages();
 
-    // Add a redirect from the root to HomePage
     app.Use(async (context, next) =>
     {
         if (context.Request.Path == "/")
@@ -217,6 +212,8 @@ if (!builder.Environment.IsEnvironment("EF"))
 
         await next();
     });
+
+    app.MapHub<EventSphere.Hubs.SupportHub>("/supporthub");
 
     app.Run();
 

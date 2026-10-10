@@ -1,0 +1,360 @@
+@using Microsoft.AspNetCore.Identity
+@inject UserManager<ApplicationUser> UserManager
+@{
+    var isWidgetAdmin = User.IsInRole("Admin");
+    var isOrganizer = User.IsInRole("Event") || User.IsInRole("Venue") || User.IsInRole("SuperOrganizer") || isWidgetAdmin;
+}
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
+
+<div class="fixed bottom-4 right-4 md:bottom-6 md:right-6 z-[9999] font-sans">
+    
+    <div id="chat-window" class="hidden w-[calc(100vw-2rem)] md:w-96 h-[30rem] max-h-[85vh] bg-gray-900 border border-gray-700 rounded-xl shadow-2xl flex-col mb-4 overflow-hidden transition-all duration-300">
+        
+        <!-- Header Controls -->
+        <div class="bg-gray-800 p-4 border-b border-gray-700 flex justify-between items-center shadow-sm shrink-0">
+            <span id="chat-header-title" class="text-gray-100 font-semibold">@((isWidgetAdmin) ? "Support Requests" : "Help Assistant")</span>
+            <div class="flex items-center space-x-3">
+                <button id="end-chat-btn" class="hidden text-xs bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded">End Chat</button>
+                
+                <button onclick="resetChat()" class="text-gray-400 hover:text-white transition" title="Restart Chat">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                    </svg>
+                </button>
+                
+                <button onclick="toggleChat()" class="text-gray-400 hover:text-white transition">✕</button>
+            </div>
+        </div>
+
+        <!-- Chat History -->
+        <div id="chat-history" class="flex-1 p-4 overflow-y-auto space-y-3 flex flex-col bg-gray-900 scroll-smooth"></div>
+        
+        <!-- Action Options -->
+        <div id="chat-options" class="p-3 bg-gray-800 border-t border-gray-700 space-y-2 shrink-0"></div>
+        
+        <!-- Live Chat Input -->
+        <div id="live-chat-input" class="hidden p-3 bg-gray-800 border-t border-gray-700 gap-2 shrink-0">
+            <input type="text" id="live-message" class="flex-1 bg-gray-700 text-white border border-gray-600 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500" placeholder="Type a message..." onkeypress="handleEnter(event)">
+            <button onclick="sendLiveMessage()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm transition">Send</button>
+        </div>
+    </div>
+
+    <!-- Toggle Widget -->
+    <button onclick="toggleChat()" class="bg-blue-600 hover:bg-blue-700 text-white w-14 h-14 rounded-full shadow-lg flex items-center justify-center float-right transition transform hover:scale-105 relative">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
+        @if(isWidgetAdmin)
+        {
+            <span id="admin-badge" class="hidden absolute top-0 right-0 bg-red-500 text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full border-2 border-gray-900">0</span>
+        }
+    </button>
+</div>
+
+<script>
+    const isAdmin = @isWidgetAdmin.ToString().ToLower();
+    const isOrganizer = @isOrganizer.ToString().ToLower();
+    const currentUserName = "@(User.Identity?.Name ?? "Guest")";
+    
+    let connection = new signalR.HubConnectionBuilder().withUrl("/supporthub").build();
+    let isLiveChat = false;
+    let targetConnectionId = null; 
+    let activeRequests = [];
+
+    const roleRestrictionMessage = "You currently do not have organizer privileges. To create venues or events, please navigate to your Profile page and submit a Role Request for approval.";
+
+    const chatFlow = {
+        start: {
+            message: "Hello! How can I help you navigate EventSphere today?",
+            options: [
+                { label: "How do I book tickets?", target: "booking_help" },
+                { label: "How do I create an Event?", target: "event_creation_help" },
+                { label: "How do I create Venues & Layouts?", target: "venue_creation_help" },
+                { label: "Talk to a real person", action: "request_admin" }
+            ]
+        },
+        booking_help: {
+            message: "To book, go to an event page and click 'View & Reserve'. You will see an interactive map of the venue where you can select your arrival and departure times[cite: 2]. Click the green seats to select them; red seats indicate they are already taken by another user[cite: 2]. After selecting, proceed to checkout to pay and receive your confirmation email[cite: 2].",
+            options: [
+                { label: "Got it, thanks!", action: "close_chat" },
+                { label: "Back to menu", target: "start" },
+                { label: "Talk to a real person", action: "request_admin" }
+            ]
+        },
+        event_creation_help: {
+            message: isOrganizer 
+                ? "Event Managers can create two types of events: Standalone or Master. Standalone events are for one-time occurrences and require a specific venue and layout[cite: 2]. Master events act as containers for multi-day events without a specific physical location[cite: 2]. If you create a Master event, you can generate 'Sub-Events' that inherit the main description and images, but allow you to select specific venues and dates for each session[cite: 2]."
+                : roleRestrictionMessage,
+            options: [
+                { label: "Got it, thanks!", action: "close_chat" },
+                { label: "Back to menu", target: "start" },
+                { label: "Talk to a real person", action: "request_admin" }
+            ]
+        },
+        venue_creation_help: {
+            message: isOrganizer 
+                ? "Venue Managers first create a Venue profile by filling out details like the name, categories, and an image[cite: 2]. Then, you can build floorplans in the Layout tab. Using the Seat Map Editor, you can drag and drop individual seats, tables, and stages onto a canvas[cite: 2]. You can also use the 'Click-to-Add' tool for fast placement, auto-generate seats around stages in Stadium or Concert formats, and even Copy/Paste JSON to duplicate your entire layout[cite: 2]."
+                : roleRestrictionMessage,
+            options: [
+                { label: "Got it, thanks!", action: "close_chat" },
+                { label: "Back to menu", target: "start" },
+                { label: "Talk to a real person", action: "request_admin" }
+            ]
+        }
+    };
+
+    async function initSignalR() {
+        try {
+            await connection.start();
+            if (isAdmin) await connection.invoke("RegisterAdmin");
+        } catch (err) {
+            console.error(err);
+        }
+    }
+    initSignalR();
+
+    // --- UI State Management ---
+    
+    function toggleChat() {
+        const win = document.getElementById('chat-window');
+        if (win.classList.contains('hidden')) {
+            win.classList.remove('hidden');
+            win.classList.add('flex');
+            
+            if (isAdmin && !isLiveChat) {
+                renderAdminQueue();
+            } else if (!isAdmin && document.getElementById('chat-history').innerHTML === '') {
+                loadBotNode('start');
+            }
+        } else {
+            win.classList.add('hidden');
+            win.classList.remove('flex');
+        }
+    }
+
+    function appendBubble(text, isSelf) {
+        const history = document.getElementById('chat-history');
+        const div = document.createElement('div');
+        div.className = `max-w-[85%] p-3 rounded-lg text-sm ${isSelf ? 'bg-blue-600 text-white self-end rounded-tr-none' : 'bg-gray-800 text-gray-200 self-start rounded-tl-none border border-gray-700'}`;
+        div.innerText = text;
+        history.appendChild(div);
+        history.scrollTop = history.scrollHeight;
+    }
+
+    function resetChat() {
+        if (isLiveChat && targetConnectionId && !isAdmin) {
+            connection.invoke("UserEndsChat", targetConnectionId);
+        } else if (!isLiveChat && !isAdmin) {
+            connection.invoke("CancelRequest");
+        }
+
+        isLiveChat = false;
+        targetConnectionId = null;
+        document.getElementById('chat-history').innerHTML = '';
+        
+        const inputContainer = document.getElementById('live-chat-input');
+        inputContainer.classList.add('hidden');
+        inputContainer.classList.remove('flex');
+        
+        if (isAdmin) {
+            document.getElementById('end-chat-btn').classList.add('hidden');
+            renderAdminQueue();
+        } else {
+            document.getElementById('chat-header-title').innerText = "Help Assistant";
+            document.getElementById('chat-options').style.display = 'block';
+            loadBotNode('start');
+        }
+    }
+
+    // --- Client Bot & Request Logic ---
+    
+    function loadBotNode(nodeId) {
+        const node = chatFlow[nodeId];
+        appendBubble(node.message, false);
+        
+        const optsContainer = document.getElementById('chat-options');
+        optsContainer.innerHTML = ''; 
+        
+        node.options.forEach(opt => {
+            const btn = document.createElement('button');
+            btn.className = "w-full text-left p-2 rounded bg-gray-700 hover:bg-gray-600 text-gray-200 text-sm transition";
+            btn.innerText = opt.label;
+            btn.onclick = () => {
+                appendBubble(opt.label, true);
+                optsContainer.innerHTML = ''; 
+
+                if (opt.action === 'close_chat') {
+                    setTimeout(() => toggleChat(), 500);
+                } else if (opt.action === 'request_admin') {
+                    requestAdmin();
+                } else if (opt.target) {
+                    setTimeout(() => loadBotNode(opt.target), 400); 
+                }
+            };
+            optsContainer.appendChild(btn);
+        });
+    }
+
+    function requestAdmin() {
+        appendBubble("Please wait while we connect you to an admin...", false);
+        connection.invoke("RequestAdmin", currentUserName);
+        
+        const optsContainer = document.getElementById('chat-options');
+        optsContainer.innerHTML = ''; 
+        
+        const cancelBtn = document.createElement('button');
+        cancelBtn.className = "w-full text-left p-2 rounded bg-red-900 hover:bg-red-800 text-white text-sm transition";
+        cancelBtn.innerText = "Cancel Request";
+        cancelBtn.onclick = () => {
+            connection.invoke("CancelRequest");
+            appendBubble("Request cancelled.", true);
+            setTimeout(() => {
+                document.getElementById('chat-history').innerHTML = '';
+                loadBotNode('start');
+            }, 1000);
+        };
+        optsContainer.appendChild(cancelBtn);
+    }
+
+    connection.on("AdminJoined", (adminId) => {
+        isLiveChat = true;
+        targetConnectionId = adminId;
+        
+        document.getElementById('chat-header-title').innerText = "Live Support";
+        document.getElementById('chat-options').style.display = 'none';
+        
+        const inputContainer = document.getElementById('live-chat-input');
+        inputContainer.classList.remove('hidden');
+        inputContainer.classList.add('flex');
+        
+        appendBubble("An admin has joined the chat. How can we help?", false);
+    });
+
+    connection.on("TicketClosed", () => {
+        isLiveChat = false;
+        targetConnectionId = null;
+        
+        const inputContainer = document.getElementById('live-chat-input');
+        inputContainer.classList.add('hidden');
+        inputContainer.classList.remove('flex');
+        
+        document.getElementById('chat-header-title').innerText = "Help Assistant";
+        appendBubble("The admin has closed this chat. Have a great day!", false);
+        
+        setTimeout(() => {
+            document.getElementById('chat-history').innerHTML = '';
+            loadBotNode('start');
+            document.getElementById('chat-options').style.display = 'block';
+        }, 3000);
+    });
+
+    // --- Admin Dashboard & Queue Logic ---
+    
+    connection.on("ReceiveSupportRequest", (userId, uName) => {
+        activeRequests.push({ id: userId, name: uName });
+        updateAdminBadge();
+        if (!isLiveChat && !document.getElementById('chat-window').classList.contains('hidden')) {
+            renderAdminQueue();
+        }
+    });
+
+    connection.on("RemoveSupportRequest", (userId) => {
+        activeRequests = activeRequests.filter(req => req.id !== userId);
+        updateAdminBadge();
+        if (!isLiveChat && !document.getElementById('chat-window').classList.contains('hidden')) {
+            renderAdminQueue();
+        }
+    });
+
+    connection.on("UserLeftChat", () => {
+        if (isLiveChat) {
+            appendBubble("The user has left the chat.", false);
+            
+            const inputContainer = document.getElementById('live-chat-input');
+            inputContainer.classList.add('hidden');
+            inputContainer.classList.remove('flex');
+        }
+    });
+
+    function updateAdminBadge() {
+        const badge = document.getElementById('admin-badge');
+        if (activeRequests.length > 0) {
+            badge.innerText = activeRequests.length;
+            badge.classList.remove('hidden');
+        } else {
+            badge.classList.add('hidden');
+        }
+    }
+
+    function renderAdminQueue() {
+        document.getElementById('chat-header-title').innerText = "Pending Requests";
+        const history = document.getElementById('chat-history');
+        history.innerHTML = '';
+        
+        if (activeRequests.length === 0) {
+            history.innerHTML = '<div class="text-gray-400 text-center mt-10 text-sm">No pending support requests.</div>';
+            return;
+        }
+
+        activeRequests.forEach((req, index) => {
+            const div = document.createElement('div');
+            div.className = "bg-gray-800 p-4 rounded-lg border border-gray-700 shadow flex justify-between items-center";
+            div.innerHTML = `
+                <span class="text-white text-sm font-medium">${req.name} needs help</span>
+                <button class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 text-xs rounded transition" onclick="acceptRequest(${index})">Start Chat</button>
+            `;
+            history.appendChild(div);
+        });
+    }
+
+    function acceptRequest(index) {
+        const req = activeRequests[index];
+        activeRequests.splice(index, 1); 
+        updateAdminBadge();
+
+        isLiveChat = true;
+        targetConnectionId = req.id;
+        
+        connection.invoke("AdminAcceptsRequest", req.id);
+        
+        document.getElementById('chat-history').innerHTML = '';
+        document.getElementById('chat-header-title').innerText = `Chatting with ${req.name}`;
+        
+        const inputContainer = document.getElementById('live-chat-input');
+        inputContainer.classList.remove('hidden');
+        inputContainer.classList.add('flex');
+        
+        const endBtn = document.getElementById('end-chat-btn');
+        endBtn.classList.remove('hidden');
+        endBtn.onclick = () => {
+            connection.invoke("CloseTicket", targetConnectionId);
+            isLiveChat = false;
+            targetConnectionId = null;
+            
+            inputContainer.classList.add('hidden');
+            inputContainer.classList.remove('flex');
+            
+            endBtn.classList.add('hidden');
+            renderAdminQueue();
+        };
+    }
+
+    // --- Shared Real-time Messaging ---
+    
+    function sendLiveMessage() {
+        const input = document.getElementById('live-message');
+        const text = input.value.trim();
+        if (!text || !targetConnectionId) return;
+
+        appendBubble(text, true);
+        connection.invoke("SendMessage", targetConnectionId, text, isAdmin);
+        input.value = '';
+    }
+
+    connection.on("ReceiveLiveMessage", (message, fromAdmin) => {
+        appendBubble(message, false);
+    });
+
+    function handleEnter(e) {
+        if (e.key === 'Enter') sendLiveMessage();
+    }
+</script>
