@@ -392,10 +392,6 @@ namespace PtixiakiReservations.Controllers
         
             if (venue == null) return NotFound();
 
-            if (!User.IsInRole("Admin") && _userManager.GetUserId(HttpContext.User) != venue.UserId)
-            {
-                return Forbid();
-            }
 
             ViewBag.ImagePath = GetImagePath(venue.imgUrl);
         

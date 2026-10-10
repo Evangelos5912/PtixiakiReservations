@@ -267,6 +267,17 @@
                             </a>
 
                             <div class="flex items-center gap-3">
+                                @if (User.IsInRole("Admin") || User.IsInRole("SuperOrganizer"))
+                                {
+                                    <a href="@Url.Action("CreateEvent", "Events", new { venueId = item.Id, venueName = item.Name })"
+                                       class="inline-flex items-center text-sm font-bold text-emerald-600 hover:text-emerald-800 transition-colors bg-emerald-50 hover:bg-emerald-100 px-2.5 py-1.5 rounded-lg border border-emerald-100" title="Create Event">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="mr-1 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                        </svg>
+                                        Create Event
+                                    </a>
+                                }
+
                                 <a asp-action="Edit" asp-route-id="@item.Id"
                                    class="inline-flex items-center text-sm font-bold text-gray-600 hover:text-gray-800 transition-colors">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="mr-1 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

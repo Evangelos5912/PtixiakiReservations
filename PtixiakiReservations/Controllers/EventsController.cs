@@ -1123,7 +1123,7 @@ public class EventsController(
         int page = 1,
         int pageSize = 12,
         bool archived = false,
-        bool onlyMasterEvents = true)
+        string searchType = "all")
     {
         try
         {
@@ -1137,129 +1137,166 @@ public class EventsController(
             if (!string.IsNullOrWhiteSpace(endDate) && DateTime.TryParse(endDate, out DateTime endDateValue))
                 parsedEndDate = endDateValue.Date.AddDays(1).AddSeconds(-1);
 
-            var query = context.Event
-                .Include(e => e.Venue)
-                .ThenInclude(v => v.City)
-                .Include(e => e.ChildEvents)
-                .ThenInclude(c => c.Venue)
-                .ThenInclude(v => v.City)
+            int? eventTypeIdValue = null;
+            if (!string.IsNullOrWhiteSpace(eventTypeId) && int.TryParse(eventTypeId, out int parsedId))
+                eventTypeIdValue = parsedId;
+
+            string term = !string.IsNullOrWhiteSpace(searchTerm) ? searchTerm.ToLower().Trim() : null;
+
+            bool fetchEvents = searchType == "all" || searchType == "events";
+            bool fetchVenues = searchType == "all" || searchType == "venues";
+
+            // ==========================================
+            // 1. QUERY BUILDER: EVENTS
+            // ==========================================
+            var eq = context.Event
+                .Include(e => e.Venue).ThenInclude(v => v.City)
+                .Include(e => e.EventType)
+                .Include(e => e.ChildEvents).ThenInclude(c => c.Venue).ThenInclude(v => v.City)
                 .AsQueryable();
 
-            if (!archived) query = query.Where(e => e.EndTime >= today);
-            if (onlyMasterEvents) query = query.Where(e => e.ParentEventId == null);
-            if (!string.IsNullOrWhiteSpace(eventTypeId) && int.TryParse(eventTypeId, out int eventTypeIdValue))
-                query = query.Where(e => e.EventTypeId == eventTypeIdValue);
-
-            if (parsedStartDate.HasValue) query = query.Where(e => e.StartDateTime >= parsedStartDate.Value);
-            if (parsedEndDate.HasValue) query = query.Where(e => e.StartDateTime <= parsedEndDate.Value);
-
-            if (!string.IsNullOrWhiteSpace(searchTerm))
+            if (fetchEvents)
             {
-                string term = searchTerm.ToLower();
-                query = query.Where(e =>
-                    e.Name.ToLower().Contains(term) ||
-                    (e.Venue != null && e.Venue.Name.ToLower().Contains(term)) ||
-                    (e.Venue != null && e.Venue.City != null && e.Venue.City.Name.ToLower().Contains(term)) ||
-                    e.ChildEvents.Any(c => 
-                        c.Name.ToLower().Contains(term) || 
-                        (c.Venue != null && c.Venue.Name.ToLower().Contains(term)) ||
-                        (c.Venue != null && c.Venue.City != null && c.Venue.City.Name.ToLower().Contains(term))
-                    )
-                );
-            }
+                if (!archived) eq = eq.Where(e => e.EndTime >= today);
+                if (parsedStartDate.HasValue) eq = eq.Where(e => e.StartDateTime >= parsedStartDate.Value);
+                if (parsedEndDate.HasValue) eq = eq.Where(e => e.StartDateTime <= parsedEndDate.Value);
+                if (eventTypeIdValue.HasValue) eq = eq.Where(e => e.EventTypeId == eventTypeIdValue.Value);
 
-            if (sort == "desc") query = query.OrderByDescending(e => e.EndTime);
-            else query = query.OrderBy(e => e.StartDateTime);
-
-            var totalCount = await query.CountAsync();
-
-            var events = await query
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .Select(e => new
+                // If no text search is active, hide sub-events to keep the grid clean.
+                // If the user types a search, we unhide sub-events so they can be matched!
+                if (string.IsNullOrWhiteSpace(term))
                 {
-                    e.Id,
-                    e.Name,
-                    e.StartDateTime,
-                    e.EndTime,
-                    ImagePath = !string.IsNullOrEmpty(e.ImagePath) 
-                        ? (e.ImagePath.EndsWith(".webp") ? e.ImagePath : $"/Events/GetCompressedImage?path={e.ImagePath}&width=800") 
-                        : (e.ParentEvent != null && !string.IsNullOrEmpty(e.ParentEvent.ImagePath) 
-                            ? (e.ParentEvent.ImagePath.EndsWith(".webp") ? e.ParentEvent.ImagePath : $"/Events/GetCompressedImage?path={e.ParentEvent.ImagePath}&width=800") 
-                            : null),
-                    VenueName = e.Venue != null ? e.Venue.Name : "No Venue",
-                    CityName = (e.Venue != null && e.Venue.City != null) ? e.Venue.City.Name : "N/A",
-                    parentEventId = e.ParentEventId,
-                    childCount = context.Event.Count(c => c.ParentEventId == e.Id),
-                    hasMultipleVenues = e.ChildEvents.Any(c => c.VenueId != null && c.VenueId != e.VenueId),
-                    distinctCities = e.ChildEvents.Where(c => c.Venue != null && c.Venue.City != null).Select(c => c.Venue.City.Id).Distinct().Count(),
-                    hasMultipleCities = e.ChildEvents.Where(c => c.Venue != null && c.Venue.City != null).Select(c => c.Venue.City.Id).Distinct().Count() > 1,
-                    cityNames = e.ChildEvents.Where(c => c.Venue != null && c.Venue.City != null).Select(c => c.Venue.City.Name).Distinct().ToList(),
-                    ticketPrice = e.TicketPrice,
-                    minPrice = e.ChildEvents.Any() ? e.ChildEvents.Min(c => c.TicketPrice) : e.TicketPrice,
-                    maxPrice = e.ChildEvents.Any() ? e.ChildEvents.Max(c => c.TicketPrice) : e.TicketPrice,
-                    
-                    // --- STANDALONE VS CHILD-AGGREGATED RATING CALCULATION ---
-                    avgRating = e.ChildEvents.Any()
-                        ? e.ChildEvents
-                            .Select(c => new {
-                                Avg = context.Reservation.Where(r => r.EventId == c.Id && r.Rating != null).Average(r => (double?)r.Rating),
-                                Count = context.Reservation.Count(r => r.EventId == c.Id && r.Rating != null)
-                            })
-                            .Where(x => x.Count > 0)
-                            .OrderByDescending(x => x.Avg)
-                            .Select(x => (double?)x.Avg)
-                            .FirstOrDefault()
-                        : (context.Reservation.Where(r => r.EventId == e.Id && r.Rating != null).Any()
-                            ? context.Reservation.Where(r => r.EventId == e.Id && r.Rating != null).Average(r => (double?)r.Rating)
-                            : (double?)null),
+                    eq = eq.Where(e => e.ParentEventId == null);
+                }
+                else
+                {
+                    eq = eq.Where(e => 
+                        e.Name.ToLower().Contains(term) ||
+                        (e.Venue != null && e.Venue.Name.ToLower().Contains(term)) ||
+                        (e.Venue != null && e.Venue.City != null && e.Venue.City.Name.ToLower().Contains(term)) ||
+                        e.ChildEvents.Any(c => 
+                            c.Name.ToLower().Contains(term) ||
+                            (c.Venue != null && c.Venue.Name.ToLower().Contains(term)) ||
+                            (c.Venue != null && c.Venue.City != null && c.Venue.City.Name.ToLower().Contains(term))
+                        )
+                    );
+                }
 
-                    reviewCount = e.ChildEvents.Any()
-                        ? e.ChildEvents
-                            .Select(c => new {
-                                Avg = context.Reservation.Where(r => r.EventId == c.Id && r.Rating != null).Average(r => (double?)r.Rating),
-                                Count = context.Reservation.Count(r => r.EventId == c.Id && r.Rating != null)
-                            })
-                            .Where(x => x.Count > 0)
-                            .OrderByDescending(x => x.Avg)
-                            .Select(x => (int?)x.Count)
-                            .FirstOrDefault()
-                        : context.Reservation.Count(r => r.EventId == e.Id && r.Rating != null)
-                })
-                .ToListAsync();
-
-            return Json(new { events, totalCount, currentPage = page, totalPages = (int)Math.Ceiling(totalCount / (double)pageSize) });
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error performing event query parameters search");
-            return StatusCode(500, "An error occurred during query execution");
-        }
-    }
-
-    [HttpPost]
-    public async Task<IActionResult> IndexAllEventsToElastic()
-    {
-        try
-        {
-            var events = await context.Event.Include(e => e.Venue).Include(e => e.EventType).ToListAsync();
-            await elasticSearchService.CreateIndexIfNotExistsAsync("events");
-            
-            const int batchSize = 50;
-            var successCount = 0;
-
-            for (int i = 0; i < events.Count; i += batchSize)
-            {
-                var batch = events.Skip(i).Take(batchSize).ToList();
-                var result = await elasticSearchService.AddOrUpdateBulkAsync(batch, "events");
-                if (result) successCount += batch.Count;
+                if (sort == "desc") eq = eq.OrderByDescending(e => e.StartDateTime);
+                else eq = eq.OrderBy(e => e.StartDateTime);
             }
 
-            return Ok($"Successfully indexed {successCount} of {events.Count} records.");
+            // ==========================================
+            // 2. QUERY BUILDER: VENUES
+            // ==========================================
+            var vq = context.Venue
+                .Include(v => v.City)
+                .Include(v => v.VenueCategory).ThenInclude(vc => vc.EventType)
+                .AsQueryable();
+
+            if (fetchVenues)
+            {
+                if (eventTypeIdValue.HasValue) vq = vq.Where(v => v.VenueCategory.Any(vc => vc.CategoryId == eventTypeIdValue.Value));
+                if (!string.IsNullOrWhiteSpace(term)) vq = vq.Where(v => v.Name.ToLower().Contains(term) || (v.City != null && v.City.Name.ToLower().Contains(term)));
+                
+                vq = vq.OrderBy(v => v.Name);
+            }
+
+            // ==========================================
+            // 3. PAGINATION MATH
+            // ==========================================
+            int eventCount = fetchEvents ? await eq.CountAsync() : 0;
+            int venueCount = fetchVenues ? await vq.CountAsync() : 0;
+            int totalRecords = eventCount + venueCount;
+
+            int skip = (page - 1) * pageSize;
+            int eventsToSkip = Math.Min(skip, eventCount);
+            int eventsToTake = Math.Min(pageSize, Math.Max(0, eventCount - eventsToSkip));
+            
+            int venuesToSkip = Math.Max(0, skip - eventCount);
+            int venuesToTake = pageSize - eventsToTake;
+
+            var results = new List<object>();
+
+            // ==========================================
+            // 4. EXECUTE & MAP: EVENTS
+            // ==========================================
+            if (fetchEvents && eventsToTake > 0)
+            {
+                var eventList = await eq.Skip(eventsToSkip).Take(eventsToTake).ToListAsync();
+                foreach (var e in eventList)
+                {
+                    double? avgRat = null;
+                    int revCount = 0;
+
+                    if (e.ChildEvents != null && e.ChildEvents.Any())
+                    {
+                        var cIds = e.ChildEvents.Select(c => c.Id).ToList();
+                        var ratings = await context.Reservation.Where(r => cIds.Contains(r.EventId) && r.Rating != null).Select(r => (double)r.Rating).ToListAsync();
+                        if (ratings.Any()) { avgRat = ratings.Average(); revCount = ratings.Count; }
+                    }
+                    else
+                    {
+                        var ratings = await context.Reservation.Where(r => r.EventId == e.Id && r.Rating != null).Select(r => (double)r.Rating).ToListAsync();
+                        if (ratings.Any()) { avgRat = ratings.Average(); revCount = ratings.Count; }
+                    }
+
+                    results.Add(new {
+                        type = "event",
+                        id = e.Id,
+                        name = e.Name,
+                        startDateTime = e.StartDateTime.ToString("s"), 
+                        endTime = e.EndTime.ToString("s"),
+                        imagePath = !string.IsNullOrEmpty(e.ImagePath) ? (e.ImagePath.EndsWith(".webp") ? e.ImagePath : $"/Events/GetCompressedImage?path={e.ImagePath}&width=800") : null,
+                        eventType = e.EventType?.Name,
+                        venueName = e.Venue?.Name ?? "No Venue",
+                        cityName = e.Venue?.City?.Name ?? "N/A",
+                        ticketPrice = e.TicketPrice,
+                        parentEventId = e.ParentEventId,
+                        childCount = e.ChildEvents?.Count ?? 0,
+                        minPrice = e.ChildEvents?.Any() == true ? e.ChildEvents.Min(c => c.TicketPrice) : e.TicketPrice,
+                        maxPrice = e.ChildEvents?.Any() == true ? e.ChildEvents.Max(c => c.TicketPrice) : e.TicketPrice,
+                        distinctCities = e.ChildEvents?.Where(c => c.Venue?.City != null).Select(c => c.Venue.CityId).Distinct().Count() ?? 0,
+                        cityNames = e.ChildEvents?.Where(c => c.Venue?.City != null).Select(c => c.Venue.City.Name).Distinct().ToList() ?? new List<string>(),
+                        hasMultipleVenues = e.ChildEvents?.Any(c => c.VenueId != e.VenueId) ?? false,
+                        avgRating = avgRat,
+                        reviewCount = revCount
+                    });
+                }
+            }
+
+            // ==========================================
+            // 5. EXECUTE & MAP: VENUES
+            // ==========================================
+            if (fetchVenues && venuesToTake > 0)
+            {
+                var venueList = await vq.Skip(venuesToSkip).Take(venuesToTake).ToListAsync();
+                foreach (var v in venueList)
+                {
+                    results.Add(new {
+                        type = "venue",
+                        id = v.Id,
+                        name = v.Name,
+                        cityName = v.City?.Name ?? "N/A",
+                        imagePath = !string.IsNullOrEmpty(v.imgUrl) ? (v.imgUrl.EndsWith(".webp") ? v.imgUrl : $"/Events/GetCompressedImage?path={v.imgUrl}&width=800") : null,
+                        phone = v.Phone ?? "No phone provided",
+                        layoutCount = context.Layout.Count(l => l.VenueId == v.Id),
+                        categoryNames = v.VenueCategory?.Where(vc => vc.EventType != null).Select(vc => vc.EventType.Name).ToList() ?? new List<string>()
+                    });
+                }
+            }
+
+            return Json(new {
+                events = results,
+                totalCount = totalRecords,
+                currentPage = page,
+                totalPages = totalRecords > 0 ? (int)Math.Ceiling(totalRecords / (double)pageSize) : 1
+            });
         }
         catch (Exception ex)
         {
-            return BadRequest($"Error encountered executing bulk operation: {ex.Message}");
+            logger.LogError(ex, "Search Controller Error");
+            return StatusCode(500, "Server Error");
         }
     }
 
@@ -1382,10 +1419,11 @@ public class EventsController(
 
         query = query.ToLower();
         var results = new List<object>();
-        var maxResults = 5;
+        var maxResults = 8;
 
         try
         {
+            // 1. Events priority
             var eventResults = await context.Event
                 .Where(e => e.Name.ToLower().Contains(query))
                 .OrderBy(e => e.Name)
@@ -1395,6 +1433,7 @@ public class EventsController(
 
             results.AddRange(eventResults);
 
+            // 2. Venues next
             if (results.Count < maxResults)
             {
                 var venueResults = await context.Venue
@@ -1407,6 +1446,7 @@ public class EventsController(
                 results.AddRange(venueResults);
             }
 
+            // 3. Cities last
             if (results.Count < maxResults)
             {
                 var cityResults = await context.City
@@ -1657,8 +1697,6 @@ public class EventsController(
         }
     }
 
-  
-
     [AllowAnonymous]
     [HttpGet]
     public IActionResult HomePage() => View();
@@ -1872,6 +1910,4 @@ public class EventsController(
 
         return Json(new { success = true, message = "Reservation successfully deleted." });
     }
-
-   
 }

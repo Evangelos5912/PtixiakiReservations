@@ -612,7 +612,6 @@
             };
 
             // Constraint Validation
-
             async function applyParentTimingConstraints(parentId) {
                 if (!parentId) return;
                 try {
@@ -1101,6 +1100,21 @@
             });
 
             toggleEventMode('father'); 
+
+            // ==========================================
+            // PRE-FILL VENUE SEARCH (FROM URL PARAMS)
+            // ==========================================
+            const urlParams = new URLSearchParams(window.location.search);
+            const prefillVenueId = urlParams.get('venueId');
+            const prefillVenueName = urlParams.get('venueName');
+
+            if (prefillVenueId && prefillVenueName) {
+                venueHiddenInput.value = prefillVenueId;
+                venueSearch.value = prefillVenueName;
+                clearVenueBtn.classList.remove('hidden');
+                fetchLayouts(prefillVenueId);
+                layoutSelect.disabled = false;
+            }
         });
 
         // Sub-Event Management
