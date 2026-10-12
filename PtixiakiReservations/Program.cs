@@ -143,6 +143,8 @@ try
     });
 
     builder.Services.AddSignalR();
+    builder.Services.AddScoped<SearchSyncService>();
+    builder.Services.AddHostedService<ElasticsearchStartupService>();
 
     // Build the app
     var app = builder.Build();

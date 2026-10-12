@@ -129,7 +129,6 @@ namespace PtixiakiReservations.Controllers
 
                 if (allEventIds.Any())
                 {
-                    // FIX: Detach events from user wishlists first to prevent FK crashes
                     await _context.Set<Wishlist>().Where(w => allEventIds.Contains(w.EventId)).ExecuteDeleteAsync();
 
                     await _context.Reservation.Where(r => allEventIds.Contains(r.EventId)).ExecuteDeleteAsync();
@@ -160,7 +159,7 @@ namespace PtixiakiReservations.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to execute memory-safe cascading deletion for Event Type ID {Id}", id);
+                _logger.LogError(ex, "Failed to execute cascading deletion for Event Type ID {Id}", id);
                 TempData["ErrorMessage"] = "Could not delete category due to database constraints.";
             }
             

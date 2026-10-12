@@ -36,10 +36,6 @@ namespace PtixiakiReservations.Controllers
             _logger = logger;
         }
 
-        /// <summary>
-        /// Helper method to verify if the current user owns the venue associated with the layout.
-        /// Admins bypass this check automatically.
-        /// </summary>
         private async Task<bool> IsAuthorizedToManageLayout(int venueId)
         {
             if (User.IsInRole("Admin")) return true;
@@ -58,7 +54,6 @@ namespace PtixiakiReservations.Controllers
 
             var query = _context.Layout.Include(l => l.Venue).AsQueryable();
 
-            // Filter layouts by owned venues unless user is Admin
             if (!isAdmin)
             {
                 query = query.Where(l => l.Venue.UserId == userId);
@@ -92,7 +87,6 @@ namespace PtixiakiReservations.Controllers
             return View(venue);
         }
         
-        // GET: Layouts/Details/5
         [Authorize(Roles = "Venue,Admin,SuperOrganizer")]
         public async Task<IActionResult> Details(int? id, int? venueId)
         {
@@ -104,7 +98,6 @@ namespace PtixiakiReservations.Controllers
                 
             if (layout == null) return NotFound();
 
-            // Check authorization constraint
             if (!await IsAuthorizedToManageLayout(layout.VenueId))
             {
                 return Forbid();
@@ -116,7 +109,6 @@ namespace PtixiakiReservations.Controllers
             return View(layout);
         }
 
-        // POST: Layouts/Create
         [Authorize(Roles = "Venue,Admin,SuperOrganizer")]
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] JsonLayoutModel[] layouts)
@@ -183,7 +175,7 @@ namespace PtixiakiReservations.Controllers
                     Rotate = layout.Rotate,
                     Top = layout.Top,
                     Left = layout.Left,
-                    VenueId = venue.Id // Admin bypassing this specific quick-create flow might require explicit VenueId injection in complex setups
+                    VenueId = venue.Id
                 };
                 _context.Add(newLayout);
             }
@@ -193,7 +185,6 @@ namespace PtixiakiReservations.Controllers
             return Json(Response.StatusCode);
         }
 
-        // GET: Layouts/Edit/5
         [Authorize(Roles = "Venue,Admin,SuperOrganizer")]
         public async Task<IActionResult> Edit(int? id)
         {
@@ -211,7 +202,6 @@ namespace PtixiakiReservations.Controllers
             return View(layout);
         }
 
-        // POST: Layouts/Edit/5
         [HttpPost]
         [Authorize(Roles = "Venue,Admin,SuperOrganizer")]
         public async Task<IActionResult> Edit(int id, Layout layoutEdit)
@@ -251,7 +241,6 @@ namespace PtixiakiReservations.Controllers
             return View(layout);
         }
 
-        // GET: Layouts/Delete/5
         [Authorize(Roles = "Venue,Admin,SuperOrganizer")]
         public async Task<IActionResult> Delete(int? id)
         {
@@ -272,8 +261,7 @@ namespace PtixiakiReservations.Controllers
         }
 
         /// <summary>
-        /// Permanently removes a layout from the database, cascading deletes to all associated Events, Wishlists, Reservations, and Sub-components.
-        /// Uses high-performance bulk operations (ExecuteDeleteAsync) to prevent RAM OOM crashes.
+        /// Removes a layout and associated items using bulk operations.
         /// </summary>
         [HttpPost, ActionName("Delete")]
         [Authorize(Roles = "Venue,Admin,SuperOrganizer")]
@@ -304,8 +292,6 @@ namespace PtixiakiReservations.Controllers
                 var eventImagePaths = await _context.Event.Where(e => allEventIds.Contains(e.Id)).Select(e => e.ImagePath).ToListAsync();
                 var galleryImagePaths = await _context.Event.Where(e => allEventIds.Contains(e.Id)).SelectMany(e => e.GalleryImages).Select(g => g.ImagePath).ToListAsync();
 
-             
-
                 if (allEventIds.Any())
                 {
                     await _context.Set<Wishlist>().Where(w => allEventIds.Contains(w.EventId)).ExecuteDeleteAsync();
@@ -326,7 +312,6 @@ namespace PtixiakiReservations.Controllers
                 _context.Layout.Remove(layout);
                 await _context.SaveChangesAsync();
 
-            
                 var allPathsToDelete = eventImagePaths.Concat(galleryImagePaths).Where(p => !string.IsNullOrEmpty(p)).ToList();
                 foreach (var path in allPathsToDelete)
                 {
@@ -336,13 +321,12 @@ namespace PtixiakiReservations.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to execute memory-safe cascading deletion for Layout ID {Id}", id);
+                _logger.LogError(ex, "Failed to execute deletion for Layout ID {Id}", id);
             }
 
             return RedirectToAction(nameof(VenueLayouts), new { venueId = venueId });
         }
 
-        // GET: Layouts/VenueLayouts/5
         [Authorize(Roles = "Venue,Admin,SuperOrganizer")]
         public async Task<IActionResult> VenueLayouts(int venueId)
         {
@@ -458,6 +442,24 @@ namespace PtixiakiReservations.Controllers
             await _context.SaveChangesAsync();
 
             return Ok(new { success = true });
+        }
+        [AllowAnonymous]
+        public async Task<IActionResult> SearchLayouts(int? venueId)
+        {
+            if (venueId == null) return NotFound();
+
+            var venue = await _context.Venue
+                .Include(v => v.City)
+                .FirstOrDefaultAsync(v => v.Id == venueId);
+
+            if (venue == null) return NotFound();
+
+            var layouts = await _context.Layout
+                .Where(l => l.VenueId == venueId)
+                .ToListAsync();
+
+            ViewBag.Venue = venue;
+            return View(layouts);
         }
     }
 }

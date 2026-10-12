@@ -29,7 +29,6 @@ public class ReservationController(
 {
     private readonly RoleManager<ApplicationRole> _roleManager = roleManager;
 
-    // GET: Reservations        
     public async Task<IActionResult> Index(bool flag, string sortOrder)
     {
         ViewBag.Flag = flag;
@@ -45,7 +44,6 @@ public class ReservationController(
         if (string.IsNullOrEmpty(id))
             return RedirectToPage("/Account/Login", new { area = "Identity" });
 
-        // UPDATE PAST RESERVATIONS
         var allReservations = await _context.Reservation.ToListAsync();
 
         foreach (var reservation in allReservations)
@@ -78,7 +76,6 @@ public class ReservationController(
         return View(res);
     }
     
-
     public List<Reservation> FilterRes(string sortOrder, List<Reservation> res)
     {
         switch (sortOrder)
@@ -129,11 +126,10 @@ public class ReservationController(
 
         DateTime NowDateTime = DateTime.Now;
 
-        // First filter reservations by the specific date and event
         var reservations = _context.Reservation.Include(r => r.Event).Include(r => r.Seat)
             .Include(r => r.Seat.Layout.Venue)
             .Where(r => r.Seat.Layout.Id == layout.Id && r.EventId == EventId)
-            .Where(r => r.Date.Date == ResDate.Date) // Filter by specific date for multi-day events
+            .Where(r => r.Date.Date == ResDate.Date)
             .ToList();
 
         int i = 0;
@@ -147,10 +143,8 @@ public class ReservationController(
             }
         }
 
-        // Check for time overlap on the same date
         reservations = reservations
             .Where(res =>
-                // Check for time overlap: Two time periods overlap if one starts before the other ends
                 ResDate < res.Date.Add(res.Duration) &&
                 ResDate.Add(Duration) > res.Date
             ).ToList();
@@ -189,7 +183,7 @@ public class ReservationController(
         return View(ev);
     }
 
-[HttpPost]
+    [HttpPost]
     public async Task<IActionResult> MakeRes([FromBody] ReservationRequestViewModel model)
     {
         try
@@ -254,8 +248,6 @@ public class ReservationController(
 
             await _context.SaveChangesAsync();
 
-            // ================= EMAIL DATA =================
-
             var seatIds = model.SeatIds.ToList();
             var numberOfSeats = seatIds.Count;
 
@@ -270,73 +262,32 @@ public class ReservationController(
                 .ThenInclude(v => v.City)
                 .Include(e => e.Layout)
                 .FirstOrDefaultAsync(e => e.Id == model.EventId);
-
-            // ================= FINANCIAL CALCULATION =================
             
             var pricePerSeat = eventEntity?.TicketPrice ?? 0.0;
             var subtotal = numberOfSeats * pricePerSeat;
-            var taxRate = 0.24; // 24% VAT 
+            var taxRate = 0.24; 
             var taxes = subtotal * taxRate;
             var totalAmount = subtotal + taxes;
 
             var subject = "Reservation Confirmation & Receipt";
-
             var seatsText = string.Join(", ", selectedSeatNames);
 
             var message = $@"
             <div style='font-family:Arial, sans-serif; padding:20px; background:#f4f4f4;'>
                 <div style='background:white; padding:30px; border-radius:10px; max-width:700px; margin:auto; box-shadow: 0 4px 6px rgba(0,0,0,0.1);'>
-
                     <h2 style='color:#2563eb; margin-top: 0;'>Reservation Confirmation</h2>
-
                     <p>Hello {user.UserName},</p>
-
                     <p>Your reservation has been completed successfully.</p>
-
                     <hr style='border: 0; border-top: 1px solid #eee; margin: 20px 0;'/>
-
                     <h3 style='color:#333;'>Event Details</h3>
                     <p><strong>Event:</strong> {eventEntity?.Name}</p>
                     <p><strong>Venue:</strong> {eventEntity?.Venue?.Name}</p>
                     <p><strong>City:</strong> {eventEntity?.Venue?.City?.Name}</p>
                     <p><strong>Area:</strong> {eventEntity?.Layout?.AreaName}</p>
-
                     <p><strong>Date:</strong> {model.ResDate:dd/MM/yyyy}</p>
                     <p><strong>Time:</strong> {model.ResDate:HH:mm}</p>
                     <p><strong>Duration:</strong> {model.Duration}</p>
-
                     <p><strong>Seats:</strong> {seatsText}</p>
-
-                    <hr style='border: 0; border-top: 1px dashed #ccc; margin: 30px 0 20px 0;'/>
-
-                    <h3 style='color:#333;'>Payment Receipt</h3>
-                    <table style='width:100%; border-collapse: collapse; text-align: left; font-size: 15px;'>
-                        <tr>
-                            <td style='padding: 8px 0; color: #555;'>Price per Seat:</td>
-                            <td style='padding: 8px 0; text-align: right; color: #555;'>€{pricePerSeat:0.00}</td>
-                        </tr>
-                        <tr>
-                            <td style='padding: 8px 0; color: #555;'>Number of Seats:</td>
-                            <td style='padding: 8px 0; text-align: right; color: #555;'>x {numberOfSeats}</td>
-                        </tr>
-                        <tr>
-                            <td style='padding: 8px 0; color: #555;'>Subtotal:</td>
-                            <td style='padding: 8px 0; text-align: right; color: #555;'>€{subtotal:0.00}</td>
-                        </tr>
-                        <tr>
-                            <td style='padding: 8px 0; color: #555;'>Taxes (24% VAT):</td>
-                            <td style='padding: 8px 0; text-align: right; color: #555;'>€{taxes:0.00}</td>
-                        </tr>
-                        <tr style='font-weight: bold; font-size: 1.2em; border-top: 2px solid #333;'>
-                            <td style='padding: 15px 0; color: #000;'>Total Paid:</td>
-                            <td style='padding: 15px 0; text-align: right; color: #2563eb;'>€{totalAmount:0.00}</td>
-                        </tr>
-                    </table>
-
-                    <br/>
-
-                    <p style='color: #777; font-size: 14px;'>Thank you for your reservation. We look forward to seeing you!</p>
-
                 </div>
             </div>";
 
@@ -350,7 +301,6 @@ public class ReservationController(
             }
             catch
             {
-                // Suppress email failure to prevent aborting the HTTP response
             }
 
             return Ok();
@@ -360,7 +310,7 @@ public class ReservationController(
             return BadRequest(ex.Message);
         }
     }
-    // GET: Reservations/Edit/5
+
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null)
@@ -377,9 +327,6 @@ public class ReservationController(
         return View(reservations);
     }
 
-    // POST: Reservations/Edit/5
-    // To protect from overposting attacks, please enable the specific properties you want to bind to, for 
-    // more details see http://go.microsoft.com/fwlink/?LinkId=317598.
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(int id, [Bind("ID,people,userId,shopId,date")] Reservation reservations)
@@ -410,11 +357,9 @@ public class ReservationController(
             return RedirectToAction(nameof(Index));
         }
         ViewData["userId"] = new SelectList(_context.Users, "Id", "Id", reservations.UserId);
-        //  ViewData["shopId"] = new SelectList(_context.Shops, "ID", "ID", reservations.shopId);
         return View(reservations);
     }
 
-    // GET: Reservations1/Delete/5
     public async Task<IActionResult> Delete(int? id)
     {
         if (id == null)
@@ -424,7 +369,6 @@ public class ReservationController(
 
         var reservations = await _context.Reservation
             .Include(r => r.ApplicationUser)
-            // .Include(r => r.shop)
             .FirstOrDefaultAsync(m => m.ID == id);
         if (reservations == null)
         {
@@ -434,7 +378,6 @@ public class ReservationController(
         return View(reservations);
     }
 
-    // POST: Reservations1/Delete/5
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
@@ -447,14 +390,12 @@ public class ReservationController(
     
     public IActionResult SelectSeats(int eventId, int venueId)
     {
-        // Pass EventId and VenueId to the Select Seats page
         ViewData["EventId"] = eventId;
         ViewData["VenueId"] = venueId;
 
         return View("SelectSeats");
     }
 
-    // GET: Reservation/ReserveSeats/5
     public async Task<IActionResult> ReserveSeats(int? eventId)
     {
         if (eventId == null)
@@ -512,17 +453,14 @@ public class ReservationController(
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> SubmitReview(int reservationId, bool attended, int? rating, string review)
     {
-        // Use _userManager (with underscore)
         var userId = _userManager.GetUserId(User);
         if (string.IsNullOrEmpty(userId)) return Unauthorized();
 
-        // Use _context (with underscore)
         var reservation = await _context.Reservation
             .FirstOrDefaultAsync(r => r.ID == reservationId && r.UserId == userId);
 
         if (reservation == null) return NotFound("Reservation not found.");
 
-        // Enforce "One review per user per event"
         bool alreadyReviewed = await _context.Reservation
             .AnyAsync(r => r.UserId == userId && r.EventId == reservation.EventId && r.Rating != null && r.ID != reservationId);
 
@@ -557,21 +495,20 @@ public class ReservationController(
 
         var calendar = new Ical.Net.Calendar();
 
-        var bookedEvent = _context.Event.FirstOrDefault(e => e.Id ==reservation.EventId);
+        var bookedEvent = _context.Event.FirstOrDefault(e => e.Id == reservation.EventId);
         if (bookedEvent == null)
         {
             return BadRequest("Event not found");
         }
 
-        var eventVenue = _context.Venue.FirstOrDefault(v => v.Id ==bookedEvent.VenueId);
+        var eventVenue = _context.Venue.FirstOrDefault(v => v.Id == bookedEvent.VenueId);
         if (eventVenue == null)
         {
             return BadRequest("Venue not found");
         }
 
-        var bookedSeat = _context.Seat.FirstOrDefault(s => s.Id ==reservation.SeatId);
-
-        var venueCity = _context.City.FirstOrDefault(c => c.Id ==eventVenue.CityId);
+        var bookedSeat = _context.Seat.FirstOrDefault(s => s.Id == reservation.SeatId);
+        var venueCity = _context.City.FirstOrDefault(c => c.Id == eventVenue.CityId);
 
         var resDesc = (bookedEvent.Name + " at " + eventVenue.Name + " (" + eventVenue.Address + ", " + venueCity.Name + ")" + ".");
 
@@ -597,11 +534,11 @@ public class ReservationController(
 
         var serializer = new Ical.Net.Serialization.CalendarSerializer();
         var icalString = serializer.SerializeToString(calendar);
-
         var bytes = System.Text.Encoding.UTF8.GetBytes(icalString);
 
         return File(bytes, "text/calendar", "reservation.ics");
     }
+
     [HttpPost]
     public async Task<IActionResult> SaveReview(int reservationId, string review, int rating)
     {
@@ -662,7 +599,6 @@ public class ReservationController(
 
         ViewBag.TicketPrice = eventEntity.TicketPrice ?? 0.0;
         ViewBag.EventName = eventEntity.Name;
-        
         ViewBag.EventId = eventId;
         ViewBag.LayoutId = layoutId;
         ViewBag.Duration = duration;
@@ -671,5 +607,4 @@ public class ReservationController(
 
         return View(); 
     }
-
 }

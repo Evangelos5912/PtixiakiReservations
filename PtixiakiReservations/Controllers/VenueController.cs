@@ -12,6 +12,7 @@ using Microsoft.EntityFrameworkCore;
 using PtixiakiReservations.Data;
 using PtixiakiReservations.Models;
 using PtixiakiReservations.Models.ViewModels;
+using PtixiakiReservations.Services;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Processing;
 using SixLabors.ImageSharp.Formats.Webp;
@@ -19,8 +20,7 @@ using SixLabors.ImageSharp.Formats.Webp;
 namespace PtixiakiReservations.Controllers
 {
     /// <summary>
-    /// Manages administrative and organizational operations for Venues.
-    /// Handles physical layout properties, categorical tagging, and file I/O for venue imagery.
+    /// Manages venue operations, layouts, categorical tagging, imagery, and search synchronization.
     /// </summary>
     public class VenueController : Controller
     {
@@ -28,9 +28,8 @@ namespace PtixiakiReservations.Controllers
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<ApplicationRole> _roleManager;
+        private readonly IElasticSearch _elasticSearch;
         
-        // Note: IHostingEnvironment is maintained for legacy compatibility, 
-        // but should be migrated to IWebHostEnvironment in future structural updates.
         [Obsolete] public readonly IHostingEnvironment HostingEnviromnet;
 
         [Obsolete]
@@ -39,20 +38,51 @@ namespace PtixiakiReservations.Controllers
             ApplicationDbContext context,
             IHostingEnvironment hostingEnviromnet, 
             UserManager<ApplicationUser> userManager,
-            RoleManager<ApplicationRole> roleManager)
+            RoleManager<ApplicationRole> roleManager,
+            IElasticSearch elasticSearch)
         {
             _environment = environment;
             _roleManager = roleManager;
             _userManager = userManager;
             _context = context;
             HostingEnviromnet = hostingEnviromnet;
+            _elasticSearch = elasticSearch;
+        }
+
+        public class VenueSearchDto
+        {
+            public string Id { get; set; }
+            public string Name { get; set; }
+            public string CityName { get; set; }
+        }
+
+        private async Task SyncVenueToElasticAsync(int venueId)
+        {
+            var venue = await _context.Venue
+                .Include(v => v.City)
+                .FirstOrDefaultAsync(v => v.Id == venueId);
+
+            if (venue != null)
+            {
+                var dto = new VenueSearchDto
+                {
+                    Id = venue.Id.ToString(),
+                    Name = venue.Name ?? "",
+                    CityName = venue.City != null ? venue.City.Name : ""
+                };
+                await _elasticSearch.CreateIndexIfNotExistsAsync("venues");
+                await _elasticSearch.AddOrUpdateAsync(dto, "venues");
+            }
+        }
+
+        private async Task RemoveVenueFromElasticAsync(int venueId)
+        {
+            await _elasticSearch.DeleteByIdAsync<VenueSearchDto>(venueId.ToString(), "venues");
         }
 
         /// <summary>
-        /// Retrieves a global directory of all venues. 
-        /// Restricted to system administrators.
+        /// Retrieves the global directory of all venues.
         /// </summary>
-        /// <param name="city">Optional geographic filter.</param>
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Index(string city)
         {
@@ -67,12 +97,8 @@ namespace PtixiakiReservations.Controllers
         }
 
         /// <summary>
-        /// Generates a paginated, searchable, and filterable dashboard of venues for organizers.
+        /// Retrieves paginated venues for organizers.
         /// </summary>
-        /// <param name="filter">Contextual scope ('mine' or 'all').</param>
-        /// <param name="searchString">Text payload matching against Venue Name or City.</param>
-        /// <param name="page">Current pagination index.</param>
-        /// <param name="pageSize">Volume constraint per page.</param>
         [Authorize(Roles = "Admin,Venue,SuperOrganizer")]
         public async Task<IActionResult> MyVenues(string filter = "mine", string searchString = null, int page = 1, int pageSize = 12)
         {
@@ -120,7 +146,6 @@ namespace PtixiakiReservations.Controllers
             {
                 layoutCounts[venue.Id] = await _context.Layout.CountAsync(sa => sa.VenueId == venue.Id);
                 
-                // Mirroring the robust image path resolution used by the Events controller
                 if (!string.IsNullOrEmpty(venue.imgUrl))
                 {
                     imagePaths[venue.Id] = venue.imgUrl.EndsWith(".webp") 
@@ -144,7 +169,7 @@ namespace PtixiakiReservations.Controllers
         }
 
         /// <summary>
-        /// Retrieves detailed configuration state for a specific venue modification.
+        /// Retrieves the venue modification view.
         /// </summary>
         [Authorize(Roles = "Admin,Venue,SuperOrganizer")]
         public async Task<IActionResult> Edit(int? id)
@@ -159,13 +184,11 @@ namespace PtixiakiReservations.Controllers
 
             if (venue == null) return NotFound();
 
-            // Security Gate: Ensure users cannot modify venues outside their ownership unless holding Admin privileges
             if (!User.IsInRole("Admin") && _userManager.GetUserId(HttpContext.User) != venue.UserId)
             {
                 return Forbid();
             }
 
-            // Extract many-to-many relationship array
             var selectedEventTypeIds = venue.VenueCategory?
                 .Where(vc => vc.CategoryId.HasValue)
                 .Select(vc => vc.CategoryId.Value)
@@ -192,7 +215,7 @@ namespace PtixiakiReservations.Controllers
         }
 
         /// <summary>
-        /// Commits physical metadata and WebP image transcoding changes for a specific venue entity.
+        /// Processes venue updates and synchronizes search indices.
         /// </summary>
         [HttpPost]
         [Authorize(Roles = "Admin,Venue,SuperOrganizer")]
@@ -279,6 +302,7 @@ namespace PtixiakiReservations.Controllers
 
                     _context.Update(venue);
                     await _context.SaveChangesAsync();
+                    await SyncVenueToElasticAsync(venue.Id);
                 }
                 catch (Exception ex)
                 {
@@ -298,7 +322,7 @@ namespace PtixiakiReservations.Controllers
         }
 
         /// <summary>
-        /// Renders the venue creation interface pre-populated with active geographic options.
+        /// Renders the venue creation view.
         /// </summary>
         [Authorize(Roles = "Admin,Venue,SuperOrganizer")]
         public IActionResult Create()
@@ -309,6 +333,9 @@ namespace PtixiakiReservations.Controllers
             return View();
         }
 
+        /// <summary>
+        /// Processes venue creation and synchronizes search indices.
+        /// </summary>
         [Authorize(Roles = "Admin,Venue,SuperOrganizer")]
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -386,6 +413,8 @@ namespace PtixiakiReservations.Controllers
                 }
                 
                 await _context.SaveChangesAsync();
+                await SyncVenueToElasticAsync(newVenue.Id);
+
                 return RedirectToAction(nameof(Details), new { id = newVenue.Id });
             }
 
@@ -394,8 +423,9 @@ namespace PtixiakiReservations.Controllers
             
             return View(model);
         }
+
         /// <summary>
-        /// Retrieves the comprehensive public profile of an established venue.
+        /// Retrieves the public profile of a venue.
         /// </summary>
         public async Task<IActionResult> Details(int? id)
         {
@@ -409,7 +439,6 @@ namespace PtixiakiReservations.Controllers
         
             if (venue == null) return NotFound();
 
-            // Mirroring the Events controller image resolution style for Details view
             string detailImagePath = "/images/image.jpg";
             if (!string.IsNullOrEmpty(venue.imgUrl))
             {
@@ -424,7 +453,7 @@ namespace PtixiakiReservations.Controllers
         }
 
         /// <summary>
-        /// Accesses the destructive deletion interface.
+        /// Renders the venue deletion view.
         /// </summary>
         [Authorize(Roles = "Admin,Venue,SuperOrganizer")]
         public async Task<IActionResult> Delete(int? id)
@@ -438,8 +467,7 @@ namespace PtixiakiReservations.Controllers
         }
 
         /// <summary>
-        /// Executes a permanent, cascading structural deletion of a venue entity.
-        /// Restricts access to Venue Owners or System Administrators.
+        /// Removes a venue and synchronizes search indices.
         /// </summary>
         [Authorize(Roles = "Admin,Venue,SuperOrganizer")]
         [HttpPost, ActionName("Delete")]
@@ -499,7 +527,6 @@ namespace PtixiakiReservations.Controllers
                     _context.RemoveRange(allGalleryImages);
                 }
 
-                // FIX: Delete Wishlist records before deleting Events to prevent RESTRICT FK constraint
                 var associatedWishlists = await _context.Set<Wishlist>()
                     .Where(w => allEventIds.Contains(w.EventId))
                     .ToListAsync();
@@ -551,15 +578,15 @@ namespace PtixiakiReservations.Controllers
             }
 
             _context.Venue.Remove(venue);
-
             await _context.SaveChangesAsync();
+
+            await RemoveVenueFromElasticAsync(id);
             
             return RedirectToAction(nameof(MyVenues));
         }
         
         /// <summary>
-        /// Exposes a JSON payload of venues scoped entirely to the actively authenticated user.
-        /// Commonly consumed by asynchronous frontend interfaces (AJAX).
+        /// Retrieves venues scoped to the authenticated user.
         /// </summary>
         [HttpGet]
         [Authorize(Roles = "Admin,Venue,SuperOrganizer")]
@@ -574,17 +601,11 @@ namespace PtixiakiReservations.Controllers
             return Json(venues);
         }
 
-        /// <summary>
-        /// Validates existential bounds within the current datastore.
-        /// </summary>
         private bool VenueExists(int id)
         {
             return _context.Venue.Any(e => e.Id == id);
         }
 
-        /// <summary>
-        /// Populates contextual SelectLists required by form ViewModels.
-        /// </summary>
         private void PopulateVenueFormLists(int selectedCityId, IEnumerable<int> selectedEventTypeIds = null)
         {
             ViewBag.ListOfCity = new SelectList(_context.City.ToList(), "Id", "Name", selectedCityId);
@@ -595,9 +616,6 @@ namespace PtixiakiReservations.Controllers
                 selectedEventTypeIds ?? Enumerable.Empty<int>());
         }
     
-        /// <summary>
-        /// Validates physical existence of an image payload, providing a static fallback upon resolution failure.
-        /// </summary>
         private string GetImagePath(string imageUrl)
         {
             if (string.IsNullOrEmpty(imageUrl)) return "~/images/image.jpg";

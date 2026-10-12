@@ -17,23 +17,21 @@ namespace PtixiakiReservations.Controllers;
 public class SeatController(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
     : Controller
 {
-    // GET: Table
     public IActionResult Index()
     {
         return View();
     }
+
     [Authorize]
     [HttpGet]
     public JsonResult get_data(int? LayoutId, int? eventId)
     {
         if (LayoutId == null) return Json(new { });
 
-        // First get all seats for this layout
         var seats = context.Seat
             .Where(s => s.LayoutId == LayoutId)
-            .ToList(); // Get the seat entities first
+            .ToList();
 
-        // If eventId is provided, get all seat IDs that are already reserved for this event
         List<int> reservedSeatIds = new List<int>();
         if (eventId.HasValue)
         {
@@ -43,15 +41,13 @@ public class SeatController(ApplicationDbContext context, UserManager<Applicatio
                 .ToList();
         }
 
-        // Create a new list of objects with the merged data
         var seatViewModels = seats.Select(seat => new
         {
             id = seat.Id,
             name = seat.Name,
             x = (float)seat.X,
             y = (float)seat.Y,
-            available = seat.Available &&
-                        !reservedSeatIds.Contains(seat.Id) // Check both the seat's availability and if it's reserved
+            available = seat.Available && !reservedSeatIds.Contains(seat.Id)
         }).ToList();
 
         return Json(seatViewModels);
@@ -98,7 +94,6 @@ public class SeatController(ApplicationDbContext context, UserManager<Applicatio
         }
     }
 
-    // GET: Table/Details/5
     [HttpGet]
     [Authorize]
     public async Task<IActionResult> Details(int? id)
@@ -120,7 +115,6 @@ public class SeatController(ApplicationDbContext context, UserManager<Applicatio
     }
 
     [Authorize(Roles = "Admin,Venue,SuperOrganizer")]
-
     public async Task<IActionResult> Single(int? id)
     {
         if (id == null)
@@ -138,7 +132,6 @@ public class SeatController(ApplicationDbContext context, UserManager<Applicatio
         return Json(seat);
     }
 
-    // GET: Table/Create
     [Authorize(Roles = "Admin,Venue,SuperOrganizer")]
     public IActionResult Create(int? layoutId)
     {
@@ -210,7 +203,6 @@ public class SeatController(ApplicationDbContext context, UserManager<Applicatio
         }
     }
     
-    // GET: Table/Edit/5
     [Authorize(Roles = "Admin,Venue,SuperOrganizer")]
     public async Task<IActionResult> Edit(int? id)
     {
@@ -228,7 +220,6 @@ public class SeatController(ApplicationDbContext context, UserManager<Applicatio
         return View(seat);
     }
 
-    // POST: Table/Edit/5
     [HttpPost]
     [ValidateAntiForgeryToken]
     [Authorize(Roles = "Admin,Venue,SuperOrganizer")]
@@ -262,6 +253,7 @@ public class SeatController(ApplicationDbContext context, UserManager<Applicatio
         ViewData["VenueId"] = new SelectList(context.Venue, "ID", "ID", Seat.LayoutId);
         return View(Seat);
     }
+
     [Authorize]
     public async Task<IActionResult> ChangeAvailable(int ID, bool Flag)
     {
@@ -309,7 +301,6 @@ public class SeatController(ApplicationDbContext context, UserManager<Applicatio
         return Json(new { success = true });
     }
     
-    // GET: Table/Delete/5
     [Authorize(Roles = "Admin,Venue,SuperOrganizer")]
     public async Task<IActionResult> Delete(int? id)
     {
@@ -328,7 +319,6 @@ public class SeatController(ApplicationDbContext context, UserManager<Applicatio
         return View(seat);
     }
 
-    // POST: Table/Delete/5
     [Authorize(Roles = "Admin,Venue,SuperOrganizer")]
     [HttpPost, ActionName("Delete")]
     public async Task<IActionResult> DeleteConfirmed(int id)
@@ -348,6 +338,7 @@ public class SeatController(ApplicationDbContext context, UserManager<Applicatio
 
         return RedirectToAction("ListOfMySeats");
     }
+
     [Authorize]
     private bool SeatExists(int id)
     {
@@ -371,7 +362,6 @@ public class SeatController(ApplicationDbContext context, UserManager<Applicatio
         using var transaction = await context.Database.BeginTransactionAsync();
         try
         {
-            // 1. Wipe old data for this layout
             var existingSeats = context.Seat.Where(s => s.LayoutId == layoutId);
             var existingShapes = context.NonSelectable.Where(s => s.LayoutId == layoutId);
             var existingGroups = context.UnitGroup.Where(g => g.LayoutId == layoutId);
@@ -381,7 +371,6 @@ public class SeatController(ApplicationDbContext context, UserManager<Applicatio
             context.UnitGroup.RemoveRange(existingGroups);
             await context.SaveChangesAsync();
 
-            // 2. Add Standalone Seats
             foreach (var seatVm in payload.Seats)
             {
                 context.Seat.Add(new Seat
@@ -396,7 +385,6 @@ public class SeatController(ApplicationDbContext context, UserManager<Applicatio
                 });
             }
 
-            // 3. Add Standalone Shapes
             foreach (var shapeVm in payload.Shapes)
             {
                 context.NonSelectable.Add(new NonSelectable
@@ -411,7 +399,6 @@ public class SeatController(ApplicationDbContext context, UserManager<Applicatio
                 });
             }
 
-            // 4. Add Groups and their children
             foreach (var groupVm in payload.Groups)
             {
                 var newGroup = new UnitGroup
@@ -424,7 +411,7 @@ public class SeatController(ApplicationDbContext context, UserManager<Applicatio
                     SelectableUnits = groupVm.SelectableUnits.Select(s => new Seat
                     {
                         Name = s.Name,
-                        X = s.X, // Relative coordinate
+                        X = s.X,
                         Y = s.Y,
                         Width = s.Width,
                         Height = s.Height,
@@ -435,12 +422,12 @@ public class SeatController(ApplicationDbContext context, UserManager<Applicatio
                     NonSelectableUnits = groupVm.NonSelectableUnits.Select(s => new NonSelectable
                     {
                         Name = s.Name,
-                        X = s.X, // Relative coordinate
+                        X = s.X,
                         Y = s.Y,
                         Width = s.Width,
                         Height = s.Height,
                         LayoutId = layoutId,
-                        ShapeType = s.ShapeType // <-- Added ShapeType here
+                        ShapeType = s.ShapeType
                     }).ToList()
                 };
                 
@@ -464,7 +451,6 @@ public class SeatController(ApplicationDbContext context, UserManager<Applicatio
     [Route("Seat/GetCompleteLayout")]
     public async Task<IActionResult> GetCompleteLayout(int layoutId)
     {
-        // 1. Find the exact IDs of all units that belong to a group
         var groupedSeatIds = await context.UnitGroup
             .Where(g => g.LayoutId == layoutId)
             .SelectMany(g => g.SelectableUnits.Select(s => s.Id))
@@ -475,7 +461,6 @@ public class SeatController(ApplicationDbContext context, UserManager<Applicatio
             .SelectMany(g => g.NonSelectableUnits.Select(s => s.Id))
             .ToListAsync();
 
-        // 2. Fetch standalone seats (strictly excluding those inside a group)
         var standaloneSeats = await context.Seat
             .Where(s => s.LayoutId == layoutId && !groupedSeatIds.Contains(s.Id))
             .Select(s => new {
@@ -488,7 +473,6 @@ public class SeatController(ApplicationDbContext context, UserManager<Applicatio
                 available = s.Available
             }).ToListAsync();
 
-        // 3. Fetch standalone shapes (strictly excluding those inside a group)
         var standaloneShapes = await context.NonSelectable
             .Where(s => s.LayoutId == layoutId && !groupedShapeIds.Contains(s.Id))
             .Select(s => new {
@@ -501,7 +485,6 @@ public class SeatController(ApplicationDbContext context, UserManager<Applicatio
                 shapeType = s.ShapeType
             }).ToListAsync();
 
-        // 4. Fetch groups and their children
         var groups = await context.UnitGroup
             .Include(g => g.SelectableUnits)
             .Include(g => g.NonSelectableUnits)

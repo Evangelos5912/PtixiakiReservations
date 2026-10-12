@@ -14,7 +14,6 @@ namespace PtixiakiReservations.Controllers;
 public class NonSelectableController(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
     : Controller
 {
-    // 1. MASTER SAVE (Matches: fetch('/NonSelectable/SaveElements'))
     [HttpPost]
     [Authorize(Roles = "Admin,Venue,SuperOrganizer")]
     public async Task<IActionResult> SaveElements(int layoutId, [FromBody] List<NonSelectable> elements)
@@ -35,7 +34,6 @@ public class NonSelectableController(ApplicationDbContext context, UserManager<A
         return Ok(new { success = true });
     }
 
-    // 2. GET ELEMENTS (Matches: fetch('/NonSelectable/GetElements'))
     [Authorize]
     [HttpGet]
     public async Task<IActionResult> GetElements(int layoutId)
@@ -46,7 +44,6 @@ public class NonSelectableController(ApplicationDbContext context, UserManager<A
         return Ok(elements);
     }
 
-    // DTO for Updating
     public class NonSelectableUpdateDto
     {
         public int Id { get; set; }
@@ -57,7 +54,6 @@ public class NonSelectableController(ApplicationDbContext context, UserManager<A
         public decimal Width {get; set; }
     }
 
-    // 3. UPDATE SINGLE SHAPE (Renamed to match: fetch('/NonSelectable/UpdateElement'))
     [HttpPost]
     [ValidateAntiForgeryToken] 
     [Authorize(Roles = "Admin,Venue,SuperOrganizer")]
@@ -93,14 +89,12 @@ public class NonSelectableController(ApplicationDbContext context, UserManager<A
         }
     }
 
-    // DTO for Deleting
     public class DeleteMultipleElementsRequest
     {
         public List<string> Names { get; set; }
         public int LayoutId { get; set; }
     }
 
-    // 4. DELETE MULTIPLE SHAPES (Added to match: fetch('/NonSelectable/DeleteElements'))
     [HttpPost]
     [Authorize(Roles = "Admin,Venue,SuperOrganizer")]
     public async Task<IActionResult> DeleteElements([FromBody] DeleteMultipleElementsRequest request)
@@ -123,4 +117,3 @@ public class NonSelectableController(ApplicationDbContext context, UserManager<A
         return Json(new { success = true });
     }
 }
-

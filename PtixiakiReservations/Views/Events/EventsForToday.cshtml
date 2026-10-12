@@ -175,7 +175,7 @@
                 </div>
 
                 <div class="flex flex-col sm:flex-row justify-between items-center pt-2 border-t border-gray-100 mt-4">
-                    <div class="flex items-center gap-2 mb-4 sm:mb-0">
+                    <div id="archived-container" class="flex items-center gap-2 mb-4 sm:mb-0">
                         <input type="checkbox" id="archived-filter" class="w-4 h-4 text-blue-600 bg-white border-gray-300 rounded focus:ring-blue-500 cursor-pointer" />
                         <label for="archived-filter" class="text-sm font-medium text-gray-600 cursor-pointer select-none">Include Archived Events</label>
                     </div>
@@ -355,9 +355,12 @@
             $('input[name="searchType"]').on('change', function() {
                 if ($('input[name="searchType"]:checked').val() == "venues") {
                     $('#dateForEvents').hide();
+                    $('#archived-container').hide();
                     dateRangePicker.clear();
+                    $('#archived-filter').prop('checked',false);
                 } else {
                     $('#dateForEvents').show();
+                    $('#archived-container').show();
                 }
                 currentPage = 1;
                 triggerSearch();

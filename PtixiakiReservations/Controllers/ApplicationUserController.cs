@@ -16,8 +16,7 @@ using PtixiakiReservations.Services;
 namespace PtixiakiReservations.Controllers
 {
     /// <summary>
-    /// Manages core user account operations, including role assignments, security settings, 
-    /// elevation requests, and email verification workflows.
+    /// Manages user accounts, authentication security, role elevation workflows, and search index synchronization.
     /// </summary>
     public class ApplicationUserController : Controller
     {
@@ -27,6 +26,7 @@ namespace PtixiakiReservations.Controllers
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly IEmailService _emailService;
         private readonly IMemoryCache _cache;
+        private readonly IElasticSearch _elasticSearch;
 
         public ApplicationUserController(
             ApplicationDbContext context, 
@@ -34,7 +34,8 @@ namespace PtixiakiReservations.Controllers
             SignInManager<ApplicationUser> signInManager,
             RoleManager<ApplicationRole> roleManager, 
             IEmailService emailService,
-            IMemoryCache cache)
+            IMemoryCache cache,
+            IElasticSearch elasticSearch)
         {
             _context = context;
             _userManager = userManager;
@@ -42,10 +43,54 @@ namespace PtixiakiReservations.Controllers
             _roleManager = roleManager;
             _emailService = emailService;
             _cache = cache;
+            _elasticSearch = elasticSearch;
+        }
+
+        public class OrganizerSearchDto
+        {
+            public string Id { get; set; }
+            public string FirstName { get; set; }
+            public string LastName { get; set; }
+            public string Email { get; set; }
+            public string UserName { get; set; }
+        }
+
+        private async Task SyncOrRemoveUserFromElasticAsync(ApplicationUser user)
+        {
+            string indexName = "event_organizers";
+            var allowedRoles = new[] { "Admin", "SuperOrganizer", "Event", "Venue", "Event Manager", "Venue Manager", "Super Organizer" };
+            
+            bool isOrganizer = false;
+            foreach (var role in allowedRoles)
+            {
+                if (await _userManager.IsInRoleAsync(user, role))
+                {
+                    isOrganizer = true;
+                    break;
+                }
+            }
+
+            if (isOrganizer)
+            {
+                var dto = new OrganizerSearchDto
+                {
+                    Id = user.Id,
+                    FirstName = user.FirstName ?? "",
+                    LastName = user.LastName ?? "",
+                    Email = user.Email ?? "",
+                    UserName = user.UserName ?? ""
+                };
+                await _elasticSearch.CreateIndexIfNotExistsAsync(indexName);
+                await _elasticSearch.AddOrUpdateAsync(dto, indexName);
+            }
+            else
+            {
+                await _elasticSearch.DeleteByIdAsync<OrganizerSearchDto>(user.Id, indexName);
+            }
         }
 
         /// <summary>
-        /// Retrieves a paginated and searchable list of all registered users for administrators.
+        /// Retrieves a paginated and searchable user list.
         /// </summary>
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Index(string searchQuery = null, int pageNumber = 1)
@@ -54,7 +99,6 @@ namespace PtixiakiReservations.Controllers
 
             var query = _context.Users.AsQueryable();
 
-            // Apply search filters.
             if (!string.IsNullOrWhiteSpace(searchQuery))
             {
                 var normalizedQuery = searchQuery.ToLower().Trim();
@@ -64,20 +108,17 @@ namespace PtixiakiReservations.Controllers
                     (u.LastName != null && u.LastName.ToLower().Contains(normalizedQuery)));
             }
 
-            // Calculate pagination metadata.
             int totalItems = await query.CountAsync();
             int totalPages = totalItems > 0 ? (int)Math.Ceiling(totalItems / (double)pageSize) : 1;
 
             pageNumber = Math.Max(1, Math.Min(pageNumber, totalPages));
 
-            // Retrieve paginated records.
             var users = await query
                 .OrderBy(u => u.Email) 
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync(); 
 
-            // Populate view context.
             ViewBag.CurrentPage = pageNumber;
             ViewBag.TotalPages = totalPages;
             ViewBag.SearchQuery = searchQuery;
@@ -86,19 +127,14 @@ namespace PtixiakiReservations.Controllers
             return View(users);
         }
 
-        /* ==============================================================
-         * ROLE ELEVATION REQUEST MANAGEMENT
-         * ============================================================== */
-
         /// <summary>
-        /// Retrieves a paginated list of users with pending administrative role requests.
+        /// Retrieves pending role elevation requests.
         /// </summary>
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> RoleRequests(string searchQuery = null, int pageNumber = 1)
         {
             const int pageSize = 10; 
 
-            // Filter by pending requests.
             var query = _context.Users.Where(u => 
                 u.VenueManagerRequestStatus == "Pending" || 
                 u.EventManagerRequestStatus == "Pending" || 
@@ -132,7 +168,7 @@ namespace PtixiakiReservations.Controllers
         }
 
         /// <summary>
-        /// Approves a pending role request and assigns the target role to the user.
+        /// Approves a pending role request and synchronizes search indices.
         /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -146,7 +182,6 @@ namespace PtixiakiReservations.Controllers
 
             string identityRoleTarget = "";
 
-            // Map requested role to internal identity role.
             switch (roleType)
             {
                 case "VenueManager":
@@ -165,7 +200,6 @@ namespace PtixiakiReservations.Controllers
                     return BadRequest("Invalid role type requested.");
             }
 
-            // Assign the target role.
             if (!string.IsNullOrEmpty(identityRoleTarget))
             {
                 if (!await _roleManager.RoleExistsAsync(identityRoleTarget))
@@ -180,11 +214,13 @@ namespace PtixiakiReservations.Controllers
             }
 
             await _userManager.UpdateAsync(user);
+            await SyncOrRemoveUserFromElasticAsync(user);
+
             return RedirectToAction(nameof(RoleRequests));
         }
 
         /// <summary>
-        /// Rejects a pending role request and updates the user's status.
+        /// Rejects a pending role request.
         /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -210,15 +246,13 @@ namespace PtixiakiReservations.Controllers
             }
 
             await _userManager.UpdateAsync(user);
+            await SyncOrRemoveUserFromElasticAsync(user);
+
             return RedirectToAction(nameof(RoleRequests));
         }
 
-        /* ==============================================================
-         * CORE PROFILE METADATA VIEWS
-         * ============================================================== */
-
         /// <summary>
-        /// Retrieves detailed profile information for a specific user.
+        /// Retrieves user profile details.
         /// </summary>
         public async Task<IActionResult> Details(string id)
         {
@@ -231,7 +265,7 @@ namespace PtixiakiReservations.Controllers
         }
 
         /// <summary>
-        /// Renders the manual role modification interface for administrators.
+        /// Renders the role modification view.
         /// </summary>
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> ChangeRole(string id)
@@ -243,7 +277,7 @@ namespace PtixiakiReservations.Controllers
         }
 
         /// <summary>
-        /// Updates a user's role, removing previous roles to prevent permission overlap.
+        /// Updates a user role and synchronizes search indices.
         /// </summary>
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> ChangeRoleAction(string id, string Role)
@@ -253,7 +287,6 @@ namespace PtixiakiReservations.Controllers
 
             bool alreadyHasRole = await _userManager.IsInRoleAsync(user, Role);
 
-            // Remove existing roles.
             var currentRoles = await _userManager.GetRolesAsync(user);
             if (currentRoles.Any())
             {
@@ -261,18 +294,19 @@ namespace PtixiakiReservations.Controllers
                 if (!removeResult.Succeeded) return BadRequest("Failed to remove existing roles.");
             }
 
-            // Toggle role back to standard User if already assigned.
             string roleToAssign = alreadyHasRole ? "User" : Role;
 
             var addResult = await _userManager.AddToRoleAsync(user, roleToAssign);
             if (!addResult.Succeeded) return BadRequest($"Failed to assign the {roleToAssign} role.");
 
             await _context.SaveChangesAsync();
+            await SyncOrRemoveUserFromElasticAsync(user);
+
             return RedirectToAction("Index", "ApplicationUser");
         }
 
         /// <summary>
-        /// Initializes the baseline administrative account and roles.
+        /// Seeds baseline administrative users and roles.
         /// </summary>
         public async Task<IActionResult> SeedAdminUser()
         {
@@ -288,7 +322,7 @@ namespace PtixiakiReservations.Controllers
         }
 
         /// <summary>
-        /// Provides autocomplete suggestions for city searches.
+        /// Provides city autocomplete suggestions.
         /// </summary>
         [HttpGet]
         public JsonResult SearchCities(string term)
@@ -302,10 +336,6 @@ namespace PtixiakiReservations.Controllers
             return Json(cities);
         }
 
-        /* ==============================================================
-         * AUTHENTICATION & SECURITY OPERATIONS
-         * ============================================================== */
-
         public class Toggle2FaRequest
         {
             public string Password { get; set; }
@@ -313,7 +343,7 @@ namespace PtixiakiReservations.Controllers
         }
 
         /// <summary>
-        /// Toggles Two-Factor Authentication (2FA) after verifying the user's password.
+        /// Toggles two-factor authentication settings.
         /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -336,7 +366,7 @@ namespace PtixiakiReservations.Controllers
         }
 
         /// <summary>
-        /// Generates and sends an OTP for initial email verification.
+        /// Generates email verification codes.
         /// </summary>
         [HttpPost]
         public async Task<IActionResult> GenerateEmailConfirmationCode()
@@ -368,7 +398,7 @@ namespace PtixiakiReservations.Controllers
         }
 
         /// <summary>
-        /// Validates the email verification OTP and confirms the user's email.
+        /// Confirms user email addresses.
         /// </summary>
         [HttpPost]
         public async Task<IActionResult> ConfirmEmailCode(string code)
@@ -400,7 +430,7 @@ namespace PtixiakiReservations.Controllers
         }
 
         /// <summary>
-        /// Validates an OTP sent to the user's current email prior to modification.
+        /// Verifies ownership of the current email.
         /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -416,7 +446,7 @@ namespace PtixiakiReservations.Controllers
         }
 
         /// <summary>
-        /// Generates and caches an OTP for the newly requested email address.
+        /// Generates email change verification codes.
         /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -453,7 +483,7 @@ namespace PtixiakiReservations.Controllers
         }
 
         /// <summary>
-        /// Validates the cached OTP and updates the user's email address.
+        /// Confirms email changes and updates search indices.
         /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -486,6 +516,7 @@ namespace PtixiakiReservations.Controllers
 
             if (result.Succeeded)
             {
+                await SyncOrRemoveUserFromElasticAsync(user);
                 return Ok();
             }
 
@@ -500,7 +531,7 @@ namespace PtixiakiReservations.Controllers
         }
 
         /// <summary>
-        /// Updates the user's password and sends a security notification email.
+        /// Updates account passwords.
         /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]

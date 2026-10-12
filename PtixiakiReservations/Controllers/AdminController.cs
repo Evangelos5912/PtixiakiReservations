@@ -6,30 +6,82 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Hosting; 
 using PtixiakiReservations.Data;
 using PtixiakiReservations.Models;
+using PtixiakiReservations.Services;
 using System.Linq;
 using System.Threading.Tasks;
 using System.IO;
 
 namespace PtixiakiReservations.Controllers
 {
+    /// <summary>
+    /// Manages administrative oversight, dashboard metrics, verification files, role request approvals, and search index synchronization.
+    /// </summary>
     [Authorize(Roles = "Admin")]
     public class AdminController : Controller
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly ApplicationDbContext _context;
         private readonly IWebHostEnvironment _env;
+        private readonly IElasticSearch _elasticSearch;
 
         public AdminController(
             UserManager<ApplicationUser> userManager,
             ApplicationDbContext context,
-            IWebHostEnvironment env) 
+            IWebHostEnvironment env,
+            IElasticSearch elasticSearch) 
         {
             _userManager = userManager;
             _context = context;
             _env = env;
+            _elasticSearch = elasticSearch;
         }
 
-        // Retrieves metrics and pending requests for the administrative dashboard.
+        public class OrganizerSearchDto
+        {
+            public string Id { get; set; }
+            public string FirstName { get; set; }
+            public string LastName { get; set; }
+            public string Email { get; set; }
+            public string UserName { get; set; }
+        }
+
+        private async Task SyncOrRemoveUserFromElasticAsync(ApplicationUser user)
+        {
+            string indexName = "event_organizers";
+            var allowedRoles = new[] { "Admin", "SuperOrganizer", "Event", "Venue", "Event Manager", "Venue Manager", "Super Organizer" };
+            
+            bool isOrganizer = false;
+            foreach (var role in allowedRoles)
+            {
+                if (await _userManager.IsInRoleAsync(user, role))
+                {
+                    isOrganizer = true;
+                    break;
+                }
+            }
+
+            if (isOrganizer)
+            {
+                var dto = new OrganizerSearchDto
+                {
+                    Id = user.Id,
+                    FirstName = user.FirstName ?? "",
+                    LastName = user.LastName ?? "",
+                    Email = user.Email ?? "",
+                    UserName = user.UserName ?? ""
+                };
+                await _elasticSearch.CreateIndexIfNotExistsAsync(indexName);
+                await _elasticSearch.AddOrUpdateAsync(dto, indexName);
+            }
+            else
+            {
+                await _elasticSearch.DeleteByIdAsync<OrganizerSearchDto>(user.Id, indexName);
+            }
+        }
+
+        /// <summary>
+        /// Retrieves dashboard metrics.
+        /// </summary>
         public async Task<IActionResult> Index()
         {
             var model = new
@@ -48,7 +100,9 @@ namespace PtixiakiReservations.Controllers
             return View(model);
         }
 
-        // Retrieves paginated and filtered pending role authorization requests.
+        /// <summary>
+        /// Retrieves paginated role requests.
+        /// </summary>
         public async Task<IActionResult> RoleRequests(string? searchQuery, int pageNumber = 1)
         {
             int pageSize = 12; 
@@ -60,7 +114,6 @@ namespace PtixiakiReservations.Controllers
                     (u.HasRequestedSuperOrganizerRole && u.SuperOrganizerRequestStatus == "Pending")
                 );
 
-            // Apply search filters.
             if (!string.IsNullOrWhiteSpace(searchQuery))
             {
                 string searchLower = searchQuery.ToLower();
@@ -70,7 +123,6 @@ namespace PtixiakiReservations.Controllers
                     u.Email.ToLower().Contains(searchLower));
             }
 
-            // Calculate pagination parameters.
             int totalItems = await query.CountAsync();
             int totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
 
@@ -80,7 +132,6 @@ namespace PtixiakiReservations.Controllers
                 .Take(pageSize)
                 .ToListAsync();
 
-            // Populate view context data.
             ViewBag.CurrentPage = pageNumber;
             ViewBag.TotalPages = totalPages == 0 ? 1 : totalPages;
             ViewBag.SearchQuery = searchQuery;
@@ -89,7 +140,9 @@ namespace PtixiakiReservations.Controllers
             return View(pendingRequests);
         }
 
-        // Approves a pending role request for the specified user and updates their role.
+        /// <summary>
+        /// Approves role requests and synchronizes search indices.
+        /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ApproveRoleRequest(string userId, string roleType)
@@ -133,7 +186,6 @@ namespace PtixiakiReservations.Controllers
                     return BadRequest("Invalid role type submitted.");
             }
 
-            // Purge associated verification documents from the file system.
             DeleteVerificationDocument(user, roleType);
 
             if (wasApproved && !string.IsNullOrEmpty(newRole))
@@ -147,14 +199,17 @@ namespace PtixiakiReservations.Controllers
                 await _userManager.AddToRoleAsync(user, newRole);
                 await _userManager.UpdateAsync(user);
                 
-                // Return status 200 OK for AJAX clients.
+                await SyncOrRemoveUserFromElasticAsync(user);
+
                 return Ok(); 
             }
             
             return BadRequest("Could not approve the request.");
         }
 
-        // Rejects a pending role request for the specified user.
+        /// <summary>
+        /// Rejects role requests and updates search indices.
+        /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> RejectRoleRequest(string userId, string roleType)
@@ -194,19 +249,21 @@ namespace PtixiakiReservations.Controllers
                     return BadRequest("Invalid role type submitted.");
             }
 
-            // Purge associated verification documents from the file system.
             DeleteVerificationDocument(user, roleType);
             
             if (wasRejected)
             {
                 await _userManager.UpdateAsync(user);
+                await SyncOrRemoveUserFromElasticAsync(user);
                 return Ok(); 
             }
 
             return BadRequest("Could not reject the request.");
         }
 
-        // Retrieves and serves the PDF verification document for authorized administrators.
+        /// <summary>
+        /// Serves user verification documents.
+        /// </summary>
         [Authorize(Roles = "Admin")]
         [HttpGet]
         public async Task<IActionResult> ViewVerificationDocument(string userId, string roleType)
@@ -224,21 +281,16 @@ namespace PtixiakiReservations.Controllers
 
             if (string.IsNullOrEmpty(docPath)) return NotFound("No document found in the database.");
 
-            // Resolve the absolute file path securely across platforms.
             string absolutePath = ResolveAbsolutePath(docPath);
 
-            // Serve the file directly to the client.
             if (System.IO.File.Exists(absolutePath))
             {
                 return PhysicalFile(absolutePath, "application/pdf");
             }
 
-            return NotFound($"File is missing from the server. Looked for it at: {absolutePath}");
+            return NotFound($"File is missing from the server.");
         }
 
-        // --- Helper Methods ---
-
-        // Removes the physical document and clears the reference in the database.
         private void DeleteVerificationDocument(ApplicationUser user, string roleType)
         {
             string? docPathToDelete = roleType switch
@@ -258,7 +310,6 @@ namespace PtixiakiReservations.Controllers
                 }
             }
 
-            // Clear the database property tracking the path.
             switch (roleType)
             {
                 case "Venue": user.VenueManagerRequestDocumentPath = null; break;
@@ -267,15 +318,11 @@ namespace PtixiakiReservations.Controllers
             }
         }
 
-        // Safely resolves the absolute file path regardless of operating system.
         private string ResolveAbsolutePath(string path)
         {
             if (string.IsNullOrWhiteSpace(path)) return string.Empty;
 
-            // Extract the filename safely, ignoring any stored directory structure.
             string fileName = Path.GetFileName(path);
-
-            // Construct the path referencing the secure application directory.
             string securePath = Path.Combine(_env.ContentRootPath, "SecureDocuments", "RoleRequests", fileName);
 
             if (System.IO.File.Exists(securePath))
@@ -283,7 +330,6 @@ namespace PtixiakiReservations.Controllers
                 return securePath;
             }
 
-            // Fallback strategy for legacy uploads stored within the public web root.
             if (!string.IsNullOrEmpty(_env.WebRootPath))
             {
                 string legacyPath = Path.Combine(_env.WebRootPath, "uploads", "verification_docs", fileName);
@@ -293,7 +339,6 @@ namespace PtixiakiReservations.Controllers
                 }
             }
 
-            // Return the target path to expose resolution errors during diagnostics.
             return securePath;
         }
     }

@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PtixiakiReservations.Data;
 using PtixiakiReservations.Models;
+using PtixiakiReservations.Services;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Collections.Generic;
@@ -15,7 +16,7 @@ using System.IO;
 namespace PtixiakiReservations.Controllers
 {
     /// <summary>
-    /// Manages administrative operations for operational regions (Cities).
+    /// Manages administrative operations for operational regions (Cities) and Elasticsearch synchronization.
     /// </summary>
     [Authorize(Roles = "Admin")]
     public class CityController : Controller
@@ -23,12 +24,36 @@ namespace PtixiakiReservations.Controllers
         private readonly ApplicationDbContext _context;
         private readonly IWebHostEnvironment _environment;
         private readonly ILogger<CityController> _logger;
+        private readonly IElasticSearch _elasticSearchService;
 
-        public CityController(ApplicationDbContext context, IWebHostEnvironment environment, ILogger<CityController> logger)
+        public CityController(
+            ApplicationDbContext context, 
+            IWebHostEnvironment environment, 
+            ILogger<CityController> logger,
+            IElasticSearch elasticSearchService)
         {
             _context = context;
             _environment = environment;
             _logger = logger;
+            _elasticSearchService = elasticSearchService;
+        }
+
+        public class CitySearchDto
+        {
+            public string Id { get; set; }
+            public string Name { get; set; }
+        }
+
+        private async Task SyncCityToElasticAsync(City city)
+        {
+            var dto = new CitySearchDto { Id = city.Id.ToString(), Name = city.Name };
+            await _elasticSearchService.CreateIndexIfNotExistsAsync("cities");
+            await _elasticSearchService.AddOrUpdateAsync(dto, "cities");
+        }
+
+        private async Task RemoveCityFromElasticAsync(int cityId)
+        {
+            await _elasticSearchService.DeleteByIdAsync<CitySearchDto>(cityId.ToString(), "cities");
         }
 
         [HttpGet]
@@ -81,8 +106,12 @@ namespace PtixiakiReservations.Controllers
 
             if (!cityExists)
             {
-                _context.City.Add(new City { Name = cleanCityName });
+                var city = new City { Name = cleanCityName };
+                _context.City.Add(city);
                 await _context.SaveChangesAsync();
+                
+                await SyncCityToElasticAsync(city);
+
                 return RedirectToAction(nameof(ManageCities));
             }
 
@@ -91,8 +120,7 @@ namespace PtixiakiReservations.Controllers
         }
 
         /// <summary>
-        /// Permanently removes a city from the database. 
-        /// Uses high-performance bulk operations (ExecuteDeleteAsync) to prevent RAM OOM crashes.
+        /// Permanently removes a city and related dependencies.
         /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -103,13 +131,10 @@ namespace PtixiakiReservations.Controllers
 
             try
             {
-                // 0. Detach all Users from this City to prevent RESTRICT FK violation
-                // This instantly sets their CityId to null without loading users into RAM
                 await _context.Users
                     .Where(u => u.CityId == id)
                     .ExecuteUpdateAsync(u => u.SetProperty(x => x.CityId, (int?)null));
 
-                // 1. Gather IDs via projection (Uses minimal RAM - no entity tracking)
                 var venueIds = await _context.Venue.Where(v => v.CityId == id).Select(v => v.Id).ToListAsync();
 
                 if (venueIds.Any())
@@ -129,14 +154,9 @@ namespace PtixiakiReservations.Controllers
 
                     var allEventIds = masterEventIds.Concat(childEventIds).Distinct().ToList();
 
-                    // 2. Harvest physical file paths before we wipe the DB records
                     var eventImagePaths = await _context.Event.Where(e => allEventIds.Contains(e.Id)).Select(e => e.ImagePath).ToListAsync();
                     var galleryImagePaths = await _context.Event.Where(e => allEventIds.Contains(e.Id)).SelectMany(e => e.GalleryImages).Select(g => g.ImagePath).ToListAsync();
                     var venueImagePaths = await _context.Venue.Where(v => venueIds.Contains(v.Id)).Select(v => v.imgUrl).ToListAsync();
-
-                    // =======================================================================
-                    // 3. EXECUTE BULK DB DELETIONS (Translates directly to raw SQL)
-                    // =======================================================================
 
                     if (allEventIds.Any())
                     {
@@ -161,10 +181,6 @@ namespace PtixiakiReservations.Controllers
                     await _context.VenueCategory.Where(vc => venueIds.Contains(vc.VenueId)).ExecuteDeleteAsync();
                     await _context.Venue.Where(v => venueIds.Contains(v.Id)).ExecuteDeleteAsync();
 
-                    // =======================================================================
-                    // 4. CLEAN UP PHYSICAL DISK STORAGE
-                    // =======================================================================
-                    
                     var allPathsToDelete = eventImagePaths.Concat(galleryImagePaths).Where(p => !string.IsNullOrEmpty(p)).ToList();
                     foreach (var path in allPathsToDelete)
                     {
@@ -181,10 +197,12 @@ namespace PtixiakiReservations.Controllers
 
                 _context.City.Remove(city);
                 await _context.SaveChangesAsync();
+
+                await RemoveCityFromElasticAsync(id);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to execute memory-safe cascading deletion for City ID {Id}", id);
+                _logger.LogError(ex, "Failed to execute cascading deletion for City ID {Id}", id);
             }
             
             return RedirectToAction(nameof(ManageCities));
@@ -209,6 +227,8 @@ namespace PtixiakiReservations.Controllers
                 city.Name = CityName.Trim();
                 _context.Update(city);
                 await _context.SaveChangesAsync();
+                
+                await SyncCityToElasticAsync(city);
                 
                 return RedirectToAction(nameof(ManageCities));
             }

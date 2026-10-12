@@ -25,7 +25,7 @@ using SixLabors.ImageSharp.Formats.Webp;
 namespace PtixiakiReservations.Controllers;
 
 /// <summary>
-/// Manages event lifecycles, hierarchical structures, media transcoding, and Elasticsearch indexing.
+/// Manages event lifecycles, hierarchical structures, media transcoding, and Elasticsearch synchronization.
 /// </summary>
 public class EventsController(
     ApplicationDbContext context,
@@ -36,19 +36,37 @@ public class EventsController(
     IWebHostEnvironment environment)
     : Controller
 {
+    private async Task SyncEventToElasticAsync(int eventId)
+    {
+        var ev = await context.Event
+            .Include(e => e.Venue)
+                .ThenInclude(v => v.City)
+            .Include(e => e.EventType)
+            .FirstOrDefaultAsync(e => e.Id == eventId);
+
+        if (ev != null)
+        {
+            await elasticSearchService.CreateIndexIfNotExistsAsync("events");
+            await elasticSearchService.AddOrUpdateAsync(ev, "events");
+        }
+    }
+
+    private async Task RemoveEventFromElasticAsync(int eventId)
+    {
+        await elasticSearchService.DeleteByIdAsync<Event>(eventId.ToString(), "events");
+    }
+
     [Authorize]
     [HttpGet]
     public async Task<IActionResult> Index(string filter = "mine", string searchString = null, int page = 1, int pageSize = 12)
     {
         var currentUserId = userManager.GetUserId(User);
         
-        // Preserve state parameters for the frontend UI router
         ViewBag.CurrentFilter = filter;
         ViewBag.SearchString = searchString;
         ViewBag.CurrentPage = page;
         ViewBag.PageSize = pageSize;
 
-   
         var query = context.Event
             .Include(e => e.Venue)
                 .ThenInclude(v => v.City)
@@ -57,14 +75,11 @@ public class EventsController(
             .Where(e => e.ParentEventId == null)
             .AsQueryable();
 
-   
         if (filter != "all")
         {
-            
             query = query.Where(e => e.OrganizerId == currentUserId);
         }
 
-  
         if (!string.IsNullOrWhiteSpace(searchString))
         {
             var term = searchString.ToLower().Trim();
@@ -74,12 +89,10 @@ public class EventsController(
                 (e.Venue != null && e.Venue.City != null && e.Venue.City.Name.ToLower().Contains(term)));
         }
 
-    
         int totalCount = await query.CountAsync();
         ViewBag.TotalCount = totalCount;
         ViewBag.TotalPages = totalCount > 0 ? (int)Math.Ceiling((double)totalCount / pageSize) : 1;
 
-        
         var events = await query
             .OrderByDescending(e => e.StartDateTime)
             .Skip((page - 1) * pageSize)
@@ -89,8 +102,17 @@ public class EventsController(
         return View(events);
     }
 
+    public class OrganizerSearchDto
+    {
+        public string Id { get; set; }
+        public string FirstName { get; set; }
+        public string LastName { get; set; }
+        public string Email { get; set; }
+        public string UserName { get; set; }
+    }
+
     /// <summary>
-    /// Dynamically transcodes and compresses images to WebP format.
+    /// Transcodes and compresses images to WebP format.
     /// </summary>
     [AllowAnonymous]
     [HttpGet]
@@ -121,7 +143,7 @@ public class EventsController(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Failed to transcode image stream. Falling back to original asset.");
+            logger.LogError(ex, "Failed to transcode image stream.");
             return PhysicalFile(physicalPath, "application/octet-stream"); 
         }
     }
@@ -558,7 +580,6 @@ public class EventsController(
         bool isStandalone = IsStandalone == "true" || IsStandalone == "on" || IsStandalone == "true,false" || isMultiDay;
         bool isChild = newEvent.ParentEventId.HasValue;
 
-        // Validate dependencies for standalone or child events.
         if (isChild || isStandalone)
         {
             if (newEvent.VenueId == null || newEvent.VenueId == 0 || newEvent.LayoutId == null || newEvent.LayoutId == 0)
@@ -575,7 +596,6 @@ public class EventsController(
             newEvent.LayoutId = null;
         }
 
-        // Verify parent constraints.
         Event parentEvent = null;
         if (isChild)
         {
@@ -596,7 +616,6 @@ public class EventsController(
         var userId = userManager.GetUserId(User);
         newEvent.OrganizerId = userId;
 
-        // Process and store the primary image asset.
         if (imageFile != null && imageFile.Length > 0)
         {
             try
@@ -628,7 +647,6 @@ public class EventsController(
             }
         }
 
-        // Process and store gallery image assets.
         if (galleryFiles != null && galleryFiles.Count > 0)
         {
             string galleryFolder = Path.Combine(environment.WebRootPath, "images", "events", "gallery");
@@ -663,6 +681,7 @@ public class EventsController(
         try
         {
             Event fatherEvent = null;
+            var createdEventIds = new List<int>();
 
             if (isMultiDay && !string.IsNullOrEmpty(SpecificDatesJson)
                 && !string.IsNullOrEmpty(StartTime) && !string.IsNullOrEmpty(MultiEndTime))
@@ -681,6 +700,7 @@ public class EventsController(
                     context.Add(newEvent);
                     await context.SaveChangesAsync(); 
                     fatherEvent = newEvent;
+                    createdEventIds.Add(newEvent.Id);
                 }
 
                 var count = 1;
@@ -691,7 +711,6 @@ public class EventsController(
                         var eventStart = date.Date.Add(startTimeSpan);
                         var eventEnd = date.Date.Add(endTimeSpan);
 
-                        // Validate sub-event bounds for multi-day schedules.
                         if (isChild && parentEvent != null)
                         {
                             if (eventStart < parentEvent.StartDateTime || eventEnd > parentEvent.EndTime)
@@ -723,13 +742,20 @@ public class EventsController(
                         count++;
                     }
                 }
+                await context.SaveChangesAsync();
+
+                var parentIdForChildren = newEvent.ParentEventId ?? fatherEvent?.Id;
+                if (parentIdForChildren.HasValue)
+                {
+                    var childIds = await context.Event.Where(e => e.ParentEventId == parentIdForChildren.Value).Select(e => e.Id).ToListAsync();
+                    createdEventIds.AddRange(childIds);
+                }
             }
             else
             {
                 if (newEvent.StartDateTime == DateTime.MinValue) newEvent.StartDateTime = DateTime.Now;
                 if (newEvent.EndTime == DateTime.MinValue) newEvent.EndTime = newEvent.StartDateTime.AddHours(2);
 
-                // Validate sub-event bounds for single-day schedules.
                 if (isChild && parentEvent != null)
                 {
                     if (newEvent.StartDateTime < parentEvent.StartDateTime || newEvent.EndTime > parentEvent.EndTime)
@@ -746,9 +772,14 @@ public class EventsController(
                 }
 
                 context.Add(newEvent);
+                await context.SaveChangesAsync();
+                createdEventIds.Add(newEvent.Id);
             }
 
-            await context.SaveChangesAsync();
+            foreach (var evId in createdEventIds.Distinct())
+            {
+                await SyncEventToElasticAsync(evId);
+            }
 
             int? returnedEventId = newEvent.ParentEventId ?? (isMultiDay && fatherEvent != null ? fatherEvent.Id : newEvent.Id);
 
@@ -777,7 +808,6 @@ public class EventsController(
     {
         if (id == null) return NotFound();
 
-        // Include required relational data for the edit interface.
         var eventToEdit = await context.Event
             .Include(e => e.Venue)
                 .ThenInclude(v => v.City) 
@@ -797,7 +827,6 @@ public class EventsController(
 
         if (!isAdmin && !isOwner) return Forbid(); 
 
-        // Populate ViewBag collections for dropdown selections.
         ViewBag.VenueList = await context.Venue
             .Include(v => v.City)
             .Where(v => v.UserId == currentUserId)
@@ -818,7 +847,7 @@ public class EventsController(
     }
 
     /// <summary>
-    /// Processes updates to an existing event, including schedule boundaries and media transcoding.
+    /// Processes updates to an existing event.
     /// </summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
@@ -851,7 +880,6 @@ public class EventsController(
 
                 if (!User.IsInRole("Admin") && originalEvent.OrganizerId != currentUserId) return Forbid();
 
-                // Ensure updated timeframe remains within parent bounds.
                 if (originalEvent.ParentEventId != null)
                 {
                     var parent = await context.Event.AsNoTracking().FirstOrDefaultAsync(e => e.Id == originalEvent.ParentEventId);
@@ -969,8 +997,8 @@ public class EventsController(
                 }
 
                 await context.SaveChangesAsync();
+                await SyncEventToElasticAsync(originalEvent.Id);
                 
-                // Return to Index after successful edit
                 return RedirectToAction(nameof(Index));
             }
             catch (DbUpdateConcurrencyException)
@@ -1010,10 +1038,8 @@ public class EventsController(
         return correctDay;
     }
 
-    
     /// <summary>
-    /// Permanently removes an event and cascades deletions down to Wishlists, Reservations, Sub-Events, and Gallery Images.
-    /// Utilizes high-performance ExecuteDeleteAsync bulk commands to bypass RAM constraints and RESTRICT locks.
+    /// Removes an event and related cascading items.
     /// </summary>
     [Authorize(Roles = "Admin,Event,SuperOrganizer")]
     [HttpDelete]
@@ -1030,7 +1056,6 @@ public class EventsController(
 
         try 
         {
-            // 1. Gather all Event IDs (The target event + any children if it's a master)
             var allEventIds = new List<int> { ev.Id };
             
             var childEventIds = await context.Event
@@ -1043,7 +1068,6 @@ public class EventsController(
                 allEventIds.AddRange(childEventIds);
             }
 
-            // 2. Harvest physical file paths to delete from disk later
             var eventImagePaths = await context.Event
                 .Where(e => allEventIds.Contains(e.Id))
                 .Select(e => e.ImagePath)
@@ -1055,31 +1079,19 @@ public class EventsController(
                 .Select(g => g.ImagePath)
                 .ToListAsync();
 
-            // =======================================================================
-            // 3. EXECUTE BULK DB DELETIONS (Translates directly to raw SQL)
-            // =======================================================================
-            
-            // Delete Wishlists (safely bypasses RESTRICT foreign key constraint)
             await context.Set<Wishlist>().Where(w => allEventIds.Contains(w.EventId)).ExecuteDeleteAsync();
             
-            // Delete Reservations
             await context.Reservation.Where(r => allEventIds.Contains(r.EventId)).ExecuteDeleteAsync();
             
-            // Delete Gallery Images (safely bypasses RESTRICT foreign key constraint)
             await context.Event.Where(e => allEventIds.Contains(e.Id)).SelectMany(e => e.GalleryImages).ExecuteDeleteAsync();
             
-            // Delete Child Events
             if (childEventIds.Any())
             {
                 await context.Event.Where(e => childEventIds.Contains(e.Id)).ExecuteDeleteAsync();
             }
             
-            // Delete Master Event
             await context.Event.Where(e => e.Id == id).ExecuteDeleteAsync();
 
-            // =======================================================================
-            // 4. CLEAN UP PHYSICAL DISK STORAGE
-            // =======================================================================
             var allPathsToDelete = eventImagePaths.Concat(galleryImagePaths).Where(p => !string.IsNullOrEmpty(p)).ToList();
             foreach (var path in allPathsToDelete)
             {
@@ -1087,12 +1099,17 @@ public class EventsController(
                 if (System.IO.File.Exists(fullPath)) System.IO.File.Delete(fullPath);
             }
 
+            foreach (var evId in allEventIds)
+            {
+                await RemoveEventFromElasticAsync(evId);
+            }
+
             return Ok();
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Failed to execute memory-safe cascading deletion for Event ID {Id}", id);
-            return BadRequest(new { success = false, message = "Could not delete event due to constrained related data: " + ex.Message });
+            logger.LogError(ex, "Failed to delete event ID {Id}", id);
+            return BadRequest(new { success = false, message = "Could not delete event: " + ex.Message });
         }
     }
     
@@ -1114,6 +1131,7 @@ public class EventsController(
     }
 
     [HttpGet]
+    [AllowAnonymous]
     public async Task<IActionResult> SearchEvents(
         string eventTypeId = null,
         string startDate = null,
@@ -1146,9 +1164,21 @@ public class EventsController(
             bool fetchEvents = searchType == "all" || searchType == "events";
             bool fetchVenues = searchType == "all" || searchType == "venues";
 
-            // ==========================================
-            // 1. QUERY BUILDER: EVENTS
-            // ==========================================
+            if (searchType == "all" && string.IsNullOrWhiteSpace(term) && !eventTypeIdValue.HasValue)
+            {
+                fetchVenues = false; 
+            }
+
+            List<string> matchingUserIds = new List<string>();
+            if (!string.IsNullOrWhiteSpace(term))
+            {
+                var matchedUsers = await elasticSearchService.SearchAsync<OrganizerSearchDto>(term, "event_organizers");
+                if (matchedUsers != null && matchedUsers.Any())
+                {
+                    matchingUserIds = matchedUsers.Select(u => u.Id).ToList();
+                }
+            }
+
             var eq = context.Event
                 .Include(e => e.Venue).ThenInclude(v => v.City)
                 .Include(e => e.EventType)
@@ -1162,8 +1192,6 @@ public class EventsController(
                 if (parsedEndDate.HasValue) eq = eq.Where(e => e.StartDateTime <= parsedEndDate.Value);
                 if (eventTypeIdValue.HasValue) eq = eq.Where(e => e.EventTypeId == eventTypeIdValue.Value);
 
-                // If no text search is active, hide sub-events to keep the grid clean.
-                // If the user types a search, we unhide sub-events so they can be matched!
                 if (string.IsNullOrWhiteSpace(term))
                 {
                     eq = eq.Where(e => e.ParentEventId == null);
@@ -1174,6 +1202,7 @@ public class EventsController(
                         e.Name.ToLower().Contains(term) ||
                         (e.Venue != null && e.Venue.Name.ToLower().Contains(term)) ||
                         (e.Venue != null && e.Venue.City != null && e.Venue.City.Name.ToLower().Contains(term)) ||
+                        (e.OrganizerId != null && matchingUserIds.Contains(e.OrganizerId)) || 
                         e.ChildEvents.Any(c => 
                             c.Name.ToLower().Contains(term) ||
                             (c.Venue != null && c.Venue.Name.ToLower().Contains(term)) ||
@@ -1186,9 +1215,6 @@ public class EventsController(
                 else eq = eq.OrderBy(e => e.StartDateTime);
             }
 
-            // ==========================================
-            // 2. QUERY BUILDER: VENUES
-            // ==========================================
             var vq = context.Venue
                 .Include(v => v.City)
                 .Include(v => v.VenueCategory).ThenInclude(vc => vc.EventType)
@@ -1197,14 +1223,19 @@ public class EventsController(
             if (fetchVenues)
             {
                 if (eventTypeIdValue.HasValue) vq = vq.Where(v => v.VenueCategory.Any(vc => vc.CategoryId == eventTypeIdValue.Value));
-                if (!string.IsNullOrWhiteSpace(term)) vq = vq.Where(v => v.Name.ToLower().Contains(term) || (v.City != null && v.City.Name.ToLower().Contains(term)));
+                
+                if (!string.IsNullOrWhiteSpace(term)) 
+                {
+                    vq = vq.Where(v => 
+                        v.Name.ToLower().Contains(term) || 
+                        (v.City != null && v.City.Name.ToLower().Contains(term)) ||
+                        (v.UserId != null && matchingUserIds.Contains(v.UserId))
+                    );
+                }
                 
                 vq = vq.OrderBy(v => v.Name);
             }
 
-            // ==========================================
-            // 3. PAGINATION MATH
-            // ==========================================
             int eventCount = fetchEvents ? await eq.CountAsync() : 0;
             int venueCount = fetchVenues ? await vq.CountAsync() : 0;
             int totalRecords = eventCount + venueCount;
@@ -1218,9 +1249,6 @@ public class EventsController(
 
             var results = new List<object>();
 
-            // ==========================================
-            // 4. EXECUTE & MAP: EVENTS
-            // ==========================================
             if (fetchEvents && eventsToTake > 0)
             {
                 var eventList = await eq.Skip(eventsToSkip).Take(eventsToTake).ToListAsync();
@@ -1265,9 +1293,6 @@ public class EventsController(
                 }
             }
 
-            // ==========================================
-            // 5. EXECUTE & MAP: VENUES
-            // ==========================================
             if (fetchVenues && venuesToTake > 0)
             {
                 var venueList = await vq.Skip(venuesToSkip).Take(venuesToTake).ToListAsync();
@@ -1278,7 +1303,10 @@ public class EventsController(
                         id = v.Id,
                         name = v.Name,
                         cityName = v.City?.Name ?? "N/A",
-                        imagePath = !string.IsNullOrEmpty(v.imgUrl) ? (v.imgUrl.EndsWith(".webp") ? v.imgUrl : $"/Events/GetCompressedImage?path={v.imgUrl}&width=800") : null,
+                        postalCode = v.PostalCode ?? "",
+                        imagePath = string.IsNullOrEmpty(v.imgUrl) 
+                            ? "/images/image.jpg" 
+                            : (v.imgUrl.StartsWith("/") ? v.imgUrl : $"/images/{v.imgUrl}"),
                         phone = v.Phone ?? "No phone provided",
                         layoutCount = context.Layout.Count(l => l.VenueId == v.Id),
                         categoryNames = v.VenueCategory?.Where(vc => vc.EventType != null).Select(vc => vc.EventType.Name).ToList() ?? new List<string>()
@@ -1295,7 +1323,7 @@ public class EventsController(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Search Controller Error");
+            logger.LogError(ex, "Search error");
             return StatusCode(500, "Server Error");
         }
     }
@@ -1371,7 +1399,7 @@ public class EventsController(
         return Json(new { success = true, events = generatedEvents });
     }
 
-        [Authorize(Roles = "Admin,Event,SuperOrganizer")]
+    [Authorize(Roles = "Admin,Event,SuperOrganizer")]
     [HttpGet]
     public async Task<IActionResult> GetUserEvents(string filter = "mine")
     {
@@ -1423,39 +1451,49 @@ public class EventsController(
 
         try
         {
-            // 1. Events priority
-            var eventResults = await context.Event
-                .Where(e => e.Name.ToLower().Contains(query))
-                .OrderBy(e => e.Name)
-                .Take(maxResults)
-                .Select(e => new { text = e.Name, type = "event", subtext = $"Event on {e.StartDateTime.ToString("MMM d, yyyy")}", id = e.Id })
-                .ToListAsync();
+            var matchedUsers = await elasticSearchService.SearchAsync<OrganizerSearchDto>(query, "event_organizers");
+            if (matchedUsers != null && matchedUsers.Any())
+            {
+                var organizerResults = matchedUsers.Take(maxResults).Select(u => new 
+                { 
+                    text = $"{u.FirstName} {u.LastName}".Trim(), 
+                    type = "organizer", 
+                    subtext = u.Email,
+                    id = u.Id 
+                });
+                results.AddRange(organizerResults);
+            }
 
-            results.AddRange(eventResults);
+            if (results.Count < maxResults)
+            {
+                var eventResults = await context.Event
+                    .Where(e => e.Name.ToLower().Contains(query))
+                    .OrderBy(e => e.Name)
+                    .Take(maxResults - results.Count)
+                    .Select(e => new { text = e.Name, type = "event", subtext = $"Event on {e.StartDateTime.ToString("MMM d, yyyy")}", id = e.Id.ToString() })
+                    .ToListAsync();
+                results.AddRange(eventResults);
+            }
 
-            // 2. Venues next
             if (results.Count < maxResults)
             {
                 var venueResults = await context.Venue
                     .Where(v => v.Name.ToLower().Contains(query))
                     .OrderBy(v => v.Name)
                     .Take(maxResults - results.Count)
-                    .Select(v => new { text = v.Name, type = "location", subtext = v.City != null ? $"Venue in {v.City.Name}" : "Venue", id = v.Id })
+                    .Select(v => new { text = v.Name, type = "location", subtext = v.City != null ? $"Venue in {v.City.Name}" : "Venue", id = v.Id.ToString() })
                     .ToListAsync();
-
                 results.AddRange(venueResults);
             }
 
-            // 3. Cities last
             if (results.Count < maxResults)
             {
                 var cityResults = await context.City
                     .Where(c => c.Name.ToLower().Contains(query))
                     .OrderBy(c => c.Name)
                     .Take(maxResults - results.Count)
-                    .Select(c => new { text = c.Name, type = "location", subtext = "City", id = c.Id })
+                    .Select(c => new { text = c.Name, type = "location", subtext = "City", id = c.Id.ToString() })
                     .ToListAsync();
-
                 results.AddRange(cityResults);
             }
 
@@ -1489,11 +1527,11 @@ public class EventsController(
             
             if (originalEvent == null) return NotFound();
             
-            // Fixed: Check owner on event Organizer instead of Venue (which threw 500 Null Reference crashes if missing)
             if (originalEvent.OrganizerId != userId && !User.IsInRole("Admin")) return Unauthorized();
 
             originalEvent.Name = NewName;
             await context.SaveChangesAsync();
+            await SyncEventToElasticAsync(originalEvent.Id);
         }
         catch (Exception)
         {
@@ -1558,6 +1596,7 @@ public class EventsController(
 
             childEvent.ParentEventId = data.ParentId;
             await context.SaveChangesAsync();
+            await SyncEventToElasticAsync(childEvent.Id);
 
             return Json(new { success = true });
         }
@@ -1637,6 +1676,7 @@ public class EventsController(
 
         context.Event.Add(newEvent);
         await context.SaveChangesAsync();
+        await SyncEventToElasticAsync(newEvent.Id);
 
         return Json(new { success = true, id = newEvent.Id });
     }
@@ -1689,6 +1729,11 @@ public class EventsController(
             }
 
             await context.SaveChangesAsync();
+            foreach (var ev in eventsToRename)
+            {
+                await SyncEventToElasticAsync(ev.Id);
+            }
+
             return Json(new { success = true, message = "Entity properties mapped and updated." });
         }
         catch (Exception)
@@ -1725,7 +1770,6 @@ public class EventsController(
             var children = childEvents.Where(c => c.ParentEventId == e.Id).ToList();
             var childPrices = children.Where(c => c.TicketPrice != null).Select(c => c.TicketPrice.Value).ToList();
             
-            // Find distinct cities of all child events
             var childCities = children.Where(c => c.Venue?.City?.Name != null)
                                       .Select(c => c.Venue.City.Name)
                                       .Distinct()
@@ -1780,7 +1824,6 @@ public class EventsController(
             var children = childEvents.Where(c => c.ParentEventId == e.Id).ToList();
             var childPrices = children.Where(c => c.TicketPrice != null).Select(c => c.TicketPrice.Value).ToList();
             
-            // Find distinct cities of all child events
             var childCities = children.Where(c => c.Venue?.City?.Name != null)
                                       .Select(c => c.Venue.City.Name)
                                       .Distinct()
@@ -1823,7 +1866,6 @@ public class EventsController(
 
         if (targetEvent == null) return NotFound();
         
-        // Verify authorization
         if (!User.IsInRole("Admin") && targetEvent.OrganizerId != currentUserId && targetEvent.Venue?.UserId != currentUserId) 
         {
             return Forbid();
@@ -1831,7 +1873,6 @@ public class EventsController(
 
         decimal unitPrice = (decimal)(targetEvent.TicketPrice ?? 0.0);
 
-        // Query un-grouped reservations to show them individually
         var query = context.Reservation
             .Include(r => r.ApplicationUser)
             .Include(r => r.Seat)
@@ -1884,7 +1925,6 @@ public class EventsController(
     {
         var currentUserId = userManager.GetUserId(User);
         
-        // Find the specific reservation row
         var reservation = await context.Reservation
             .Include(r => r.Event)
                 .ThenInclude(e => e.Venue)
@@ -1894,13 +1934,11 @@ public class EventsController(
         
         var targetEvent = reservation.Event;
 
-        // Verify management authorization
         if (!User.IsInRole("Admin") && targetEvent.OrganizerId != currentUserId && targetEvent.Venue?.UserId != currentUserId) 
         {
             return Forbid();
         }
 
-        // Check if the reservation was already attended
         if (reservation.Attended == true)
         {
             return BadRequest(new { success = false, message = "Cannot delete reservation: The attendee has already checked in." });
@@ -1909,5 +1947,58 @@ public class EventsController(
         await context.Reservation.Where(r => r.ID == reservationId).ExecuteDeleteAsync();
 
         return Json(new { success = true, message = "Reservation successfully deleted." });
+    }
+
+    [HttpPost("Events/IndexOrganizersToElastic")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> IndexOrganizersToElastic()
+    {
+        try
+        {
+            string indexName = "event_organizers";
+            await elasticSearchService.CreateIndexIfNotExistsAsync(indexName);
+
+            var allowedRoles = new[] { "Admin", "SuperOrganizer", "Event", "Venue" };
+            var usersToIndex = new List<ApplicationUser>();
+
+            foreach (var role in allowedRoles)
+            {
+                var roleUsers = await userManager.GetUsersInRoleAsync(role);
+                usersToIndex.AddRange(roleUsers);
+            }
+
+            var distinctUsers = usersToIndex.GroupBy(u => u.Id).Select(g => g.First()).ToList();
+            
+            var cleanUsers = distinctUsers.Select(u => new OrganizerSearchDto
+            {
+                Id = u.Id,
+                FirstName = u.FirstName ?? "",
+                LastName = u.LastName ?? "",
+                Email = u.Email ?? "",
+                UserName = u.UserName ?? ""
+            }).ToList();
+            
+            int successCount = 0;
+            foreach (var user in cleanUsers)
+            {
+                bool isIndexed = await elasticSearchService.AddOrUpdateAsync(user, indexName);
+                if (isIndexed) 
+                {
+                    successCount++;
+                }
+            }
+            
+            return Ok(new { 
+                success = successCount > 0, 
+                attempted = cleanUsers.Count,
+                succeeded = successCount,
+                message = $"Successfully indexed {successCount} out of {cleanUsers.Count} organizers." 
+            });
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to index organizers.");
+            return StatusCode(500, "An error occurred while syncing organizers.");
+        }
     }
 }

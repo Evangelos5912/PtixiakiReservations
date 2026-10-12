@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using PtixiakiReservations.Data;
 using PtixiakiReservations.Models;
 using PtixiakiReservations.Models.ViewModels;
+using PtixiakiReservations.Services;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
@@ -22,23 +23,67 @@ namespace PtixiakiReservations.Controllers
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly ApplicationDbContext _context;
         private readonly IWebHostEnvironment _env;
+        private readonly IElasticSearch _elasticSearch;
 
         public ProfileController(
             UserManager<ApplicationUser> userManager,
             SignInManager<ApplicationUser> signInManager,
             ApplicationDbContext context,
-            IWebHostEnvironment env)
+            IWebHostEnvironment env,
+            IElasticSearch elasticSearch)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _context = context;
             _env = env;
+            _elasticSearch = elasticSearch;
         }
 
-        // GET: /Profile
+        public class OrganizerSearchDto
+        {
+            public string Id { get; set; }
+            public string FirstName { get; set; }
+            public string LastName { get; set; }
+            public string Email { get; set; }
+            public string UserName { get; set; }
+        }
+
+        private async Task SyncOrRemoveUserFromElasticAsync(ApplicationUser user)
+        {
+            string indexName = "event_organizers";
+            var allowedRoles = new[] { "Admin", "SuperOrganizer", "Event", "Venue", "Event Manager", "Venue Manager", "Super Organizer" };
+            
+            bool isOrganizer = false;
+            foreach (var role in allowedRoles)
+            {
+                if (await _userManager.IsInRoleAsync(user, role))
+                {
+                    isOrganizer = true;
+                    break;
+                }
+            }
+
+            if (isOrganizer)
+            {
+                var dto = new OrganizerSearchDto
+                {
+                    Id = user.Id,
+                    FirstName = user.FirstName ?? "",
+                    LastName = user.LastName ?? "",
+                    Email = user.Email ?? "",
+                    UserName = user.UserName ?? ""
+                };
+                await _elasticSearch.CreateIndexIfNotExistsAsync(indexName);
+                await _elasticSearch.AddOrUpdateAsync(dto, indexName);
+            }
+            else
+            {
+                await _elasticSearch.DeleteByIdAsync<OrganizerSearchDto>(user.Id, indexName);
+            }
+        }
+
         public async Task<IActionResult> Index()
         {
-            // Get user with City included
             var userId = _userManager.GetUserId(User);
             var user = await _context.Users
                 .Include(u => u.City)
@@ -82,7 +127,6 @@ namespace PtixiakiReservations.Controllers
             return View(model);
         }
 
-        // GET: /Profile/Edit
         public async Task<IActionResult> Edit()
         {
             var user = await _userManager.GetUserAsync(User);
@@ -91,7 +135,6 @@ namespace PtixiakiReservations.Controllers
                 return NotFound();
             }
 
-            // Load city name if city exists
             if (user.CityId.HasValue)
             {
                 var city = await _context.City.FindAsync(user.CityId.Value);
@@ -146,10 +189,10 @@ namespace PtixiakiReservations.Controllers
                 return View(model);
             }
 
+            await SyncOrRemoveUserFromElasticAsync(user);
             return RedirectToAction(nameof(Index));
         }
 
-        // GET: /Profile/Reservations
         public async Task<IActionResult> Reservations()
         {
             var user = await _userManager.GetUserAsync(User);
@@ -170,7 +213,6 @@ namespace PtixiakiReservations.Controllers
             return View(reservations);
         }
 
-        // GET: /Profile/RequestRoles
         public IActionResult RequestRoles()
         {
             var model = new RoleRequestViewModel 
@@ -196,19 +238,16 @@ namespace PtixiakiReservations.Controllers
                 return NotFound();
             }
 
-            // --- 1. HANDLE PDF UPLOAD ---
             string? savedDocumentPath = null;
 
             if (pdfDocument != null && pdfDocument.Length > 0)
             {
-                // Security Check 1: Ensure it is actually a PDF
                 if (pdfDocument.ContentType != "application/pdf" && !pdfDocument.FileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
                 {
                     ModelState.AddModelError("", "Only PDF documents are allowed for verification.");
                     return View(model);
                 }
 
-                // Security Check 2: Max 5MB file size to prevent server crashing
                 if (pdfDocument.Length > 5242880) 
                 {
                     ModelState.AddModelError("", "The PDF document must be smaller than 5MB.");
@@ -217,17 +256,14 @@ namespace PtixiakiReservations.Controllers
 
                 string uploadsFolder = Path.Combine(_env.ContentRootPath, "SecureDocuments", "RoleRequests");
                 
-                // Create the folder if it doesn't exist yet
                 if (!Directory.Exists(uploadsFolder))
                 {
                     Directory.CreateDirectory(uploadsFolder);
                 }
 
-                // Create a unique file name so users don't overwrite each other's files
                 string uniqueFileName = Guid.NewGuid().ToString() + "_" + Path.GetFileName(pdfDocument.FileName);
                 string filePath = Path.Combine(uploadsFolder, uniqueFileName);
 
-                // Save the file to the hard drive
                 using (var fileStream = new FileStream(filePath, FileMode.Create))
                 {
                     await pdfDocument.CopyToAsync(fileStream);
@@ -236,7 +272,6 @@ namespace PtixiakiReservations.Controllers
                 savedDocumentPath = "SecureDocuments/RoleRequests/" + uniqueFileName;
             }
 
-            // --- 2. UPDATE USER ROLES & ASSIGN PDF PATH ---
             switch (model.SelectedRoleRequest)
             {
                 case "Venue":
@@ -278,7 +313,6 @@ namespace PtixiakiReservations.Controllers
                 return View(model);
             }
 
-            // --- 3. DYNAMIC SUCCESS MESSAGE ---
             string displayRole = model.SelectedRoleRequest switch
             {
                 "Venue" => "Venue Manager",
@@ -305,11 +339,9 @@ namespace PtixiakiReservations.Controllers
             {
                 var userId = user.Id;
 
-                // 1. Gather all associated structural IDs (Venues & Layouts)
                 var venueIds = await _context.Venue.Where(v => v.UserId == userId).Select(v => v.Id).ToListAsync();
                 var layoutIds = venueIds.Any() ? await _context.Layout.Where(l => venueIds.Contains(l.VenueId)).Select(l => l.Id).ToListAsync() : new List<int>();
 
-                // 2. Gather all Event IDs (Events the user organized directly OR events happening inside the user's venues/layouts)
                 var organizerEventIds = await _context.Event.Where(e => e.OrganizerId == userId).Select(e => e.Id).ToListAsync();
                 var venueEventIds = venueIds.Any() ? await _context.Event.Where(e => e.VenueId.HasValue && venueIds.Contains(e.VenueId.Value)).Select(e => e.Id).ToListAsync() : new List<int>();
                 
@@ -318,7 +350,6 @@ namespace PtixiakiReservations.Controllers
                 
                 var allEventIds = masterEventIds.Concat(childEventIds).Distinct().ToList();
 
-                // 3. Harvest physical file paths before destroying DB references
                 var eventImagePaths = allEventIds.Any() ? await _context.Event.Where(e => allEventIds.Contains(e.Id)).Select(e => e.ImagePath).ToListAsync() : new List<string>();
                 var galleryImagePaths = allEventIds.Any() ? await _context.Event.Where(e => allEventIds.Contains(e.Id)).SelectMany(e => e.GalleryImages).Select(g => g.ImagePath).ToListAsync() : new List<string>();
                 var venueImagePaths = venueIds.Any() ? await _context.Venue.Where(v => venueIds.Contains(v.Id)).Select(v => v.imgUrl).ToListAsync() : new List<string>();
@@ -330,17 +361,9 @@ namespace PtixiakiReservations.Controllers
                     user.SuperOrganizerRequestDocumentPath 
                 };
 
-                // =======================================================================
-                // 4. MEMORY-SAFE BULK DELETIONS (Bottom-Up to prevent FK Restrict crashes)
-                // =======================================================================
-
-                // A. Delete Wishlists (User's personal wishlists + ANY wishlists tied to the destroyed events)
                 await _context.Set<Wishlist>().Where(w => w.UserId == userId || allEventIds.Contains(w.EventId)).ExecuteDeleteAsync();
-
-                // B. Delete Reservations (User's personal reservations + ANY reservations tied to the destroyed events)
                 await _context.Reservation.Where(r => r.UserId == userId || allEventIds.Contains(r.EventId)).ExecuteDeleteAsync();
 
-                // C. Delete Events & Event Images
                 if (allEventIds.Any())
                 {
                     await _context.Event.Where(e => allEventIds.Contains(e.Id)).SelectMany(e => e.GalleryImages).ExecuteDeleteAsync();
@@ -348,7 +371,6 @@ namespace PtixiakiReservations.Controllers
                     if (masterEventIds.Any()) await _context.Event.Where(e => masterEventIds.Contains(e.Id)).ExecuteDeleteAsync();
                 }
 
-                // D. Delete Layout Items & Layouts
                 if (layoutIds.Any())
                 {
                     await _context.Seat.Where(s => layoutIds.Contains(s.LayoutId)).ExecuteDeleteAsync();
@@ -357,25 +379,20 @@ namespace PtixiakiReservations.Controllers
                     await _context.Layout.Where(l => layoutIds.Contains(l.Id)).ExecuteDeleteAsync();
                 }
 
-                // E. Delete Venue Categories & Venues
                 if (venueIds.Any())
                 {
                     await _context.VenueCategory.Where(vc => venueIds.Contains(vc.VenueId)).ExecuteDeleteAsync();
                     await _context.Venue.Where(v => venueIds.Contains(v.Id)).ExecuteDeleteAsync();
                 }
 
-                // =======================================================================
-                // 5. DESTROY IDENTITY AND CLEAR FILES
-                // =======================================================================
-
-                // AspNetCore Identity automatically deletes attached Roles/Claims inside this method
                 var deleteResult = await _userManager.DeleteAsync(user);
                 if (!deleteResult.Succeeded)
                 {
                     throw new Exception("Identity system failed to destroy the primary user record.");
                 }
 
-                // Only clean up physical disk files if the database transaction fully succeeded
+                await _elasticSearch.DeleteByIdAsync<OrganizerSearchDto>(userId, "event_organizers");
+
                 var imagePathsToDelete = eventImagePaths.Concat(galleryImagePaths).Where(p => !string.IsNullOrEmpty(p)).ToList();
                 foreach (var path in imagePathsToDelete)
                 {

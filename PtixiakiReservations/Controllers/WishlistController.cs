@@ -12,12 +12,12 @@ using PtixiakiReservations.Models;
 namespace PtixiakiReservations.Controllers
 {
     public class WishlistController : Controller
-    {        private readonly ApplicationDbContext _context;
+    {        
+        private readonly ApplicationDbContext _context;
 
         public WishlistController(ApplicationDbContext context)
         {
             _context = context;
-           
         }
 
         [HttpGet]
@@ -37,7 +37,8 @@ namespace PtixiakiReservations.Controllers
             {
                 _context.Wishlist.Add(new Wishlist {UserId = userId, EventId = eventId});
                 await _context.SaveChangesAsync();
-                return Json(true);}
+                return Json(true);
+            }
             return Json(false);
         }
 
@@ -48,14 +49,11 @@ namespace PtixiakiReservations.Controllers
             var wishlistItem = await _context.Wishlist
             .FirstOrDefaultAsync(w => w.UserId == userId && w.EventId == eventId);
 
-
-
             if (wishlistItem != null)
             {
                 _context.Wishlist.Remove(wishlistItem);
                 await _context.SaveChangesAsync();
                 return Json(true);
-
             }
             return Json(false);
         }
@@ -80,13 +78,11 @@ namespace PtixiakiReservations.Controllers
 
             var today = DateTime.Today;
 
-            // Start with events only in the user's wishlist
             var query = _context.Wishlist
                 .Where(w => w.UserId == userId)
                 .Select(w => w.Event)
                 .AsQueryable();
 
-            // Apply search filter if provided
             if (!string.IsNullOrWhiteSpace(searchTerm))
             {
                 var term = searchTerm.ToLower();
@@ -96,13 +92,11 @@ namespace PtixiakiReservations.Controllers
                     (e.Venue != null && e.Venue.City != null && e.Venue.City.Name.ToLower().Contains(term)));
             }
 
-            // Match sorting logic from EventsController
             if (sort == "desc") query = query.OrderByDescending(e => e.EndTime);
             else query = query.OrderBy(e => e.StartDateTime);
 
             var totalCount = await query.CountAsync();
 
-            // Use the EXACT same projection as EventsController.SearchEvents
             var events = await query
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
@@ -117,21 +111,17 @@ namespace PtixiakiReservations.Controllers
                     CityName = (e.Venue != null && e.Venue.City != null) ? e.Venue.City.Name : "N/A",
                     parentEventId = e.ParentEventId,
                     childCount = _context.Event.Count(c => c.ParentEventId == e.Id),
-                    
                     hasMultipleVenues = e.ChildEvents.Any(c => c.VenueId != null && c.VenueId != e.VenueId),
-                    
                     distinctCities = e.ChildEvents
                         .Where(c => c.Venue != null && c.Venue.City != null)
                         .Select(c => c.Venue.City.Id)
                         .Distinct()
                         .Count(),
-                        
                     hasMultipleCities = e.ChildEvents
                         .Where(c => c.Venue != null && c.Venue.City != null)
                         .Select(c => c.Venue.City.Id)
                         .Distinct()
                         .Count() > 1,
-
                     cityNames = e.ChildEvents
                         .Where(c => c.Venue != null && c.Venue.City != null)
                         .Select(c => c.Venue.City.Name)
@@ -149,7 +139,6 @@ namespace PtixiakiReservations.Controllers
             });
         }
 
-        // 3. The AJAX endpoint for the search bar autocomplete
         [HttpGet]
         public async Task<IActionResult> GetAutocompleteResults(string query, string userId)
         {
@@ -162,13 +151,11 @@ namespace PtixiakiReservations.Controllers
 
             try
             {
-                // Only search within the user's wishlisted events
                 var userEvents = _context.Wishlist
                     .Where(w => w.UserId == userId)
                     .Select(w => w.Event)
                     .AsQueryable();
 
-                // Match Event names (including the 'id' field to match your JS)
                 var eventResults = await userEvents
                     .Where(e => e.Name.ToLower().Contains(query))
                     .OrderBy(e => e.Name)
@@ -183,7 +170,6 @@ namespace PtixiakiReservations.Controllers
 
                 results.AddRange(eventResults);
 
-                // Match Cities associated with the wishlisted events
                 if (results.Count < maxResults)
                 {
                     var cityResults = await userEvents
@@ -210,9 +196,5 @@ namespace PtixiakiReservations.Controllers
                 return Json(new List<object>());
             }
         }
-
-
     }
-
-    
 }
