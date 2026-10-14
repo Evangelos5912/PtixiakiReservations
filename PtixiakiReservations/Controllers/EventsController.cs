@@ -3,7 +3,6 @@ using System;
 using System.IO;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -14,7 +13,6 @@ using PtixiakiReservations.Data;
 using PtixiakiReservations.Models;
 using PtixiakiReservations.Models.ViewModels;
 using PtixiakiReservations.Services;
-using System.Text;
 using System.Text.Json; 
 using Microsoft.AspNetCore.Hosting; 
 using Microsoft.AspNetCore.Http;
@@ -25,7 +23,7 @@ using SixLabors.ImageSharp.Formats.Webp;
 namespace PtixiakiReservations.Controllers;
 
 /// <summary>
-/// Manages event lifecycles, hierarchical structures, media transcoding, and Elasticsearch synchronization.
+/// Manages events, venues, image transcoding, and Elasticsearch index synchronization.
 /// </summary>
 public class EventsController(
     ApplicationDbContext context,
@@ -39,8 +37,7 @@ public class EventsController(
     private async Task SyncEventToElasticAsync(int eventId)
     {
         var ev = await context.Event
-            .Include(e => e.Venue)
-                .ThenInclude(v => v.City)
+            .Include(e => e.Venue).ThenInclude(v => v.City)
             .Include(e => e.EventType)
             .FirstOrDefaultAsync(e => e.Id == eventId);
 
@@ -68,8 +65,7 @@ public class EventsController(
         ViewBag.PageSize = pageSize;
 
         var query = context.Event
-            .Include(e => e.Venue)
-                .ThenInclude(v => v.City)
+            .Include(e => e.Venue).ThenInclude(v => v.City)
             .Include(e => e.EventType)
             .Include(e => e.ChildEvents) 
             .Where(e => e.ParentEventId == null)
@@ -93,11 +89,7 @@ public class EventsController(
         ViewBag.TotalCount = totalCount;
         ViewBag.TotalPages = totalCount > 0 ? (int)Math.Ceiling((double)totalCount / pageSize) : 1;
 
-        var events = await query
-            .OrderByDescending(e => e.StartDateTime)
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .ToListAsync();
+        var events = await query.OrderByDescending(e => e.StartDateTime).Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
 
         return View(events);
     }
@@ -112,7 +104,7 @@ public class EventsController(
     }
 
     /// <summary>
-    /// Transcodes and compresses images to WebP format.
+    /// Transcodes, scales, and caches images to WebP format.
     /// </summary>
     [AllowAnonymous]
     [HttpGet]
@@ -147,44 +139,31 @@ public class EventsController(
             return PhysicalFile(physicalPath, "application/octet-stream"); 
         }
     }
-
+    
     [HttpGet]
     [AllowAnonymous]
     public async Task<IActionResult> GetTodayEvents(string city, int page = 1, int pageSize = 12)
     {
         var today = DateTime.Today;
         var eventsQuery = context.Event
-            .Include(e => e.Venue)
-            .ThenInclude(v => v.City)
+            .Include(e => e.Venue).ThenInclude(v => v.City)
             .Where(e => e.StartDateTime.Date == today)
             .OrderBy(e => e.StartDateTime);
 
         if (!string.IsNullOrWhiteSpace(city))
-        {
-            eventsQuery = (IOrderedQueryable<Event>)eventsQuery
-                .Where(e => e.Venue.City.Name.ToLower() == city.ToLower());
-        }
+            eventsQuery = (IOrderedQueryable<Event>)eventsQuery.Where(e => e.Venue.City.Name.ToLower() == city.ToLower());
 
         var totalCount = await eventsQuery.CountAsync();
         
-        var events = await eventsQuery
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
+        var events = await eventsQuery.Skip((page - 1) * pageSize).Take(pageSize)
             .Select(e => new {
-                id = e.Id,
-                name = e.Name,
-                startDateTime = e.StartDateTime,
-                endTime = e.EndTime,
-                venueName = e.Venue.Name,
+                id = e.Id, name = e.Name, startDateTime = e.StartDateTime, endTime = e.EndTime, venueName = e.Venue.Name,
                 cityName = e.Venue.City != null ? e.Venue.City.Name : "N/A",
-                imagePath = !string.IsNullOrEmpty(e.ImagePath) 
-                    ? (e.ImagePath.EndsWith(".webp") ? e.ImagePath : $"/Events/GetCompressedImage?path={e.ImagePath}&width=600") 
-                    : null,
+                imagePath = !string.IsNullOrEmpty(e.ImagePath) ? (e.ImagePath.EndsWith(".webp") ? e.ImagePath : $"/Events/GetCompressedImage?path={e.ImagePath}&width=600") : null,
                 ticketPrice = e.TicketPrice,
                 minPrice = e.ChildEvents.Any() ? e.ChildEvents.Min(c => c.TicketPrice) : e.TicketPrice,
                 maxPrice = e.ChildEvents.Any() ? e.ChildEvents.Max(c => c.TicketPrice) : e.TicketPrice
-            })
-            .ToListAsync();
+            }).ToListAsync();
 
         return Json(new { events, totalCount, currentPage = page, totalPages = (int)Math.Ceiling(totalCount / (double)pageSize) });
     }
@@ -194,36 +173,22 @@ public class EventsController(
     public async Task<IActionResult> GetUpcomingEvents(string city, int page = 1, int pageSize = 12)
     {
         var today = DateTime.Today;
-        var eventsQuery = context.Event
-            .Where(e => e.StartDateTime.Date > today)
-            .OrderBy(e => e.StartDateTime);
+        var eventsQuery = context.Event.Where(e => e.StartDateTime.Date > today).OrderBy(e => e.StartDateTime);
 
         if (!string.IsNullOrWhiteSpace(city))
-        {
-            eventsQuery = (IOrderedQueryable<Event>)eventsQuery
-                .Where(e => e.Venue.City.Name.ToLower() == city.ToLower());
-        }
+            eventsQuery = (IOrderedQueryable<Event>)eventsQuery.Where(e => e.Venue.City.Name.ToLower() == city.ToLower());
 
         var totalCount = await eventsQuery.CountAsync();
         
-        var events = await eventsQuery
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
+        var events = await eventsQuery.Skip((page - 1) * pageSize).Take(pageSize)
             .Select(e => new {
-                id = e.Id,
-                name = e.Name,
-                startDateTime = e.StartDateTime,
-                endTime = e.EndTime,
-                venueName = e.Venue.Name,
+                id = e.Id, name = e.Name, startDateTime = e.StartDateTime, endTime = e.EndTime, venueName = e.Venue.Name,
                 cityName = e.Venue.City != null ? e.Venue.City.Name : "N/A",
-                imagePath = !string.IsNullOrEmpty(e.ImagePath) 
-                    ? (e.ImagePath.EndsWith(".webp") ? e.ImagePath : $"/Events/GetCompressedImage?path={e.ImagePath}&width=600") 
-                    : null,
+                imagePath = !string.IsNullOrEmpty(e.ImagePath) ? (e.ImagePath.EndsWith(".webp") ? e.ImagePath : $"/Events/GetCompressedImage?path={e.ImagePath}&width=600") : null,
                 ticketPrice = e.TicketPrice,
                 minPrice = e.ChildEvents.Any() ? e.ChildEvents.Min(c => c.TicketPrice) : e.TicketPrice,
                 maxPrice = e.ChildEvents.Any() ? e.ChildEvents.Max(c => c.TicketPrice) : e.TicketPrice
-            })
-            .ToListAsync();
+            }).ToListAsync();
 
         return Json(new { events, totalCount, currentPage = page, totalPages = (int)Math.Ceiling(totalCount / (double)pageSize) });
     }
@@ -233,36 +198,22 @@ public class EventsController(
     public async Task<IActionResult> GetPastEvents(string city, int page = 1, int pageSize = 12)
     {
         var today = DateTime.Today;
-        var eventsQuery = context.Event
-            .Where(e => e.StartDateTime.Date < today)
-            .OrderByDescending(e => e.StartDateTime);
+        var eventsQuery = context.Event.Where(e => e.StartDateTime.Date < today).OrderByDescending(e => e.StartDateTime);
 
         if (!string.IsNullOrWhiteSpace(city))
-        {
-            eventsQuery = (IOrderedQueryable<Event>)eventsQuery
-                .Where(e => e.Venue.City.Name.ToLower() == city.ToLower());
-        }
+            eventsQuery = (IOrderedQueryable<Event>)eventsQuery.Where(e => e.Venue.City.Name.ToLower() == city.ToLower());
 
         var totalCount = await eventsQuery.CountAsync();
         
-        var events = await eventsQuery
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
+        var events = await eventsQuery.Skip((page - 1) * pageSize).Take(pageSize)
             .Select(e => new {
-                id = e.Id,
-                name = e.Name,
-                startDateTime = e.StartDateTime,
-                endTime = e.EndTime,
-                venueName = e.Venue.Name,
+                id = e.Id, name = e.Name, startDateTime = e.StartDateTime, endTime = e.EndTime, venueName = e.Venue.Name,
                 cityName = e.Venue.City != null ? e.Venue.City.Name : "N/A",
-                imagePath = !string.IsNullOrEmpty(e.ImagePath) 
-                    ? (e.ImagePath.EndsWith(".webp") ? e.ImagePath : $"/Events/GetCompressedImage?path={e.ImagePath}&width=600") 
-                    : null,
+                imagePath = !string.IsNullOrEmpty(e.ImagePath) ? (e.ImagePath.EndsWith(".webp") ? e.ImagePath : $"/Events/GetCompressedImage?path={e.ImagePath}&width=600") : null,
                 ticketPrice = e.TicketPrice,
                 minPrice = e.ChildEvents.Any() ? e.ChildEvents.Min(c => c.TicketPrice) : e.TicketPrice,
                 maxPrice = e.ChildEvents.Any() ? e.ChildEvents.Max(c => c.TicketPrice) : e.TicketPrice
-            })
-            .ToListAsync();
+            }).ToListAsync();
 
         return Json(new { events, totalCount, currentPage = page, totalPages = (int)Math.Ceiling(totalCount / (double)pageSize) });
     }
@@ -274,31 +225,19 @@ public class EventsController(
         var eventsQuery = context.Event.OrderBy(e => e.StartDateTime);
 
         if (!string.IsNullOrWhiteSpace(city))
-        {
-            eventsQuery = (IOrderedQueryable<Event>)eventsQuery
-                .Where(e => e.Venue.City.Name.ToLower() == city.ToLower());
-        }
+            eventsQuery = (IOrderedQueryable<Event>)eventsQuery.Where(e => e.Venue.City.Name.ToLower() == city.ToLower());
 
         var totalCount = await eventsQuery.CountAsync();
         
-        var events = await eventsQuery
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
+        var events = await eventsQuery.Skip((page - 1) * pageSize).Take(pageSize)
             .Select(e => new {
-                id = e.Id,
-                name = e.Name,
-                startDateTime = e.StartDateTime,
-                endTime = e.EndTime,
-                venueName = e.Venue.Name,
+                id = e.Id, name = e.Name, startDateTime = e.StartDateTime, endTime = e.EndTime, venueName = e.Venue.Name,
                 cityName = e.Venue.City != null ? e.Venue.City.Name : "N/A",
-                imagePath = !string.IsNullOrEmpty(e.ImagePath) 
-                    ? (e.ImagePath.EndsWith(".webp") ? e.ImagePath : $"/Events/GetCompressedImage?path={e.ImagePath}&width=600") 
-                    : null,
+                imagePath = !string.IsNullOrEmpty(e.ImagePath) ? (e.ImagePath.EndsWith(".webp") ? e.ImagePath : $"/Events/GetCompressedImage?path={e.ImagePath}&width=600") : null,
                 ticketPrice = e.TicketPrice,
                 minPrice = e.ChildEvents.Any() ? e.ChildEvents.Min(c => c.TicketPrice) : e.TicketPrice,
                 maxPrice = e.ChildEvents.Any() ? e.ChildEvents.Max(c => c.TicketPrice) : e.TicketPrice
-            })
-            .ToListAsync();
+            }).ToListAsync();
 
         return Json(new { events, totalCount, currentPage = page, totalPages = (int)Math.Ceiling(totalCount / (double)pageSize) });
     }
@@ -317,12 +256,9 @@ public class EventsController(
     {
         var today = DateTime.Today;
         var eventsQuery = context.Event
-            .Include(e => e.Venue)
-            .ThenInclude(v => v.City)
+            .Include(e => e.Venue).ThenInclude(v => v.City)
             .Include(e => e.EventType) 
-            .Include(e => e.ChildEvents)
-            .ThenInclude(c => c.Venue)      
-            .ThenInclude(v => v.City)
+            .Include(e => e.ChildEvents).ThenInclude(c => c.Venue).ThenInclude(v => v.City)
             .Where(e => e.ParentEventId == null && e.EndTime >= today); 
 
         if (!string.IsNullOrWhiteSpace(searchTerm))
@@ -342,14 +278,10 @@ public class EventsController(
         }
 
         if (!string.IsNullOrWhiteSpace(city))
-        {
             eventsQuery = eventsQuery.Where(e => e.Venue.City.Name.ToLower() == city.ToLower());
-        }
 
         if (category.HasValue && category.Value > 0)
-        {
             eventsQuery = eventsQuery.Where(e => e.EventTypeId == category.Value);
-        }
 
         eventsQuery = eventsQuery.OrderBy(e => e.StartDateTime);
         int totalMasterEvents = await eventsQuery.CountAsync();
@@ -358,10 +290,7 @@ public class EventsController(
         ViewBag.TotalPages = (int)Math.Ceiling((double)totalMasterEvents / pageSize);
         ViewBag.CurrentPage = page;
         
-        var eventsList = await eventsQuery
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .ToListAsync();
+        var eventsList = await eventsQuery.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
 
         var masterIds = eventsList.Select(e => e.Id).ToList();
 
@@ -383,6 +312,7 @@ public class EventsController(
         return View(eventsList);
     }
 
+    [AllowAnonymous]
     public async Task<IActionResult> Details(int? id)
     {
         if (id == null) return NotFound();
@@ -391,16 +321,11 @@ public class EventsController(
             .Include(e => e.Organizer)
             .Include(e => e.EventType)
             .Include(e => e.GalleryImages) 
-            .Include(e => e.Venue)
-                .ThenInclude(v => v.City)
-            .Include(e => e.ParentEvent)
-                .ThenInclude(p => p.GalleryImages)
-            .Include(e => e.ChildEvents) 
-                .ThenInclude(c => c.Layout)
-            .Include(e => e.ChildEvents) 
-                .ThenInclude(c => c.Venue)
-                    .ThenInclude(v => v.City)
-            .AsSplitQuery() 
+            .Include(e => e.Venue).ThenInclude(v => v.City)
+            .Include(e => e.ParentEvent).ThenInclude(p => p.GalleryImages)
+            .Include(e => e.ChildEvents).ThenInclude(c => c.Layout)
+            .Include(e => e.ChildEvents).ThenInclude(c => c.Venue).ThenInclude(v => v.City)
+            .AsSplitQuery()
             .FirstOrDefaultAsync(m => m.Id == id);
 
         if (@event == null) return NotFound();
@@ -412,7 +337,6 @@ public class EventsController(
             .ToListAsync();
 
         ViewBag.EventReviews = eventReviews;
-
         ViewBag.EligibleToReview = false;
         ViewBag.ReviewReservationId = null;
 
@@ -438,8 +362,7 @@ public class EventsController(
     {
         var targetEvent = await context.Event
             .Include(e => e.GalleryImages)
-            .Include(e => e.ParentEvent)
-                .ThenInclude(p => p.GalleryImages)
+            .Include(e => e.ParentEvent).ThenInclude(p => p.GalleryImages)
             .FirstOrDefaultAsync(e => e.Id == eventId);
 
         if (targetEvent == null) return Json(new { success = false, message = "Event not found" });
@@ -452,9 +375,7 @@ public class EventsController(
         if (galleryToUse != null && galleryToUse.Any())
         {
             paths.AddRange(galleryToUse.Select(g => 
-                g.ImagePath.EndsWith(".webp") 
-                    ? g.ImagePath 
-                    : $"/Events/GetCompressedImage?path={g.ImagePath}&width=1000"));
+                g.ImagePath.EndsWith(".webp") ? g.ImagePath : $"/Events/GetCompressedImage?path={g.ImagePath}&width=1000"));
         }
 
         return Json(new { success = true, images = paths });
@@ -468,17 +389,12 @@ public class EventsController(
             .Include(e => e.Venue)
             .Where(e => e.Venue.UserId == userId)
             .Select(e => new {
-                id = e.Id,
-                name = e.Name,
-                startDateTime = e.StartDateTime,
-                endTime = e.EndTime,
+                id = e.Id, name = e.Name, startDateTime = e.StartDateTime, endTime = e.EndTime,
                 eventType = e.EventType != null ? e.EventType.Name : "Default",
-                venueName = e.Venue.Name,
-                ticketPrice = e.TicketPrice,
+                venueName = e.Venue.Name, ticketPrice = e.TicketPrice,
                 minPrice = e.ChildEvents.Any() ? e.ChildEvents.Min(c => c.TicketPrice) : e.TicketPrice,
                 maxPrice = e.ChildEvents.Any() ? e.ChildEvents.Max(c => c.TicketPrice) : e.TicketPrice
-            })
-            .ToListAsync();
+            }).ToListAsync();
             
         return Json(events);
     }
@@ -493,12 +409,8 @@ public class EventsController(
             .ToListAsync();
 
         var result = events.Select(e => new {
-            id = e.Id,
-            name = e.Name,
-            startDateTime = e.StartDateTime,
-            endTime = e.EndTime,
-            eventType = e.EventType != null ? e.EventType.Name : "Default",
-            ticketPrice = e.TicketPrice,
+            id = e.Id, name = e.Name, startDateTime = e.StartDateTime, endTime = e.EndTime,
+            eventType = e.EventType != null ? e.EventType.Name : "Default", ticketPrice = e.TicketPrice,
             minPrice = e.ChildEvents.Any() ? e.ChildEvents.Min(c => c.TicketPrice) : e.TicketPrice,
             maxPrice = e.ChildEvents.Any() ? e.ChildEvents.Max(c => c.TicketPrice) : e.TicketPrice
         });
@@ -507,11 +419,7 @@ public class EventsController(
     }
 
     [AllowAnonymous]
-    public JsonResult GetEventTypes()
-    {
-        var eventsTypes = context.EventType.ToList();
-        return new JsonResult(eventsTypes);
-    }
+    public JsonResult GetEventTypes() => new JsonResult(context.EventType.ToList());
 
     [Authorize(Roles = "Admin,Event,SuperOrganizer")]
     public async Task<IActionResult> VenueEvents(int venueId)
@@ -528,9 +436,7 @@ public class EventsController(
         try
         {
             var userId = userManager.GetUserId(User);
-            var venues = await context.Venue
-                .Select(v => new SelectListItem { Value = v.Id.ToString(), Text = v.Name })
-                .ToListAsync();
+            var venues = await context.Venue.Select(v => new SelectListItem { Value = v.Id.ToString(), Text = v.Name }).ToListAsync();
 
             if (venues.Count == 0)
             {
@@ -584,10 +490,7 @@ public class EventsController(
         {
             if (newEvent.VenueId == null || newEvent.VenueId == 0 || newEvent.LayoutId == null || newEvent.LayoutId == 0)
             {
-                return BadRequest(new { 
-                    success = false, 
-                    message = "Security Check Failed: A Venue and Layout are strictly required for this event mode." 
-                });
+                return BadRequest(new { success = false, message = "Security Check Failed: A Venue and Layout are strictly required for this event mode." });
             }
         }
         else
@@ -600,10 +503,7 @@ public class EventsController(
         if (isChild)
         {
             parentEvent = await context.Event.AsNoTracking().FirstOrDefaultAsync(e => e.Id == newEvent.ParentEventId.Value);
-            if (parentEvent == null)
-            {
-                return BadRequest(new { success = false, message = "The assigned Master Event does not exist." });
-            }
+            if (parentEvent == null) return BadRequest(new { success = false, message = "The assigned Master Event does not exist." });
         }
 
         PtixiakiReservations.Models.Venue venue = null;
@@ -633,11 +533,9 @@ public class EventsController(
                         int newHeight = (int)((double)image.Height / image.Width * 1920);
                         image.Mutate(x => x.Resize(1920, newHeight));
                     }
-
                     var encoder = new WebpEncoder { Quality = 80 };
                     await image.SaveAsync(filePath, encoder);
                 }
-
                 newEvent.ImagePath = "/images/events/" + uniqueFileName;
             }
             catch (Exception ex)
@@ -668,23 +566,20 @@ public class EventsController(
                             int newHeight = (int)((double)image.Height / image.Width * 1920);
                             image.Mutate(x => x.Resize(1920, newHeight));
                         }
-
                         var encoder = new WebpEncoder { Quality = 80 };
                         await image.SaveAsync(filePath, encoder);
                     }
-
                     newEvent.GalleryImages.Add(new EventImage { ImagePath = "/images/events/gallery/" + uniqueFileName });
                 }
             }
         }
-       
+        
         try
         {
             Event fatherEvent = null;
             var createdEventIds = new List<int>();
 
-            if (isMultiDay && !string.IsNullOrEmpty(SpecificDatesJson)
-                && !string.IsNullOrEmpty(StartTime) && !string.IsNullOrEmpty(MultiEndTime))
+            if (isMultiDay && !string.IsNullOrEmpty(SpecificDatesJson) && !string.IsNullOrEmpty(StartTime) && !string.IsNullOrEmpty(MultiEndTime))
             {
                 var selectedDates = JsonSerializer.Deserialize<List<string>>(SpecificDatesJson);
                 TimeSpan startTimeSpan = DateTime.TryParse(StartTime, out DateTime pst) ? pst.TimeOfDay : TimeSpan.Parse(StartTime);
@@ -728,7 +623,6 @@ public class EventsController(
                             Description = (isChild && parentEvent != null) ? parentEvent.Description : newEvent.Description,
                             EventTypeId = (isChild && parentEvent != null) ? parentEvent.EventTypeId : newEvent.EventTypeId,
                             ImagePath = (isChild && parentEvent != null && string.IsNullOrEmpty(newEvent.ImagePath)) ? parentEvent.ImagePath : newEvent.ImagePath,
-                            
                             TicketPrice = newEvent.TicketPrice,
                             VenueId = newEvent.VenueId, 
                             LayoutId = newEvent.LayoutId, 
@@ -760,10 +654,7 @@ public class EventsController(
                 {
                     if (newEvent.StartDateTime < parentEvent.StartDateTime || newEvent.EndTime > parentEvent.EndTime)
                     {
-                        return BadRequest(new { 
-                            success = false, 
-                            message = $"Sub-event timeframe securely blocked. It falls strictly outside the Master Event's allowed timeframe ({parentEvent.StartDateTime:MMM d, yyyy h:mm tt} - {parentEvent.EndTime:MMM d, yyyy h:mm tt})." 
-                        });
+                        return BadRequest(new { success = false, message = $"Sub-event timeframe securely blocked. It falls strictly outside the Master Event's allowed timeframe ({parentEvent.StartDateTime:MMM d, yyyy h:mm tt} - {parentEvent.EndTime:MMM d, yyyy h:mm tt})." });
                     }
                     
                     newEvent.Description = parentEvent.Description;
@@ -784,12 +675,8 @@ public class EventsController(
             int? returnedEventId = newEvent.ParentEventId ?? (isMultiDay && fatherEvent != null ? fatherEvent.Id : newEvent.Id);
 
             return Json(new { 
-                success = true, 
-                eventId = returnedEventId, 
-                eventName = newEvent.Name,
-                venueId = newEvent.VenueId,
-                venueName = venue?.Name, 
-                eventTypeId = newEvent.EventTypeId
+                success = true, eventId = returnedEventId, eventName = newEvent.Name, venueId = newEvent.VenueId,
+                venueName = venue?.Name, eventTypeId = newEvent.EventTypeId
             });
         }
         catch (Exception ex)
@@ -799,9 +686,6 @@ public class EventsController(
         }
     }
 
-    /// <summary>
-    /// Initializes the modification interface for an existing event.
-    /// </summary>
     [Authorize(Roles = "Admin,Event,SuperOrganizer")]
     [HttpGet]
     public async Task<IActionResult> Edit(int? id)
@@ -809,13 +693,11 @@ public class EventsController(
         if (id == null) return NotFound();
 
         var eventToEdit = await context.Event
-            .Include(e => e.Venue)
-                .ThenInclude(v => v.City) 
+            .Include(e => e.Venue).ThenInclude(v => v.City) 
             .Include(e => e.EventType)
             .Include(e => e.Layout)
             .Include(e => e.GalleryImages) 
-            .Include(e => e.ParentEvent)
-                .ThenInclude(p => p.GalleryImages) 
+            .Include(e => e.ParentEvent).ThenInclude(p => p.GalleryImages) 
             .AsSplitQuery() 
             .FirstOrDefaultAsync(e => e.Id == id);
 
@@ -830,10 +712,7 @@ public class EventsController(
         ViewBag.VenueList = await context.Venue
             .Include(v => v.City)
             .Where(v => v.UserId == currentUserId)
-            .Select(v => new SelectListItem { 
-                Value = v.Id.ToString(), 
-                Text = v.City != null ? $"{v.Name}, {v.City.Name}" : v.Name 
-            })
+            .Select(v => new SelectListItem { Value = v.Id.ToString(), Text = v.City != null ? $"{v.Name}, {v.City.Name}" : v.Name })
             .ToListAsync();
 
         ViewBag.EventTypeList = new SelectList(await context.EventType.ToListAsync(), "Id", "Name", eventToEdit.EventTypeId);
@@ -846,9 +725,6 @@ public class EventsController(
         return View(eventToEdit);
     }
 
-    /// <summary>
-    /// Processes updates to an existing event.
-    /// </summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [Authorize(Roles = "Admin,Event,SuperOrganizer")]
@@ -858,24 +734,15 @@ public class EventsController(
 
         var currentUserId = userManager.GetUserId(User);
 
-        ViewBag.VenueList = await context.Venue
-            .Where(v => v.UserId == currentUserId)
-            .Select(v => new SelectListItem { Value = v.Id.ToString(), Text = v.Name })
-            .ToListAsync();
+        ViewBag.VenueList = await context.Venue.Where(v => v.UserId == currentUserId).Select(v => new SelectListItem { Value = v.Id.ToString(), Text = v.Name }).ToListAsync();
         ViewBag.EventTypeList = new SelectList(await context.EventType.ToListAsync(), "Id", "Name", updatedEvent.EventTypeId);
-        ViewBag.LayoutList = await context.Layout
-            .Where(sa => sa.VenueId == updatedEvent.VenueId)
-            .Select(sa => new SelectListItem { Value = sa.Id.ToString(), Text = sa.AreaName })
-            .ToListAsync();
+        ViewBag.LayoutList = await context.Layout.Where(sa => sa.VenueId == updatedEvent.VenueId).Select(sa => new SelectListItem { Value = sa.Id.ToString(), Text = sa.AreaName }).ToListAsync();
 
         if (ModelState.IsValid)
         {
             try
             {
-                var originalEvent = await context.Event
-                    .Include(e => e.GalleryImages)
-                    .FirstOrDefaultAsync(e => e.Id == id);
-                    
+                var originalEvent = await context.Event.Include(e => e.GalleryImages).FirstOrDefaultAsync(e => e.Id == id);
                 if (originalEvent == null) return NotFound();
 
                 if (!User.IsInRole("Admin") && originalEvent.OrganizerId != currentUserId) return Forbid();
@@ -883,17 +750,14 @@ public class EventsController(
                 if (originalEvent.ParentEventId != null)
                 {
                     var parent = await context.Event.AsNoTracking().FirstOrDefaultAsync(e => e.Id == originalEvent.ParentEventId);
-                    if (parent != null)
+                    if (parent != null && (updatedEvent.StartDateTime < parent.StartDateTime || updatedEvent.EndTime > parent.EndTime))
                     {
-                        if (updatedEvent.StartDateTime < parent.StartDateTime || updatedEvent.EndTime > parent.EndTime)
-                        {
-                            ModelState.AddModelError("", $"Sub-event timeframe strictly falls outside the Master Event's allowed timeframe ({parent.StartDateTime:MMM d, yyyy h:mm tt} - {parent.EndTime:MMM d, yyyy h:mm tt}).");
-                            
-                            updatedEvent.ImagePath = originalEvent.ImagePath;
-                            updatedEvent.GalleryImages = originalEvent.GalleryImages;
-                            updatedEvent.ParentEventId = originalEvent.ParentEventId;
-                            return View(updatedEvent);
-                        }
+                        ModelState.AddModelError("", $"Sub-event timeframe strictly falls outside the Master Event's allowed timeframe ({parent.StartDateTime:MMM d, yyyy h:mm tt} - {parent.EndTime:MMM d, yyyy h:mm tt}).");
+                        
+                        updatedEvent.ImagePath = originalEvent.ImagePath;
+                        updatedEvent.GalleryImages = originalEvent.GalleryImages;
+                        updatedEvent.ParentEventId = originalEvent.ParentEventId;
+                        return View(updatedEvent);
                     }
                 }
 
@@ -920,7 +784,6 @@ public class EventsController(
                                 int newHeight = (int)((double)image.Height / image.Width * 1920);
                                 image.Mutate(x => x.Resize(1920, newHeight));
                             }
-
                             var encoder = new WebpEncoder { Quality = 80 };
                             await image.SaveAsync(filePath, encoder);
                         }
@@ -930,7 +793,6 @@ public class EventsController(
                     catch (Exception)
                     {
                         ModelState.AddModelError("", "Error processing primary image file.");
-                        
                         updatedEvent.ImagePath = originalEvent.ImagePath;
                         updatedEvent.GalleryImages = originalEvent.GalleryImages;
                         updatedEvent.ParentEventId = originalEvent.ParentEventId;
@@ -970,15 +832,11 @@ public class EventsController(
                                     int newHeight = (int)((double)image.Height / image.Width * 1920);
                                     image.Mutate(x => x.Resize(1920, newHeight));
                                 }
-
                                 var encoder = new WebpEncoder { Quality = 80 };
                                 await image.SaveAsync(galleryPath, encoder);
                             }
 
-                            originalEvent.GalleryImages.Add(new EventImage 
-                            {
-                                ImagePath = "/images/events/gallery/" + uniqueGalleryName
-                            });
+                            originalEvent.GalleryImages.Add(new EventImage { ImagePath = "/images/events/gallery/" + uniqueGalleryName });
                         }
                     }
                 }
@@ -1038,9 +896,6 @@ public class EventsController(
         return correctDay;
     }
 
-    /// <summary>
-    /// Removes an event and related cascading items.
-    /// </summary>
     [Authorize(Roles = "Admin,Event,SuperOrganizer")]
     [HttpDelete]
     public async Task<IActionResult> Delete(int? id)
@@ -1048,7 +903,6 @@ public class EventsController(
         if (id == null) return NotFound();
 
         var ev = await context.Event.AsNoTracking().FirstOrDefaultAsync(e => e.Id == id);
-            
         if (ev == null) return NotFound();
 
         var userId = userManager.GetUserId(User);
@@ -1057,38 +911,18 @@ public class EventsController(
         try 
         {
             var allEventIds = new List<int> { ev.Id };
-            
-            var childEventIds = await context.Event
-                .Where(e => e.ParentEventId == id)
-                .Select(e => e.Id)
-                .ToListAsync();
+            var childEventIds = await context.Event.Where(e => e.ParentEventId == id).Select(e => e.Id).ToListAsync();
                 
-            if (childEventIds.Any())
-            {
-                allEventIds.AddRange(childEventIds);
-            }
+            if (childEventIds.Any()) allEventIds.AddRange(childEventIds);
 
-            var eventImagePaths = await context.Event
-                .Where(e => allEventIds.Contains(e.Id))
-                .Select(e => e.ImagePath)
-                .ToListAsync();
-                
-            var galleryImagePaths = await context.Event
-                .Where(e => allEventIds.Contains(e.Id))
-                .SelectMany(e => e.GalleryImages)
-                .Select(g => g.ImagePath)
-                .ToListAsync();
+            var eventImagePaths = await context.Event.Where(e => allEventIds.Contains(e.Id)).Select(e => e.ImagePath).ToListAsync();
+            var galleryImagePaths = await context.Event.Where(e => allEventIds.Contains(e.Id)).SelectMany(e => e.GalleryImages).Select(g => g.ImagePath).ToListAsync();
 
             await context.Set<Wishlist>().Where(w => allEventIds.Contains(w.EventId)).ExecuteDeleteAsync();
-            
             await context.Reservation.Where(r => allEventIds.Contains(r.EventId)).ExecuteDeleteAsync();
-            
             await context.Event.Where(e => allEventIds.Contains(e.Id)).SelectMany(e => e.GalleryImages).ExecuteDeleteAsync();
             
-            if (childEventIds.Any())
-            {
-                await context.Event.Where(e => childEventIds.Contains(e.Id)).ExecuteDeleteAsync();
-            }
+            if (childEventIds.Any()) await context.Event.Where(e => childEventIds.Contains(e.Id)).ExecuteDeleteAsync();
             
             await context.Event.Where(e => e.Id == id).ExecuteDeleteAsync();
 
@@ -1099,10 +933,7 @@ public class EventsController(
                 if (System.IO.File.Exists(fullPath)) System.IO.File.Delete(fullPath);
             }
 
-            foreach (var evId in allEventIds)
-            {
-                await RemoveEventFromElasticAsync(evId);
-            }
+            foreach (var evId in allEventIds) await RemoveEventFromElasticAsync(evId);
 
             return Ok();
         }
@@ -1133,15 +964,9 @@ public class EventsController(
     [HttpGet]
     [AllowAnonymous]
     public async Task<IActionResult> SearchEvents(
-        string eventTypeId = null,
-        string startDate = null,
-        string endDate = null,
-        string searchTerm = null,
-        string sort = "asc",
-        int page = 1,
-        int pageSize = 12,
-        bool archived = false,
-        string searchType = "all")
+        string eventTypeId = null, string startDate = null, string endDate = null, string searchTerm = null,
+        string sort = "asc", int page = 1, int pageSize = 12, bool archived = false, string searchType = "all",
+        string organizerId = null)
     {
         try
         {
@@ -1164,15 +989,46 @@ public class EventsController(
             bool fetchEvents = searchType == "all" || searchType == "events";
             bool fetchVenues = searchType == "all" || searchType == "venues";
 
-            if (searchType == "all" && string.IsNullOrWhiteSpace(term) && !eventTypeIdValue.HasValue)
+            if (searchType == "all" && string.IsNullOrWhiteSpace(term) && !eventTypeIdValue.HasValue && string.IsNullOrWhiteSpace(organizerId))
             {
-                fetchVenues = false; 
+                fetchVenues = true; 
             }
 
             List<string> matchingUserIds = new List<string>();
-            if (!string.IsNullOrWhiteSpace(term))
+            
+            if (!string.IsNullOrWhiteSpace(term) && string.IsNullOrWhiteSpace(organizerId))
             {
-                var matchedUsers = await elasticSearchService.SearchAsync<OrganizerSearchDto>(term, "event_organizers");
+                IEnumerable<OrganizerSearchDto> matchedUsers = new List<OrganizerSearchDto>();
+                try
+                {
+                    string esQuery = string.Join(" ", term.Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(w => $"*{w}*"));
+                    matchedUsers = await elasticSearchService.SearchAsync<OrganizerSearchDto>(esQuery, "event_organizers");
+                }
+                catch
+                {
+                    matchedUsers = new List<OrganizerSearchDto>();
+                }
+
+                if (matchedUsers == null || !matchedUsers.Any())
+                {
+                    var sqlTerms = term.Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(t => t.ToLower()).ToList();
+
+                    var dbUsersQuery = userManager.Users.AsQueryable();
+                    
+                    foreach(var st in sqlTerms)
+                    {
+                        dbUsersQuery = dbUsersQuery.Where(u => 
+                            (u.FirstName != null && u.FirstName.ToLower().Contains(st)) || 
+                            (u.LastName != null && u.LastName.ToLower().Contains(st)) || 
+                            (u.Email != null && u.Email.ToLower().Contains(st))
+                        );
+                    }
+
+                    var dbUsers = await dbUsersQuery.Take(20).ToListAsync();
+
+                    matchedUsers = dbUsers.Select(u => new OrganizerSearchDto { Id = u.Id }).ToList();
+                }
+
                 if (matchedUsers != null && matchedUsers.Any())
                 {
                     matchingUserIds = matchedUsers.Select(u => u.Id).ToList();
@@ -1192,23 +1048,30 @@ public class EventsController(
                 if (parsedEndDate.HasValue) eq = eq.Where(e => e.StartDateTime <= parsedEndDate.Value);
                 if (eventTypeIdValue.HasValue) eq = eq.Where(e => e.EventTypeId == eventTypeIdValue.Value);
 
-                if (string.IsNullOrWhiteSpace(term))
+                if (!string.IsNullOrWhiteSpace(organizerId))
                 {
-                    eq = eq.Where(e => e.ParentEventId == null);
+                    eq = eq.Where(e => e.OrganizerId == organizerId && e.ParentEventId == null);
                 }
                 else
                 {
-                    eq = eq.Where(e => 
-                        e.Name.ToLower().Contains(term) ||
-                        (e.Venue != null && e.Venue.Name.ToLower().Contains(term)) ||
-                        (e.Venue != null && e.Venue.City != null && e.Venue.City.Name.ToLower().Contains(term)) ||
-                        (e.OrganizerId != null && matchingUserIds.Contains(e.OrganizerId)) || 
-                        e.ChildEvents.Any(c => 
-                            c.Name.ToLower().Contains(term) ||
-                            (c.Venue != null && c.Venue.Name.ToLower().Contains(term)) ||
-                            (c.Venue != null && c.Venue.City != null && c.Venue.City.Name.ToLower().Contains(term))
-                        )
-                    );
+                    if (string.IsNullOrWhiteSpace(term))
+                    {
+                        eq = eq.Where(e => e.ParentEventId == null);
+                    }
+                    else
+                    {
+                        eq = eq.Where(e => 
+                            e.Name.ToLower().Contains(term) ||
+                            (e.Venue != null && e.Venue.Name.ToLower().Contains(term)) ||
+                            (e.Venue != null && e.Venue.City != null && e.Venue.City.Name.ToLower().Contains(term)) ||
+                            (e.OrganizerId != null && matchingUserIds.Contains(e.OrganizerId)) || 
+                            e.ChildEvents.Any(c => 
+                                c.Name.ToLower().Contains(term) ||
+                                (c.Venue != null && c.Venue.Name.ToLower().Contains(term)) ||
+                                (c.Venue != null && c.Venue.City != null && c.Venue.City.Name.ToLower().Contains(term))
+                            )
+                        );
+                    }
                 }
 
                 if (sort == "desc") eq = eq.OrderByDescending(e => e.StartDateTime);
@@ -1224,7 +1087,11 @@ public class EventsController(
             {
                 if (eventTypeIdValue.HasValue) vq = vq.Where(v => v.VenueCategory.Any(vc => vc.CategoryId == eventTypeIdValue.Value));
                 
-                if (!string.IsNullOrWhiteSpace(term)) 
+                if (!string.IsNullOrWhiteSpace(organizerId))
+                {
+                    vq = vq.Where(v => v.UserId == organizerId);
+                }
+                else if (!string.IsNullOrWhiteSpace(term)) 
                 {
                     vq = vq.Where(v => 
                         v.Name.ToLower().Contains(term) || 
@@ -1270,25 +1137,16 @@ public class EventsController(
                     }
 
                     results.Add(new {
-                        type = "event",
-                        id = e.Id,
-                        name = e.Name,
-                        startDateTime = e.StartDateTime.ToString("s"), 
-                        endTime = e.EndTime.ToString("s"),
+                        type = "event", id = e.Id, name = e.Name, startDateTime = e.StartDateTime.ToString("s"), endTime = e.EndTime.ToString("s"),
                         imagePath = !string.IsNullOrEmpty(e.ImagePath) ? (e.ImagePath.EndsWith(".webp") ? e.ImagePath : $"/Events/GetCompressedImage?path={e.ImagePath}&width=800") : null,
-                        eventType = e.EventType?.Name,
-                        venueName = e.Venue?.Name ?? "No Venue",
-                        cityName = e.Venue?.City?.Name ?? "N/A",
-                        ticketPrice = e.TicketPrice,
-                        parentEventId = e.ParentEventId,
-                        childCount = e.ChildEvents?.Count ?? 0,
+                        eventType = e.EventType?.Name, venueName = e.Venue?.Name ?? "No Venue", cityName = e.Venue?.City?.Name ?? "N/A",
+                        ticketPrice = e.TicketPrice, parentEventId = e.ParentEventId, childCount = e.ChildEvents?.Count ?? 0,
                         minPrice = e.ChildEvents?.Any() == true ? e.ChildEvents.Min(c => c.TicketPrice) : e.TicketPrice,
                         maxPrice = e.ChildEvents?.Any() == true ? e.ChildEvents.Max(c => c.TicketPrice) : e.TicketPrice,
                         distinctCities = e.ChildEvents?.Where(c => c.Venue?.City != null).Select(c => c.Venue.CityId).Distinct().Count() ?? 0,
                         cityNames = e.ChildEvents?.Where(c => c.Venue?.City != null).Select(c => c.Venue.City.Name).Distinct().ToList() ?? new List<string>(),
                         hasMultipleVenues = e.ChildEvents?.Any(c => c.VenueId != e.VenueId) ?? false,
-                        avgRating = avgRat,
-                        reviewCount = revCount
+                        avgRating = avgRat, reviewCount = revCount
                     });
                 }
             }
@@ -1299,25 +1157,16 @@ public class EventsController(
                 foreach (var v in venueList)
                 {
                     results.Add(new {
-                        type = "venue",
-                        id = v.Id,
-                        name = v.Name,
-                        cityName = v.City?.Name ?? "N/A",
-                        postalCode = v.PostalCode ?? "",
-                        imagePath = string.IsNullOrEmpty(v.imgUrl) 
-                            ? "/images/image.jpg" 
-                            : (v.imgUrl.StartsWith("/") ? v.imgUrl : $"/images/{v.imgUrl}"),
-                        phone = v.Phone ?? "No phone provided",
-                        layoutCount = context.Layout.Count(l => l.VenueId == v.Id),
+                        type = "venue", id = v.Id, name = v.Name, cityName = v.City?.Name ?? "N/A", postalCode = v.PostalCode ?? "",
+                        imagePath = string.IsNullOrEmpty(v.imgUrl) ? "/images/image.jpg" : (v.imgUrl.StartsWith("/") ? v.imgUrl : $"/images/{v.imgUrl}"),
+                        phone = v.Phone ?? "No phone provided", layoutCount = context.Layout.Count(l => l.VenueId == v.Id),
                         categoryNames = v.VenueCategory?.Where(vc => vc.EventType != null).Select(vc => vc.EventType.Name).ToList() ?? new List<string>()
                     });
                 }
             }
 
             return Json(new {
-                events = results,
-                totalCount = totalRecords,
-                currentPage = page,
+                events = results, totalCount = totalRecords, currentPage = page,
                 totalPages = totalRecords > 0 ? (int)Math.Ceiling(totalRecords / (double)pageSize) : 1
             });
         }
@@ -1338,16 +1187,7 @@ public class EventsController(
             var createResult = await elasticSearchService.CreateIndexIfNotExistsAsync(indexName);
             if (!createResult) return BadRequest("Failed to initialize target index parameter");
 
-            var testEvent = new Event
-            {
-                Id = 999,
-                Name = "Test Event " + DateTime.Now.Ticks,
-                StartDateTime = DateTime.Now,
-                EndTime = DateTime.Now.AddHours(1),
-                EventTypeId = 1,
-                VenueId = 1
-            };
-
+            var testEvent = new Event { Id = 999, Name = "Test Event " + DateTime.Now.Ticks, StartDateTime = DateTime.Now, EndTime = DateTime.Now.AddHours(1), EventTypeId = 1, VenueId = 1 };
             var indexResult = await elasticSearchService.AddOrUpdateAsync(testEvent, indexName);
             if (!indexResult) return BadRequest("Failed to construct test document payload");
 
@@ -1406,31 +1246,19 @@ public class EventsController(
         try
         {
             var userId = userManager.GetUserId(User);
-            
             var query = context.Event.AsQueryable();
 
             if (filter != "all")
-            {
                 query = query.Where(e => e.OrganizerId == userId || (e.Venue != null && e.Venue.UserId == userId));
-            }
 
-            var events = await query
-                .OrderByDescending(e => e.StartDateTime)
+            var events = await query.OrderByDescending(e => e.StartDateTime)
                 .Select(e => new {
-                    id = e.Id,
-                    name = e.Name,
-                    startDateTime = e.StartDateTime,
-                    endTime = e.EndTime,
-                    venueId = e.VenueId,
-                    venue = e.Venue != null ? new { name = e.Venue.Name } : null,
-                    eventType = e.EventType != null ? new { name = e.EventType.Name } : null,
-                    organizerId = e.OrganizerId,
-                    parentEventId = e.ParentEventId, 
-                    ticketPrice = e.TicketPrice,
+                    id = e.Id, name = e.Name, startDateTime = e.StartDateTime, endTime = e.EndTime, venueId = e.VenueId,
+                    venue = e.Venue != null ? new { name = e.Venue.Name } : null, eventType = e.EventType != null ? new { name = e.EventType.Name } : null,
+                    organizerId = e.OrganizerId, parentEventId = e.ParentEventId, ticketPrice = e.TicketPrice,
                     minPrice = e.ChildEvents.Any() ? e.ChildEvents.Min(c => c.TicketPrice) : e.TicketPrice,
                     maxPrice = e.ChildEvents.Any() ? e.ChildEvents.Max(c => c.TicketPrice) : e.TicketPrice
-                })
-                .ToListAsync();
+                }).ToListAsync();
 
             return Json(new { success = true, events = events });
         }
@@ -1451,15 +1279,45 @@ public class EventsController(
 
         try
         {
-            var matchedUsers = await elasticSearchService.SearchAsync<OrganizerSearchDto>(query, "event_organizers");
+            IEnumerable<OrganizerSearchDto> matchedUsers = new List<OrganizerSearchDto>();
+            try
+            {
+                string esQuery = string.Join(" ", query.Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(w => $"*{w}*"));
+                matchedUsers = await elasticSearchService.SearchAsync<OrganizerSearchDto>(esQuery, "event_organizers");
+            }
+            catch
+            {
+                matchedUsers = new List<OrganizerSearchDto>();
+            }
+
+            if (matchedUsers == null || !matchedUsers.Any())
+            {
+                var sqlTerms = query.Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(t => t.ToLower()).ToList();
+
+                var dbUsersQuery = userManager.Users.AsQueryable();
+                
+                foreach(var st in sqlTerms)
+                {
+                    dbUsersQuery = dbUsersQuery.Where(u => 
+                        (u.FirstName != null && u.FirstName.ToLower().Contains(st)) || 
+                        (u.LastName != null && u.LastName.ToLower().Contains(st)) || 
+                        (u.Email != null && u.Email.ToLower().Contains(st))
+                    );
+                }
+
+                var dbUsers = await dbUsersQuery.Take(maxResults).ToListAsync();
+
+                matchedUsers = dbUsers.Select(u => new OrganizerSearchDto 
+                { 
+                    Id = u.Id, FirstName = u.FirstName ?? "", LastName = u.LastName ?? "", Email = u.Email ?? "" 
+                }).ToList();
+            }
+
             if (matchedUsers != null && matchedUsers.Any())
             {
                 var organizerResults = matchedUsers.Take(maxResults).Select(u => new 
                 { 
-                    text = $"{u.FirstName} {u.LastName}".Trim(), 
-                    type = "organizer", 
-                    subtext = u.Email,
-                    id = u.Id 
+                    text = $"{u.FirstName} {u.LastName}".Trim(), type = "organizer", subtext = u.Email, id = u.Id 
                 });
                 results.AddRange(organizerResults);
             }
@@ -1508,11 +1366,7 @@ public class EventsController(
     [HttpGet]
     public JsonResult GetLayouts(int venueId)
     {
-        var layouts = context.Layout
-            .Where(sa => sa.VenueId == venueId)
-            .Select(sa => new { id = sa.Id, areaName = sa.AreaName })
-            .ToList();
-
+        var layouts = context.Layout.Where(sa => sa.VenueId == venueId).Select(sa => new { id = sa.Id, areaName = sa.AreaName }).ToList();
         return Json(layouts);
     }
 
@@ -1526,7 +1380,6 @@ public class EventsController(
             var originalEvent = await context.Event.FirstOrDefaultAsync(e => e.Id == id);
             
             if (originalEvent == null) return NotFound();
-            
             if (originalEvent.OrganizerId != userId && !User.IsInRole("Admin")) return Unauthorized();
 
             originalEvent.Name = NewName;
@@ -1547,13 +1400,8 @@ public class EventsController(
         var events = await context.Event
             .Where(e => e.ParentEventId == null && e.Name.Contains(query))
             .Select(e => new {
-                id = e.Id,
-                name = e.Name,
-                venue = e.Venue.Name,
-                venueId = e.VenueId,
-                eventTypeId = e.EventTypeId,
-                rawStartDate = e.StartDateTime.ToString("yyyy-MM-ddTHH:mm"),
-                rawEndDate = e.EndTime.ToString("yyyy-MM-ddTHH:mm"),
+                id = e.Id, name = e.Name, venue = e.Venue.Name, venueId = e.VenueId, eventTypeId = e.EventTypeId,
+                rawStartDate = e.StartDateTime.ToString("yyyy-MM-ddTHH:mm"), rawEndDate = e.EndTime.ToString("yyyy-MM-ddTHH:mm"),
                 date = e.StartDateTime.ToString("MMM dd, yyyy")
             })
             .Take(5)
@@ -1570,12 +1418,9 @@ public class EventsController(
             .Where(e => e.ParentEventId == parentId)
             .OrderBy(e => e.StartDateTime)
             .Select(e => new {
-                id = e.Id,
-                name = e.Name, 
-                date = e.StartDateTime.ToString("dddd, MMM d, yyyy"),
+                id = e.Id, name = e.Name, date = e.StartDateTime.ToString("dddd, MMM d, yyyy"),
                 time = e.StartDateTime.ToString("h:mm tt") + " - " + e.EndTime.ToString("h:mm tt"),
-                layout = e.Layout != null ? e.Layout.AreaName : "No Layout",
-                ticketPrice = e.TicketPrice
+                layout = e.Layout != null ? e.Layout.AreaName : "No Layout", ticketPrice = e.TicketPrice
             })
             .ToListAsync();
             
@@ -1621,9 +1466,7 @@ public class EventsController(
         if (fatherEvent == null) return NotFound();
 
         var childEvents = await context.Event
-            .Include(e => e.Venue)
-            .Include(e => e.Venue.City)
-            .Include(e => e.EventType)
+            .Include(e => e.Venue).Include(e => e.Venue.City).Include(e => e.EventType)
             .Where(e => e.ParentEventId == id)
             .OrderBy(e => e.StartDateTime)
             .ToListAsync();
@@ -1641,8 +1484,7 @@ public class EventsController(
         query = query.ToLower();
         var venues = await context.Venue
             .Where(v => v.Name.ToLower().Contains(query) || (v.City != null && v.City.Name.ToLower().Contains(query)))
-            .OrderByDescending(v => v.Name.ToLower().Contains(query))
-            .ThenBy(v => v.Name)
+            .OrderByDescending(v => v.Name.ToLower().Contains(query)).ThenBy(v => v.Name)
             .Select(v => new { id = v.Id, name = v.Name, city = v.City != null ? v.City.Name : "N/A" })
             .Take(10)
             .ToListAsync();
@@ -1752,8 +1594,7 @@ public class EventsController(
     {
         var events = await context.Event
             .Include(e => e.EventType)
-            .Include(e => e.Venue)
-                .ThenInclude(v => v.City)
+            .Include(e => e.Venue).ThenInclude(v => v.City)
             .Where(e => e.ParentEventId == null)
             .OrderByDescending(e => e.Id) 
             .Take(12)
@@ -1761,39 +1602,22 @@ public class EventsController(
 
         var eventIds = events.Select(e => e.Id).ToList();
         var childEvents = await context.Event
-            .Include(e => e.Venue)
-                .ThenInclude(v => v.City)
+            .Include(e => e.Venue).ThenInclude(v => v.City)
             .Where(e => e.ParentEventId != null && eventIds.Contains(e.ParentEventId.Value))
             .ToListAsync();
 
         var result = events.Select(e => {
             var children = childEvents.Where(c => c.ParentEventId == e.Id).ToList();
             var childPrices = children.Where(c => c.TicketPrice != null).Select(c => c.TicketPrice.Value).ToList();
-            
-            var childCities = children.Where(c => c.Venue?.City?.Name != null)
-                                      .Select(c => c.Venue.City.Name)
-                                      .Distinct()
-                                      .ToList();
+            var childCities = children.Where(c => c.Venue?.City?.Name != null).Select(c => c.Venue.City.Name).Distinct().ToList();
             
             return new {
-                id = e.Id,
-                name = e.Name,
-                startDateTime = e.StartDateTime,
-                endTime = e.EndTime,
-                imagePath = e.ImagePath,
-                eventType = e.EventType != null ? e.EventType.Name : null,
-                venueName = e.Venue != null ? e.Venue.Name : null,
-                cityName = e.Venue?.City?.Name ?? "Unknown",
-                ticketPrice = e.TicketPrice,
-                
-                childCount = children.Count,
+                id = e.Id, name = e.Name, startDateTime = e.StartDateTime, endTime = e.EndTime, imagePath = e.ImagePath,
+                eventType = e.EventType != null ? e.EventType.Name : null, venueName = e.Venue != null ? e.Venue.Name : null,
+                cityName = e.Venue?.City?.Name ?? "Unknown", ticketPrice = e.TicketPrice, childCount = children.Count,
                 minPrice = childPrices.Any() ? childPrices.Min() : (double?)null,
                 maxPrice = childPrices.Any() ? childPrices.Max() : (double?)null,
-                
-                distinctCities = childCities.Count,
-                cityNames = childCities,
-                
-                parentEventId = e.ParentEventId
+                distinctCities = childCities.Count, cityNames = childCities, parentEventId = e.ParentEventId
             };
         });
 
@@ -1806,8 +1630,7 @@ public class EventsController(
     {
         var events = await context.Event
             .Include(e => e.EventType)
-            .Include(e => e.Venue)
-                .ThenInclude(v => v.City)
+            .Include(e => e.Venue).ThenInclude(v => v.City)
             .Where(e => e.ParentEventId == null)
             .OrderByDescending(e => e.StartDateTime) 
             .Take(12)
@@ -1815,39 +1638,22 @@ public class EventsController(
 
         var eventIds = events.Select(e => e.Id).ToList();
         var childEvents = await context.Event
-            .Include(e => e.Venue)
-                .ThenInclude(v => v.City)
+            .Include(e => e.Venue).ThenInclude(v => v.City)
             .Where(e => e.ParentEventId != null && eventIds.Contains(e.ParentEventId.Value))
             .ToListAsync();
 
         var result = events.Select(e => {
             var children = childEvents.Where(c => c.ParentEventId == e.Id).ToList();
             var childPrices = children.Where(c => c.TicketPrice != null).Select(c => c.TicketPrice.Value).ToList();
-            
-            var childCities = children.Where(c => c.Venue?.City?.Name != null)
-                                      .Select(c => c.Venue.City.Name)
-                                      .Distinct()
-                                      .ToList();
+            var childCities = children.Where(c => c.Venue?.City?.Name != null).Select(c => c.Venue.City.Name).Distinct().ToList();
             
             return new {
-                id = e.Id,
-                name = e.Name,
-                startDateTime = e.StartDateTime,
-                endTime = e.EndTime,
-                imagePath = e.ImagePath,
-                eventType = e.EventType != null ? e.EventType.Name : null,
-                venueName = e.Venue != null ? e.Venue.Name : null,
-                cityName = e.Venue?.City?.Name ?? "Unknown",
-                ticketPrice = e.TicketPrice,
-                
-                childCount = children.Count,
+                id = e.Id, name = e.Name, startDateTime = e.StartDateTime, endTime = e.EndTime, imagePath = e.ImagePath,
+                eventType = e.EventType != null ? e.EventType.Name : null, venueName = e.Venue != null ? e.Venue.Name : null,
+                cityName = e.Venue?.City?.Name ?? "Unknown", ticketPrice = e.TicketPrice, childCount = children.Count,
                 minPrice = childPrices.Any() ? childPrices.Min() : (double?)null,
                 maxPrice = childPrices.Any() ? childPrices.Max() : (double?)null,
-                
-                distinctCities = childCities.Count,
-                cityNames = childCities,
-                
-                parentEventId = e.ParentEventId
+                distinctCities = childCities.Count, cityNames = childCities, parentEventId = e.ParentEventId
             };
         });
 
@@ -1860,23 +1666,15 @@ public class EventsController(
     {
         var currentUserId = userManager.GetUserId(User);
         
-        var targetEvent = await context.Event
-            .Include(e => e.Venue)
-            .FirstOrDefaultAsync(e => e.Id == id);
-
+        var targetEvent = await context.Event.Include(e => e.Venue).FirstOrDefaultAsync(e => e.Id == id);
         if (targetEvent == null) return NotFound();
         
         if (!User.IsInRole("Admin") && targetEvent.OrganizerId != currentUserId && targetEvent.Venue?.UserId != currentUserId) 
-        {
             return Forbid();
-        }
 
         decimal unitPrice = (decimal)(targetEvent.TicketPrice ?? 0.0);
 
-        var query = context.Reservation
-            .Include(r => r.ApplicationUser)
-            .Include(r => r.Seat)
-            .Where(r => r.EventId == id);
+        var query = context.Reservation.Include(r => r.ApplicationUser).Include(r => r.Seat).Where(r => r.EventId == id);
 
         if (!string.IsNullOrWhiteSpace(searchTerm))
         {
@@ -1889,29 +1687,20 @@ public class EventsController(
         int totalRecords = await query.CountAsync();
         int totalPages = totalRecords == 0 ? 1 : (int)Math.Ceiling(totalRecords / (double)pageSize);
 
-        var reservations = await query
-            .OrderByDescending(r => r.Date)
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
+        var reservations = await query.OrderByDescending(r => r.Date).Skip((page - 1) * pageSize).Take(pageSize)
             .Select(r => new EventReservationViewModel
             {
                 ReservationId = r.ID,
                 UserName = r.ApplicationUser != null ? r.ApplicationUser.UserName : "Unknown User",
                 Email = r.ApplicationUser != null ? r.ApplicationUser.Email : "N/A",
-                ReservationDate = r.Date,
-                SeatCount = 1,
-                SeatName = r.Seat != null ? r.Seat.Name : "N/A",
-                TotalPaid = unitPrice
-            })
-            .ToListAsync();
-
-        decimal totalRevenue = totalRecords * unitPrice;
+                ReservationDate = r.Date, SeatCount = 1, SeatName = r.Seat != null ? r.Seat.Name : "N/A", TotalPaid = unitPrice
+            }).ToListAsync();
 
         ViewBag.SearchTerm = searchTerm;
         ViewBag.CurrentPage = page;
         ViewBag.TotalPages = totalPages;
         ViewBag.TotalRecords = totalRecords;
-        ViewBag.TotalRevenue = totalRevenue;
+        ViewBag.TotalRevenue = totalRecords * unitPrice;
         ViewBag.EventId = id;
         ViewBag.EventName = targetEvent.Name;
 
@@ -1924,25 +1713,13 @@ public class EventsController(
     public async Task<IActionResult> DeleteReservation(int reservationId)
     {
         var currentUserId = userManager.GetUserId(User);
-        
-        var reservation = await context.Reservation
-            .Include(r => r.Event)
-                .ThenInclude(e => e.Venue)
-            .FirstOrDefaultAsync(r => r.ID == reservationId);
+        var reservation = await context.Reservation.Include(r => r.Event).ThenInclude(e => e.Venue).FirstOrDefaultAsync(r => r.ID == reservationId);
 
         if (reservation == null) return NotFound(new { success = false, message = "Reservation not found." });
         
         var targetEvent = reservation.Event;
-
-        if (!User.IsInRole("Admin") && targetEvent.OrganizerId != currentUserId && targetEvent.Venue?.UserId != currentUserId) 
-        {
-            return Forbid();
-        }
-
-        if (reservation.Attended == true)
-        {
-            return BadRequest(new { success = false, message = "Cannot delete reservation: The attendee has already checked in." });
-        }
+        if (!User.IsInRole("Admin") && targetEvent.OrganizerId != currentUserId && targetEvent.Venue?.UserId != currentUserId) return Forbid();
+        if (reservation.Attended == true) return BadRequest(new { success = false, message = "Cannot delete reservation: The attendee has already checked in." });
 
         await context.Reservation.Where(r => r.ID == reservationId).ExecuteDeleteAsync();
 
@@ -1968,30 +1745,20 @@ public class EventsController(
             }
 
             var distinctUsers = usersToIndex.GroupBy(u => u.Id).Select(g => g.First()).ToList();
-            
             var cleanUsers = distinctUsers.Select(u => new OrganizerSearchDto
             {
-                Id = u.Id,
-                FirstName = u.FirstName ?? "",
-                LastName = u.LastName ?? "",
-                Email = u.Email ?? "",
-                UserName = u.UserName ?? ""
+                Id = u.Id, FirstName = u.FirstName ?? "", LastName = u.LastName ?? "", Email = u.Email ?? "", UserName = u.UserName ?? ""
             }).ToList();
             
             int successCount = 0;
             foreach (var user in cleanUsers)
             {
                 bool isIndexed = await elasticSearchService.AddOrUpdateAsync(user, indexName);
-                if (isIndexed) 
-                {
-                    successCount++;
-                }
+                if (isIndexed) successCount++;
             }
             
             return Ok(new { 
-                success = successCount > 0, 
-                attempted = cleanUsers.Count,
-                succeeded = successCount,
+                success = successCount > 0, attempted = cleanUsers.Count, succeeded = successCount,
                 message = $"Successfully indexed {successCount} out of {cleanUsers.Count} organizers." 
             });
         }
