@@ -1140,7 +1140,7 @@ public class EventsController(
 
                     results.Add(new {
                         type = "event", id = e.Id, name = e.Name, startDateTime = e.StartDateTime.ToString("s"), endTime = e.EndTime.ToString("s"),
-                        imagePath = normalizedEventImg,
+                        imagePath = !string.IsNullOrEmpty(e.ImagePath) ? (e.ImagePath.StartsWith("/") ? e.ImagePath : $"/{e.ImagePath}") : null,
                         eventType = e.EventType?.Name, venueName = e.Venue?.Name ?? "No Venue", cityName = e.Venue?.City?.Name ?? "N/A",
                         ticketPrice = e.TicketPrice, parentEventId = e.ParentEventId, childCount = e.ChildEvents?.Count ?? 0,
                         minPrice = e.ChildEvents?.Any() == true ? e.ChildEvents.Min(c => c.TicketPrice) : e.TicketPrice,
