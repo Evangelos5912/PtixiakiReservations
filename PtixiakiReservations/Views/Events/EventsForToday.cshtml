@@ -1,7 +1,7 @@
-﻿@model IEnumerable<PtixiakiReservations.Models.Event>
-@using Microsoft.AspNetCore.Identity
+﻿@using Microsoft.AspNetCore.Identity
 @inject SignInManager<ApplicationUser> SignInManager
 @inject UserManager<ApplicationUser> UserManager
+@model IEnumerable<PtixiakiReservations.Models.Event>
 
 @{
     ViewData["Title"] = "Events";
@@ -96,6 +96,7 @@
     }
 </style>
 
+<!-- Safely inject our secure server-side vars into data attributes -->
 <div id="auth-state" class="hidden" 
      data-user-id="@currentUserId" 
      data-can-view-subevents="@canViewSubEvents.ToString().ToLower()"></div>
@@ -130,6 +131,7 @@
             </div>
 
             <div id="panel-body" class="p-6">
+                <!-- Radio Options for Result Type -->
                 <div class="flex items-center gap-6 mb-5 pb-5 border-b border-gray-100">
                     <label class="flex items-center gap-2 cursor-pointer">
                         <input type="radio" name="searchType" value="all" checked class="text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer">
@@ -146,6 +148,7 @@
                 </div>
 
                 <div class="flex flex-col md:flex-row gap-5 mb-5">
+                    
                     <div class="w-full md:w-1/2 relative">
                         <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
                             <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
@@ -191,6 +194,7 @@
     </div>
 
     <div class="w-full px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+
         <div id="events-count" class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4 pt-4 scroll-mt-20">
             <h2 class="text-2xl font-extrabold text-gray-900 tracking-tight">
                 Results <span class="text-blue-600 font-bold ml-2 bg-blue-50 px-3 py-1 rounded-full text-lg" id="filtered-count">0</span>
@@ -201,6 +205,9 @@
                         <option value="asc" selected>Sort by Date: Asc</option>
                         <option value="desc">Sort by Date: Desc</option>
                     </select>
+                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-400">
+                        <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg>
+                    </div>
                 </div>
                 <div class="relative w-full sm:w-auto"> 
                     <select id="variable-pagination" class="appearance-none bg-white border border-gray-300 rounded-xl py-2.5 px-4 pr-10 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors w-full sm:w-36 shadow-sm cursor-pointer">
@@ -208,6 +215,9 @@
                         <option value="24">24 per page</option>
                         <option value="48">48 per page</option>
                     </select>
+                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-400">
+                        <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg>
+                    </div>
                 </div>
             </div>
         </div>
@@ -233,13 +243,33 @@
                 </button>
             </div>
         </div>
+
+        <div class="mt-12 flex justify-center pb-12">
+            <nav id="pagination" class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px hidden" aria-label="Pagination">
+                <button type="button" id="prev-page" class="pagination-prev relative inline-flex items-center px-4 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                    <svg class="h-5 w-5 mr-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                        <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                    </svg>
+                    Previous
+                </button>
+
+                <div id="page-numbers" class="flex flex-wrap justify-center"></div>
+
+                <button type="button" id="next-page" class="pagination-next relative inline-flex items-center px-4 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                    Next
+                    <svg class="h-5 w-5 ml-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                        <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                    </svg>
+                </button>
+            </nav>
+        </div>
     </div>
 </div>
 
 @section Scripts {
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
         $(document).ready(function () {
+            
             const authState = document.getElementById('auth-state');
             const currentUserId = authState ? authState.getAttribute('data-user-id') : '';
             const canViewSubEvents = authState ? (authState.getAttribute('data-can-view-subevents') === 'true') : false;
@@ -248,7 +278,17 @@
             let pageSize = 12;
             let sortOrder = 'asc';
             let totalPages = 1;
+            
             let dateRangePicker;
+            let autocompleteTimeout;
+            let autocompleteResults = [];
+            let currentAutocompleteIndex = -1;
+            let maxAutocompleteResults = 8;
+
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('searchTerm')) {
+                $('#search-term').val(urlParams.get('searchTerm'));
+            }
 
             dateRangePicker = flatpickr("#date-range", {
                 mode: "range",
@@ -257,11 +297,127 @@
                 altFormat: "d/m/Y",
                 conjunction: " to ",
                 minDate: "today",
-                onChange: function() {
+                onChange: function(selectedDates) {
                     currentPage = 1;
                     triggerSearch();
                 }
             });
+
+            function loadEventTypes() {
+                return $.getJSON('/Events/GetEventTypes')
+                    .done(function(data) {
+                        const dropdown = $('#event-type');
+                        $.each(data, function(i, item) {
+                            dropdown.append($('<option>', {
+                                value: item.id,
+                                text: item.name
+                            }));
+                        });
+                        if (urlParams.has('eventTypeId')) {
+                            dropdown.val(urlParams.get('eventTypeId'));
+                        }
+                    })
+                    .fail(function(error) {
+                        console.error('Failed to load event types:', error);
+                    });
+            }
+
+            loadEventTypes().always(function() {
+                performSearch();
+            });
+
+            $('#reset-date').click(function() {
+                dateRangePicker.clear();
+                currentPage = 1;
+                triggerSearch();
+            });
+
+            $('#reset-search').click(function() {
+                $('#event-type').val('');
+                dateRangePicker.clear();
+                $('#search-term').val('');
+                $('input[name="searchType"][value="all"]').prop('checked', true);
+                window.location.href = '@Url.Action("EventsForToday", "Events")';
+            });
+
+            $('#search-term').on('input', function() {
+                const query = $(this).val().trim();
+                if (autocompleteTimeout) clearTimeout(autocompleteTimeout);
+                if (query.length < 1) {
+                    $('#autocomplete-dropdown').addClass('hidden').empty();
+                    return;
+                }
+                autocompleteTimeout = setTimeout(function() {
+                    fetchAutocompleteResults(query);
+                }, 300);
+            });
+            
+            $('input[name="searchType"]').on('change', function() {
+                if ($('input[name="searchType"]:checked').val() == "venues") {
+                    $('#dateForEvents').hide();
+                    $('#archived-container').hide();
+                    dateRangePicker.clear();
+                    $('#archived-filter').prop('checked',false);
+                } else {
+                    $('#dateForEvents').show();
+                    $('#archived-container').show();
+                }
+                currentPage = 1;
+                triggerSearch();
+            });
+
+            $('#event-type').on('change', function() {
+                currentPage = 1;
+                triggerSearch();
+            });
+
+            $('#variable-view').on('change', function() {
+                sortOrder = $(this).val();
+                currentPage = 1;
+                triggerSearch();
+            });
+            
+            $('#variable-pagination').on('change', function() {
+                pageSize = parseInt($(this).val()) || 12;
+                currentPage = 1;
+                triggerSearch();
+            });
+
+            $('#search-button').click(function() {
+                currentPage = 1;
+                triggerSearch();
+            });
+
+            $('#prev-page').off('click').on('click', function() {
+                if (currentPage > 1) {
+                    currentPage--;
+                    triggerSearch();
+                }
+            });
+
+            $('#next-page').off('click').on('click', function() {
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    triggerSearch();
+                }
+            });
+
+            $('#page-numbers').off('click').on('click', '.page-button', function(e) {
+                e.preventDefault();
+                let selectedPage = parseInt($(this).data('page'));
+                if (selectedPage !== currentPage && selectedPage > 0 && selectedPage <= totalPages) {
+                    currentPage = selectedPage;
+                    triggerSearch();
+                }
+            });
+
+            function triggerSearch() {
+                $('#events-container').addClass('hidden');
+                $('#loading-indicator').removeClass('hidden');
+                $('#no-results').addClass('hidden');
+                document.getElementById('events-count').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                setTimeout(performSearch, 300);
+            }
 
             function performSearch() {
                 let startDate = null;
@@ -299,6 +455,7 @@
 
                         if (!data.events || data.events.length === 0) {
                             $('#no-results').removeClass('hidden');
+                            updatePagination(false); 
                             return;
                         }
 
@@ -312,49 +469,316 @@
                         });
 
                         container.removeClass('hidden');
+                        updatePagination(true);
                     })
                     .fail(function() {
+                        console.error('Search query operation encountered a server-side exception.');
                         $('#loading-indicator').addClass('hidden');
                     });
-            }
-
-            function triggerSearch() {
-                $('#events-container').addClass('hidden');
-                $('#loading-indicator').removeClass('hidden');
-                $('#no-results').addClass('hidden');
-                setTimeout(performSearch, 300);
             }
 
             function buildVenueCard(venue) {
                 const imgPath = venue.imagePath || '';
                 const hasImage = imgPath.trim() !== "";
+                const venueName = venue.name || 'Unnamed Venue';
+                const cityName = venue.cityName || 'Unknown';
+                const phone = venue.phone || 'No phone provided';
+                const layoutCount = venue.layoutCount || 0;
+                
+                let categoriesHtml = '';
+                if (venue.categoryNames && venue.categoryNames.length > 0) {
+                    categoriesHtml = venue.categoryNames.map(c => 
+                        `<span class="whitespace-nowrap px-2 py-1 bg-purple-50 text-purple-800 border border-purple-100 font-semibold text-xs rounded-full">${c}</span>`
+                    ).join(' ');
+                } else {
+                    categoriesHtml = `<span class="whitespace-nowrap px-2 py-1 bg-gray-100 text-gray-800 border border-gray-200 font-semibold text-xs rounded-full">All Categories</span>`;
+                }
+
                 return `
                 <div class="event-card venue-card border border-gray-200 shadow-md transition-all">
                     <a href="/Venue/Details/${venue.id}" class="block !no-underline text-current flex-grow relative p-5 pb-0">
                         <div class="relative h-40 w-full shrink-0 mb-4 z-10">
                             <div class="absolute inset-0 overflow-hidden rounded-xl bg-gray-100">
-                                ${hasImage ? `<img src="${imgPath}" alt="${venue.name}" class="w-full h-full object-cover" />` : '<div class="flex items-center justify-center h-full text-gray-400">No Image</div>'}
+                                ${hasImage ? 
+                                    `<img src="${imgPath}" alt="${venueName}" class="w-full h-full object-cover transform hover:scale-105 transition-transform duration-300" />` : 
+                                    `<div class="flex items-center justify-center h-full text-gray-400"><svg class="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg></div>`
+                                }
+                            </div>
+                            <div class="absolute top-2 right-2 z-50 flex flex-col items-end gap-2">
+                                <div class="bg-purple-600/95 backdrop-blur-sm text-white text-[10px] font-extrabold px-3 py-1.5 rounded-full shadow-sm tracking-wide uppercase border border-purple-500">VENUE</div>
+                                <div class="cursor-help bg-white/95 backdrop-blur-sm border border-gray-100 text-purple-800 text-[10px] font-extrabold px-3 py-1.5 rounded-full shadow-sm uppercase tracking-wide">
+                                    ${cityName}
+                                </div>
                             </div>
                         </div>
-                        <h3 class="text-lg font-bold text-gray-900 mb-3">${venue.name}</h3>
+                        
+                        <div class="event-content">
+                            <h3 class="text-lg font-bold text-gray-900 mb-3 line-clamp-2">${venueName}</h3>
+                            
+                            <div class="flex items-center gap-2 mb-3 flex-wrap">
+                                ${categoriesHtml}
+                            </div>
+                            
+                            <div class="flex items-start mb-3">
+                                <svg class="h-5 w-5 text-gray-500 mr-2 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
+                                <div><p class="text-sm text-gray-600 font-medium">${phone}</p></div>
+                            </div>
+                            <div class="flex items-start mb-4">
+                                <svg class="h-5 w-5 text-gray-500 mr-2 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
+                                <div><p class="text-sm font-medium text-gray-600">${layoutCount} Layout Areas</p></div>
+                            </div>
+                        </div>
                     </a>
+                    <div class="px-5 pb-5 mt-auto">
+                        <div class="event-footer flex justify-between items-center pt-4 border-t border-gray-100">
+                            <a href="/Venue/Details/${venue.id}" class="text-sm font-bold text-purple-600 hover:text-purple-800 transition-colors bg-purple-50 px-3 py-1.5 rounded-lg hover:bg-purple-100 !no-underline cursor-pointer w-full text-center">View Venue Details →</a>
+                        </div>
+                    </div>
                 </div>`;
             }
 
             function buildEventCard(event, timeClass) {
+                const startDate = new Date(event.startDateTime);
+                const endDate = new Date(event.endTime);
+                const isMultiDay = startDate.toDateString() !== endDate.toDateString();
+                let dateDisplayHtml = "";
+
+                if (isMultiDay) {
+                    const startStr = startDate.toLocaleDateString('en-US', {month: 'short', day: 'numeric', year: 'numeric' });
+                    const endStr = endDate.toLocaleDateString('en-US', {month: 'short', day: 'numeric', year: 'numeric' });
+                    dateDisplayHtml = `<p class="text-sm text-gray-800 font-bold">${startStr} - ${endStr}</p>`;
+                } else {
+                    const dateStr = startDate.toLocaleDateString('en-US', {month: 'long', day: 'numeric', year: 'numeric' });
+                    const timeStr = `${startDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })} - ${endDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`;
+                    dateDisplayHtml = `<p class="text-sm text-gray-800 font-bold">${dateStr}</p><p class="text-sm text-gray-500 font-medium">${timeStr}</p>`;
+                }
+
                 const imgPath = event.imagePath || '';
                 const hasImage = imgPath.trim() !== "";
+                const eventName = event.name || 'Unnamed Event';
+                const eventId = event.id;
+
+                const isMasterEvent = event.parentEventId == null;
+                const showSubEventsLink = isMasterEvent && canViewSubEvents;
+                
+                const childCount = event.childCount || 0;
+                let priceDisplayHtml = "";
+
+                if (childCount > 0) {
+                    const minP = event.minPrice;
+                    const maxP = event.maxPrice;
+                    const tPrice = event.ticketPrice;
+
+                    if (minP != null && maxP != null) {
+                        if (minP === maxP) {
+                            priceDisplayHtml = minP > 0 ? `€${minP}` : "Free";
+                        } else {
+                            priceDisplayHtml = `€${minP} - €${maxP}`;
+                        }
+                    } else {
+                        priceDisplayHtml = (tPrice != null && tPrice > 0) ? `€${tPrice}` : "Free";
+                    }
+                } else {
+                    const tPrice = event.ticketPrice;
+                    if (tPrice != null && tPrice > 0) {
+                        priceDisplayHtml = `€${tPrice}`;
+                    } else {
+                        priceDisplayHtml = "Free";
+                    }
+                }
+
+                let ratingBadgeHtml = "";
+                const avgRating = event.avgRating;
+                const reviewCount = event.reviewCount || 0;
+                if (avgRating && reviewCount > 0) {
+                    ratingBadgeHtml = `
+                    <div class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                        <span class="text-amber-500 mr-1">★</span>
+                        ${parseFloat(avgRating).toFixed(1)} (${reviewCount})
+                    </div>`;
+                }
+
+                const distinctCities = event.distinctCities || 0;
+                const cityNames = event.cityNames || [];
+                const baseCity = event.cityName || 'Unknown';
+
+                let locationText = baseCity;
+                let tooltipHtml = '';
+
+                if (childCount > 0) {
+                    if (distinctCities > 1) {
+                        locationText = distinctCities + ' Cities';
+                        tooltipHtml = `<span class="tooltip-text" role="tooltip">${cityNames.join(', ')}</span>`;
+                    } else if (distinctCities === 1 && cityNames.length > 0) {
+                        locationText = cityNames[0];
+                    }
+                }
+
+                const cityBadgeHtml = tooltipHtml !== '' 
+                    ? `<div class="flex items-center gap-1"><p>${locationText}</p>${tooltipHtml}</div>` 
+                    : `<p>${locationText}</p>`;
+
+                const hasMultipleVenues = event.hasMultipleVenues || false;
+                const venueName = event.venueName || 'No Venue';
+                let venueDisplayHtml = hasMultipleVenues 
+                    ? `<p class="text-sm font-medium text-gray-600">Multiple Locations</p>` 
+                    : `<p class="text-sm font-medium text-gray-600">${venueName}</p>`;
+
+                let wishlistBadge = `
+                <div class="wishlist-badge cursor-help absolute top-7 left-7 bg-white/90 backdrop-blur-sm border border-gray-100 text-indigo-800 p-2 z-20 rounded-full shadow-sm hover:bg-white transition-colors wishlist-id-${eventId}">
+                    <button type="button" onclick="window.wishlistAction(event, ${eventId})" class="border-none bg-transparent p-0 cursor-pointer flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#eab308" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                        </svg>
+                    </button>
+                </div>`;
+
+                if (currentUserId !== '') {
+                    let wParams = { eventId: eventId, userId: currentUserId };
+                    $.getJSON('/Wishlist/returnItem', wParams)
+                        .done(function(isWishlisted) {
+                            if (isWishlisted === true) {
+                                $(`.wishlist-id-${eventId}`).html(`
+                                    <button type="button" onclick="window.wishlistAction(event, ${eventId})" class="border-none bg-transparent p-0 cursor-pointer flex items-center justify-center">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="#eab308" stroke="#eab308" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                        </svg>
+                                    </button>
+                                `);
+                            }
+                        });
+                }
+
+                let statusBadgeHtml = "";
+                if (timeClass === "event-today") {
+                    statusBadgeHtml = `<div class="bg-green-500/95 backdrop-blur-sm text-white text-[10px] font-extrabold px-3 py-1.5 rounded-full shadow-sm tracking-wide uppercase border border-green-400">TODAY</div>`;
+                } else if (timeClass === "event-upcoming") {
+                    statusBadgeHtml = `<div class="bg-blue-400/95 backdrop-blur-sm text-white text-[10px] font-extrabold px-3 py-1.5 rounded-full shadow-sm tracking-wide uppercase border border-blue-300">UPCOMING</div>`;
+                } else {
+                    statusBadgeHtml = `<div class="bg-gray-600/95 backdrop-blur-sm text-white text-[10px] font-extrabold px-3 py-1.5 rounded-full shadow-sm tracking-wide uppercase border border-gray-500">ENDED</div>`;
+                }
+
+                const categoryBadgeHtml = event.eventType ? `
+                    <div class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-gray-100 text-gray-600 border border-gray-200">
+                        ${event.eventType}
+                    </div>` : '';
+
                 return `
                 <div class="event-card ${timeClass} border border-gray-200 shadow-md transition-all">
-                    <a href="/Events/Details/${event.id}" class="block !no-underline text-current flex-grow relative p-5 pb-0">
+                    <a href="/Events/Details/${eventId}" class="block !no-underline text-current flex-grow relative p-5 pb-0">
+                        
                         <div class="relative h-40 w-full shrink-0 mb-4 z-10">
                             <div class="absolute inset-0 overflow-hidden rounded-xl bg-gray-100">
-                                ${hasImage ? `<img src="${imgPath}" alt="${event.name}" class="w-full h-full object-cover" />` : '<div class="flex items-center justify-center h-full text-gray-400">No Image</div>'}
+                                ${hasImage ? 
+                                    `<img src="${imgPath}" alt="${eventName}" class="w-full h-full object-cover transform hover:scale-105 transition-transform duration-300" />` : 
+                                    `<div class="flex items-center justify-center h-full text-gray-400"><svg class="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg></div>`
+                                }
+                            </div>
+                            
+                            <div class="absolute top-2 right-2 z-50 flex flex-col items-end gap-2">
+                                ${statusBadgeHtml}
+                                <div class="tooltip-container2 cursor-help bg-white/95 backdrop-blur-sm border border-gray-100 text-indigo-800 text-[10px] font-extrabold px-3 py-1.5 rounded-full shadow-sm uppercase tracking-wide">
+                                    ${cityBadgeHtml}
+                                </div>
                             </div>
                         </div>
-                        <h3 class="text-lg font-bold text-gray-900 mb-3">${event.name}</h3>
+                        
+                        <div class="event-content">
+                            <div class="flex items-center justify-between mb-3">
+                                <h3 class="text-lg font-bold text-gray-900 mb-2 line-clamp-2">${eventName}</h3>
+                                ${isMasterEvent ? 
+                                `<div class="tooltip-container flex items-center cursor-help shrink-0">
+                                    <svg class="h-5 w-5 text-indigo-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M12 11V5" /><path d="M12 11L6 18" /><path d="M12 11L18 18" />
+                                        <circle cx="12" cy="4" r="2.5" fill="currentColor" stroke="none" />
+                                        <circle cx="6" cy="19" r="2.5" fill="currentColor" stroke="none" />
+                                        <circle cx="18" cy="19" r="2.5" fill="currentColor" stroke="none" />
+                                    </svg>
+                                    <span class="tooltip-text" role="tooltip">Master event</span>
+                                </div>` : ''}
+                            </div>
+                            
+                            <div class="flex items-center gap-2 mb-3 flex-wrap">
+                                ${categoryBadgeHtml}
+                                <div class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                    ${priceDisplayHtml} 
+                                </div>
+                                ${ratingBadgeHtml}
+                            </div>
+                            
+                            <div class="flex items-start mb-3">
+                                <svg class="h-5 w-5 text-gray-500 mr-2 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                                <div>${dateDisplayHtml}</div>
+                            </div>
+                            <div class="flex items-start mb-4">
+                                <svg class="h-5 w-5 text-gray-500 mr-2 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /></svg>
+                                <div>${venueDisplayHtml}</div>
+                            </div>
+                        </div>
                     </a>
+
+                    ${wishlistBadge}
+                    
+                    ${showSubEventsLink ? `
+                    <div class="px-5 pb-5 mt-auto">
+                        <div class="event-footer flex justify-between items-center pt-4 border-t border-gray-100">
+                            <a href="/Events/ChildEvents/${eventId}" class="text-sm font-bold text-blue-600 hover:text-blue-800 transition-colors bg-blue-50 px-3 py-1.5 rounded-lg hover:bg-blue-100 !no-underline cursor-pointer">Manage Sub-Events (${childCount})</a>
+                            <a href="/Events/Edit/${eventId}" class="text-sm font-bold text-gray-500 hover:text-gray-800 transition-colors !no-underline cursor-pointer">Edit →</a>
+                        </div>
+                    </div>
+                    ` : '<div class="pb-5"></div>'}
                 </div>`;
+            }
+
+            window.wishlistAction = function(e, eventId) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                if (!currentUserId || currentUserId === '') {
+                    alert("You must be logged in to use this feature.");
+                    return;
+                }
+
+                let token = $('input[name="__RequestVerificationToken"]').val();
+                let wParams = { eventId: eventId, userId: currentUserId };
+
+                $.getJSON('/Wishlist/returnItem', wParams).done(function(isWishlisted) {
+                    if (!isWishlisted) {
+                        $.ajax({
+                            url: '/Wishlist/addWishlistEvent',
+                            type: 'POST',
+                            data: wParams,
+                            headers: { "RequestVerificationToken": token },
+                            success: function(success) {
+                                if (success === true) {
+                                    $(`.wishlist-id-${eventId}`).html(`
+                                    <button type="button" onclick="window.wishlistAction(event, ${eventId})" class="border-none bg-transparent p-0 cursor-pointer flex items-center justify-center">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="#eab308" stroke="#eab308" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                        </svg>
+                                    </button>`);
+                                }
+                            }
+                        });
+                    } else {
+                        $.ajax({
+                            url: '/Wishlist/deleteWishlistEvent',
+                            type: 'DELETE',
+                            data: wParams,
+                            headers: { "RequestVerificationToken": token },
+                            success: function(success) {
+                                if (success === true) {
+                                    $(`.wishlist-id-${eventId}`).html(`
+                                    <button type="button" onclick="window.wishlistAction(event, ${eventId})" class="border-none bg-transparent p-0 cursor-pointer flex items-center justify-center">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#eab308" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                        </svg>
+                                    </button>`);
+                                }
+                            }
+                        });
+                    }
+                });
             }
 
             function getEventTimeClass(startDate, endDate) {
@@ -374,19 +798,323 @@
                 }
             }
 
-            $.getJSON('/Events/GetEventTypes').done(function(data) {
-                const dropdown = $('#event-type');
-                $.each(data, function(i, item) {
-                    dropdown.append($('<option>', { value: item.id, text: item.name }));
-                });
-            });
+            function updatePagination(show = true) {
+                const paginationContainer = $('#pagination');
+                const pageNumbersContainer = $('#page-numbers');
 
-            $('#search-button').click(function() {
+                pageNumbersContainer.empty();
+
+                if (!show || totalPages <= 1) {
+                    paginationContainer.addClass('hidden');
+                    paginationContainer.hide();
+                    return;
+                }
+
+                paginationContainer.removeClass('hidden');
+                paginationContainer.show();
+
+                $('#prev-page').prop('disabled', currentPage === 1);
+                $('#next-page').prop('disabled', currentPage === totalPages);
+
+                let startPage = Math.max(1, currentPage - 2);
+                let endPage = Math.min(totalPages, startPage + 4);
+
+                if (endPage - startPage < 4) {
+                    startPage = Math.max(1, endPage - 4);
+                }
+
+                if (startPage > 1) {
+                    pageNumbersContainer.append(createPageButton(1));
+                    if (startPage > 2) {
+                        pageNumbersContainer.append('<span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">...</span>');
+                    }
+                }
+
+                for (let i = startPage; i <= endPage; i++) {
+                    pageNumbersContainer.append(createPageButton(i));
+                }
+
+                if (endPage < totalPages) {
+                    if (endPage < totalPages - 1) {
+                        pageNumbersContainer.append('<span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">...</span>');
+                    }
+                    pageNumbersContainer.append(createPageButton(totalPages));
+                }
+            }
+
+            function createPageButton(pageNumber) {
+                const isActive = pageNumber === currentPage;
+                return $('<button>', {
+                    type: 'button',
+                    class: `page-number pagination-link page-button relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                        isActive 
+                        ? 'active current-page z-10 bg-indigo-50 border-indigo-500 text-indigo-600' 
+                        : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
+                    }`,
+                    'data-page': pageNumber,
+                    text: pageNumber
+                });
+            }
+            
+            function fetchAutocompleteResults(query) {
+                $.ajax({
+                    url: '/Events/GetAutocompleteResults',
+                    data: { query: query },
+                    success: function(data) {
+                        displayAutocompleteResults(data, query);
+                    },
+                    error: function() {
+                        const mockResults = getMockAutocompleteResults(query);
+                        displayAutocompleteResults(mockResults, query);
+                    }
+                });
+            }
+
+            function displayAutocompleteResults(results, query) {
+                const dropdown = $('#autocomplete-dropdown');
+                dropdown.empty();
+
+                if (!results || results.length === 0) {
+                    dropdown.addClass('hidden');
+                    return;
+                }
+
+                autocompleteResults = results.slice(0, maxAutocompleteResults);
+                currentAutocompleteIndex = -1;
+
+                autocompleteResults.forEach(function(result, index) {
+                    const highlightedText = highlightMatch(result.text, query);
+                    const item = $('<div class="autocomplete-item flex items-center">')
+                        .html(`
+                            <div class="mr-3 text-blue-500">
+                                ${result.type === 'event' ?
+                                    '<svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>' :
+                                    '<svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>'
+                                }
+                            </div>
+                            <div>
+                                <div class="text-sm text-gray-900">${highlightedText}</div>
+                                <div class="text-xs text-gray-500 font-medium">${result.subtext || ''}</div>
+                            </div>
+                        `)
+                        .data('index', index)
+                        .on('click', function() {
+                            selectAutocompleteItem(index);
+                        });
+
+                    dropdown.append(item);
+                });
+
+                dropdown.removeClass('hidden');
+            }
+
+            function navigateAutocomplete(direction) {
+                const items = $('.autocomplete-item');
+                if (items.length === 0) return;
+
+                items.removeClass('active');
+                currentAutocompleteIndex += direction;
+
+                if (currentAutocompleteIndex >= items.length) {
+                    currentAutocompleteIndex = 0;
+                } else if (currentAutocompleteIndex < 0) {
+                    currentAutocompleteIndex = items.length - 1;
+                }
+
+                items.eq(currentAutocompleteIndex).addClass('active');
+            }
+
+            function selectAutocompleteItem(index) {
+                const result = autocompleteResults[index];
+                if (!result) return;
+
+                $('#search-term').val(result.text);
+                $('#autocomplete-dropdown').addClass('hidden');
+                
                 currentPage = 1;
                 triggerSearch();
+            }
+
+            function highlightMatch(text, query) {
+                if (!query) return text;
+                const regex = new RegExp('(' + query.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&') + ')', 'gi');
+                return text.replace(regex, '<span class="highlight">$1</span>');
+            }
+
+            function getMockAutocompleteResults(query) {
+                query = query.toLowerCase();
+                const cities = ['Athens', 'Thessaloniki', 'Patras', 'Heraklion'];
+                const events = ['Music Concert Series', 'Comedy Night', 'Art Exhibition'];
+                let results = [];
+
+                cities.filter(c => c.toLowerCase().includes(query)).forEach(c => { results.push({ text: c, type: 'location', subtext: 'City' }); });
+                events.filter(e => e.toLowerCase().includes(query)).forEach(e => { results.push({ text: e, type: 'event', subtext: 'Event' }); });
+                
+                return results;
+            }
+
+            // Keyboard navigation for dropdown
+            $('#search-term').on('keydown', function(e) {
+                const dropdown = $('#autocomplete-dropdown');
+                const isVisible = !dropdown.hasClass('hidden');
+
+                if (!isVisible) return;
+
+                if (e.keyCode === 40) { 
+                    e.preventDefault();
+                    navigateAutocomplete(1);
+                } else if (e.keyCode === 38) { 
+                    e.preventDefault();
+                    navigateAutocomplete(-1);
+                } else if (e.keyCode === 13 && currentAutocompleteIndex >= 0) { 
+                    e.preventDefault();
+                    selectAutocompleteItem(currentAutocompleteIndex);
+                } else if (e.keyCode === 27) { 
+                    dropdown.addClass('hidden');
+                    currentAutocompleteIndex = -1;
+                }
             });
 
-            performSearch();
+            // Close dropdown clicking outside
+            $(document).on('click', function(e) {
+                if (!$(e.target).closest('#search-term, #autocomplete-dropdown').length) {
+                    $('#autocomplete-dropdown').addClass('hidden');
+                }
+            });
+        });
+    </script>
+    
+    <script>
+        document.getElementById("panel-button")?.addEventListener("click", function () {
+            const panel = document.getElementById("panel-body");
+            panel.classList.toggle("hidden");
+        });
+    </script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            async function populateDualCarousel() {
+                try {
+                    const response = await fetch('/Events/getNewestEvents');
+                    const events = await response.json();
+                    const track = document.getElementById('dual-hero-track');
+
+                    if (!track) return;
+
+                    if (events.length === 0) {
+                        track.innerHTML = '<div class="w-full h-full flex items-center justify-center text-gray-500 bg-white rounded-2xl border border-gray-200 shadow-sm">No events found</div>';
+                        return;
+                    }
+
+                    track.innerHTML = ''; 
+
+                    events.forEach((event) => {
+                        const formattedStartDate = new Date(event.startDateTime).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                        
+                        const childCount = event.childCount || event.ChildCount || 0;
+                        const distinctCities = event.distinctCities || event.DistinctCities || 0;
+                        const cityNames = event.cityNames || event.CityNames || [];
+                        const baseCity = event.cityName || event.CityName || 'Unknown';
+
+                        let locationText = baseCity;
+                        let tooltipHtml = '';
+
+                        if (childCount > 0) {
+                            if (distinctCities > 1) {
+                                locationText = distinctCities + ' Cities';
+                                tooltipHtml = `<span class="tooltip-text cursor-help" role="tooltip">${cityNames.join(', ')}</span>`;
+                            } else if (distinctCities === 1 && cityNames.length > 0) {
+                                locationText = cityNames[0];
+                            }
+                        }
+
+                        const locationDisplayHtml = tooltipHtml !== '' 
+                            ? `<div class="flex items-center gap-1"><p>${locationText}</p>${tooltipHtml}</div>` 
+                            : `<p>${locationText}</p>`;
+
+                        let priceDisplayHtml = "";
+
+                        if (childCount > 0) {
+                            const minP = event.minPrice !== undefined ? event.minPrice : event.MinPrice;
+                            const maxP = event.maxPrice !== undefined ? event.maxPrice : event.MaxPrice;
+                            const tPrice = event.ticketPrice !== undefined ? event.ticketPrice : event.TicketPrice;
+
+                            if (minP != null && maxP != null) {
+                                if (minP === maxP) {
+                                    priceDisplayHtml = minP > 0 ? `€${minP}` : "Free";
+                                } else {
+                                    priceDisplayHtml = `€${minP} - €${maxP}`;
+                                }
+                            } else {
+                                priceDisplayHtml = (tPrice != null && tPrice > 0) ? `€${tPrice}` : "Free";
+                            }
+                        } else {
+                            const tPrice = event.ticketPrice !== undefined ? event.ticketPrice : event.TicketPrice;
+                            if (tPrice != null && tPrice > 0) {
+                                priceDisplayHtml = `€${tPrice}`;
+                            } else {
+                                priceDisplayHtml = "Free";
+                            }
+                        }
+
+                        const imgBg = event.imagePath ? `url('${event.imagePath}')` : 'none';
+                        const fallbackBg = event.imagePath ? '' : 'bg-gradient-to-br from-gray-700 to-gray-900';
+
+                        const categoryBadgeHtml = event.eventType ? `
+                            <span class="bg-blue-600 text-white text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full w-max shadow-md">
+                                ${event.eventType}
+                            </span>` : '';
+
+                        const slideHtml = `
+                            <a href="/Events/Details/${event.id}" 
+                               class="flex-shrink-0 h-full rounded-2xl overflow-hidden relative group block shadow-xl hover:shadow-2xl transition-all border border-gray-100" 
+                               style="width: calc(50% - 12px);">
+                               <div class="absolute inset-0 bg-cover bg-center transition-transform duration-1000 group-hover:scale-105 ${fallbackBg}" style="background-image: ${imgBg};"></div>
+                               <div class="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent opacity-90"></div>
+                               <div class="absolute inset-0 p-8 flex flex-col justify-start text-white">
+                                   <div class="flex items-center gap-2 mb-4">
+                                       ${categoryBadgeHtml}
+                                       <span class="bg-emerald-500 text-white text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full w-max shadow-md">
+                                           ${priceDisplayHtml}
+                                       </span>
+                                   </div>
+                                   <h3 class="text-3xl font-extrabold mb-3 line-clamp-2 leading-tight drop-shadow-md">${event.name}</h3>
+                                   <div class="flex items-center gap-6 text-sm text-gray-200 font-medium drop-shadow-sm">
+                                       <span class="flex items-center">
+                                           <svg class="h-5 w-5 mr-2 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /></svg>
+                                           ${locationDisplayHtml}
+                                       </span>
+                                       <span class="flex items-center">
+                                           <svg class="h-5 w-5 mr-2 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                                           ${formattedStartDate}
+                                       </span>
+                                   </div>
+                               </div>
+                            </a>
+                        `;
+                        track.insertAdjacentHTML('beforeend', slideHtml);
+                    });
+
+                    startDualCarouselLogic(events.length);
+                } catch (err) {
+                    console.error("Dual Carousel fetch error:", err);
+                }
+            }
+
+            function startDualCarouselLogic(totalSlides) {
+                const track = document.getElementById('dual-hero-track');
+                if (totalSlides <= 2) return; 
+
+                let currentIndex = 0;
+                setInterval(() => {
+                    const maxIndex = totalSlides - 2; 
+                    currentIndex++;
+                    if (currentIndex > maxIndex) currentIndex = 0; 
+                    track.style.transform = `translateX(calc(-${currentIndex} * (50% + 12px)))`;
+                }, 4000);
+            }
+
+            populateDualCarousel();
         });
     </script>
 }
