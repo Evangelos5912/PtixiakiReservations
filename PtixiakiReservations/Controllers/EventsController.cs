@@ -1012,7 +1012,6 @@ public class EventsController(
                 if (matchedUsers == null || !matchedUsers.Any())
                 {
                     var sqlTerms = term.Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(t => t.ToLower()).ToList();
-
                     var dbUsersQuery = userManager.Users.AsQueryable();
                     
                     foreach(var st in sqlTerms)
@@ -1025,7 +1024,6 @@ public class EventsController(
                     }
 
                     var dbUsers = await dbUsersQuery.Take(20).ToListAsync();
-
                     matchedUsers = dbUsers.Select(u => new OrganizerSearchDto { Id = u.Id }).ToList();
                 }
 
@@ -1136,9 +1134,13 @@ public class EventsController(
                         if (ratings.Any()) { avgRat = ratings.Average(); revCount = ratings.Count; }
                     }
 
+                    // Direct static path resolution
+                    string normalizedEventImg = string.IsNullOrEmpty(e.ImagePath) ? null : 
+                        (e.ImagePath.StartsWith("/") ? e.ImagePath : $"/{e.ImagePath}");
+
                     results.Add(new {
                         type = "event", id = e.Id, name = e.Name, startDateTime = e.StartDateTime.ToString("s"), endTime = e.EndTime.ToString("s"),
-                        imagePath = !string.IsNullOrEmpty(e.ImagePath) ? (e.ImagePath.EndsWith(".webp") ? e.ImagePath : $"/Events/GetCompressedImage?path={e.ImagePath}&width=800") : null,
+                        imagePath = normalizedEventImg,
                         eventType = e.EventType?.Name, venueName = e.Venue?.Name ?? "No Venue", cityName = e.Venue?.City?.Name ?? "N/A",
                         ticketPrice = e.TicketPrice, parentEventId = e.ParentEventId, childCount = e.ChildEvents?.Count ?? 0,
                         minPrice = e.ChildEvents?.Any() == true ? e.ChildEvents.Min(c => c.TicketPrice) : e.TicketPrice,
@@ -1156,9 +1158,12 @@ public class EventsController(
                 var venueList = await vq.Skip(venuesToSkip).Take(venuesToTake).ToListAsync();
                 foreach (var v in venueList)
                 {
+                    string normalizedVenueImg = string.IsNullOrEmpty(v.imgUrl) ? "/images/image.jpg" : 
+                        (v.imgUrl.StartsWith("/") ? v.imgUrl : $"/images/{v.imgUrl}");
+
                     results.Add(new {
                         type = "venue", id = v.Id, name = v.Name, cityName = v.City?.Name ?? "N/A", postalCode = v.PostalCode ?? "",
-                        imagePath = string.IsNullOrEmpty(v.imgUrl) ? "/images/image.jpg" : (v.imgUrl.StartsWith("/") ? v.imgUrl : $"/images/{v.imgUrl}"),
+                        imagePath = normalizedVenueImg,
                         phone = v.Phone ?? "No phone provided", layoutCount = context.Layout.Count(l => l.VenueId == v.Id),
                         categoryNames = v.VenueCategory?.Where(vc => vc.EventType != null).Select(vc => vc.EventType.Name).ToList() ?? new List<string>()
                     });
