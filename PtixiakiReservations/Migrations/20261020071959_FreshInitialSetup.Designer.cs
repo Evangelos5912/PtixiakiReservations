@@ -12,8 +12,8 @@ using PtixiakiReservations.Data;
 namespace PtixiakiReservations.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260909163545_AddedEventReservations")]
-    partial class AddedEventReservations
+    [Migration("20261020071959_FreshInitialSetup")]
+    partial class FreshInitialSetup
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -525,8 +525,8 @@ namespace PtixiakiReservations.Migrations
                     b.Property<bool>("IsPastReservation")
                         .HasColumnType("boolean");
 
-                    b.Property<int?>("Rating")
-                        .HasColumnType("integer");
+                    b.Property<double?>("Rating")
+                        .HasColumnType("double precision");
 
                     b.Property<string>("Review")
                         .HasColumnType("text");

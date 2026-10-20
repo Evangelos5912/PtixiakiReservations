@@ -6,18 +6,14 @@
     ViewData["Title"] = "Event Details";
     var displayDescription = Model.Description ?? Model.ParentEvent?.Description;
     
-    // Determine if this event acts as a master container for multiple sub-schedules
     var hasSchedules = Model.ParentEventId == null && Model.ChildEvents != null && Model.ChildEvents.Any();
     
-    // Determine if this is an empty Master Event (No Venue, No Children yet)
     var isEmptyMasterEvent = Model.ParentEventId == null && Model.VenueId == null && (!Model.ChildEvents?.Any() ?? true);
 
-    // Determine if this is a reviewable leaf node (Standalone event OR a child/sub event)
     bool isReviewableNode = (Model.VenueId != null && !hasSchedules) || Model.ParentEventId != null;
 
     var reviews = ViewBag.EventReviews as List<PtixiakiReservations.Models.Reservation> ?? new List<PtixiakiReservations.Models.Reservation>();
 
-    // Safely collect gallery images (fallback to parent if it's a sub-event)
     var galleryImages = Model.GalleryImages?.ToList() ?? new List<PtixiakiReservations.Models.EventImage>();
     if (!galleryImages.Any() && Model.ParentEvent?.GalleryImages != null)
     {
@@ -74,14 +70,15 @@
         <!-- Sticky Navigation Menu -->
         <div class="sticky top-0 z-40 bg-white/95 backdrop-blur-sm border-b border-gray-200 shadow-sm w-full">
             <nav class="flex px-8 py-4 space-x-8 overflow-x-auto hide-scrollbar">
-                <a href="#general-info" class="text-sm font-bold text-gray-600 hover:text-blue-600 uppercase tracking-wider transition-colors relative group py-1">
+                <!-- A11y: Enforce minimum 48px touch targets for nav links -->
+                <a href="#general-info" class="text-sm font-bold text-gray-600 hover:text-blue-600 uppercase tracking-wider transition-colors relative group py-2 min-h-[48px] flex items-center">
                     General Info
                     <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-blue-600 transition-all duration-300 ease-out group-hover:w-full"></span>
                 </a>
                 
                 @if (displayDescription != null)
                 {
-                    <a href="#descriptionArea" class="text-sm font-bold text-gray-600 hover:text-blue-600 uppercase tracking-wider transition-colors relative group py-1">
+                    <a href="#descriptionArea" class="text-sm font-bold text-gray-600 hover:text-blue-600 uppercase tracking-wider transition-colors relative group py-2 min-h-[48px] flex items-center">
                         Description
                         <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-blue-600 transition-all duration-300 ease-out group-hover:w-full"></span>
                     </a>
@@ -89,7 +86,7 @@
                 
                 @if (Model.Organizer != null)
                 {
-                    <a href="#OrganizerInfo" class="text-sm font-bold text-gray-600 hover:text-blue-600 uppercase tracking-wider transition-colors relative group py-1">
+                    <a href="#OrganizerInfo" class="text-sm font-bold text-gray-600 hover:text-blue-600 uppercase tracking-wider transition-colors relative group py-2 min-h-[48px] flex items-center">
                         Organizer
                         <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-blue-600 transition-all duration-300 ease-out group-hover:w-full"></span>
                     </a>
@@ -97,7 +94,7 @@
                 
                 @if (hasSchedules)
                 {
-                    <a href="#available-schedules" class="text-sm font-bold text-gray-600 hover:text-blue-600 uppercase tracking-wider transition-colors relative group py-1">
+                    <a href="#available-schedules" class="text-sm font-bold text-gray-600 hover:text-blue-600 uppercase tracking-wider transition-colors relative group py-2 min-h-[48px] flex items-center">
                         Schedules
                         <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-blue-600 transition-all duration-300 ease-out group-hover:w-full"></span>
                     </a>
@@ -105,7 +102,7 @@
 
                 @if (isReviewableNode)
                 {
-                    <a href="#community-reviews" class="text-sm font-bold text-gray-600 hover:text-blue-600 uppercase tracking-wider transition-colors relative group py-1">
+                    <a href="#community-reviews" class="text-sm font-bold text-gray-600 hover:text-blue-600 uppercase tracking-wider transition-colors relative group py-2 min-h-[48px] flex items-center">
                         Reviews (@reviews.Count)
                         <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-blue-600 transition-all duration-300 ease-out group-hover:w-full"></span>
                     </a>
@@ -127,15 +124,17 @@
                         <div>
                             @if (Model.StartDateTime.Date != Model.EndTime.Date)
                             {
-                                <h3 class="text-lg font-semibold text-gray-900">
+                                <!-- Semantic Header Order: H2 -->
+                                <h2 class="text-lg font-semibold text-gray-900">
                                     @Model.StartDateTime.ToString("MMM d, yyyy") - @Model.EndTime.ToString("MMM d, yyyy")
-                                </h3>
+                                </h2>
                             }
                             else
                             {
-                                <h3 class="text-lg font-semibold text-gray-900">
+                                <!-- Semantic Header Order: H2 -->
+                                <h2 class="text-lg font-semibold text-gray-900">
                                     @Model.StartDateTime.ToString("dddd, MMMM d, yyyy") 
-                                </h3>
+                                </h2>
                                 <p class="text-gray-700 mt-1 font-medium">
                                     @Model.StartDateTime.ToString("h:mm tt") - @Model.EndTime.ToString("h:mm tt")
                                 </p>
@@ -180,24 +179,28 @@
                             <div>
                                 @if (hasMultipleVenues)
                                 {
-                                    <h3 class="text-lg font-semibold text-gray-900">Multiple Locations</h3>
+                                    <!-- Semantic Header Order: H2 -->
+                                    <h2 class="text-lg font-semibold text-gray-900">Multiple Locations</h2>
                                     <p class="text-gray-700 mt-1">This event takes place across several venues.</p>
-                                    <a href="#available-schedules" class="inline-flex items-center mt-2 text-blue-700 hover:text-blue-900 font-medium transition-colors">
+                                    <!-- A11y: Expand Touch Target -->
+                                    <a href="#available-schedules" class="inline-flex items-center justify-center min-h-[48px] mt-2 text-blue-700 hover:text-blue-900 font-medium transition-colors">
                                         Check schedule below ↓
                                     </a>
                                 }
                                 else if (displayVenue != null)
                                 {
-                                    <h3 class="text-lg font-semibold text-gray-900">Location</h3>
+                                    <!-- Semantic Header Order: H2 -->
+                                    <h2 class="text-lg font-semibold text-gray-900">Location</h2>
                                     <p class="text-gray-800 mt-1 font-medium">@displayVenue.Name</p>
                                 
                                     @if (displayVenue.Address != null && displayVenue.City != null)
                                     {
                                         <p class="text-gray-600">@displayVenue.Address, @displayVenue.City.Name</p>
                                         
+                                        <!-- A11y: Expand Touch Target -->
                                         <a href="https://maps.google.com/?q=@(Uri.EscapeDataString($"{displayVenue.Name}, {displayVenue.Address}, {displayVenue.City.Name}"))" 
                                         target="_blank" rel="noopener noreferrer"
-                                        class="inline-flex items-center mt-3 text-blue-700 hover:text-blue-900 font-medium transition-colors">
+                                        class="inline-flex items-center min-h-[48px] mt-3 text-blue-700 hover:text-blue-900 font-medium transition-colors">
                                             View on Google Maps
                                             <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
                                         </a>
@@ -217,7 +220,8 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
                             </svg>
                             <div>
-                                <h3 class="text-lg font-semibold text-gray-900">Event Type</h3>
+                                <!-- Semantic Header Order: H2 -->
+                                <h2 class="text-lg font-semibold text-gray-900">Event Type</h2>
                                 <p class="text-gray-700 mt-1 font-medium">@Model.EventType.Name</p>
                             </div>
                         </div>
@@ -236,7 +240,8 @@
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                                         </svg>
                                     </div>
-                                    <h3 class="text-lg font-bold text-amber-900 mb-1">No Schedules Available</h3>
+                                    <!-- Semantic Header Order: H2 -->
+                                    <h2 class="text-lg font-bold text-amber-900 mb-1">No Schedules Available</h2>
                                     <p class="text-sm font-medium text-amber-700">There are no current available sub-events for this master event.</p>
                                 </div>
                                 <button disabled class="w-full block text-center px-6 py-4 bg-gray-100 text-gray-400 font-bold text-lg rounded-lg border border-gray-200 shadow-sm cursor-not-allowed">
@@ -247,10 +252,11 @@
                         else if(!hasSchedules)
                         {
                             <div class="text-center">
-                                <h3 class="text-2xl font-bold text-gray-900 mb-2">Reserve Your Spot</h3>
+                                <!-- Semantic Header Order: H2 -->
+                                <h2 class="text-2xl font-bold text-gray-900 mb-2">Reserve Your Spot</h2>
                                 <p class="text-gray-600 mb-6">Select your preferred seats and secure your tickets now.</p>
                                 <a href="@Url.Action("ReserveSeats", "Reservation", new { eventId = Model.Id })"
-                                class="w-full block text-center px-6 py-4 bg-blue-600 text-white font-semibold text-lg rounded-lg shadow-md hover:bg-blue-700 transition-all">
+                                class="w-full block text-center px-6 py-4 bg-blue-600 text-white font-semibold text-lg rounded-lg shadow-md hover:bg-blue-700 transition-all min-h-[48px]">
                                     Reserve Seats
                                 </a>
                             </div>
@@ -258,10 +264,11 @@
                         else
                         {
                             <div class="text-center">
-                                <h3 class="text-2xl font-bold text-gray-900 mb-2">Reserve Your Spot</h3>
+                                <!-- Semantic Header Order: H2 -->
+                                <h2 class="text-2xl font-bold text-gray-900 mb-2">Reserve Your Spot</h2>
                                 <p class="text-gray-600 mb-6">Multiple times and locations available.</p>
                                 <a href="#available-schedules"
-                                class="w-full block text-center px-6 py-4 bg-blue-600 text-white font-semibold text-lg rounded-lg shadow-md hover:bg-blue-700 transition-all">
+                                class="w-full block text-center px-6 py-4 bg-blue-600 text-white font-semibold text-lg rounded-lg shadow-md hover:bg-blue-700 transition-all min-h-[48px]">
                                     Select a Schedule
                                 </a>
                             </div>
@@ -275,10 +282,12 @@
             @if (displayDescription != null)
             {
             <div id="descriptionArea" class="mt-8 w-full scroll-mt-24">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">Description</h3>
+                <!-- Semantic Header Order: H2 -->
+                <h2 class="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">Description</h2>
                 <div class="relative">
                     <p id="event-description" class="text-gray-600 mb-2 break-words leading-relaxed whitespace-pre-wrap custom-line-clamp">@displayDescription</p>
-                    <button id="toggle-description-btn" class="hidden text-blue-600 hover:text-blue-800 font-medium text-sm focus:outline-none flex items-center transition-colors mt-2">
+                    <!-- A11y: 48px touch target and explicit aria-label -->
+                    <button id="toggle-description-btn" aria-label="Toggle full description text" class="hidden text-blue-600 hover:text-blue-800 font-medium text-sm focus:outline-none flex items-center transition-colors mt-2 min-h-[48px] px-2 -ml-2 rounded-lg hover:bg-blue-50">
                         <span>Read More</span>
                         <svg class="w-4 h-4 ml-1 transform transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                     </button>
@@ -300,17 +309,18 @@
                             }
 
                             <div class="w-full h-full flex-none snap-center">
-                                <img src="@gPath" class="w-full h-full object-cover" loading="lazy" />
+                                <img src="@gPath" class="w-full h-full object-cover" loading="lazy" alt="Event gallery image" />
                             </div>
                         }
                     </div>
                     
                     @if (galleryImages.Count > 1)
                     {
-                        <button id="btn-prev" type="button" class="hidden absolute left-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white p-2 rounded-full shadow-lg transition-all opacity-0 group-hover:opacity-100 z-10 md:block">
+                        <!-- A11y: Provide accessible names and touch targets -->
+                        <button id="btn-prev" aria-label="Previous gallery image" type="button" class="hidden absolute left-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white p-2 rounded-full shadow-lg transition-all opacity-0 group-hover:opacity-100 z-10 md:flex min-w-[48px] min-h-[48px] items-center justify-center border-none cursor-pointer">
                             <svg class="w-6 h-6 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
                         </button>
-                        <button id="btn-next" type="button" class="hidden absolute right-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white p-2 rounded-full shadow-lg transition-all opacity-0 group-hover:opacity-100 z-10 md:block">
+                        <button id="btn-next" aria-label="Next gallery image" type="button" class="hidden absolute right-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white p-2 rounded-full shadow-lg transition-all opacity-0 group-hover:opacity-100 z-10 md:flex min-w-[48px] min-h-[48px] items-center justify-center border-none cursor-pointer">
                             <svg class="w-6 h-6 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                         </button>
                     }
@@ -325,26 +335,28 @@
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
                         </div>
                         <div>
-                            <h3 class="text-lg font-bold text-gray-900">Organizer</h3>
+                            <!-- Semantic Header Order: H2 -->
+                            <h2 class="text-lg font-bold text-gray-900">Organizer</h2>
                             <p class="text-indigo-600 font-medium text-sm">@Model.Organizer.FirstName @Model.Organizer.LastName</p>
                         </div>
                     </div>
                     
                     <div class="space-y-3">
                         <div class="grid grid-cols-3 items-center">
-                            <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Phone:</h3>
+                            <!-- Semantic HTML: Use generic elements for list data instead of headers -->
+                            <span class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Phone:</span>
                             <p class="col-span-2 text-gray-900 font-medium">@(string.IsNullOrWhiteSpace(Model.Organizer.PhoneNumber) ? "Not Provided" : Model.Organizer.PhoneNumber)</p>
                         </div>
                         <div class="grid grid-cols-3 items-center">
-                            <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Email:</h3>
+                            <span class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Email:</span>
                             <p class="col-span-2 text-gray-900 font-medium break-words">@Model.Organizer.Email</p>
                         </div>
                         <div class="grid grid-cols-3 items-center">
-                            <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Address:</h3>
+                            <span class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Address:</span>
                             <p class="col-span-2 text-gray-900 font-medium">@(string.IsNullOrWhiteSpace(Model.Organizer.Address) ? "Not Provided" : Model.Organizer.Address)</p>
                         </div>
                         <div class="grid grid-cols-3 items-center">
-                            <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Zip Code:</h3>
+                            <span class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Zip Code:</span>
                             <p class="col-span-2 text-gray-900 font-medium">@(string.IsNullOrWhiteSpace(Model.Organizer.PostalCode) ? "Not Provided" : Model.Organizer.PostalCode)</p>
                         </div>
                     </div>
@@ -419,7 +431,8 @@
                                         </span>
                                     </td>
                                     <td class="px-8 py-4 text-right">
-                                        <a href="@Url.Action("Details", "Events", new { id = child.Id })" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                                        <!-- A11y: Enforce touch targets -->
+                                        <a href="@Url.Action("Details", "Events", new { id = child.Id })" class="inline-flex items-center justify-center min-h-[48px] px-4 py-2 border border-transparent text-sm font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
                                             View & Reserve
                                         </a>
                                     </td>
@@ -430,11 +443,12 @@
                     
                     @if (totalSchedulePages > 1)
                     {
-                        <div class="bg-white px-8 py-5 border-t border-gray-200 flex items-center justify-center gap-2">
+                        <div class="bg-white px-8 py-5 border-t border-gray-200 flex items-center justify-center gap-2 flex-wrap">
                             @if (schedulePage > 1)
                             {
+                                <!-- A11y: 48px touch targets for pagination -->
                                 <a href="@(Url.Action("Details", "Events", new { id = Model.Id, schedulePage = schedulePage - 1 }) + "#available-schedules")"
-                                   class="px-3 py-2 text-sm font-medium rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors">
+                                   class="px-4 py-3 min-h-[48px] flex items-center justify-center text-sm font-medium rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors">
                                     Previous
                                 </a>
                             }
@@ -443,14 +457,14 @@
                             {
                                 if (pageNumber == schedulePage)
                                 {
-                                    <span class="min-w-10 px-3 py-2 text-sm font-semibold rounded-md bg-blue-600 text-white text-center">
+                                    <span class="min-w-12 px-4 py-3 min-h-[48px] flex items-center justify-center text-sm font-semibold rounded-md bg-blue-600 text-white text-center">
                                         @pageNumber
                                     </span>
                                 }
                                 else
                                 {
                                     <a href="@(Url.Action("Details", "Events", new { id = Model.Id, schedulePage = pageNumber }) + "#available-schedules")"
-                                       class="min-w-10 px-3 py-2 text-sm font-medium rounded-md border border-gray-300 text-gray-700 text-center hover:bg-gray-50 transition-colors">
+                                       class="min-w-12 px-4 py-3 min-h-[48px] flex items-center justify-center text-sm font-medium rounded-md border border-gray-300 text-gray-700 text-center hover:bg-gray-50 transition-colors">
                                         @pageNumber
                                     </a>
                                 }
@@ -458,8 +472,9 @@
 
                             @if (schedulePage < totalSchedulePages)
                             {
+                                <!-- A11y: 48px touch targets for pagination -->
                                 <a href="@(Url.Action("Details", "Events", new { id = Model.Id, schedulePage = schedulePage + 1 }) + "#available-schedules")"
-                                   class="px-3 py-2 text-sm font-medium rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors">
+                                   class="px-4 py-3 min-h-[48px] flex items-center justify-center text-sm font-medium rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors">
                                     Next
                                 </a>
                             }
@@ -478,7 +493,8 @@
                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.690h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
                             </div>
                             <div>
-                                <h3 class="text-xl font-bold text-gray-900">How was your experience?</h3>
+                                <!-- Semantic Header Order: H2 -->
+                                <h2 class="text-xl font-bold text-gray-900">How was your experience?</h2>
                                 <p class="text-sm text-gray-600">Our records show you attended this event. Share your thoughts!</p>
                             </div>
                         </div>
@@ -492,9 +508,10 @@
                                     <p class="font-bold text-gray-900 text-sm">Did you attend this event?</p>
                                     <p class="text-xs text-gray-500">Confirm attendance to unlock the rating options.</p>
                                 </div>
-                                <label class="relative inline-flex items-center cursor-pointer">
-                                    <input type="checkbox" name="attended" value="true" class="sr-only peer" id="attendedToggle" onchange="toggleReviewForm()">
-                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                                <!-- A11y: Include aria-label and ensure container meets minimum touch height -->
+                                <label class="relative inline-flex items-center cursor-pointer min-h-[48px]">
+                                    <input type="checkbox" name="attended" aria-label="Confirm attendance" value="true" class="sr-only peer" id="attendedToggle" onchange="toggleReviewForm()">
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[14px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
                                 </label>
                             </div>
 
@@ -503,8 +520,9 @@
                                 <div>
                                     <label class="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-2">Rate your experience</label>
                                     <div class="flex items-center space-x-4 bg-gray-50 p-4 rounded-xl border border-gray-200">
-                                        <input type="range" name="rating" id="ratingSlider" min="0.5" max="5.0" step="0.5" value="5.0" 
-                                               class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                                        <!-- A11y: Added aria-label and py-3 for touch target area -->
+                                        <input type="range" name="rating" aria-label="Rating out of 5" id="ratingSlider" min="0.5" max="5.0" step="0.5" value="5.0" 
+                                               class="w-full h-2 py-3 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
                                                oninput="document.getElementById('ratingDisplay').innerText = parseFloat(this.value).toFixed(1)">
                                         <div class="font-black text-xl text-yellow-500 w-16 text-center bg-white py-1 px-2 rounded-lg shadow-sm border border-gray-100">
                                             <span id="ratingDisplay">5.0</span>★
@@ -513,11 +531,12 @@
                                 </div>
 
                                 <div>
-                                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-2">Leave a comment (Optional)</label>
-                                    <textarea name="review" rows="3" class="w-full border border-gray-300 rounded-xl shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 p-3 text-sm text-gray-900" placeholder="Tell us what you enjoyed most..."></textarea>
+                                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-2" for="reviewTextInput">Leave a comment (Optional)</label>
+                                    <!-- A11y: Explicit id matching the label and aria-label fallback -->
+                                    <textarea id="reviewTextInput" name="review" aria-label="Review comment" rows="3" class="w-full border border-gray-300 rounded-xl shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 p-3 text-sm text-gray-900" placeholder="Tell us what you enjoyed most..."></textarea>
                                 </div>
 
-                                <button type="submit" id="submitReviewBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-xl transition-all shadow-md text-sm">
+                                <button type="submit" id="submitReviewBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 min-h-[48px] rounded-xl transition-all shadow-md text-sm">
                                     Submit Review
                                 </button>
                             </div>
@@ -531,10 +550,11 @@
             {
                 <div id="community-reviews" class="mt-16 pt-8 border-t border-gray-200 scroll-mt-24">
                     <div class="flex items-center justify-between mb-6">
-                        <h3 class="text-2xl font-extrabold text-gray-900 flex items-center">
+                        <!-- Semantic Header Order: H2 -->
+                        <h2 class="text-2xl font-extrabold text-gray-900 flex items-center">
                             <svg class="w-6 h-6 mr-2 text-yellow-500" fill="currentColor" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
                             Community Reviews
-                        </h3>
+                        </h2>
                         <span class="bg-indigo-50 text-indigo-700 font-bold px-3 py-1 rounded-full text-sm border border-indigo-100">
                             @reviews.Count @(reviews.Count == 1 ? "Review" : "Reviews")
                         </span>
@@ -560,8 +580,9 @@
                                                     @(rev.ApplicationUser?.FirstName?.Substring(0, 1).ToUpper() ?? "A")
                                                 </div>
                                                 <div>
-                                                    <h4 class="font-bold text-gray-900 text-sm">@(rev.ApplicationUser?.FirstName ?? "Verified") @(rev.ApplicationUser?.LastName ?? "Attendee")</h4>
-                                                    <p class="text-[11px] text-gray-400 font-medium">Attended on @rev.Date.ToString("MMM dd, yyyy")</p>
+                                                    <!-- Semantic Header Order: H3 child of H2 -->
+                                                    <h3 class="font-bold text-gray-900 text-sm m-0">@(rev.ApplicationUser?.FirstName ?? "Verified") @(rev.ApplicationUser?.LastName ?? "Attendee")</h3>
+                                                    <p class="text-[11px] text-gray-400 font-medium m-0">Attended on @rev.Date.ToString("MMM dd, yyyy")</p>
                                                 </div>
                                             </div>
                                             <div class="bg-amber-50 text-amber-800 font-extrabold px-2.5 py-1 rounded-lg text-xs border border-amber-200 flex items-center shadow-xs">
@@ -571,7 +592,7 @@
                                         </div>
                                         @if (!string.IsNullOrEmpty(rev.Review))
                                         {
-                                            <p class="text-gray-600 text-sm leading-relaxed mt-2 italic">"@rev.Review"</p>
+                                            <p class="text-gray-600 text-sm leading-relaxed mt-2 italic m-0">"@rev.Review"</p>
                                         }
                                     </div>
                                 </div>
@@ -586,7 +607,8 @@
     
     <!-- Navigation Utility -->
     <div class="mt-8 mb-8 pb-8 text-center">
-        <a href="@Url.Action("EventsForToday", "Events")" class="inline-flex items-center px-6 py-3 bg-white border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition-colors shadow-sm font-bold text-sm">
+        <!-- A11y: Enforce touch targets -->
+        <a href="@Url.Action("EventsForToday", "Events")" class="inline-flex items-center justify-center px-6 py-3 min-h-[48px] bg-white border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition-colors shadow-sm font-bold text-sm">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
@@ -628,9 +650,10 @@
         if (wishlistContainer) {
             wishlistContainer.innerHTML = `
             <div class="flex items-center justify-center space-x-3 mt-2">
-                <h4 class="text-gray-600 text-sm font-bold uppercase tracking-wider">Add to Wishlist</h4>
-                <div id="wishlist-id-${eventId}" class="cursor-pointer flex justify-center items-center bg-white p-2 rounded-full shadow-sm border border-gray-200 hover:shadow-md hover:bg-gray-50 transition-all">
-                    <button type="button" onclick="window.wishlistAction(event, ${eventId})" class="focus:outline-none flex items-center justify-center">
+                <div class="text-gray-600 text-sm font-bold uppercase tracking-wider">Add to Wishlist</div>
+                <!-- A11y: Extended touch target wrapper for Javascript injected wishlist button -->
+                <div id="wishlist-id-${eventId}" class="cursor-pointer flex justify-center items-center bg-white rounded-full shadow-sm border border-gray-200 hover:shadow-md hover:bg-gray-50 transition-all">
+                    <button type="button" aria-label="Toggle wishlist" onclick="window.wishlistAction(event, ${eventId})" class="focus:outline-none flex items-center justify-center min-w-[48px] min-h-[48px] border-none bg-transparent rounded-full cursor-pointer">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#eab308" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
                         </svg>
@@ -646,8 +669,9 @@
                     if (isWishlisted === true) {
                         const target = document.getElementById(`wishlist-id-${eventId}`);
                         if (target) {
+                            // A11y update active state button injection
                             target.innerHTML = `
-                                <button type="button" onclick="window.wishlistAction(event, ${eventId})" class="focus:outline-none">
+                                <button type="button" aria-label="Toggle wishlist" onclick="window.wishlistAction(event, ${eventId})" class="focus:outline-none flex items-center justify-center min-w-[48px] min-h-[48px] border-none bg-transparent rounded-full cursor-pointer">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#eab308" stroke="#eab308" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                         <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
                                     </svg>

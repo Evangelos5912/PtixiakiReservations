@@ -7,7 +7,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace PtixiakiReservations.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class FreshInitialSetup : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -47,7 +47,8 @@ namespace PtixiakiReservations.Migrations
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Name = table.Column<string>(type: "text", nullable: true)
+                    Name = table.Column<string>(type: "text", nullable: true),
+                    ImagePath = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -89,14 +90,17 @@ namespace PtixiakiReservations.Migrations
                     VenueManagerRequestDate = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
                     VenueManagerRequestReason = table.Column<string>(type: "text", nullable: true),
                     VenueManagerRequestStatus = table.Column<string>(type: "text", nullable: true),
+                    VenueManagerRequestDocumentPath = table.Column<string>(type: "text", nullable: true),
                     HasRequestedEventManagerRole = table.Column<bool>(type: "boolean", nullable: false),
                     EventManagerRequestDate = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
                     EventManagerRequestReason = table.Column<string>(type: "text", nullable: true),
                     EventManagerRequestStatus = table.Column<string>(type: "text", nullable: true),
+                    EventManagerRequestDocumentPath = table.Column<string>(type: "text", nullable: true),
                     HasRequestedSuperOrganizerRole = table.Column<bool>(type: "boolean", nullable: false),
                     SuperOrganizerRequestDate = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
                     SuperOrganizerRequestReason = table.Column<string>(type: "text", nullable: true),
                     SuperOrganizerRequestStatus = table.Column<string>(type: "text", nullable: true),
+                    SuperOrganizerRequestDocumentPath = table.Column<string>(type: "text", nullable: true),
                     UserName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
                     NormalizedUserName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
                     Email = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
@@ -303,14 +307,23 @@ namespace PtixiakiReservations.Migrations
                     StartDateTime = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
                     EndTime = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
                     EventTypeId = table.Column<int>(type: "integer", nullable: false),
-                    VenueId = table.Column<int>(type: "integer", nullable: false),
+                    VenueId = table.Column<int>(type: "integer", nullable: true),
                     LayoutId = table.Column<int>(type: "integer", nullable: true),
+                    Description = table.Column<string>(type: "text", nullable: true),
+                    OrganizerId = table.Column<string>(type: "text", nullable: true),
                     ParentEventId = table.Column<int>(type: "integer", nullable: true),
+                    TicketPrice = table.Column<double>(type: "double precision", nullable: true),
                     ImagePath = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Event", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Event_AspNetUsers_OrganizerId",
+                        column: x => x.OrganizerId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_Event_EventType_EventTypeId",
                         column: x => x.EventTypeId,
@@ -338,6 +351,110 @@ namespace PtixiakiReservations.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "UnitGroup",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Name = table.Column<string>(type: "text", nullable: true),
+                    Top = table.Column<decimal>(type: "numeric", nullable: false),
+                    Left = table.Column<decimal>(type: "numeric", nullable: false),
+                    LayoutId = table.Column<int>(type: "integer", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_UnitGroup", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_UnitGroup_Layout_LayoutId",
+                        column: x => x.LayoutId,
+                        principalTable: "Layout",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "EventImage",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    EventId = table.Column<int>(type: "integer", nullable: false),
+                    ImagePath = table.Column<string>(type: "text", nullable: true),
+                    DisplayOrder = table.Column<int>(type: "integer", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_EventImage", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_EventImage_Event_EventId",
+                        column: x => x.EventId,
+                        principalTable: "Event",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Wishlist",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    UserId = table.Column<string>(type: "text", nullable: true),
+                    EventId = table.Column<int>(type: "integer", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Wishlist", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Wishlist_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Wishlist_Event_EventId",
+                        column: x => x.EventId,
+                        principalTable: "Event",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "NonSelectable",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    LayoutId = table.Column<int>(type: "integer", nullable: false),
+                    X = table.Column<decimal>(type: "numeric", nullable: false),
+                    Y = table.Column<decimal>(type: "numeric", nullable: false),
+                    Width = table.Column<decimal>(type: "numeric", nullable: false),
+                    Height = table.Column<decimal>(type: "numeric", nullable: false),
+                    ShapeType = table.Column<string>(type: "text", nullable: true),
+                    BackgroundColor = table.Column<string>(type: "text", nullable: true),
+                    Name = table.Column<string>(type: "text", nullable: true),
+                    Scene = table.Column<bool>(type: "boolean", nullable: false),
+                    UnitGroupId = table.Column<int>(type: "integer", nullable: true),
+                    UnitGrouId = table.Column<int>(type: "integer", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_NonSelectable", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_NonSelectable_Layout_LayoutId",
+                        column: x => x.LayoutId,
+                        principalTable: "Layout",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_NonSelectable_UnitGroup_UnitGrouId",
+                        column: x => x.UnitGrouId,
+                        principalTable: "UnitGroup",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Seat",
                 columns: table => new
                 {
@@ -347,7 +464,11 @@ namespace PtixiakiReservations.Migrations
                     Y = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
                     Name = table.Column<string>(type: "text", nullable: true),
                     Available = table.Column<bool>(type: "boolean", nullable: false),
-                    LayoutId = table.Column<int>(type: "integer", nullable: false)
+                    LayoutId = table.Column<int>(type: "integer", nullable: false),
+                    Width = table.Column<decimal>(type: "numeric", nullable: true),
+                    Height = table.Column<decimal>(type: "numeric", nullable: true),
+                    UnitGroupId = table.Column<int>(type: "integer", nullable: true),
+                    UnitGrouId = table.Column<int>(type: "integer", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -356,6 +477,12 @@ namespace PtixiakiReservations.Migrations
                         name: "FK_Seat_Layout_LayoutId",
                         column: x => x.LayoutId,
                         principalTable: "Layout",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Seat_UnitGroup_UnitGrouId",
+                        column: x => x.UnitGrouId,
+                        principalTable: "UnitGroup",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 });
@@ -374,7 +501,7 @@ namespace PtixiakiReservations.Migrations
                     IsPastReservation = table.Column<bool>(type: "boolean", nullable: false),
                     Attended = table.Column<bool>(type: "boolean", nullable: true),
                     Review = table.Column<string>(type: "text", nullable: true),
-                    Rating = table.Column<int>(type: "integer", nullable: true)
+                    Rating = table.Column<double>(type: "double precision", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -447,19 +574,44 @@ namespace PtixiakiReservations.Migrations
                 column: "EventTypeId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Event_ParentEventId",
-                table: "Event",
-                column: "ParentEventId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_Event_LayoutId",
                 table: "Event",
                 column: "LayoutId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Event_OrganizerId",
+                table: "Event",
+                column: "OrganizerId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Event_ParentEventId",
+                table: "Event",
+                column: "ParentEventId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Event_VenueId",
                 table: "Event",
                 column: "VenueId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_EventImage_EventId",
+                table: "EventImage",
+                column: "EventId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Layout_VenueId",
+                table: "Layout",
+                column: "VenueId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_NonSelectable_LayoutId",
+                table: "NonSelectable",
+                column: "LayoutId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_NonSelectable_UnitGrouId",
+                table: "NonSelectable",
+                column: "UnitGrouId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Reservation_EventId",
@@ -482,9 +634,14 @@ namespace PtixiakiReservations.Migrations
                 column: "LayoutId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Layout_VenueId",
-                table: "Layout",
-                column: "VenueId");
+                name: "IX_Seat_UnitGrouId",
+                table: "Seat",
+                column: "UnitGrouId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UnitGroup_LayoutId",
+                table: "UnitGroup",
+                column: "LayoutId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Venue_CityId",
@@ -505,6 +662,16 @@ namespace PtixiakiReservations.Migrations
                 name: "IX_VenueCategory_VenueId",
                 table: "VenueCategory",
                 column: "VenueId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Wishlist_EventId",
+                table: "Wishlist",
+                column: "EventId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Wishlist_UserId",
+                table: "Wishlist",
+                column: "UserId");
         }
 
         /// <inheritdoc />
@@ -526,19 +693,31 @@ namespace PtixiakiReservations.Migrations
                 name: "AspNetUserTokens");
 
             migrationBuilder.DropTable(
+                name: "EventImage");
+
+            migrationBuilder.DropTable(
+                name: "NonSelectable");
+
+            migrationBuilder.DropTable(
                 name: "Reservation");
 
             migrationBuilder.DropTable(
                 name: "VenueCategory");
 
             migrationBuilder.DropTable(
+                name: "Wishlist");
+
+            migrationBuilder.DropTable(
                 name: "AspNetRoles");
+
+            migrationBuilder.DropTable(
+                name: "Seat");
 
             migrationBuilder.DropTable(
                 name: "Event");
 
             migrationBuilder.DropTable(
-                name: "Seat");
+                name: "UnitGroup");
 
             migrationBuilder.DropTable(
                 name: "EventType");

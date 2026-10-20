@@ -16,6 +16,17 @@
     var currentUserId = currentUser != null ? currentUser.Id : "";
 }
 
+<!-- Server-Side Preload for LCP Hero Image -->
+@if (Model != null && Model.Any())
+{
+    var firstEventImage = Model.FirstOrDefault(e => !string.IsNullOrEmpty(e.ImagePath));
+    if (firstEventImage != null)
+    {
+        string lcpImg = firstEventImage.ImagePath.StartsWith("/") ? firstEventImage.ImagePath : "/" + firstEventImage.ImagePath;
+        <link rel="preload" as="image" href="@lcpImg" fetchpriority="high" />
+    }
+}
+
 <style>
     :root {
         --color-blue-50: #eff6ff;
@@ -96,7 +107,6 @@
     }
 </style>
 
-<!-- Safely inject our secure server-side vars into data attributes -->
 <div id="auth-state" class="hidden" 
      data-user-id="@currentUserId" 
      data-can-view-subevents="@canViewSubEvents.ToString().ToLower()"></div>
@@ -124,14 +134,14 @@
         <div class="bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] w-full border border-gray-200">
             
             <div class="bg-gray-50 border-b border-gray-200 px-6 py-4 flex flex-row items-center justify-between rounded-t-2xl">
-                <h3 class="text-lg font-bold text-gray-800 tracking-tight flex items-center gap-2">
+                <!-- Update heading hierarchy -->
+                <h2 class="text-lg font-bold text-gray-800 tracking-tight flex items-center gap-2">
                     <svg class="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                     Search Criteria
-                </h3>
+                </h2>
             </div>
 
             <div id="panel-body" class="p-6">
-                <!-- Radio Options for Result Type -->
                 <div class="flex items-center gap-6 mb-5 pb-5 border-b border-gray-100">
                     <label class="flex items-center gap-2 cursor-pointer">
                         <input type="radio" name="searchType" value="all" checked class="text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer">
@@ -158,7 +168,8 @@
                     </div>
 
                     <div class="w-full md:w-1/4 relative">
-                        <select id="event-type" class="w-full appearance-none bg-white border border-gray-300 rounded-xl shadow-sm py-3 px-4 pr-10 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors cursor-pointer">
+                        <!-- Include accessibility labels and touch targets -->
+                        <select id="event-type" aria-label="Filter by event category" class="w-full appearance-none bg-white border border-gray-300 rounded-xl shadow-sm py-3 px-4 pr-10 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors cursor-pointer">
                             <option value="">All Categories</option>
                         </select>
                         <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-400">
@@ -167,8 +178,9 @@
                     </div>
 
                     <div class="w-full md:w-1/4 relative" id="dateForEvents">
-                        <input type="text" id="date-range" placeholder="Select Dates" class="w-full bg-white border border-gray-300 rounded-xl shadow-sm py-3 px-4 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors cursor-pointer">
-                        <button id="reset-date" type="button" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors bg-white pl-2">
+                        <!-- Include accessibility labels and touch targets -->
+                        <input type="text" id="date-range" aria-label="Select date range" placeholder="Select Dates" class="w-full bg-white border border-gray-300 rounded-xl shadow-sm py-3 px-4 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors cursor-pointer min-h-[48px]">
+                        <button id="reset-date" type="button" aria-label="Clear date selection" class="absolute right-1 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors bg-white w-12 h-12 flex items-center justify-center rounded-full">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" /></svg>
                         </button>
                     </div>
@@ -201,7 +213,8 @@
             </h2>
             <div class="flex items-center gap-3 w-full sm:w-auto">
                 <div class="relative w-full sm:w-auto"> 
-                    <select id="variable-view" class="appearance-none bg-white border border-gray-300 rounded-xl py-2.5 px-4 pr-10 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors w-full sm:w-48 shadow-sm cursor-pointer">
+                    <!-- Include accessibility labels -->
+                    <select id="variable-view" aria-label="Sort order" class="appearance-none bg-white border border-gray-300 rounded-xl py-2.5 px-4 pr-10 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors w-full sm:w-48 shadow-sm cursor-pointer">
                         <option value="asc" selected>Sort by Date: Asc</option>
                         <option value="desc">Sort by Date: Desc</option>
                     </select>
@@ -210,7 +223,8 @@
                     </div>
                 </div>
                 <div class="relative w-full sm:w-auto"> 
-                    <select id="variable-pagination" class="appearance-none bg-white border border-gray-300 rounded-xl py-2.5 px-4 pr-10 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors w-full sm:w-36 shadow-sm cursor-pointer">
+                    <!-- Include accessibility labels -->
+                    <select id="variable-pagination" aria-label="Results per page" class="appearance-none bg-white border border-gray-300 rounded-xl py-2.5 px-4 pr-10 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors w-full sm:w-36 shadow-sm cursor-pointer">
                         <option value="12" selected>12 per page</option>
                         <option value="24">24 per page</option>
                         <option value="48">48 per page</option>
@@ -290,18 +304,20 @@
                 $('#search-term').val(urlParams.get('searchTerm'));
             }
 
-            dateRangePicker = flatpickr("#date-range", {
-                mode: "range",
-                dateFormat: "Y-m-d",
-                altInput: true,
-                altFormat: "d/m/Y",
-                conjunction: " to ",
-                minDate: "today",
-                onChange: function(selectedDates) {
-                    currentPage = 1;
-                    triggerSearch();
-                }
-            });
+            if (typeof flatpickr !== 'undefined') {
+                dateRangePicker = flatpickr("#date-range", {
+                    mode: "range",
+                    dateFormat: "Y-m-d",
+                    altInput: true,
+                    altFormat: "d/m/Y",
+                    conjunction: " to ",
+                    minDate: "today",
+                    onChange: function(selectedDates) {
+                        currentPage = 1;
+                        triggerSearch();
+                    }
+                });
+            }
 
             function loadEventTypes() {
                 return $.getJSON('/Events/GetEventTypes')
@@ -322,19 +338,15 @@
                     });
             }
 
-            loadEventTypes().always(function() {
-                performSearch();
-            });
-
             $('#reset-date').click(function() {
-                dateRangePicker.clear();
+                if(dateRangePicker) dateRangePicker.clear();
                 currentPage = 1;
                 triggerSearch();
             });
 
             $('#reset-search').click(function() {
                 $('#event-type').val('');
-                dateRangePicker.clear();
+                if(dateRangePicker) dateRangePicker.clear();
                 $('#search-term').val('');
                 $('input[name="searchType"][value="all"]').prop('checked', true);
                 window.location.href = '@Url.Action("EventsForToday", "Events")';
@@ -356,7 +368,7 @@
                 if ($('input[name="searchType"]:checked').val() == "venues") {
                     $('#dateForEvents').hide();
                     $('#archived-container').hide();
-                    dateRangePicker.clear();
+                    if(dateRangePicker) dateRangePicker.clear();
                     $('#archived-filter').prop('checked',false);
                 } else {
                     $('#dateForEvents').show();
@@ -459,12 +471,13 @@
                             return;
                         }
 
-                        data.events.forEach(function(item) {
+                        data.events.forEach(function(item, index) {
+                            const isLcp = index === 0;
                             if (item.type === 'venue') {
-                                container.append(buildVenueCard(item));
+                                container.append(buildVenueCard(item, isLcp));
                             } else {
                                 const timeClass = getEventTimeClass(new Date(item.startDateTime), new Date(item.endTime));
-                                container.append(buildEventCard(item, timeClass));
+                                container.append(buildEventCard(item, timeClass, isLcp));
                             }
                         });
 
@@ -477,13 +490,15 @@
                     });
             }
 
-            function buildVenueCard(venue) {
+            function buildVenueCard(venue, isLcp = false) {
                 const imgPath = venue.imagePath || '';
                 const hasImage = imgPath.trim() !== "";
                 const venueName = venue.name || 'Unnamed Venue';
                 const cityName = venue.cityName || 'Unknown';
                 const phone = venue.phone || 'No phone provided';
                 const layoutCount = venue.layoutCount || 0;
+                
+                const imgAttributes = isLcp ? 'fetchpriority="high" loading="eager"' : 'loading="lazy"';
                 
                 let categoriesHtml = '';
                 if (venue.categoryNames && venue.categoryNames.length > 0) {
@@ -500,7 +515,7 @@
                         <div class="relative h-40 w-full shrink-0 mb-4 z-10">
                             <div class="absolute inset-0 overflow-hidden rounded-xl bg-gray-100">
                                 ${hasImage ? 
-                                    `<img src="${imgPath}" alt="${venueName}" class="w-full h-full object-cover transform hover:scale-105 transition-transform duration-300" />` : 
+                                    `<img src="${imgPath}" alt="${venueName}" ${imgAttributes} class="w-full h-full object-cover transform hover:scale-105 transition-transform duration-300" />` : 
                                     `<div class="flex items-center justify-center h-full text-gray-400"><svg class="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg></div>`
                                 }
                             </div>
@@ -537,7 +552,7 @@
                 </div>`;
             }
 
-            function buildEventCard(event, timeClass) {
+            function buildEventCard(event, timeClass, isLcp = false) {
                 const startDate = new Date(event.startDateTime);
                 const endDate = new Date(event.endTime);
                 const isMultiDay = startDate.toDateString() !== endDate.toDateString();
@@ -546,9 +561,11 @@
                 if (isMultiDay) {
                     const startStr = startDate.toLocaleDateString('en-US', {month: 'short', day: 'numeric', year: 'numeric' });
                     const endStr = endDate.toLocaleDateString('en-US', {month: 'short', day: 'numeric', year: 'numeric' });
+                    // Inline string
                     dateDisplayHtml = `<p class="text-sm text-gray-800 font-bold">${startStr} - ${endStr}</p>`;
                 } else {
                     const dateStr = startDate.toLocaleDateString('en-US', {month: 'long', day: 'numeric', year: 'numeric' });
+                    // Inline string
                     const timeStr = `${startDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })} - ${endDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`;
                     dateDisplayHtml = `<p class="text-sm text-gray-800 font-bold">${dateStr}</p><p class="text-sm text-gray-500 font-medium">${timeStr}</p>`;
                 }
@@ -557,6 +574,8 @@
                 const hasImage = imgPath.trim() !== "";
                 const eventName = event.name || 'Unnamed Event';
                 const eventId = event.id;
+
+                const imgAttributes = isLcp ? 'fetchpriority="high" loading="eager"' : 'loading="lazy"';
 
                 const isMasterEvent = event.parentEventId == null;
                 const showSubEventsLink = isMasterEvent && canViewSubEvents;
@@ -573,6 +592,7 @@
                         if (minP === maxP) {
                             priceDisplayHtml = minP > 0 ? `€${minP}` : "Free";
                         } else {
+                            // Inline string
                             priceDisplayHtml = `€${minP} - €${maxP}`;
                         }
                     } else {
@@ -626,7 +646,8 @@
 
                 let wishlistBadge = `
                 <div class="wishlist-badge cursor-help absolute top-7 left-7 bg-white/90 backdrop-blur-sm border border-gray-100 text-indigo-800 p-2 z-20 rounded-full shadow-sm hover:bg-white transition-colors wishlist-id-${eventId}">
-                    <button type="button" onclick="window.wishlistAction(event, ${eventId})" class="border-none bg-transparent p-0 cursor-pointer flex items-center justify-center">
+                    <!-- Include accessibility labels -->
+                    <button type="button" aria-label="Toggle wishlist" onclick="window.wishlistAction(event, ${eventId})" class="border-none bg-transparent p-0 cursor-pointer flex items-center justify-center">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#eab308" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
                         </svg>
@@ -635,18 +656,18 @@
 
                 if (currentUserId !== '') {
                     let wParams = { eventId: eventId, userId: currentUserId };
-                    $.getJSON('/Wishlist/returnItem', wParams)
-                        .done(function(isWishlisted) {
-                            if (isWishlisted === true) {
-                                $(`.wishlist-id-${eventId}`).html(`
-                                    <button type="button" onclick="window.wishlistAction(event, ${eventId})" class="border-none bg-transparent p-0 cursor-pointer flex items-center justify-center">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="#eab308" stroke="#eab308" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-                                        </svg>
-                                    </button>
-                                `);
-                            }
-                        });
+                    $.getJSON('/Wishlist/returnItem', wParams).done(function(isWishlisted) {
+                        if (isWishlisted === true) {
+                            $(`.wishlist-id-${eventId}`).html(`
+                                <!-- Include accessibility labels -->
+                                <button type="button" aria-label="Remove from wishlist" onclick="window.wishlistAction(event, ${eventId})" class="border-none bg-transparent p-0 cursor-pointer flex items-center justify-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="#eab308" stroke="#eab308" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                    </svg>
+                                </button>
+                            `);
+                        }
+                    });
                 }
 
                 let statusBadgeHtml = "";
@@ -670,7 +691,7 @@
                         <div class="relative h-40 w-full shrink-0 mb-4 z-10">
                             <div class="absolute inset-0 overflow-hidden rounded-xl bg-gray-100">
                                 ${hasImage ? 
-                                    `<img src="${imgPath}" alt="${eventName}" class="w-full h-full object-cover transform hover:scale-105 transition-transform duration-300" />` : 
+                                    `<img src="${imgPath}" alt="${eventName}" ${imgAttributes} class="w-full h-full object-cover transform hover:scale-105 transition-transform duration-300" />` : 
                                     `<div class="flex items-center justify-center h-full text-gray-400"><svg class="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg></div>`
                                 }
                             </div>
@@ -752,7 +773,8 @@
                             success: function(success) {
                                 if (success === true) {
                                     $(`.wishlist-id-${eventId}`).html(`
-                                    <button type="button" onclick="window.wishlistAction(event, ${eventId})" class="border-none bg-transparent p-0 cursor-pointer flex items-center justify-center">
+                                    <!-- Include accessibility labels -->
+                                    <button type="button" aria-label="Remove from wishlist" onclick="window.wishlistAction(event, ${eventId})" class="border-none bg-transparent p-0 cursor-pointer flex items-center justify-center">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="#eab308" stroke="#eab308" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                             <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
                                         </svg>
@@ -769,7 +791,8 @@
                             success: function(success) {
                                 if (success === true) {
                                     $(`.wishlist-id-${eventId}`).html(`
-                                    <button type="button" onclick="window.wishlistAction(event, ${eventId})" class="border-none bg-transparent p-0 cursor-pointer flex items-center justify-center">
+                                    <!-- Include accessibility labels -->
+                                    <button type="button" aria-label="Add to wishlist" onclick="window.wishlistAction(event, ${eventId})" class="border-none bg-transparent p-0 cursor-pointer flex items-center justify-center">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#eab308" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                             <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
                                         </svg>
@@ -953,7 +976,6 @@
                 return results;
             }
 
-            // Keyboard navigation for dropdown
             $('#search-term').on('keydown', function(e) {
                 const dropdown = $('#autocomplete-dropdown');
                 const isVisible = !dropdown.hasClass('hidden');
@@ -975,12 +997,15 @@
                 }
             });
 
-            // Close dropdown clicking outside
             $(document).on('click', function(e) {
                 if (!$(e.target).closest('#search-term, #autocomplete-dropdown').length) {
                     $('#autocomplete-dropdown').addClass('hidden');
                 }
             });
+
+            // Guarantee performSearch fires instantly on load
+            loadEventTypes();
+            performSearch();
         });
     </script>
     
@@ -1008,7 +1033,10 @@
 
                     track.innerHTML = ''; 
 
-                    events.forEach((event) => {
+                    events.forEach((event, index) => {
+                        const isLcp = index === 0;
+                        const imgAttributes = isLcp ? 'fetchpriority="high" loading="eager"' : 'loading="lazy"';
+                        
                         const formattedStartDate = new Date(event.startDateTime).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
                         
                         const childCount = event.childCount || event.ChildCount || 0;
@@ -1043,6 +1071,7 @@
                                 if (minP === maxP) {
                                     priceDisplayHtml = minP > 0 ? `€${minP}` : "Free";
                                 } else {
+                                    // Inline string
                                     priceDisplayHtml = `€${minP} - €${maxP}`;
                                 }
                             } else {
@@ -1069,7 +1098,7 @@
                             <a href="/Events/Details/${event.id}" 
                                class="flex-shrink-0 h-full rounded-2xl overflow-hidden relative group block shadow-xl hover:shadow-2xl transition-all border border-gray-100" 
                                style="width: calc(50% - 12px);">
-                               <div class="absolute inset-0 bg-cover bg-center transition-transform duration-1000 group-hover:scale-105 ${fallbackBg}" style="background-image: ${imgBg};"></div>
+                               <div class="absolute inset-0 bg-cover bg-center transition-transform duration-1000 group-hover:scale-105 ${fallbackBg}" style="background-image: ${imgBg};" ${imgAttributes}></div>
                                <div class="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent opacity-90"></div>
                                <div class="absolute inset-0 p-8 flex flex-col justify-start text-white">
                                    <div class="flex items-center gap-2 mb-4">

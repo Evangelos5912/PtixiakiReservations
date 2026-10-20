@@ -191,7 +191,13 @@ if (!builder.Environment.IsEnvironment("EF"))
     }
 
 
-    app.UseStaticFiles();
+    app.UseStaticFiles(new StaticFileOptions
+    {
+        OnPrepareResponse = ctx =>
+        {
+            ctx.Context.Response.Headers["Cache-Control"] = "public,max-age=31536000";
+        }
+    });
     app.MapStaticAssets();
 
     app.UseRouting();

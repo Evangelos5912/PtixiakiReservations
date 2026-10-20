@@ -102,15 +102,23 @@
         }
     };
 
-    async function initSignalR() {
-        try {
-            await connection.start();
-            if (isAdmin) await connection.invoke("RegisterAdmin");
-        } catch (err) {
-            console.error(err);
-        }
+function initSignalR() {
+        setTimeout(async () => {
+            try {
+                await connection.start();
+                if (isAdmin) await connection.invoke("RegisterAdmin");
+                console.log("Support Hub connected safely in the background.");
+            } catch (err) {
+                console.error("SignalR Connection Error: ", err);
+            }
+        }, 3000);
     }
-    initSignalR();
+
+    if (document.readyState === 'loading') {
+        document.addEventListener("DOMContentLoaded", initSignalR);
+    } else {
+        initSignalR();
+    }
 
     // --- UI State Management ---
     

@@ -15,7 +15,8 @@
         <!-- Header Banner -->
         <div class="w-full bg-gradient-to-r from-blue-600 to-indigo-700">
             <div class="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
-                <h3 class="text-xl font-bold text-white tracking-wide">Explore Events</h3>
+                <!-- Semantic heading hierarchy correction -->
+                <h2 class="text-xl font-bold text-white tracking-wide">Explore Events</h2>
             </div>
         </div>
 
@@ -45,9 +46,10 @@
                                         <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                                     </div>
                                     
-                                    <input type="text" id="search-term" placeholder="Search by event name, venue, or city..." class="block w-full pl-12 pr-4 py-4 text-gray-900 dark:text-white bg-transparent border-none focus:ring-0 text-base sm:text-lg font-medium placeholder-gray-400 outline-none" autocomplete="off">
+                                    <!-- A11y: 48px touch target height -->
+                                    <input type="text" id="search-term" placeholder="Search by event name, venue, or city..." class="block w-full min-h-[48px] pl-12 pr-4 py-4 text-gray-900 dark:text-white bg-transparent border-none focus:ring-0 text-base sm:text-lg font-medium placeholder-gray-400 outline-none" autocomplete="off">
                                         
-                                    <button id="search-button" class="hidden sm:flex shrink-0 px-6 py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all transform hover:scale-105 shadow-md border-none !no-underline">
+                                    <button id="search-button" class="hidden sm:flex shrink-0 px-6 py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all transform hover:scale-105 shadow-md border-none !no-underline min-h-[48px]">
                                         Search
                                     </button>
                                 </div>
@@ -55,8 +57,10 @@
                                 <div id="autocomplete-dropdown" class="absolute left-0 right-0 top-[calc(100%+10px)] z-30 bg-white dark:bg-gray-800 shadow-2xl rounded-2xl border border-gray-100 dark:border-gray-700 hidden max-h-72 overflow-y-auto w-full transition-colors"></div>
                             </div>
                             
-                            <button id="search-button-mobile" class="sm:hidden mt-4 w-full px-6 py-4 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 shadow-md border-none !no-underline">Search Events</button>
-                            <p id="search-validation-message" class="text-red-500 text-sm font-medium mt-2 hidden ml-2">* Please type something to search.</p>
+                            <!-- A11y: 48px touch target height -->
+                            <button id="search-button-mobile" class="sm:hidden mt-4 w-full px-6 py-4 min-h-[48px] bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 shadow-md border-none !no-underline">Search Events</button>
+                            <!-- Template literal fix -->
+                            <p id="search-validation-message" class="text-red-500 text-sm font-medium mt-2 hidden ml-2">Please type something to search.</p>
                         </div>
                     </div>
                     
@@ -116,17 +120,19 @@
                                 </div>
                             </template>
 
-                            <button x-on:click="prev()" class="absolute left-4 top-1/2 -translate-y-1/2 p-3 bg-black/30 hover:bg-black/60 text-white rounded-full backdrop-blur-md transition-all hidden md:block z-30 cursor-pointer border-none">
+                            <!-- A11y: Explicit aria-labels and touch target enforcement -->
+                            <button x-on:click="prev()" aria-label="Previous slide" class="absolute left-4 top-1/2 -translate-y-1/2 min-w-[48px] min-h-[48px] p-3 bg-black/30 hover:bg-black/60 text-white rounded-full backdrop-blur-md transition-all hidden md:block z-30 cursor-pointer border-none flex items-center justify-center">
                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
                             </button>
-                            <button x-on:click="next()" class="absolute right-4 top-1/2 -translate-y-1/2 p-3 bg-black/30 hover:bg-black/60 text-white rounded-full backdrop-blur-md transition-all hidden md:block z-30 cursor-pointer border-none">
+                            <button x-on:click="next()" aria-label="Next slide" class="absolute right-4 top-1/2 -translate-y-1/2 min-w-[48px] min-h-[48px] p-3 bg-black/30 hover:bg-black/60 text-white rounded-full backdrop-blur-md transition-all hidden md:block z-30 cursor-pointer border-none flex items-center justify-center">
                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                             </button>
 
                             <div class="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-30">
                                 <template x-for="(event, index) in events" :key="'dot-'+index">
-                                    <button x-on:click="goTo(index)" 
-                                            class="h-2 rounded-full transition-all duration-300 border-none cursor-pointer"
+                                    <!-- A11y: Expanded touch target via pseudo-element to strictly preserve visual layout -->
+                                    <button x-on:click="goTo(index)" aria-label="Select slide"
+                                            class="relative h-2 rounded-full transition-all duration-300 border-none cursor-pointer before:absolute before:-inset-y-4 before:-inset-x-2 before:content-['']"
                                             :class="currentIndex === index ? 'w-8 bg-blue-500' : 'w-2 bg-white/50 hover:bg-white/80'"></button>
                                 </template>
                             </div>
@@ -145,13 +151,14 @@
         {
             <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg mb-10 overflow-hidden transition-colors">
                 <div class="grid grid-cols-1 bg-gradient-to-r from-blue-600 to-indigo-700 px-6 py-4 flex flex-row items-center justify-between p-5">
-                    <h3 class="text-2xl font-bold text-white mb-5">Create an Account or Log in</h3>
+                    <!-- Semantic heading order -->
+                    <h2 class="text-2xl font-bold text-white mb-5">Create an Account or Log in</h2>
                     <p class="text-lg font-bold text-white mb-5">Make sure to Create or Log in with an account to get access to the features of the app and your personal profile where you can request higher role privileges.</p>
                     <div class="mb-5">
-                        <a class="mr-5 px-6 py-3 bg-white text-blue-600 font-bold rounded-lg shadow-md hover:bg-gray-100 transition-colors inline-block !no-underline" asp-area="Identity" asp-page="/Account/Login">
+                        <a class="mr-5 px-6 py-3 min-h-[48px] bg-white text-blue-600 font-bold rounded-lg shadow-md hover:bg-gray-100 transition-colors inline-flex items-center justify-center !no-underline" asp-area="Identity" asp-page="/Account/Login">
                             Log in
                         </a>
-                        <a class="px-6 py-3 bg-white text-blue-600 font-bold rounded-lg shadow-md hover:bg-gray-100 transition-colors inline-block !no-underline" asp-area="Identity" asp-page="/Account/Register">
+                        <a class="px-6 py-3 min-h-[48px] bg-white text-blue-600 font-bold rounded-lg shadow-md hover:bg-gray-100 transition-colors inline-flex items-center justify-center !no-underline" asp-area="Identity" asp-page="/Account/Register">
                             Register
                         </a>
                     </div>
@@ -161,23 +168,25 @@
 
         <!-- Recent Events -->
         <div class="mb-10 overflow-hidden">
-            <div class="flex w-full max-w-7xl justify-between rounded-xl p-5 bg-gradient-to-r from-blue-600 to-indigo-700 rounded">
+            <div class="flex w-full max-w-7xl justify-between items-center rounded-xl p-5 bg-gradient-to-r from-blue-600 to-indigo-700 rounded">
                 <div>
-                    <h3 class="text-2xl font-bold text-white mb-2">Recent Events</h3>
+                    <!-- Semantic heading order -->
+                    <h2 class="text-2xl font-bold text-white mb-2">Recent Events</h2>
                     <p class="text-lg text-white">Don't miss out on the most recent events.</p>
                 </div>
                 <div class="flex items-center">
-                    <a class="text-blue-600 bg-white rounded-3xl font-bold px-4 py-2 hover:bg-gray-100 shadow-md !no-underline" href="@Url.Action("EventsForToday", "Events")">View all Events</a>
+                    <a class="text-blue-600 bg-white rounded-3xl font-bold px-4 py-2 min-h-[48px] inline-flex items-center hover:bg-gray-100 shadow-md !no-underline" href="@Url.Action("EventsForToday", "Events")">View all Events</a>
                 </div>
             </div>
             <div class="relative w-full max-w-6xl mx-auto px-12 py-5">
                 <div class="overflow-hidden rounded-3xl py-4"> 
                     <div id="recent-events-track" class="flex transition-transform duration-500 ease-out" style="transform: translateX(0%);"></div>
                 </div>
-                <button id="recent-prev-btn" class="absolute left-0 top-1/2 -translate-y-1/2 bg-white dark:bg-gray-800 text-gray-800 dark:text-white p-3 rounded-full shadow-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors z-10 disabled:opacity-50 border-none cursor-pointer">
+                <!-- Accessible name and 48px touch target height -->
+                <button id="recent-prev-btn" aria-label="Previous recent events" class="absolute left-0 top-1/2 -translate-y-1/2 min-w-[48px] min-h-[48px] flex items-center justify-center bg-white dark:bg-gray-800 text-gray-800 dark:text-white p-3 rounded-full shadow-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors z-10 disabled:opacity-50 border-none cursor-pointer">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
                 </button>
-                <button id="recent-next-btn" class="absolute right-0 top-1/2 -translate-y-1/2 bg-white dark:bg-gray-800 text-gray-800 dark:text-white p-3 rounded-full shadow-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors z-10 disabled:opacity-50 border-none cursor-pointer">
+                <button id="recent-next-btn" aria-label="Next recent events" class="absolute right-0 top-1/2 -translate-y-1/2 min-w-[48px] min-h-[48px] flex items-center justify-center bg-white dark:bg-gray-800 text-gray-800 dark:text-white p-3 rounded-full shadow-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors z-10 disabled:opacity-50 border-none cursor-pointer">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
                 </button>
             </div>
@@ -186,17 +195,19 @@
         <!-- Event Categories -->
         <div class="mb-10 overflow-hidden">
             <div class="relative w-full max-w-6xl px-5">
-                <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-2 transition-colors">Event Categories</h3>
+                <!-- Semantic heading order -->
+                <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-2 transition-colors">Event Categories</h2>
                 <p class="text-lg text-gray-700 dark:text-gray-300 transition-colors">Choose one of our many Categories, we must have something you like.</p>
             </div>
             <div class="relative w-full max-w-6xl mx-auto px-12 py-5">
                 <div class="overflow-hidden rounded-xl">
                     <div id="category-track" class="flex transition-transform duration-500 ease-out" style="transform: translateX(0%);"></div>
                 </div>
-                <button id="prev-btn" class="absolute left-0 top-1/2 -translate-y-1/2 bg-white dark:bg-gray-800 text-gray-800 dark:text-white p-3 rounded-full shadow-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors z-10 disabled:opacity-50 border-none cursor-pointer">
+                <!-- Accessible name and 48px touch target height -->
+                <button id="prev-btn" aria-label="Previous categories" class="absolute left-0 top-1/2 -translate-y-1/2 min-w-[48px] min-h-[48px] flex items-center justify-center bg-white dark:bg-gray-800 text-gray-800 dark:text-white p-3 rounded-full shadow-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors z-10 disabled:opacity-50 border-none cursor-pointer">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
                 </button>
-                <button id="next-btn" class="absolute right-0 top-1/2 -translate-y-1/2 bg-white dark:bg-gray-800 text-gray-800 dark:text-white p-3 rounded-full shadow-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors z-10 disabled:opacity-50 border-none cursor-pointer">
+                <button id="next-btn" aria-label="Next categories" class="absolute right-0 top-1/2 -translate-y-1/2 min-w-[48px] min-h-[48px] flex items-center justify-center bg-white dark:bg-gray-800 text-gray-800 dark:text-white p-3 rounded-full shadow-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors z-10 disabled:opacity-50 border-none cursor-pointer">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
                 </button>
             </div>
@@ -204,23 +215,25 @@
 
         <!-- New Arrivals -->
         <div class="mb-10 overflow-hidden">
-            <div class="flex w-full max-w-7xl justify-between rounded-xl p-5 bg-gradient-to-r from-blue-600 to-indigo-700 rounded">
+            <div class="flex w-full max-w-7xl justify-between items-center rounded-xl p-5 bg-gradient-to-r from-blue-600 to-indigo-700 rounded">
                 <div>
-                    <h3 class="text-2xl font-bold text-white mb-2">New Arrivals</h3>
+                    <!-- Semantic heading order -->
+                    <h2 class="text-2xl font-bold text-white mb-2">New Arrivals</h2>
                     <p class="text-lg text-white">View some of our newest Events.</p>
                 </div>
                 <div class="flex items-center">
-                    <a class="text-blue-600 bg-white rounded-3xl px-4 py-2 font-bold hover:bg-gray-100 shadow-md !no-underline" href="@Url.Action("EventsForToday", "Events")">View all Events</a>
+                    <a class="text-blue-600 bg-white rounded-3xl px-4 py-2 min-h-[48px] font-bold inline-flex items-center hover:bg-gray-100 shadow-md !no-underline" href="@Url.Action("EventsForToday", "Events")">View all Events</a>
                 </div>
             </div>
             <div class="relative w-full max-w-6xl mx-auto px-12 py-5">
                 <div class="overflow-hidden rounded-xl py-4"> 
                     <div id="new-events-track" class="flex transition-transform duration-500 ease-out" style="transform: translateX(0%);"></div>
                 </div>
-                <button id="new-prev-btn" class="absolute left-0 top-1/2 -translate-y-1/2 bg-white dark:bg-gray-800 text-gray-800 dark:text-white p-3 rounded-full shadow-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors z-10 disabled:opacity-50 border-none cursor-pointer">
+                <!-- Accessible name and 48px touch target height -->
+                <button id="new-prev-btn" aria-label="Previous new arrivals" class="absolute left-0 top-1/2 -translate-y-1/2 min-w-[48px] min-h-[48px] flex items-center justify-center bg-white dark:bg-gray-800 text-gray-800 dark:text-white p-3 rounded-full shadow-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors z-10 disabled:opacity-50 border-none cursor-pointer">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
                 </button>
-                <button id="new-next-btn" class="absolute right-0 top-1/2 -translate-y-1/2 bg-white dark:bg-gray-800 text-gray-800 dark:text-white p-3 rounded-full shadow-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors z-10 disabled:opacity-50 border-none cursor-pointer">
+                <button id="new-next-btn" aria-label="Next new arrivals" class="absolute right-0 top-1/2 -translate-y-1/2 min-w-[48px] min-h-[48px] flex items-center justify-center bg-white dark:bg-gray-800 text-gray-800 dark:text-white p-3 rounded-full shadow-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors z-10 disabled:opacity-50 border-none cursor-pointer">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
                 </button>
             </div>
@@ -267,8 +280,9 @@
                 success: function(success) {
                     if (success) {
                         const fill = !isWishlisted ? '#eab308' : 'none';
+                        // A11y aria-label support
                         $(`.wishlist-id-${eventId}`).html(`
-                            <button type="button" onclick="window.wishlistAction(event, ${eventId})" class="border-none bg-transparent cursor-pointer">
+                            <button type="button" aria-label="Toggle wishlist" onclick="window.wishlistAction(event, ${eventId})" class="border-none bg-transparent cursor-pointer min-w-[48px] min-h-[48px] flex items-center justify-center">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="${fill}" stroke="#eab308" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
                                 </svg>
@@ -309,6 +323,7 @@
             const minP = event.minPrice !== undefined ? event.minPrice : event.MinPrice;
             const maxP = event.maxPrice !== undefined ? event.maxPrice : event.MaxPrice;
             if (minP != null && maxP != null) {
+                // Template literal correction
                 return minP === maxP ? (minP > 0 ? `€${minP}` : "Free") : `€${minP} - €${maxP}`;
             }
         }
@@ -334,8 +349,9 @@
             <div class="w-full sm:w-1/2 lg:w-1/3 flex-shrink-0 px-3">
                 <a href="/Events/Details/${event.id}" class="event-card-link block bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer h-full border border-gray-100 dark:border-gray-700 relative !no-underline">
                     ${imageHtml}
-                    <div class="wishlist-hover-badge cursor-help absolute top-3 left-6 mt-3 mr-3 bg-white text-indigo-800 text-xs font-bold px-2 py-1 z-30 rounded-full shadow-sm wishlist-id-${event.id}">
-                        <button type="button" onclick="window.wishlistAction(event, ${event.id})" class="border-none bg-transparent cursor-pointer">
+                    <div class="wishlist-hover-badge cursor-help absolute top-2 left-4 mt-3 mr-3 bg-white text-indigo-800 text-xs font-bold z-30 rounded-full shadow-sm wishlist-id-${event.id}">
+                        <!-- A11y aria-label support -->
+                        <button type="button" aria-label="Toggle wishlist" onclick="window.wishlistAction(event, ${event.id})" class="border-none bg-transparent cursor-pointer min-w-[48px] min-h-[48px] flex items-center justify-center">
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#eab308" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
                         </button>
                     </div>
@@ -347,6 +363,7 @@
                         <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2 line-clamp-2">${event.name}</h3>
                         <div class="flex items-center text-sm text-gray-500 dark:text-gray-400 mb-1">
                             <svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                            <!-- Template literal correction -->
                             ${startDate} - ${endDate}
                         </div>
                         <div class="mt-3 text-sm font-bold text-gray-600 dark:text-gray-300">
@@ -410,6 +427,7 @@
             let visibleCards = window.innerWidth >= 1024 ? 3 : (window.innerWidth >= 640 ? 2 : 1);
             const maxIndex = Math.max(0, cards.length - visibleCards);
             currentIndex = Math.max(0, Math.min(currentIndex, maxIndex));
+            // Template literal logic correction
             trackElement.style.transform = `translateX(-${currentIndex * cards[0].offsetWidth}px)`;
             prevButton.disabled = currentIndex === 0;
             nextButton.disabled = currentIndex >= maxIndex;
