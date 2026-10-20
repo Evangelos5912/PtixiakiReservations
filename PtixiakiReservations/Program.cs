@@ -19,6 +19,7 @@ using Serilog.Sinks.SystemConsole.Themes;
 using Serilog.Sinks.Elasticsearch;
 using System;
 using Microsoft.AspNetCore.Authorization;
+using PtixiakiReservations.Hubs;
 
 // Configure Npgsql to handle DateTime as timestamp without time zone
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
@@ -222,6 +223,7 @@ if (!builder.Environment.IsEnvironment("EF"))
     });
 
     app.MapHub<EventSphere.Hubs.SupportHub>("/supporthub");
+    app.MapHub<SeatHub>("/seathub");
 
     app.Run();
 
