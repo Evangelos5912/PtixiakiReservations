@@ -173,6 +173,10 @@
                             <!-- Ribbon 2: Categories -->
                             <div class="flex overflow-x-auto hide-scrollbar gap-2 w-full pb-1 border-t border-gray-100 pt-2">
                                 <span class="shrink-0 self-center text-[10px] sm:text-xs font-bold text-gray-400 uppercase tracking-wider mr-1">Add Elements:</span>
+                                <button type="button" id="show-ai" class="shrink-0 px-4 py-1.5 text-xs sm:text-sm font-bold text-purple-700 bg-purple-50 border border-purple-200 hover:bg-purple-600 hover:text-white rounded-lg shadow-sm transition-all flex items-center gap-1.5">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                                    AI Generator
+                                </button>
                                 <button type="button" id="show-seat" class="shrink-0 px-4 py-1.5 text-xs sm:text-sm font-bold text-blue-700 bg-blue-50 border border-blue-200 hover:bg-blue-600 hover:text-white rounded-lg shadow-sm transition-all">Seats</button>
                                 <button type="button" id="show-table" class="shrink-0 px-4 py-1.5 text-xs sm:text-sm font-bold text-blue-700 bg-blue-50 border border-blue-200 hover:bg-blue-600 hover:text-white rounded-lg shadow-sm transition-all">Tables</button>
                                 <button type="button" id="show-scene" class="shrink-0 px-4 py-1.5 text-xs sm:text-sm font-bold text-blue-700 bg-blue-50 border border-blue-200 hover:bg-blue-600 hover:text-white rounded-lg shadow-sm transition-all">Stages</button>
@@ -184,6 +188,13 @@
                                     Select a category above to view generators.
                                 </div>
                                 
+                                <div class="AddContainer w-full hidden flex overflow-x-auto hide-scrollbar gap-2" id="aiContainer">
+                                    <input type="text" id="aiPromptInput" placeholder="e.g. Generate 60 seats with a stage at the top center..." class="w-full sm:w-96 h-8 border border-purple-300 rounded-md px-3 text-xs sm:text-sm focus:ring-purple-500 focus:border-purple-500 outline-none">
+                                    <button type="button" id="generateAiBtn" class="shrink-0 px-4 h-8 text-xs sm:text-sm font-bold text-white bg-purple-600 hover:bg-purple-700 rounded-md shadow-sm transition-all flex items-center">
+                                        Generate Layout
+                                    </button>
+                                </div>
+
                                 <div class="AddContainer w-full hidden flex overflow-x-auto hide-scrollbar gap-2" id="seatContainer">
                                     <div class="flex items-center bg-white border border-gray-300 rounded-md shadow-sm overflow-hidden h-8 shrink-0">
                                         <button type="button" id="toggle-click-add" title="Enable crosshair mode" class="px-2 h-full text-xs sm:text-sm font-bold text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-1 border-r border-gray-300 outline-none">
@@ -353,6 +364,83 @@
             });
         }
 
+        // ==========================================
+        // AI LAYOUT GENERATION LOGIC
+        // ==========================================
+        document.getElementById('show-ai').addEventListener('click', () => toggleCategory('aiContainer'));
+
+        document.getElementById('generateAiBtn').addEventListener('click', async () => {
+            const promptText = document.getElementById('aiPromptInput').value.trim();
+            if (!promptText) return updateStatus("Please enter an AI prompt.", "warning");
+
+            const btn = document.getElementById('generateAiBtn');
+            const originalText = btn.innerText;
+            btn.disabled = true;
+            btn.innerText = 'Generating...';
+            updateStatus("AI is generating your layout. Please wait...", "blue");
+
+            try {
+                const response = await fetch('/Layouts/GenerateFromPrompt', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ Prompt: promptText, LayoutId: parseInt(layoutId),CanvasWidth: baseW, CanvasHeight: baseH })
+                });
+
+                if (!response.ok) {
+                    let errData = {};
+                    try { errData = await response.json(); } catch(e){}
+                    throw new Error(errData.error || 'Server error');
+                }
+
+                const layoutData = await response.json();
+                
+                if (confirm("Applying the AI layout will clear your current unsaved canvas. Proceed?")) {
+                    currentSeats = [];
+                    currentShapes = [];
+                    currentGroups = [];
+                    selectedItems.clear();
+
+                    const getNewId = () => `temp-ai-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
+
+                    if (layoutData.seats) {
+                        layoutData.seats.forEach(s => {
+                            currentSeats.push({
+                                id: getNewId(), name: s.name || s.Name || "Seat", 
+                                x: s.x ?? s.X ?? 0, y: s.y ?? s.Y ?? 0, 
+                                width: s.width || 60, height: s.height || 60, 
+                                available: s.available ?? true
+                            });
+                        });
+                    }
+                    
+                    if (layoutData.shapes) {
+                        layoutData.shapes.forEach(s => {
+                            currentShapes.push({
+                                id: getNewId(), name: s.name || s.Name || "Shape", 
+                                x: s.x ?? s.X ?? 0, y: s.y ?? s.Y ?? 0, 
+                                width: s.width || 100, height: s.height || 100, 
+                                shapeType: s.shapeType || 'rectangle', 
+                                backgroundColor: s.backgroundColor || '#D1D5DB'
+                            });
+                        });
+                    }
+
+                    renderAll();
+                    hideAllOptions();
+                    fitLayoutToViewport();
+                    updateStatus("AI Layout mapped successfully! Click 'Save Map' to keep it.", "success");
+                } else {
+                    updateStatus("AI Layout discarded.", "info");
+                }
+            } catch (error) {
+                console.error(error);
+                updateStatus("AI Generation failed: " + error.message, "error");
+            } finally {
+                btn.disabled = false;
+                btn.innerText = originalText;
+            }
+        });
+
         window.exportLayoutJson = function() {
             const exportData = { width: baseW, height: baseH, seats: currentSeats, shapes: currentShapes, groups: currentGroups };
             navigator.clipboard.writeText(JSON.stringify(exportData, null, 2)).then(() => {
@@ -432,8 +520,10 @@
                 const u = getUniqueItemName(prefix, currentNum);
 
                 const rect = zoomContainer.getBoundingClientRect();
-                let dropX = Math.round(((e.clientX - rect.left) / currentScale) / 10) * 10;
-                let dropY = Math.round(((e.clientY - rect.top) / currentScale) / 10) * 10;
+                
+                // Subtract half the seat width/height (30px) BEFORE snapping to the 10px grid
+                let dropX = Math.round((((e.clientX - rect.left) / currentScale) - 30) / 10) * 10;
+                let dropY = Math.round((((e.clientY - rect.top) / currentScale) - 30) / 10) * 10;
 
                 dropX = Math.max(0, Math.min(dropX, baseW - 60));
                 dropY = Math.max(0, Math.min(dropY, baseH - 60));
@@ -950,12 +1040,14 @@
             e.preventDefault();
             const itemType = e.dataTransfer.getData('itemType');
             const rect = zoomContainer.getBoundingClientRect();
-            let dropX = Math.round(((e.clientX - rect.left) / currentScale) / 10) * 10;
-            let dropY = Math.round(((e.clientY - rect.top) / currentScale) / 10) * 10;
-
+            
             let itemW = 60, itemH = 60;
             if (itemType === 'stage') { itemW = 300; itemH = 150; }
             else if (['square', 'circle', 'triangle'].includes(itemType)) { itemW = 100; itemH = 100; }
+
+            // Subtract half the width/height BEFORE snapping to the 10px grid
+            let dropX = Math.round((((e.clientX - rect.left) / currentScale) - (itemW / 2)) / 10) * 10;
+            let dropY = Math.round((((e.clientY - rect.top) / currentScale) - (itemH / 2)) / 10) * 10;
 
             dropX = Math.max(0, Math.min(dropX, baseW - itemW));
             dropY = Math.max(0, Math.min(dropY, baseH - itemH));

@@ -87,6 +87,8 @@ try
 
     builder.Services.AddSignalR();
 
+    builder.Services.AddHttpClient<IAILayoutService, AILayoutService>();
+
     // Add configuration for forwarded headers
     builder.Services.Configure<ForwardedHeadersOptions>(options =>
     {

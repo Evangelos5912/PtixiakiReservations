@@ -14,6 +14,7 @@ using Microsoft.Extensions.Logging;
 using PtixiakiReservations.Data;
 using PtixiakiReservations.Models;
 using PtixiakiReservations.Models.ViewModels;
+using PtixiakiReservations.Services;
 
 namespace PtixiakiReservations.Controllers
 {
@@ -23,17 +24,19 @@ namespace PtixiakiReservations.Controllers
         private readonly UserManager<ApplicationUser> _usermanager;
         private readonly IWebHostEnvironment _environment;
         private readonly ILogger<LayoutsController> _logger;
-
+        private readonly IAILayoutService _aiLayoutService;
         public LayoutsController(
             ApplicationDbContext context, 
             UserManager<ApplicationUser> usermanager,
             IWebHostEnvironment environment,
-            ILogger<LayoutsController> logger)
+            ILogger<LayoutsController> logger,
+            IAILayoutService aiLayoutService)
         {
             _context = context;
             _usermanager = usermanager;
             _environment = environment;
             _logger = logger;
+            _aiLayoutService = aiLayoutService;
         }
 
         private async Task<bool> IsAuthorizedToManageLayout(int venueId)
@@ -460,6 +463,38 @@ namespace PtixiakiReservations.Controllers
 
             ViewBag.Venue = venue;
             return View(layouts);
+        }
+        public class PromptRequest
+        {
+            public string Prompt { get; set; }
+            public int LayoutId { get; set; }
+            public int CanvasWidth { get; set; }
+            public int CanvasHeight { get; set; }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> GenerateFromPrompt([FromBody] PromptRequest request)
+        {
+            if (string.IsNullOrWhiteSpace(request.Prompt))
+                return BadRequest("Prompt cannot be empty.");
+
+            try
+            {
+                // Pass the new CanvasWidth and CanvasHeight to the AI Service
+                var layoutPayload = await _aiLayoutService.GenerateLayoutAsync(
+                    request.Prompt, 
+                    request.LayoutId, 
+                    request.CanvasWidth, 
+                    request.CanvasHeight
+                );
+                
+                return Ok(layoutPayload);
+            }
+            catch (System.Exception ex)
+            {
+                System.Console.WriteLine($"AI Synthesis Error: {ex.Message}");
+                return StatusCode(500, new { error = ex.Message });
+            }
         }
     }
 }
