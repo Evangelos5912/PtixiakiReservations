@@ -11,6 +11,7 @@ using PtixiakiReservations.Models;
 
 namespace PtixiakiReservations.Controllers
 {
+    // Handles user wishlist operations and search functionality
     public class WishlistController : Controller
     {        
         private readonly ApplicationDbContext _context;
@@ -20,6 +21,7 @@ namespace PtixiakiReservations.Controllers
             _context = context;
         }
 
+        // Checks if an event currently exists in the user's wishlist
         [HttpGet]
         public async Task<IActionResult> returnItem(string userId, int eventId)
         {
@@ -29,6 +31,7 @@ namespace PtixiakiReservations.Controllers
             return Json(wishlistItem);
         }
 
+        // Inserts a new event into the user's wishlist
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> addWishlistEvent(string userId, int eventId)
@@ -42,6 +45,7 @@ namespace PtixiakiReservations.Controllers
             return Json(false);
         }
 
+        // Deletes an event from the user's wishlist
         [HttpDelete]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> deleteWishlistEvent(string userId, int eventId)
@@ -58,6 +62,7 @@ namespace PtixiakiReservations.Controllers
             return Json(false);
         }
 
+        // Renders the wishlist dashboard for the authenticated user
         [HttpGet]
         [Authorize] 
         public async Task<IActionResult> Index()
@@ -71,6 +76,7 @@ namespace PtixiakiReservations.Controllers
             return View();
         }
 
+        // Retrieves a paginated, sorted, and searchable list of wishlist events
         [HttpGet]
         public async Task<IActionResult> SearchWishlist(string userId, string searchTerm, string sort, int page = 1, int pageSize = 12)
         {
@@ -139,6 +145,7 @@ namespace PtixiakiReservations.Controllers
             });
         }
 
+        // Provides autocomplete suggestions based on the user's saved wishlist items
         [HttpGet]
         public async Task<IActionResult> GetAutocompleteResults(string query, string userId)
         {

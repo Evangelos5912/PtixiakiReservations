@@ -25,10 +25,8 @@ public class ResetPasswordWith2faModel : PageModel
 
         if (isValid)
         {
-            // 1. Generate the actual Reset Token (usually in the link)
             var resetToken = await _userManager.GeneratePasswordResetTokenAsync(user);
 
-            // 2. Pass everything to the final reset page via TempData
             TempData["ResetEmail"] = email;
             TempData["ResetToken"] = resetToken;
 

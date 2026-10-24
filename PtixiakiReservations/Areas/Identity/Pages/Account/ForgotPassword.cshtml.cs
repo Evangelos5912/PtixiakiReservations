@@ -44,7 +44,6 @@ namespace PtixiakiReservations.Areas.Identity.Pages.Account
             var user = await _userManager.FindByEmailAsync(Input.Email);
             if (user == null) return RedirectToPage("./ForgotPasswordConfirmation");
 
-            // 1. Generate 2FA Code
             var code = await _userManager.GenerateTwoFactorTokenAsync(user, "Email");
 
             string subject = "Your EventSphere Security Code";

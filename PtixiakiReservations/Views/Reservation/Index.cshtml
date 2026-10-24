@@ -10,7 +10,6 @@
 <div class="bg-gradient-to-br from-gray-50 to-blue-50/50 min-h-screen py-8 px-4 sm:px-6 lg:px-8 font-sans">
     <div class="max-w-7xl mx-auto space-y-6">
         
-        <!-- Header Section -->
         <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
             <div class="bg-gradient-to-r from-blue-600 to-indigo-700 px-6 sm:px-8 py-8 md:flex md:items-center md:justify-between gap-4">
                 <div>
@@ -33,7 +32,6 @@
                 </div>
             </div>
 
-            <!-- Stats Section -->
             <div class="bg-white px-6 py-5 border-t border-gray-100">
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div class="flex items-center p-3 bg-gray-50 rounded-xl border border-gray-100">
@@ -63,7 +61,6 @@
             </div>
         </div>
 
-        <!-- Filters Section -->
         <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-4 sm:p-5">
             <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div class="flex items-center w-full sm:w-auto">
@@ -87,7 +84,6 @@
             </div>
         </div>
 
-        <!-- Reservation Cards (Mobile View) -->
         <div class="lg:hidden grid grid-cols-1 gap-4 mb-8">
             @foreach (var item in Model)
             {
@@ -132,7 +128,6 @@
             }
         </div>
 
-        <!-- Reservation Table (Desktop View) -->
         <div class="hidden lg:block bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200">
@@ -244,7 +239,6 @@
             </div>
         </div>
 
-        <!-- Empty State -->
         @if (!Model.Any())
         {
             <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-16 text-center">
@@ -266,7 +260,6 @@
     </div>
 </div>
 
-<!-- Review Modal -->
 <div id="reviewModal" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm hidden items-center justify-center z-50">
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-8 relative border border-gray-200 mx-4">
         <button onclick="closeReviewModal()" class="absolute top-5 right-5 text-gray-400 hover:text-gray-600 transition-colors">
@@ -397,7 +390,6 @@
             }
         }
 
-        // AJAX Review Submission
         $('#ajaxReviewForm').on('submit', function (e) {
             e.preventDefault();
             const form = $(this);

@@ -22,9 +22,7 @@ using SixLabors.ImageSharp.Formats.Webp;
 
 namespace PtixiakiReservations.Controllers;
 
-/// <summary>
-/// Manages events, venues, image transcoding, and Elasticsearch index synchronization.
-/// </summary>
+// Handles event management, image processing, and Elasticsearch integration
 public class EventsController(
     ApplicationDbContext context,
     UserManager<ApplicationUser> userManager,
@@ -34,6 +32,7 @@ public class EventsController(
     IWebHostEnvironment environment)
     : Controller
 {
+    // Syncs an event and its relations to the Elasticsearch index
     private async Task SyncEventToElasticAsync(int eventId)
     {
         var ev = await context.Event
@@ -48,11 +47,13 @@ public class EventsController(
         }
     }
 
+    // Removes an event from the Elasticsearch index
     private async Task RemoveEventFromElasticAsync(int eventId)
     {
         await elasticSearchService.DeleteByIdAsync<Event>(eventId.ToString(), "events");
     }
 
+    // Retrieves a paginated and filtered list of master events for the dashboard
     [Authorize]
     [HttpGet]
     public async Task<IActionResult> Index(string filter = "mine", string searchString = null, int page = 1, int pageSize = 12)
@@ -94,6 +95,7 @@ public class EventsController(
         return View(events);
     }
 
+    // DTO for Elasticsearch organizer indexing
     public class OrganizerSearchDto
     {
         public string Id { get; set; }
@@ -103,9 +105,7 @@ public class EventsController(
         public string UserName { get; set; }
     }
 
-    /// <summary>
-    /// Transcodes, scales, and caches images to WebP format.
-    /// </summary>
+    // Resizes and transcodes images to WebP format with caching
     [AllowAnonymous]
     [HttpGet]
     [ResponseCache(Duration = 86400, Location = ResponseCacheLocation.Any)]
@@ -140,6 +140,7 @@ public class EventsController(
         }
     }
     
+    // Retrieves today's events as JSON
     [HttpGet]
     [AllowAnonymous]
     public async Task<IActionResult> GetTodayEvents(string city, int page = 1, int pageSize = 12)
@@ -168,6 +169,7 @@ public class EventsController(
         return Json(new { events, totalCount, currentPage = page, totalPages = (int)Math.Ceiling(totalCount / (double)pageSize) });
     }
 
+    // Retrieves future events as JSON
     [HttpGet]
     [AllowAnonymous]
     public async Task<IActionResult> GetUpcomingEvents(string city, int page = 1, int pageSize = 12)
@@ -193,6 +195,7 @@ public class EventsController(
         return Json(new { events, totalCount, currentPage = page, totalPages = (int)Math.Ceiling(totalCount / (double)pageSize) });
     }
 
+    // Retrieves past events as JSON
     [HttpGet]
     [AllowAnonymous]
     public async Task<IActionResult> GetPastEvents(string city, int page = 1, int pageSize = 12)
@@ -218,6 +221,7 @@ public class EventsController(
         return Json(new { events, totalCount, currentPage = page, totalPages = (int)Math.Ceiling(totalCount / (double)pageSize) });
     }
 
+    // Retrieves all events as JSON
     [HttpGet]
     [AllowAnonymous]
     public async Task<IActionResult> GetAllEvents(string city, int page = 1, int pageSize = 12)
@@ -242,6 +246,7 @@ public class EventsController(
         return Json(new { events, totalCount, currentPage = page, totalPages = (int)Math.Ceiling(totalCount / (double)pageSize) });
     }
 
+    // Determines the CSS class based on event timing relative to today
     [AllowAnonymous]
     public string GetEventTimeClass(DateTime eventDate)
     {
@@ -251,6 +256,7 @@ public class EventsController(
         else return "event-past";
     }
 
+    // Retrieves master events with aggregated child event data and ratings
     [AllowAnonymous]
     public async Task<IActionResult> EventsForToday(int? category, string city, string searchTerm, int page = 1, int pageSize = 12)
     {
@@ -312,6 +318,7 @@ public class EventsController(
         return View(eventsList);
     }
 
+    // Retrieves event details and checks user review eligibility
     [AllowAnonymous]
     public async Task<IActionResult> Details(int? id)
     {
@@ -357,6 +364,7 @@ public class EventsController(
         return View(@event);
     }
 
+    // Retrieves gallery image paths for an event or its parent
     [HttpGet]
     public async Task<IActionResult> GetEventGallery(int eventId)
     {
@@ -381,6 +389,7 @@ public class EventsController(
         return Json(new { success = true, images = paths });
     }
 
+    // Retrieves all events for the current user's venues
     [Authorize]
     public async Task<JsonResult> GetEvents()
     {
@@ -399,6 +408,7 @@ public class EventsController(
         return Json(events);
     }
 
+    // Retrieves all events for a specific venue
     [Authorize]
     [HttpGet]
     public async Task<IActionResult> GetEvents2(int? venueId)
@@ -418,9 +428,11 @@ public class EventsController(
         return Json(result); 
     }
 
+    // Retrieves available event categories
     [AllowAnonymous]
     public JsonResult GetEventTypes() => new JsonResult(context.EventType.ToList());
 
+    // Renders the event list view for a specific venue
     [Authorize(Roles = "Admin,Event,SuperOrganizer")]
     public async Task<IActionResult> VenueEvents(int venueId)
     {
@@ -429,6 +441,7 @@ public class EventsController(
         return View(venue);
     }
 
+    // Renders the event creation form with required dropdown data
     [Authorize(Roles = "Admin,Event,SuperOrganizer")]
     [HttpGet]
     public async Task<IActionResult> CreateEvent()
@@ -463,6 +476,7 @@ public class EventsController(
         }
     }
 
+    // Creates a new event, processes image uploads, and handles multi-day child event generation
     [Authorize(Roles = "Admin,Event,SuperOrganizer")]
     [HttpPost]
     [ValidateAntiForgeryToken]
@@ -686,6 +700,7 @@ public class EventsController(
         }
     }
 
+    // Renders the event edit form with current data
     [Authorize(Roles = "Admin,Event,SuperOrganizer")]
     [HttpGet]
     public async Task<IActionResult> Edit(int? id)
@@ -725,6 +740,7 @@ public class EventsController(
         return View(eventToEdit);
     }
 
+    // Updates an event, processes new images, and validates parent-child timeframes
     [HttpPost]
     [ValidateAntiForgeryToken]
     [Authorize(Roles = "Admin,Event,SuperOrganizer")]
@@ -881,6 +897,7 @@ public class EventsController(
         return View(updatedEvent);
     }
 
+    // Validates if a specific date matches the selected recurring days
     [Authorize]
     public bool CorrectDay(JsonEventModel ev, int i, int everyNum)
     {
@@ -896,6 +913,7 @@ public class EventsController(
         return correctDay;
     }
 
+    // Cascades deletion of an event, its children, reservations, images, and search entries
     [Authorize(Roles = "Admin,Event,SuperOrganizer")]
     [HttpDelete]
     public async Task<IActionResult> Delete(int? id)
@@ -944,8 +962,10 @@ public class EventsController(
         }
     }
     
+    // Checks if an event exists in the database
     private bool EventExists(int id) => context.Event.Any(e => e.Id == id);
 
+    // Seeds test events into Elasticsearch
     [Authorize]
     [HttpPost]
     public async Task<IActionResult> IndexEventsToElastic()
@@ -961,6 +981,7 @@ public class EventsController(
         return Ok(result);
     }
 
+    // Performs a unified search across events, venues, and organizers using Elasticsearch and SQL
     [HttpGet]
     [AllowAnonymous]
     public async Task<IActionResult> SearchEvents(
@@ -1134,7 +1155,6 @@ public class EventsController(
                         if (ratings.Any()) { avgRat = ratings.Average(); revCount = ratings.Count; }
                     }
 
-                    // Direct static path resolution
                     string normalizedEventImg = string.IsNullOrEmpty(e.ImagePath) ? null : 
                         (e.ImagePath.StartsWith("/") ? e.ImagePath : $"/{e.ImagePath}");
 
@@ -1182,6 +1202,7 @@ public class EventsController(
         }
     }
 
+    // Tests Elasticsearch connectivity and basic operations
     [HttpGet("test-elasticsearch")]
     [AllowAnonymous] 
     public async Task<IActionResult> TestElasticsearch()
@@ -1206,6 +1227,7 @@ public class EventsController(
         }
     }
 
+    // Bulk generates random events for testing
     [HttpGet]
     [Route("Events/GenerateEvents/{count}")]
     public async Task<IActionResult> GenerateEvents(int count)
@@ -1244,6 +1266,7 @@ public class EventsController(
         return Json(new { success = true, events = generatedEvents });
     }
 
+    // Retrieves events managed by the current user
     [Authorize(Roles = "Admin,Event,SuperOrganizer")]
     [HttpGet]
     public async Task<IActionResult> GetUserEvents(string filter = "mine")
@@ -1273,6 +1296,7 @@ public class EventsController(
         }
     }
 
+    // Provides global search autocomplete results for organizers, events, venues, and cities
     [AllowAnonymous]
     public async Task<IActionResult> GetAutocompleteResults(string query)
     {
@@ -1368,6 +1392,7 @@ public class EventsController(
         }
     }
 
+    // Retrieves available layouts for a specific venue
     [HttpGet]
     public JsonResult GetLayouts(int venueId)
     {
@@ -1375,6 +1400,7 @@ public class EventsController(
         return Json(layouts);
     }
 
+    // Updates the name of a specific event
     [Authorize(Roles = "Admin,Event,SuperOrganizer")]
     [HttpPost]
     public async Task<IActionResult> EditSubSelectedName(int id, string NewName)
@@ -1398,6 +1424,7 @@ public class EventsController(
         return Json(new { success = true, message = "Update query successfully processed." });
     }
 
+    // Searches for top-level master events
     [Authorize(Roles = "Admin,Event,SuperOrganizer")] 
     [HttpGet]
     public async Task<IActionResult> SearchParentEvents(string query)
@@ -1414,6 +1441,7 @@ public class EventsController(
         return Json(events);
     }
 
+    // Retrieves all child events belonging to a master event
     [HttpGet]
     [Authorize(Roles = "Admin,Event,SuperOrganizer")]
     public async Task<IActionResult> GetSubEvents(int parentId)
@@ -1432,6 +1460,7 @@ public class EventsController(
         return Json(subEvents);
     }
 
+    // Links a child event to a new master event
     [Authorize(Roles = "Admin,Event,SuperOrganizer")]
     [HttpPost]
     public async Task<IActionResult> UpdateParentEvent([FromBody] LinkEventDto data)
@@ -1456,12 +1485,14 @@ public class EventsController(
         }
     }
 
+    // DTO for linking parent and child events
     public class LinkEventDto
     {
         public int ChildId { get; set; }
         public int? ParentId { get; set; }
     }
 
+    // Renders the view listing all child events for a master event
     [AllowAnonymous]
     public async Task<IActionResult> ChildEvents(int? id)
     {
@@ -1481,6 +1512,7 @@ public class EventsController(
         return View(childEvents);
     }
 
+    // Searches venues for autocomplete suggestions
     [HttpGet]
     public async Task<IActionResult> SearchVenues(string query)
     {
@@ -1497,6 +1529,7 @@ public class EventsController(
         return Json(venues);
     }
 
+    // Creates a duplicate of an existing event
     [Authorize(Roles = "Admin,Event,SuperOrganizer")]
     [HttpPost]
     public async Task<IActionResult> DuplicateSubEvent(int id)
@@ -1528,6 +1561,7 @@ public class EventsController(
         return Json(new { success = true, id = newEvent.Id });
     }
 
+    // Generates a sequential name for duplicated events
     private string GenerateNextName(string currentName)
     {
         if (string.IsNullOrWhiteSpace(currentName)) return "New Event 1";
@@ -1545,6 +1579,7 @@ public class EventsController(
         return $"{currentName.TrimEnd()} 1";
     }
 
+    // Retrieves the start and end times for an event
     [Authorize]
     [HttpGet]
     public async Task<IActionResult> GetEventTiming(int id)
@@ -1557,6 +1592,7 @@ public class EventsController(
         return Json(ev);
     }
 
+    // Sequentially renames multiple selected events
     [Authorize(Roles = "Admin,Event,SuperOrganizer")]
     [HttpPost]
     public async Task<IActionResult> MultiSubRename([FromForm] List<int> ids, [FromForm] string NewName)
@@ -1589,10 +1625,12 @@ public class EventsController(
         }
     }
 
+    // Renders the main landing page
     [AllowAnonymous]
     [HttpGet]
     public IActionResult HomePage() => View();
 
+    // Retrieves recently added master events with aggregated child metrics
     [HttpGet]
     [AllowAnonymous]
     public async Task<IActionResult> getNewestEvents()
@@ -1629,6 +1667,7 @@ public class EventsController(
         return Json(result);
     }
 
+    // Retrieves upcoming master events with aggregated child metrics
     [HttpGet]
     [AllowAnonymous]
     public async Task<IActionResult> getRecentEvents()
@@ -1665,6 +1704,7 @@ public class EventsController(
         return Json(result);
     }
 
+    // Retrieves a paginated list of reservations for an event
     [Authorize(Roles = "Admin,Event,SuperOrganizer")]
     [HttpGet]
     public async Task<IActionResult> EventReservations(int id, string searchTerm = "", int page = 1, int pageSize = 15)
@@ -1712,6 +1752,7 @@ public class EventsController(
         return View(reservations);
     }
 
+    // Cancels and removes an attendee's reservation
     [Authorize(Roles = "Admin,Event,SuperOrganizer")]
     [HttpPost]
     [ValidateAntiForgeryToken]
@@ -1731,6 +1772,7 @@ public class EventsController(
         return Json(new { success = true, message = "Reservation successfully deleted." });
     }
 
+    // Bulk syncs all authorized organizers to Elasticsearch
     [HttpPost("Events/IndexOrganizersToElastic")]
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> IndexOrganizersToElastic()

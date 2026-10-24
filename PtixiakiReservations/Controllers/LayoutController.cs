@@ -18,6 +18,7 @@ using PtixiakiReservations.Services;
 
 namespace PtixiakiReservations.Controllers
 {
+    // Handles CRUD operations, duplication, and AI generation for venue layouts
     public class LayoutsController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -25,6 +26,7 @@ namespace PtixiakiReservations.Controllers
         private readonly IWebHostEnvironment _environment;
         private readonly ILogger<LayoutsController> _logger;
         private readonly IAILayoutService _aiLayoutService;
+
         public LayoutsController(
             ApplicationDbContext context, 
             UserManager<ApplicationUser> usermanager,
@@ -39,6 +41,7 @@ namespace PtixiakiReservations.Controllers
             _aiLayoutService = aiLayoutService;
         }
 
+        // Validates if the current user has permissions to manage the venue layout
         private async Task<bool> IsAuthorizedToManageLayout(int venueId)
         {
             if (User.IsInRole("Admin")) return true;
@@ -49,6 +52,7 @@ namespace PtixiakiReservations.Controllers
             return venue != null && venue.UserId == userId;
         }
 
+        // Lists all layouts accessible to the current user
         [Authorize(Roles = "Venue,Admin,SuperOrganizer")]
         public async Task<IActionResult> Index()
         {
@@ -76,6 +80,7 @@ namespace PtixiakiReservations.Controllers
             return View();
         }
 
+        // Renders the layout selection view for a specific event
         [Authorize(Roles = "Venue,Admin,SuperOrganizer")]
         public async Task<IActionResult> ChooseLayout(int venueId, int eventId, string duration, string resDate)
         {
@@ -90,6 +95,7 @@ namespace PtixiakiReservations.Controllers
             return View(venue);
         }
         
+        // Retrieves and displays detailed information for a specific layout
         [Authorize(Roles = "Venue,Admin,SuperOrganizer")]
         public async Task<IActionResult> Details(int? id, int? venueId)
         {
@@ -112,7 +118,8 @@ namespace PtixiakiReservations.Controllers
             return View(layout);
         }
 
-        [Authorize(Roles = "Venue,Admin,SuperOrganizer")]
+        // Bulk creates new sub-areas for a venue
+        [Authorize(Roles = "Admin")]
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] JsonLayoutModel[] layouts)
         {
@@ -155,7 +162,8 @@ namespace PtixiakiReservations.Controllers
             return Ok(new { message = "Successfully created all sub-areas" });
         }
 
-        [Authorize(Roles = "Venue,Admin,SuperOrganizer")]
+        // Generates default layouts based on venue context
+        [Authorize(Roles = "Admin")]
         [HttpPost]
         public async Task<IActionResult> CreateFromVenue([FromBody]JsonLayoutModel[] layouts)
         {
@@ -188,7 +196,8 @@ namespace PtixiakiReservations.Controllers
             return Json(Response.StatusCode);
         }
 
-        [Authorize(Roles = "Venue,Admin,SuperOrganizer")]
+        // Renders the layout edit form
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null) return NotFound();
@@ -205,8 +214,9 @@ namespace PtixiakiReservations.Controllers
             return View(layout);
         }
 
+        // Updates layout properties and saves changes
         [HttpPost]
-        [Authorize(Roles = "Venue,Admin,SuperOrganizer")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Edit(int id, Layout layoutEdit)
         {
             var layout = await _context.Layout.SingleOrDefaultAsync(s => s.Id == id);
@@ -244,7 +254,8 @@ namespace PtixiakiReservations.Controllers
             return View(layout);
         }
 
-        [Authorize(Roles = "Venue,Admin,SuperOrganizer")]
+        // Renders the layout deletion confirmation view
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null) return NotFound();
@@ -263,11 +274,9 @@ namespace PtixiakiReservations.Controllers
             return View(layout);
         }
 
-        /// <summary>
-        /// Removes a layout and associated items using bulk operations.
-        /// </summary>
+        // Cascades deletion for a layout, removing associated seats, shapes, and events
         [HttpPost, ActionName("Delete")]
-        [Authorize(Roles = "Venue,Admin,SuperOrganizer")]
+        [Authorize(Roles = "Admin")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
@@ -330,6 +339,7 @@ namespace PtixiakiReservations.Controllers
             return RedirectToAction(nameof(VenueLayouts), new { venueId = venueId });
         }
 
+        // Retrieves all layouts associated with a specific venue
         [Authorize(Roles = "Venue,Admin,SuperOrganizer")]
         public async Task<IActionResult> VenueLayouts(int venueId)
         {
@@ -353,6 +363,7 @@ namespace PtixiakiReservations.Controllers
             return View(layouts);
         }
 
+        // Returns a JSON list of layouts for a venue
         [HttpGet]
         [Authorize(Roles = "Venue,Admin,SuperOrganizer")]
         public async Task<JsonResult> GetLayouts(int venueId)
@@ -370,14 +381,16 @@ namespace PtixiakiReservations.Controllers
             return Json(layouts);
         }
 
+        // Checks if a layout exists in the database
         [Authorize(Roles = "Venue,Admin,SuperOrganizer")]
         private bool LayoutExists(int id)
         {
             return _context.Layout.Any(e => e.Id == id);
         }
 
+        // Clones an existing layout including all seats and shapes
         [HttpPost]
-        [Authorize(Roles = "Venue,Admin,SuperOrganizer")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Duplicate([FromBody] DuplicateLayoutRequest request)
         {
             var originalLayout = await _context.Layout
@@ -446,6 +459,8 @@ namespace PtixiakiReservations.Controllers
 
             return Ok(new { success = true });
         }
+        
+        // Public endpoint to search and view layouts for a given venue
         [AllowAnonymous]
         public async Task<IActionResult> SearchLayouts(int? venueId)
         {
@@ -464,6 +479,8 @@ namespace PtixiakiReservations.Controllers
             ViewBag.Venue = venue;
             return View(layouts);
         }
+        
+        // DTO for AI layout generation requests
         public class PromptRequest
         {
             public string Prompt { get; set; }
@@ -472,7 +489,9 @@ namespace PtixiakiReservations.Controllers
             public int CanvasHeight { get; set; }
         }
 
+        // Calls the AI service to generate a layout payload from a text prompt
         [HttpPost]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> GenerateFromPrompt([FromBody] PromptRequest request)
         {
             if (string.IsNullOrWhiteSpace(request.Prompt))

@@ -81,7 +81,6 @@ namespace PtixiakiReservations.Areas.Identity.Pages.Account.Manage
                 return Page();
             }
 
-            // Strip spaces and hypens
             var verificationCode = Input.Code.Replace(" ", string.Empty).Replace("-", string.Empty);
 
             var is2faTokenValid = await _userManager.VerifyTwoFactorTokenAsync(

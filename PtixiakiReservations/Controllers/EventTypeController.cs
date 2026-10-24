@@ -14,7 +14,7 @@ using PtixiakiReservations.Models;
 
 namespace PtixiakiReservations.Controllers
 {
-    [Authorize(Roles = "Admin")]
+    // Handles management of global event categories
     public class EventTypeController : Controller
     {       
         private readonly ApplicationDbContext _context;
@@ -31,7 +31,9 @@ namespace PtixiakiReservations.Controllers
             _context = context;
         }
 
+        // Returns a paginated and searchable list of event types
         [HttpGet]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> ManageEventType(string searchQuery = null, int pageNumber = 1)
         {
             const int pageSize = 10; 
@@ -61,14 +63,18 @@ namespace PtixiakiReservations.Controllers
             return View(eventTypes);
         }
 
+        // Renders the event type creation form
         [HttpGet]
+        [Authorize(Roles = "Admin")]
         public IActionResult CreateEventType()
         {
             return View();
         }
 
+        // Creates a new event type and processes its thumbnail image upload
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> CreateEventType(string ETName, IFormFile? imageFile)
         {
             if (string.IsNullOrWhiteSpace(ETName))
@@ -109,8 +115,10 @@ namespace PtixiakiReservations.Controllers
             return RedirectToAction(nameof(ManageEventType));
         }
 
+        // Cascades the deletion of a category and its associated events, reservations, venue links, and images
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteEventType(int id)
         {
             var et = await _context.EventType.FindAsync(id);
@@ -166,7 +174,9 @@ namespace PtixiakiReservations.Controllers
             return RedirectToAction(nameof(ManageEventType));
         }
 
+        // Renders the event type edit form
         [HttpGet]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> EditEventType(int ETId)
         {
             var et = await _context.EventType.FindAsync(ETId);
@@ -174,8 +184,10 @@ namespace PtixiakiReservations.Controllers
             return View(et);
         }
 
+        // Updates the event type name and optionally replaces its thumbnail image
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> EditEventType(int ETId, string ETName, IFormFile? imageFile)
         {
             var et = await _context.EventType.FindAsync(ETId);
@@ -227,8 +239,9 @@ namespace PtixiakiReservations.Controllers
             return NoContent();
         }
 
-        [AllowAnonymous] 
+        // Retrieves all categories as JSON for public API consumption
         [HttpGet]
+        [AllowAnonymous] 
         public async Task<IActionResult> GetCategories()
         {
             var categories = await _context.EventType

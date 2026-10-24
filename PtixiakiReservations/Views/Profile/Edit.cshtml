@@ -3,16 +3,22 @@
     ViewData["Title"] = "Edit Profile";
 }
 
+<!-- Profile edit container -->
 <div class="max-w-3xl mx-auto bg-white dark:bg-gray-800 shadow-lg rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
+    
+    <!-- Header section -->
     <div class="p-7 bg-gradient-to-r from-blue-600 to-blue-800 border-b border-blue-700">
         <h1 class="text-3xl font-bold text-white">Edit Your Profile</h1>
         <p class="mt-2 text-sm text-blue-100">Update your personal information</p>
     </div>
 
+    <!-- Profile data submission form -->
     <form asp-action="Edit" method="post" class="p-7 bg-white dark:bg-gray-800">
         <div asp-validation-summary="ModelOnly" class="text-red-500 mb-4 text-sm"></div>
 
         <div class="grid grid-cols-1 gap-6">
+            
+            <!-- Primary user identity fields -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                     <label asp-for="FirstName" class="block text-sm font-semibold text-gray-700 dark:text-gray-200">First Name</label>
@@ -27,13 +33,14 @@
                 </div>
             </div>
 
+            <!-- Optional contact number -->
             <div>
                 <label asp-for="PhoneNumber" class="block text-sm font-semibold text-gray-700 dark:text-gray-200">Phone Number (Optional)</label>
                 <input asp-for="PhoneNumber" class="mt-2 block w-full py-3 px-4 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-lg shadow-sm text-gray-900 dark:text-white focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-600 transition" />
                 <span asp-validation-for="PhoneNumber" class="text-xs text-red-500"></span>
             </div>
 
-            <!-- City -->
+            <!-- City selection with autocomplete and tooltip -->
             <div>
                 <div class="flex">
                     <label for="cityName" class="block text-sm font-semibold text-gray-700 dark:text-gray-200">City (Optional)</label>
@@ -51,20 +58,21 @@
                 <span asp-validation-for="CityId" class="text-xs text-red-500"></span>
             </div>
 
-             <!-- Address --> 
+             <!-- Street address input --> 
              <div> 
                 <label asp-for="Address" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Address (Optional)</label> 
                  <input asp-for="Address" class="mt-1 block w-full py-2 px-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-md shadow-sm text-gray-800 dark:text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500" /> 
                  <span asp-validation-for="Address" class="text-xs text-red-500"></span> 
              </div> 
             
-             <!-- Postal Code --> 
+             <!-- Postal code input --> 
              <div> 
                  <label asp-for="PostalCode" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Postal Code (Optional)</label> 
                  <input asp-for="PostalCode" class="mt-1 block w-full py-2 px-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-md shadow-sm text-gray-800 dark:text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500" /> 
                 <span asp-validation-for="PostalCode" class="text-xs text-red-500"></span> 
             </div> 
 
+            <!-- Form action controls -->
             <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-5">
                 <a href="@Url.Action("Index", "Profile")" class="inline-flex justify-center items-center px-5 py-3 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-white bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-4 focus:ring-blue-100 transition font-medium">
                     Cancel
@@ -77,6 +85,7 @@
     </form>
 </div>
 
+<!-- Custom tooltip styling -->
 <style>
 .tooltip-container {
     position: relative;      
@@ -84,7 +93,6 @@
     cursor: help;            
     }
 
-    
     .tooltip-text {
     visibility: hidden;     
     opacity: 0;              
@@ -104,7 +112,6 @@
     overflow: visible;
     }
 
-   
     .tooltip-text::after {
     content: "";
     position: absolute;
@@ -122,6 +129,7 @@
     }
 </style>
 
+<!-- jQuery UI Autocomplete initialization for city search -->
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
     <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">

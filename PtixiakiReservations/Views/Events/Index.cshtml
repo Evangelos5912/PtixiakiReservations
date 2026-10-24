@@ -12,22 +12,16 @@
     bool isSuper = User.IsInRole("SuperOrganizer");
     bool isEventManager = User.IsInRole("Event");
 
-    // Pagination constants
     int currentPage = ViewBag.CurrentPage ?? 1;
     int totalPages = ViewBag.TotalPages ?? 1;
     int pageSize = ViewBag.PageSize ?? 12;
 }
 
-<!-- ============================================================== -->
-<!-- MAIN WORKSPACE CONTAINER                                       -->
-<!-- ============================================================== -->
 <div class="bg-gradient-to-br from-gray-50 to-blue-50/50 min-h-screen py-8 px-4 sm:px-6 lg:px-8 font-sans">
     <div class="max-w-7xl mx-auto space-y-6">
         
-        <!-- Anti-Forgery Token for secure AJAX interactions -->
         @Html.AntiForgeryToken()
 
-        <!-- Contextual Page Header & Call to Action -->
         <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
             <div class="bg-gradient-to-r from-blue-600 to-indigo-700 px-6 sm:px-8 py-8">
                 <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -50,13 +44,9 @@
             </div>
         </div>
 
-        <!-- ============================================================== -->
-        <!-- SEARCH & FILTER TOOLBAR                                        -->
-        <!-- ============================================================== -->
         <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-4 sm:p-5">
             <div class="flex flex-col lg:flex-row gap-4">
                 
-                <!-- Search Input -->
                 <div class="flex-grow relative">
                     <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                         <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
@@ -68,7 +58,6 @@
                            placeholder="Search events by name, type, or venue...">
                 </div>
                 
-                <!-- Dropdown Filters -->
                 <div class="flex flex-col sm:flex-row gap-3 lg:shrink-0">
                     <select id="ownership-filter" class="w-full sm:w-48 px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors text-sm font-semibold text-gray-700 bg-gray-50 cursor-pointer">
                         <option value="mine">My Events</option>
@@ -85,18 +74,13 @@
             </div>
         </div>
 
-        <!-- ============================================================== -->
-        <!-- DYNAMIC DATA TABLE PRESENTATION                                -->
-        <!-- ============================================================== -->
         <div id="events-container" class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden relative min-h-[300px]">
             
-            <!-- Loading State -->
             <div id="loading-indicator" class="absolute inset-0 z-10 bg-white/80 backdrop-blur-sm flex flex-col items-center justify-center">
                 <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mb-3"></div>
                 <p class="text-sm font-bold text-gray-500 animate-pulse">Loading Events...</p>
             </div>
 
-            <!-- Table Structure -->
             <div class="overflow-x-auto hidden" id="events-table-wrapper">
                 <table id="events-table" class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
@@ -110,12 +94,10 @@
                         </tr>
                     </thead>
                     <tbody id="events-list" class="bg-white divide-y divide-gray-100">
-                        <!-- Content Injected via JavaScript -->
                     </tbody>
                 </table>
             </div>
 
-            <!-- Empty State Fallback -->
             <div id="no-events-message" class="hidden py-16 px-6 text-center">
                 <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mb-4">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -129,15 +111,11 @@
                 </button>
             </div>
             
-            <!-- Pagination Controls Wrapper -->
             <div id="js-pagination-container" class="bg-gray-50 px-6 py-4 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-4 hidden"></div>
         </div>
     </div>
 </div>
 
-<!-- ============================================================== -->
-<!-- EVENT DETAILS MODAL DIALOG                                     -->
-<!-- ============================================================== -->
 <div id="event-details-modal" class="fixed inset-0 z-[100] hidden bg-gray-900/60 backdrop-blur-sm flex items-center justify-center transition-opacity" aria-modal="true" role="dialog">
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 overflow-hidden transform transition-all border border-gray-200">
         <div class="bg-gradient-to-r from-blue-600 to-indigo-700 px-6 py-4 flex justify-between items-center">
@@ -148,12 +126,10 @@
         </div>
         
         <div class="p-6" id="modal-event-details">
-            <!-- Event details injected via JS -->
         </div>
         
         <div class="bg-gray-50 border-t border-gray-100 px-6 py-4 flex justify-between items-center gap-3">
             <div id="modal-reservations-link-container">
-                <!-- Injected via JS if authorized -->
             </div>
             <div id="modal-action-buttons" class="flex items-center gap-3 w-full sm:w-auto ml-auto">
                 <button onclick="closeModal()" type="button" class="flex-1 sm:flex-none px-5 py-2.5 bg-white border border-gray-300 text-gray-700 font-bold rounded-lg hover:bg-gray-50 transition-colors text-sm shadow-sm">
@@ -170,12 +146,8 @@
     </div>
 </div>
 
-<!-- ============================================================== -->
-<!-- JAVASCRIPT LOGIC ENGINE                                        -->
-<!-- ============================================================== -->
 @section Scripts {
     <script>
-        /** State Memory & Configuration */
         const currentUserId = '@UserManager.GetUserId(User)';
         const userIsAdmin = @User.IsInRole("Admin").ToString().ToLower();
         const userIsSuper = @User.IsInRole("SuperOrganizer").ToString().ToLower();
@@ -186,27 +158,22 @@
         let jsCurrentPage = 1;
         const jsPageSize = 12;
 
-        /** DOM Initialization */
         $(document).ready(function() {
             loadEvents();
             
-            // Bind Filter Listeners
             $("#event-search").on("input", () => { jsCurrentPage = 1; filterEvents(); });
             $("#ownership-filter").on("change", () => { jsCurrentPage = 1; filterEvents(); });
             $("#date-filter").on("change", () => { jsCurrentPage = 1; filterEvents(); });
             
-            // Allow clicking outside the modal to close it
             $('#event-details-modal').on('click', function(e) {
                 if (e.target === this) closeModal();
             });
             
-            // Escape key closes modal
             $(document).on('keydown', function(e) {
                 if (e.key === "Escape" && !$('#event-details-modal').hasClass('hidden')) closeModal();
             });
         });
 
-        /** Utility to reset all search parameters */
         window.clearFilters = function() {
             $("#event-search").val('');
             $("#ownership-filter").val('mine');
@@ -214,7 +181,6 @@
             filterEvents();
         };
 
-        /** Fetches raw event JSON payload from server memory */
         function loadEvents() {
             $.ajax({
                 url: '/Events/GetUserEvents?filter=all',
@@ -234,9 +200,6 @@
             });
         }
 
-        /** 
-         * Master Filtering Engine
-         */
         function filterEvents() {
             const searchTerm = $("#event-search").val().toLowerCase();
             const ownershipFilter = $("#ownership-filter").val(); 
@@ -256,7 +219,6 @@
                     );
                 }
 
-                // Robust Ownership Evaluation: Converts both IDs to lowercase to bypass Identity casing mismatches
                 let matchesOwnership = true;
                 if (ownershipFilter === 'mine') {
                     matchesOwnership = (event.organizerId && currentUserId && event.organizerId.toLowerCase() === currentUserId.toLowerCase());
@@ -331,7 +293,6 @@
                 const rowHtml = `
                     <tr class="hover:bg-indigo-50/30 transition-colors group">
                         <td class="px-6 py-4">
-                            <!-- Display Mode -->
                             <div id="display-name-${event.id}" class="flex items-center gap-2 w-full max-w-[250px]">
                                 <div class="text-sm font-bold text-gray-900 group-hover:text-indigo-700 transition-colors truncate">${event.name}</div>
                                 <button type="button" onclick="enableInlineEdit(${event.id})" class="text-gray-400 hover:text-indigo-600 transition-colors shrink-0" title="Rename Event">
@@ -339,7 +300,6 @@
                                 </button>
                             </div>
                             
-                            <!-- Inline Edit Mode -->
                             <div id="edit-mode-${event.id}" class="hidden items-center gap-2 w-full max-w-[300px]">
                                 <input type="text" id="edit-input-${event.id}" value="${event.name}" data-original-value="${event.name}" onkeydown="if(event.key === 'Enter') { event.preventDefault(); saveEditName(${event.id}); }" class="font-bold text-gray-900 border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full transition-colors">
                                 <button type="button" onclick="saveEditName(${event.id})" class="bg-emerald-500 hover:bg-emerald-600 text-white px-2 py-1 rounded text-xs transition-colors font-bold shadow-sm shrink-0">Save</button>
@@ -444,7 +404,6 @@
             document.getElementById('events-container').scrollIntoView({ behavior: 'smooth', block: 'start' });
         };
 
-        /** Action: Opens specific event context in modal UI */
         window.showEventDetails = function(eventId) {
             const event = allEvents.find(e => e.id === eventId);
             if (!event) return;
@@ -460,7 +419,6 @@
             const editBtn = document.getElementById("modal-edit-btn");
             const deleteBtn = document.getElementById("modal-delete-btn");
             
-            // Bypass Identity casing issues securely
             const isOwner = (event.organizerId && currentUserId && event.organizerId.toLowerCase() === currentUserId.toLowerCase()); 
             const canEdit = userIsAdmin || ((userIsEventManager || userIsSuper) && isOwner);
 
@@ -471,7 +429,6 @@
                 deleteBtn.classList.remove("hidden");
                 deleteBtn.onclick = () => { triggerEventDeletion(event.id); };
 
-                // Render Reservations ledger link in quickview modal footer for authorized event managers
                 $("#modal-reservations-link-container").html(`
                     <a href="/Events/EventReservations/${event.id}" class="inline-flex items-center text-sm font-bold text-indigo-600 hover:text-indigo-800 transition-colors !no-underline">
                         <svg class="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
@@ -527,7 +484,6 @@
             $("#event-details-modal").removeClass("hidden");
         };
 
-        /** Prompts user and hits the Delete controller, securing the request with CSRF token */
         window.triggerEventDeletion = function(eventId) {
             const warningMessage = "Are you absolutely sure you want to delete this event?\n\nWARNING: If this is a Master Event, ALL of its Sub-Events will be permanently deleted alongside it. This cannot be undone.";
             
@@ -538,7 +494,6 @@
                 deleteBtn.innerHTML = "Deleting...";
                 deleteBtn.disabled = true;
 
-                // Bind CSRF verification
                 const token = $('input[name="__RequestVerificationToken"]').val();
 
                 $.ajax({
@@ -549,7 +504,6 @@
                         deleteBtn.innerHTML = "Delete Event";
                         deleteBtn.disabled = false;
 
-                        // Safely purge state memory
                         allEvents = allEvents.filter(e => e.id !== eventId && e.parentEventId !== eventId);
                         
                         closeModal();
@@ -566,7 +520,6 @@
             }
         };
 
-        /** Inline Edit Module */
         window.enableInlineEdit = function(id) {
             document.getElementById(`display-name-${id}`).classList.add('hidden');
             const editMode = document.getElementById(`edit-mode-${id}`);
@@ -592,7 +545,6 @@
                     inputField.setAttribute('data-original-value', newName);
                     document.querySelector(`#display-name-${id} div`).textContent = newName;
                     
-                    // Update state memory
                     const ev = allEvents.find(e => e.id === id);
                     if (ev) ev.name = newName;
                     

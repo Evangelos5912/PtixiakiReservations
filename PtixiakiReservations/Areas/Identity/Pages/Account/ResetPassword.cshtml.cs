@@ -47,7 +47,6 @@ namespace PtixiakiReservations.Areas.Identity.Pages.Account
 
        public IActionResult OnGet()
         {
-            // Retrieve the token we generated in the previous step
             var token = TempData["ResetToken"] as string;
             var email = TempData["ResetEmail"] as string;
 
@@ -61,7 +60,7 @@ namespace PtixiakiReservations.Areas.Identity.Pages.Account
                 Email = email 
             };
             
-            TempData.Keep(); // Keep them for the Post action
+            TempData.Keep(); 
             return Page();
         }
 
@@ -75,7 +74,6 @@ namespace PtixiakiReservations.Areas.Identity.Pages.Account
             var user = await _userManager.FindByEmailAsync(Input.Email);
             if (user == null)
             {
-                // Don't reveal that the user does not exist
                 return RedirectToPage("./ResetPasswordConfirmation");
             }
 

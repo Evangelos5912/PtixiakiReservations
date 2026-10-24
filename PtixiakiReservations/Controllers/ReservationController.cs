@@ -19,6 +19,7 @@ using PtixiakiReservations.Services;
 
 namespace PtixiakiReservations.Controllers;
 
+// Handles user reservations, seat availability, reviews, and ICS calendar generation
 [Authorize]
 public class ReservationController(
     ApplicationDbContext _context,
@@ -29,6 +30,7 @@ public class ReservationController(
 {
     private readonly RoleManager<ApplicationRole> _roleManager = roleManager;
 
+    // Retrieves and sorts the current user's reservations, automatically marking past ones
     public async Task<IActionResult> Index(bool flag, string sortOrder)
     {
         ViewBag.Flag = flag;
@@ -76,6 +78,7 @@ public class ReservationController(
         return View(res);
     }
     
+    // Applies sorting logic to the reservations list
     public List<Reservation> FilterRes(string sortOrder, List<Reservation> res)
     {
         switch (sortOrder)
@@ -117,6 +120,7 @@ public class ReservationController(
         return res;
     }
 
+    // Returns a list of occupied seat IDs for a specific event and timeframe
     public JsonResult isFree(int EventId, int LayoutId, DateTime ResDate, TimeSpan Duration)
     {
         var layout = _context.Layout.SingleOrDefault(s => s.Id == LayoutId);
@@ -157,6 +161,7 @@ public class ReservationController(
         return Json(seatIds);
     }
 
+    // Retrieves detailed information for a specific reservation
     public async Task<IActionResult> Details(int? id)
     {
         if (id is null) return NotFound();
@@ -174,6 +179,7 @@ public class ReservationController(
         return View(reservations);
     }
 
+    // Renders the reservation creation view for a given event
     public IActionResult Create(int? eventId)
     {
         if (eventId is null) return NotFound();
@@ -183,6 +189,7 @@ public class ReservationController(
         return View(ev);
     }
 
+    // Processes new reservations, validates constraints, and sends a confirmation email
     [HttpPost]
     public async Task<IActionResult> MakeRes([FromBody] ReservationRequestViewModel model)
     {
@@ -311,6 +318,7 @@ public class ReservationController(
         }
     }
 
+    // Renders the reservation edit form
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null)
@@ -327,6 +335,7 @@ public class ReservationController(
         return View(reservations);
     }
 
+    // Updates an existing reservation
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(int id, [Bind("ID,people,userId,shopId,date")] Reservation reservations)
@@ -360,6 +369,7 @@ public class ReservationController(
         return View(reservations);
     }
 
+    // Renders the reservation deletion confirmation view
     public async Task<IActionResult> Delete(int? id)
     {
         if (id == null)
@@ -378,6 +388,7 @@ public class ReservationController(
         return View(reservations);
     }
 
+    // Permanently deletes a reservation
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
@@ -388,6 +399,7 @@ public class ReservationController(
         return RedirectToAction(nameof(Index));
     }
     
+    // Renders the initial seat selection view
     public IActionResult SelectSeats(int eventId, int venueId)
     {
         ViewData["EventId"] = eventId;
@@ -396,6 +408,7 @@ public class ReservationController(
         return View("SelectSeats");
     }
 
+    // Retrieves event and venue details for the reservation process
     public async Task<IActionResult> ReserveSeats(int? eventId)
     {
         if (eventId == null)
@@ -421,6 +434,7 @@ public class ReservationController(
         return View(eventDetails);
     }
 
+    // Renders the detailed seat selection map for a specific layout and timeframe
     public async Task<IActionResult> SelectSeats(int eventId, int layoutId, string duration, string resDate)
     {
         var layout = await _context.Layout
@@ -448,6 +462,7 @@ public class ReservationController(
         return View();
     }
 
+    // Processes a user review and updates attendance status for a reservation
     [HttpPost]
     [Authorize]
     [ValidateAntiForgeryToken]
@@ -488,6 +503,7 @@ public class ReservationController(
         return RedirectToAction("Details", "Events", new { id = reservation.EventId });
     }
 
+    // Generates an ICS calendar file for the reserved event
     [HttpGet("reservation/{ID}/ics")]
     public IActionResult GetIcs(int id)
     {
@@ -539,6 +555,7 @@ public class ReservationController(
         return File(bytes, "text/calendar", "reservation.ics");
     }
 
+    // Saves a user review for an attended reservation
     [HttpPost]
     public async Task<IActionResult> SaveReview(int reservationId, string review, int rating)
     {
@@ -563,6 +580,7 @@ public class ReservationController(
         return RedirectToAction("Index");
     }
 
+    // Updates the attendance status of a reservation
     [HttpPost]
     public async Task<IActionResult> MarkAttendance(int reservationId, bool attended)
     {
@@ -581,11 +599,13 @@ public class ReservationController(
         return RedirectToAction("Index");
     }
 
+    // Checks if a reservation exists in the database
     private bool ReservationsExists(int id) 
     { 
         return _context.Reservation.Any(e => e.ID == id); 
     }
 
+    // Renders the payment checkout page with pricing and selected seat data
     [HttpGet]
     [Authorize]
     public async Task<IActionResult> PaymentPage(int eventId, int layoutId, string duration, string resDate, string seatIds)

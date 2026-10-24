@@ -21,7 +21,6 @@ namespace PtixiakiReservations.Services
         public AILayoutService(HttpClient httpClient, IConfiguration config)
         {
             _httpClient = httpClient;
-            // 120-second timeout ensures massive 60+ seat arrays don't get cut off
             _httpClient.Timeout = TimeSpan.FromSeconds(3000); 
             _apiKey = config["Gemini:ApiKey"];
         }

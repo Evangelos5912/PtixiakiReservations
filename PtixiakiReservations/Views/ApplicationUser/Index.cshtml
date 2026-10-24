@@ -3,7 +3,6 @@
 @{
     ViewData["Title"] = "User Management";
 
-    // Safely extract pagination and search metadata provided by the Controller's ViewBag
     int currentPage = ViewBag.CurrentPage ?? 1;
     int totalPages = ViewBag.TotalPages ?? 1;
     string searchQuery = ViewBag.SearchQuery as string;
@@ -20,7 +19,6 @@
         </div>
 
         <!-- Search Engine Form -->
-        <!-- Submits a GET request back to the Index action with the 'searchQuery' parameter -->
         <form method="get" asp-action="Index" class="flex w-full md:w-auto relative">
             <div class="relative w-full md:w-80">
                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">

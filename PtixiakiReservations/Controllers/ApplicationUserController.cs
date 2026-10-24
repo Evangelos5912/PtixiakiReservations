@@ -15,9 +15,7 @@ using PtixiakiReservations.Services;
 
 namespace PtixiakiReservations.Controllers
 {
-    /// <summary>
-    /// Manages user accounts, authentication security, role elevation workflows, and search index synchronization.
-    /// </summary>
+    // Handles user accounts, security, role management, and search sync
     public class ApplicationUserController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -46,6 +44,7 @@ namespace PtixiakiReservations.Controllers
             _elasticSearch = elasticSearch;
         }
 
+        // DTO for Elasticsearch organizer data
         public class OrganizerSearchDto
         {
             public string Id { get; set; }
@@ -55,6 +54,7 @@ namespace PtixiakiReservations.Controllers
             public string UserName { get; set; }
         }
 
+        // Syncs eligible organizers to Elasticsearch or removes them
         private async Task SyncOrRemoveUserFromElasticAsync(ApplicationUser user)
         {
             string indexName = "event_organizers";
@@ -89,9 +89,7 @@ namespace PtixiakiReservations.Controllers
             }
         }
 
-        /// <summary>
-        /// Retrieves a paginated and searchable user list.
-        /// </summary>
+        // Returns a paginated and searchable list of all users
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Index(string searchQuery = null, int pageNumber = 1)
         {
@@ -127,9 +125,7 @@ namespace PtixiakiReservations.Controllers
             return View(users);
         }
 
-        /// <summary>
-        /// Retrieves pending role elevation requests.
-        /// </summary>
+        // Returns a paginated list of pending role elevation requests
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> RoleRequests(string searchQuery = null, int pageNumber = 1)
         {
@@ -167,9 +163,7 @@ namespace PtixiakiReservations.Controllers
             return View(pendingUsers);
         }
 
-        /// <summary>
-        /// Approves a pending role request and synchronizes search indices.
-        /// </summary>
+        // Approves role request, assigns role, and updates search index
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin")]
@@ -219,9 +213,7 @@ namespace PtixiakiReservations.Controllers
             return RedirectToAction(nameof(RoleRequests));
         }
 
-        /// <summary>
-        /// Rejects a pending role request.
-        /// </summary>
+        // Rejects role request and updates search index
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin")]
@@ -251,9 +243,7 @@ namespace PtixiakiReservations.Controllers
             return RedirectToAction(nameof(RoleRequests));
         }
 
-        /// <summary>
-        /// Retrieves user profile details.
-        /// </summary>
+        // Returns user profile details
         public async Task<IActionResult> Details(string id)
         {
             if (string.IsNullOrEmpty(id)) return NotFound();
@@ -264,9 +254,7 @@ namespace PtixiakiReservations.Controllers
             return View(user);
         }
 
-        /// <summary>
-        /// Renders the role modification view.
-        /// </summary>
+        // Renders role modification view
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> ChangeRole(string id)
         {
@@ -276,9 +264,7 @@ namespace PtixiakiReservations.Controllers
             return View(user);
         }
 
-        /// <summary>
-        /// Updates a user role and synchronizes search indices.
-        /// </summary>
+        // Updates user role and synchronizes search index
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> ChangeRoleAction(string id, string Role)
         {
@@ -305,9 +291,7 @@ namespace PtixiakiReservations.Controllers
             return RedirectToAction("Index", "ApplicationUser");
         }
 
-        /// <summary>
-        /// Seeds baseline administrative users and roles.
-        /// </summary>
+        // Seeds default administrative users and roles
         public async Task<IActionResult> SeedAdminUser()
         {
             try
@@ -321,9 +305,7 @@ namespace PtixiakiReservations.Controllers
             }
         }
 
-        /// <summary>
-        /// Provides city autocomplete suggestions.
-        /// </summary>
+        // Returns city autocomplete suggestions as JSON
         [HttpGet]
         public JsonResult SearchCities(string term)
         {
@@ -336,15 +318,14 @@ namespace PtixiakiReservations.Controllers
             return Json(cities);
         }
 
+        // DTO for 2FA toggle
         public class Toggle2FaRequest
         {
             public string Password { get; set; }
             public bool Enable { get; set; } 
         }
 
-        /// <summary>
-        /// Toggles two-factor authentication settings.
-        /// </summary>
+        // Toggles two-factor authentication status
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Toggle2Fa([FromBody] Toggle2FaRequest request)
@@ -365,9 +346,7 @@ namespace PtixiakiReservations.Controllers
             return BadRequest(new { message = "Failed to update settings." });
         }
 
-        /// <summary>
-        /// Generates email verification codes.
-        /// </summary>
+        // Generates and emails a verification code
         [HttpPost]
         public async Task<IActionResult> GenerateEmailConfirmationCode()
         {
@@ -397,9 +376,7 @@ namespace PtixiakiReservations.Controllers
             }
         }
 
-        /// <summary>
-        /// Confirms user email addresses.
-        /// </summary>
+        // Validates confirmation code and marks email as confirmed
         [HttpPost]
         public async Task<IActionResult> ConfirmEmailCode(string code)
         {
@@ -418,6 +395,7 @@ namespace PtixiakiReservations.Controllers
             return BadRequest("Invalid code.");
         }
 
+        // DTOs for email change workflow
         public class EmailChangeRequestDto
         {
             public string NewEmail { get; set; }
@@ -429,9 +407,7 @@ namespace PtixiakiReservations.Controllers
             public string NewEmail { get; set; }
         }
 
-        /// <summary>
-        /// Verifies ownership of the current email.
-        /// </summary>
+        // Verifies ownership of current email via 2FA token
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> VerifyCurrentEmailOwnership(string code)
@@ -445,9 +421,7 @@ namespace PtixiakiReservations.Controllers
             return Ok();
         }
 
-        /// <summary>
-        /// Generates email change verification codes.
-        /// </summary>
+        // Generates and emails an OTP for email change
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> GenerateEmailChangeCode([FromBody] EmailChangeRequestDto request)
@@ -482,9 +456,7 @@ namespace PtixiakiReservations.Controllers
             return Ok();
         }
 
-        /// <summary>
-        /// Confirms email changes and updates search indices.
-        /// </summary>
+        // Validates OTP, updates email, and synchronizes search index
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ConfirmEmailChangeCode([FromBody] ConfirmEmailChangeDto request)
@@ -523,6 +495,7 @@ namespace PtixiakiReservations.Controllers
             return BadRequest(new { message = "Failed to update email in the database." });
         }
 
+        // DTO for password change
         public class ChangePasswordDto
         {
             public string CurrentPassword { get; set; }
@@ -530,9 +503,7 @@ namespace PtixiakiReservations.Controllers
             public string ConfirmPassword { get; set; }
         }
 
-        /// <summary>
-        /// Updates account passwords.
-        /// </summary>
+        // Updates account password and sends notification email
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDto request)

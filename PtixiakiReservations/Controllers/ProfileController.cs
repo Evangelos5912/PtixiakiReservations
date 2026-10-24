@@ -16,6 +16,7 @@ using System.Collections.Generic;
 
 namespace PtixiakiReservations.Controllers
 {
+    // Handles user profile management, role requests, and account deletion
     [Authorize]
     public class ProfileController : Controller
     {
@@ -39,6 +40,7 @@ namespace PtixiakiReservations.Controllers
             _elasticSearch = elasticSearch;
         }
 
+        // DTO for Elasticsearch organizer indexing
         public class OrganizerSearchDto
         {
             public string Id { get; set; }
@@ -48,6 +50,7 @@ namespace PtixiakiReservations.Controllers
             public string UserName { get; set; }
         }
 
+        // Syncs eligible organizers to Elasticsearch or removes them
         private async Task SyncOrRemoveUserFromElasticAsync(ApplicationUser user)
         {
             string indexName = "event_organizers";
@@ -82,6 +85,7 @@ namespace PtixiakiReservations.Controllers
             }
         }
 
+        // Retrieves and displays the user's profile dashboard and recent reservations
         public async Task<IActionResult> Index()
         {
             var userId = _userManager.GetUserId(User);
@@ -127,6 +131,7 @@ namespace PtixiakiReservations.Controllers
             return View(model);
         }
 
+        // Renders the profile edit form
         public async Task<IActionResult> Edit()
         {
             var user = await _userManager.GetUserAsync(User);
@@ -156,6 +161,7 @@ namespace PtixiakiReservations.Controllers
             return View(model);
         }
 
+        // Updates user profile information and syncs changes to search index
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(ProfileEditViewModel model)
@@ -193,6 +199,7 @@ namespace PtixiakiReservations.Controllers
             return RedirectToAction(nameof(Index));
         }
 
+        // Retrieves all reservations for the current user
         public async Task<IActionResult> Reservations()
         {
             var user = await _userManager.GetUserAsync(User);
@@ -213,6 +220,7 @@ namespace PtixiakiReservations.Controllers
             return View(reservations);
         }
 
+        // Renders the role request form
         public IActionResult RequestRoles()
         {
             var model = new RoleRequestViewModel 
@@ -223,6 +231,7 @@ namespace PtixiakiReservations.Controllers
             return View(model);
         }
 
+        // Processes role elevation requests and securely stores verification documents
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> RequestRoles(RoleRequestViewModel model, IFormFile? pdfDocument)
@@ -325,6 +334,7 @@ namespace PtixiakiReservations.Controllers
             return RedirectToAction(nameof(Index));
         }
 
+        // Permanently deletes the user account and cascades deletion of all associated data
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteAccount()

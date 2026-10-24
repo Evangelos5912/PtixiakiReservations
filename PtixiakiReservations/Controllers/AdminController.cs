@@ -14,7 +14,7 @@ using System.IO;
 namespace PtixiakiReservations.Controllers
 {
     /// <summary>
-    /// Manages administrative oversight, dashboard metrics, verification files, role request approvals, and search index synchronization.
+    /// Handles admin dashboard, user role approvals, and search indexing.
     /// </summary>
     [Authorize(Roles = "Admin")]
     public class AdminController : Controller
@@ -45,6 +45,7 @@ namespace PtixiakiReservations.Controllers
             public string UserName { get; set; }
         }
 
+        // Updates or removes user from ElasticSearch based on active organizer roles.
         private async Task SyncOrRemoveUserFromElasticAsync(ApplicationUser user)
         {
             string indexName = "event_organizers";
@@ -80,7 +81,7 @@ namespace PtixiakiReservations.Controllers
         }
 
         /// <summary>
-        /// Retrieves dashboard metrics.
+        /// Loads admin dashboard statistics.
         /// </summary>
         public async Task<IActionResult> Index()
         {
@@ -101,7 +102,7 @@ namespace PtixiakiReservations.Controllers
         }
 
         /// <summary>
-        /// Retrieves paginated role requests.
+        /// Paginates and filters pending role requests.
         /// </summary>
         public async Task<IActionResult> RoleRequests(string? searchQuery, int pageNumber = 1)
         {
@@ -141,7 +142,7 @@ namespace PtixiakiReservations.Controllers
         }
 
         /// <summary>
-        /// Approves role requests and synchronizes search indices.
+        /// Approves a role request, assigns the role, and updates the search index.
         /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -208,7 +209,7 @@ namespace PtixiakiReservations.Controllers
         }
 
         /// <summary>
-        /// Rejects role requests and updates search indices.
+        /// Rejects a role request and updates the search index.
         /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -262,7 +263,7 @@ namespace PtixiakiReservations.Controllers
         }
 
         /// <summary>
-        /// Serves user verification documents.
+        /// Serves the user's verification PDF securely.
         /// </summary>
         [Authorize(Roles = "Admin")]
         [HttpGet]
@@ -291,6 +292,7 @@ namespace PtixiakiReservations.Controllers
             return NotFound($"File is missing from the server.");
         }
 
+        // Deletes the associated verification file from the server.
         private void DeleteVerificationDocument(ApplicationUser user, string roleType)
         {
             string? docPathToDelete = roleType switch
@@ -318,6 +320,7 @@ namespace PtixiakiReservations.Controllers
             }
         }
 
+        // Locates the document path across secure and legacy directories.
         private string ResolveAbsolutePath(string path)
         {
             if (string.IsNullOrWhiteSpace(path)) return string.Empty;

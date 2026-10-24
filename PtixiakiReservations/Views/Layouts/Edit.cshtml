@@ -34,7 +34,6 @@
 
         <div class="bg-white sm:rounded-2xl shadow-lg border-y sm:border border-gray-200 overflow-hidden">
             
-            <!-- HORIZONTALLY SCROLLABLE TABS -->
             <div class="border-b border-gray-200 bg-gray-50/50">
                 <nav class="flex overflow-x-auto hide-scrollbar px-2 sm:px-4" aria-label="Tabs">
                     <button id="tab-details" class="tab-button shrink-0 flex items-center border-indigo-500 text-indigo-600 py-4 px-4 sm:px-6 border-b-2 font-bold text-sm transition-colors" aria-current="page">
@@ -95,9 +94,6 @@
                 <div id="seats-content" class="tab-content hidden">
                     <div id="seat-status" class="hidden mb-4 font-bold text-sm transition-all duration-300 shadow-sm"></div>
 
-                    <!-- ========================================================= -->
-                    <!-- COLLAPSIBLE MOBILE-FRIENDLY INSTRUCTIONS                  -->
-                    <!-- ========================================================= -->
                     <details class="bg-indigo-50 border border-indigo-100 rounded-xl mb-4 sm:mb-6 shadow-sm group">
                         <summary class="flex items-center cursor-pointer p-3 sm:p-5 outline-none select-none">
                             <div class="flex-shrink-0">
@@ -137,11 +133,9 @@
                         </div>
                     </details>
 
-                    <!-- SWIPEABLE RIBBON TOOLBAR FOR MOBILE -->
                     <div class="bg-white rounded-t-xl border border-gray-200 p-2 sm:p-4 shadow-sm relative z-20">
                         <div class="flex flex-col gap-3 w-full">
                             
-                            <!-- Ribbon 1: Actions -->
                             <div class="flex overflow-x-auto hide-scrollbar gap-2 w-full pb-1">
                                 <button type="button" onclick="groupSelectedItems()" title="Group Selected" class="shrink-0 flex items-center px-3 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-lg shadow-sm text-xs sm:text-sm font-bold transition-all">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
@@ -170,7 +164,6 @@
                                 </button>
                             </div>
 
-                            <!-- Ribbon 2: Categories -->
                             <div class="flex overflow-x-auto hide-scrollbar gap-2 w-full pb-1 border-t border-gray-100 pt-2">
                                 <span class="shrink-0 self-center text-[10px] sm:text-xs font-bold text-gray-400 uppercase tracking-wider mr-1">Add Elements:</span>
                                 <button type="button" id="show-ai" class="shrink-0 px-4 py-1.5 text-xs sm:text-sm font-bold text-purple-700 bg-purple-50 border border-purple-200 hover:bg-purple-600 hover:text-white rounded-lg shadow-sm transition-all flex items-center gap-1.5">
@@ -182,7 +175,6 @@
                                 <button type="button" id="show-scene" class="shrink-0 px-4 py-1.5 text-xs sm:text-sm font-bold text-blue-700 bg-blue-50 border border-blue-200 hover:bg-blue-600 hover:text-white rounded-lg shadow-sm transition-all">Stages</button>
                             </div>
 
-                            <!-- Ribbon 3: Contextual Tools -->
                             <div class="bg-gray-50 rounded-lg p-2 border border-gray-200 shadow-inner min-h-[50px] flex items-center">
                                 <div id="toolbar-instruction" class="text-xs sm:text-sm text-gray-500 italic w-full text-center">
                                     Select a category above to view generators.
@@ -227,7 +219,6 @@
                     </div>
 
                     <div class="relative mt-[-1px] z-10">
-                        <!-- STATIC TOP-RIGHT ZOOM CONTROLS -->
                         <div class="absolute top-4 right-4 sm:right-6 z-[110] flex items-center pointer-events-none">
                             <div class="flex items-center gap-1 bg-white/90 backdrop-blur p-1 sm:p-1.5 rounded-lg shadow-md border border-gray-200 pointer-events-auto">
                                 <button type="button" id="zoom-out" class="p-1 sm:p-1.5 hover:bg-gray-100 rounded text-gray-700 transition-colors" title="Zoom Out (Ctrl + Scroll Down)">
@@ -244,10 +235,8 @@
                             </div>
                         </div>
 
-                        <!-- Canvas container height adjusted for mobile screens -->
                         <div id="seat-map" class="bg-gray-200 rounded-b-xl border border-gray-200 p-0 w-full overflow-auto relative shadow-inner select-none z-[90]" style="height: 55vh; min-height: 400px; max-height: 900px;">
                             
-                            <!-- THE PLAYABLE CANVAS BOUNDARY -->
                             <div id="zoom-container" class="absolute origin-top-left bg-white shadow-2xl border-2 border-indigo-400 overflow-visible" style="width: @(boundaryWidth)px; height: @(boundaryHeight)px; top: 40px; left: 40px; z-index: 10;">
                                 <div class="absolute inset-0 bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:20px_20px] pointer-events-none opacity-60"></div>
                                 <div class="boundary-label absolute -top-6 left-[-2px] bg-indigo-500 text-white font-extrabold text-[9px] sm:text-[10px] uppercase tracking-wider px-2 py-1 rounded-t-md shadow-sm whitespace-nowrap">
@@ -259,7 +248,6 @@
                         </div>
                     </div>
 
-                    <!-- DYNAMIC PROPERTIES PANEL -->
                     <div class="mt-4 w-full relative z-30">
                         <div class="hidden flex flex-col bg-white shadow-xl border-t-4 border-indigo-500 rounded-xl p-3 sm:p-5 w-full gap-3 sm:gap-4 transition-all duration-300 animate-fade-in-up" id="optionsPanel"></div>
                     </div>
@@ -273,7 +261,6 @@
     .hide-scrollbar::-webkit-scrollbar { display: none; }
     .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-    /* Remove transition from zoom-container to prevent dragging lag/rubberbanding */
     #zoom-container { transition: none; } 
 
     .selection-box {
@@ -320,9 +307,6 @@
         const prefixInput = document.getElementById('click-add-prefix');
         const startInput = document.getElementById('click-add-start');
 
-        // ==========================================
-        // AJAX SAVE DETAILS LOGIC
-        // ==========================================
         const editForm = document.getElementById('editLayoutForm');
         if (editForm) {
             editForm.addEventListener('submit', async function(e) {
@@ -364,9 +348,6 @@
             });
         }
 
-        // ==========================================
-        // AI LAYOUT GENERATION LOGIC
-        // ==========================================
         document.getElementById('show-ai').addEventListener('click', () => toggleCategory('aiContainer'));
 
         document.getElementById('generateAiBtn').addEventListener('click', async () => {
@@ -521,7 +502,6 @@
 
                 const rect = zoomContainer.getBoundingClientRect();
                 
-                // Subtract half the seat width/height (30px) BEFORE snapping to the 10px grid
                 let dropX = Math.round((((e.clientX - rect.left) / currentScale) - 30) / 10) * 10;
                 let dropY = Math.round((((e.clientY - rect.top) / currentScale) - 30) / 10) * 10;
 
@@ -621,9 +601,6 @@
             renderAll(); showOptions({ id: targetGroupId }, 'group');
         }
 
-        // ==========================================
-        // MATH-PERFECT ZOOM TO CURSOR LOGIC
-        // ==========================================
         function setZoom(scale, cursorX = null, cursorY = null, skipScrollAdjustment = false) {
             const oldScale = currentScale;
             currentScale = Math.max(0.1, Math.min(scale, 2.5)); 
@@ -633,15 +610,12 @@
             if (oldScale !== currentScale && !skipScrollAdjustment) {
                 const rect = seatMap.getBoundingClientRect();
                 
-                // If cursor is not provided, default to zooming towards the center of the viewport
                 const targetMouseX = cursorX !== null ? cursorX : rect.width / 2;
                 const targetMouseY = cursorY !== null ? cursorY : rect.height / 2;
 
-                // Where is this mouse point located inside the actual unscaled canvas grid?
                 const unscaledX = (targetMouseX + seatMap.scrollLeft) / oldScale;
                 const unscaledY = (targetMouseY + seatMap.scrollTop) / oldScale;
 
-                // Adjust the scroll wrapper so the unscaled coordinate remains exactly under the mouse pointer
                 seatMap.scrollLeft = (unscaledX * currentScale) - targetMouseX;
                 seatMap.scrollTop = (unscaledY * currentScale) - targetMouseY;
             }
@@ -655,7 +629,6 @@
             const scaleX = viewportWidth / (baseW + padding);
             const scaleY = viewportHeight / (baseH + padding);
             
-            // Set zoom but skip auto scroll adjustment so we can hard center it next
             setZoom(Math.max(0.1, Math.min(scaleX, scaleY, 1.0)), null, null, true);
 
             setTimeout(() => {
@@ -675,7 +648,6 @@
                 const mouseX = e.clientX - rect.left;
                 const mouseY = e.clientY - rect.top;
                 
-                // Fine-tune wheel delta step
                 const zoomFactor = e.deltaY > 0 ? -0.1 : 0.1; 
                 setZoom(currentScale + zoomFactor, mouseX, mouseY); 
             }
@@ -781,7 +753,7 @@
                 if (seatsPerRow[r] <= 0) continue;
                 for (let i = 0; i < seatsPerRow[r]; i++) {
                     let angle = (template === 'stadium') ? (i * 2 * Math.PI) / seatsPerRow[r] : (seatsPerRow[r] === 1 ? Math.PI / 2 : 0.1 * Math.PI + (i * (0.8 * Math.PI) / (seatsPerRow[r] - 1)));
-                    const u = getUniqueItemName(prefix, currentNum);    
+                    const u = getUniqueItemName(prefix, currentNum);   
                     newSeats.push({
                         id: `temp-${Date.now()}-${counter}`, name: u.name,
                         x: Math.max(0, Math.min(Math.round((cx + ((baseRx + (r * rowSpacing)) * Math.cos(angle)) - (seatW / 2)) / 10) * 10, baseW - 60)),
@@ -1045,7 +1017,6 @@
             if (itemType === 'stage') { itemW = 300; itemH = 150; }
             else if (['square', 'circle', 'triangle'].includes(itemType)) { itemW = 100; itemH = 100; }
 
-            // Subtract half the width/height BEFORE snapping to the 10px grid
             let dropX = Math.round((((e.clientX - rect.left) / currentScale) - (itemW / 2)) / 10) * 10;
             let dropY = Math.round((((e.clientY - rect.top) / currentScale) - (itemH / 2)) / 10) * 10;
 
@@ -1137,7 +1108,6 @@
 
             element.addEventListener('mousedown', function(e) {
                 if (e.target.closest('.cursor-nwse-resize')) return; 
-                // IGNORE CTRL CLICKS SO PANNING CAN TAKE OVER
                 if (e.ctrlKey || e.metaKey) return; 
 
                 e.preventDefault(); e.stopPropagation();
@@ -1280,13 +1250,9 @@
         const selectionBox = document.getElementById('selection-box');
         let isBoxSelecting = false; let startBoxX, startBoxY;
 
-        // ==========================================
-        // PAN AND BOX-SELECT EVENT LISTENER
-        // ==========================================
         seatMap.addEventListener('mousedown', function(e) {
             if (isClickToAddMode) return;
 
-            // PANNING LOGIC (Ctrl + Click & Drag)
             if (e.ctrlKey || e.metaKey) {
                 e.preventDefault();
                 let isPanning = true;
@@ -1315,10 +1281,9 @@
 
                 document.addEventListener('mousemove', onPanMove);
                 document.addEventListener('mouseup', onPanUp);
-                return; // Stop here so it doesn't trigger box selection
+                return; 
             }
 
-            // BOX SELECTION LOGIC
             if (e.target !== seatMap && e.target !== zoomContainer && e.target.id !== 'layout-boundary') return; 
 
             hideAllOptions(); isBoxSelecting = true;

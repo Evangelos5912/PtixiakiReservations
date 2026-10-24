@@ -70,10 +70,8 @@ namespace PtixiakiReservations.Areas.Identity.Pages.Account.Manage
 
         public async Task<IActionResult> OnPostLinkLoginAsync(string provider)
         {
-            // Clear the existing external cookie to ensure a clean login process
             await HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
 
-            // Request a redirect to the external login provider to link a login for the current user
             var redirectUrl = Url.Page("./ExternalLogins", pageHandler: "LinkLoginCallback");
             var properties = _signInManager.ConfigureExternalAuthenticationProperties(provider, redirectUrl, _userManager.GetUserId(User));
             return new ChallengeResult(provider, properties);
@@ -100,7 +98,6 @@ namespace PtixiakiReservations.Areas.Identity.Pages.Account.Manage
                 return RedirectToPage();
             }
 
-            // Clear the existing external cookie to ensure a clean login process
             await HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
 
             StatusMessage = "The external login was added.";

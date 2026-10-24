@@ -1,10 +1,12 @@
 @model IEnumerable<PtixiakiReservations.Models.Event>
 
+<!-- Renders a grid of sub-events belonging to a specific parent master event -->
 @{
     ViewData["Title"] = "Events for " + ViewBag.FatherEventName;
 }
 
 <div class="container mx-auto mt-4 px-4">
+    <!-- Page header with navigation back to the master event -->
     <div class="flex justify-between items-center mb-6">
         <h2 class="text-2xl font-bold">Events under: <span class="text-blue-600">@ViewBag.FatherEventName</span></h2>
         <a asp-action="Details" asp-route-id="@ViewBag.FatherEventId" class="text-gray py-2 px-4">
@@ -14,6 +16,7 @@
 
     @if (!Model.Any())
     {
+        <!-- Empty state fallback -->
         <div class="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4" role="alert">
             <p class="font-bold">No scheduled events yet.</p>
             <p>There are currently no sub-events scheduled under this main event.</p>
@@ -21,10 +24,13 @@
     }
     else
     {
+        <!-- Sub-event card grid -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             @foreach (var item in Model)
             {
                 <div class="bg-white rounded-lg shadow-md overflow-hidden flex flex-col">
+                    
+                    <!-- Event thumbnail or fallback SVG icon -->
                     <div class="h-48 w-full overflow-hidden mb-4 rounded-md bg-gray-100">
                         @if (!string.IsNullOrEmpty(item.DisplayImagePath))
                         {
@@ -38,6 +44,7 @@
                         }
                     </div>
                     
+                    <!-- Event metadata -->
                     <div class="p-4 flex-grow">
                         <h5 class="text-lg font-bold text-gray-800 truncate">@item.Name</h5>
                         <p class="text-sm text-gray-600 mb-1">
@@ -49,6 +56,8 @@
                             <strong>Type:</strong> <span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">@(item.EventType?.Name ?? "General")</span>
                         </p>
                     </div>
+                    
+                    <!-- Management actions -->
                     <div class="flex justify-between p-4 border-t border-gray-100">
                         <a asp-action="Edit" asp-route-id="@item.Id" class="text-center bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
                             Edit Details
@@ -63,12 +72,3 @@
     }
 </div>
 
-<script type="module">
-    import { getEventSvg } from "/js/event-svg.js";
-
-    document.querySelectorAll(".event-icon").forEach(el => {
-        const type = el.dataset.type || "";;
-
-        el.innerHTML = getEventSvg(type.toLowerCase());
-    });
-</script>

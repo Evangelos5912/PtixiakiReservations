@@ -14,6 +14,7 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace PtixiakiReservations.Controllers;
 
+// Handles operations for individual seats and layout units
 public class SeatController(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
     : Controller
 {
@@ -22,6 +23,7 @@ public class SeatController(ApplicationDbContext context, UserManager<Applicatio
         return View();
     }
 
+    // Retrieves seat data for a layout, filtering availability by active event reservations
     [Authorize]
     [HttpGet]
     public JsonResult get_data(int? LayoutId, int? eventId)
@@ -53,6 +55,7 @@ public class SeatController(ApplicationDbContext context, UserManager<Applicatio
         return Json(seatViewModels);
     }
 
+    // DTO for seat updates
     public class SeatUpdateDto
     {
         public int Id { get; set; }
@@ -61,9 +64,10 @@ public class SeatController(ApplicationDbContext context, UserManager<Applicatio
         public decimal Y { get; set; }
     }
 
+    // Updates coordinates and name of an existing seat
     [HttpPost]
     [ValidateAntiForgeryToken] 
-    [Authorize(Roles = "Admin,Venue,SuperOrganizer")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> UpdateSeat([FromBody] SeatUpdateDto request)
     {
         if (request == null || request.Id <= 0)
@@ -94,6 +98,7 @@ public class SeatController(ApplicationDbContext context, UserManager<Applicatio
         }
     }
 
+    // Retrieves detailed view for a single seat
     [HttpGet]
     [Authorize]
     public async Task<IActionResult> Details(int? id)
@@ -114,7 +119,8 @@ public class SeatController(ApplicationDbContext context, UserManager<Applicatio
         return View(seat);
     }
 
-    [Authorize(Roles = "Admin,Venue,SuperOrganizer")]
+    // Retrieves seat data as JSON
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Single(int? id)
     {
         if (id == null)
@@ -132,7 +138,8 @@ public class SeatController(ApplicationDbContext context, UserManager<Applicatio
         return Json(seat);
     }
 
-    [Authorize(Roles = "Admin,Venue,SuperOrganizer")]
+    // Renders the seat creation interface
+    [Authorize(Roles = "Admin")]
     public IActionResult Create(int? layoutId)
     {
         if (layoutId == null)
@@ -146,9 +153,10 @@ public class SeatController(ApplicationDbContext context, UserManager<Applicatio
         return View("CreateSeatMap");
     }
 
+    // Completely replaces all seats in a layout with a newly provided array
     [HttpPost]     
     [Route("Seat/CreateTableMap")]
-    [Authorize(Roles = "Admin,Venue,SuperOrganizer")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> CreateTableMap(int layoutId, [FromBody] List<Seat> layoutElements)
     {
         try
@@ -203,7 +211,8 @@ public class SeatController(ApplicationDbContext context, UserManager<Applicatio
         }
     }
     
-    [Authorize(Roles = "Admin,Venue,SuperOrganizer")]
+    // Renders the seat edit form
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null)
@@ -220,9 +229,10 @@ public class SeatController(ApplicationDbContext context, UserManager<Applicatio
         return View(seat);
     }
 
+    // Processes standard seat form edits
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [Authorize(Roles = "Admin,Venue,SuperOrganizer")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Edit(int id, [Bind("ID,ReservationId,VenueId")] Seat Seat)
     {
         if (id != Seat.Id)
@@ -254,6 +264,7 @@ public class SeatController(ApplicationDbContext context, UserManager<Applicatio
         return View(Seat);
     }
 
+    // Toggles the base availability state of a seat
     [Authorize]
     public async Task<IActionResult> ChangeAvailable(int ID, bool Flag)
     {
@@ -284,8 +295,9 @@ public class SeatController(ApplicationDbContext context, UserManager<Applicatio
         return RedirectToAction("ListOfMySeats", "Seat", new { layoutId = Seat.LayoutId });
     }
 
+    // Bulk deletes selected seats by name
     [HttpPost]
-    [Authorize(Roles = "Admin,Venue,SuperOrganizer")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> DeleteMultipleSeats([FromBody] DeleteMultipleSeatsRequest request)
     {
         var seatsToRemove = await context.Seat
@@ -301,7 +313,8 @@ public class SeatController(ApplicationDbContext context, UserManager<Applicatio
         return Json(new { success = true });
     }
     
-    [Authorize(Roles = "Admin,Venue,SuperOrganizer")]
+    // Renders the seat deletion confirmation view
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Delete(int? id)
     {
         if (id == null)
@@ -319,7 +332,8 @@ public class SeatController(ApplicationDbContext context, UserManager<Applicatio
         return View(seat);
     }
 
-    [Authorize(Roles = "Admin,Venue,SuperOrganizer")]
+    // Permanently removes a seat and its active reservations
+    [Authorize(Roles = "Admin")]
     [HttpPost, ActionName("Delete")]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
@@ -339,22 +353,25 @@ public class SeatController(ApplicationDbContext context, UserManager<Applicatio
         return RedirectToAction("ListOfMySeats");
     }
 
+    // Verifies seat existence
     [Authorize]
     private bool SeatExists(int id)
     {
         return context.Seat.Any(e => e.Id == id);
     }
 
+    // DTO for bulk seat deletion
     public class DeleteMultipleSeatsRequest
     {
         public List<string> seatNames { get; set; }
         public int layoutId { get; set; }
     }
 
+    // Replaces the entire layout schema (seats, shapes, groups) transactionally
     [HttpPost]
     [ValidateAntiForgeryToken]
     [Route("Seat/SaveCompleteLayout")]
-    [Authorize(Roles = "Admin,Venue,SuperOrganizer")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> SaveCompleteLayout(int layoutId, [FromBody] LayoutPayloadViewModel payload)
     {
         if (payload == null) return BadRequest("Invalid layout data.");
@@ -446,6 +463,7 @@ public class SeatController(ApplicationDbContext context, UserManager<Applicatio
         }
     }
 
+    // Fetches the complete mapped layout combining standalone elements and grouped objects
     [HttpGet]
     [Authorize]
     [Route("Seat/GetCompleteLayout")]

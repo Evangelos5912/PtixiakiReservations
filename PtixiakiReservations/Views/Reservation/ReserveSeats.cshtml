@@ -7,10 +7,10 @@
     var layoutId = Model.LayoutId;
 }
 
+<!-- Primary Container for Seat Reservation Flow -->
 <div class="min-h-screen bg-gray-50/50 py-6 sm:py-10 px-4 sm:px-6 lg:px-8 pb-32 sm:pb-12">
     <div class="max-w-6xl mx-auto">
         
-        <!-- Page Header & Breadcrumbs -->
         <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
             <div>
                 <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">Seat Reservation</h1>
@@ -20,7 +20,6 @@
 
         <div class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
             
-            <!-- Hero Banner -->
             <div class="bg-gradient-to-r from-blue-600 to-indigo-700 px-6 sm:px-8 py-6 sm:py-8 relative overflow-hidden">
                 <div class="absolute -right-10 -top-10 w-40 h-40 bg-white opacity-10 rounded-full blur-3xl pointer-events-none"></div>
                 <div class="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -47,7 +46,6 @@
 
             <div class="p-4 sm:p-8">
                 
-                <!-- Timing Configurator -->
                 <div class="bg-gray-50 rounded-xl p-5 border border-gray-200 mb-8 shadow-sm">
                     <div class="flex items-center mb-4">
                         <div class="h-8 w-8 rounded-lg bg-indigo-100 border border-indigo-200 flex items-center justify-center mr-3">
@@ -60,7 +58,6 @@
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <!-- Hidden Context Payload -->
                         <div class="hidden">
                             <input type="hidden" id="startTime" value="@Model.StartDateTime.TimeOfDay" />
                             <input type="hidden" id="endTime" value="@Model.EndTime.TimeOfDay" />
@@ -95,7 +92,6 @@
                     </div>
                 </div>
 
-                <!-- Interactive Seat Map -->
                 @if (layoutId == null || layoutId == 0)
                 {
                     <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-6 flex items-start shadow-sm">
@@ -116,7 +112,6 @@
                             <p class="text-sm text-gray-500 mt-1">Drag to pan the map. Scroll to zoom. Click on green seats to reserve them.</p>
                         </div>
                         
-                        <!-- Map Legend -->
                         <div class="flex flex-wrap gap-3 sm:gap-4 bg-gray-50 border border-gray-200 rounded-lg px-4 py-2 shadow-sm" aria-label="Seat Map Legend">
                             <div class="flex items-center" title="Available to reserve">
                                 <div class="w-4 h-4 bg-emerald-500 rounded border border-emerald-600 mr-2 shadow-inner"></div>
@@ -137,11 +132,9 @@
                         </div>
                     </div>
 
-                    <!-- Canvas Container -->
                     <div class="mb-8 relative z-10">
                         <div id="canvas-wrapper" class="bg-gray-100 rounded-xl border border-gray-200 overflow-hidden relative shadow-inner w-full" style="height: 65vh; min-height: 500px; max-height: 800px;">
                             
-                            <!-- Camera Controls -->
                             <div class="absolute bottom-4 right-4 z-50 flex items-center gap-1 bg-white/95 backdrop-blur-md p-1.5 rounded-xl shadow-lg border border-gray-200">
                                 <button type="button" aria-label="Zoom Out" onclick="ZoomOut()" class="w-12 h-12 flex items-center justify-center hover:bg-gray-100 rounded-lg text-gray-700 transition-colors cursor-pointer border-none" title="Zoom Out">
                                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM13 10H7"/></svg>
@@ -164,7 +157,6 @@
                         </div>
                     </div>
 
-                    <!-- Selected Seats Feedback Tray -->
                     <div id="selection-summary" class="mb-8 hidden animate-fade-in-up">
                         <div class="bg-indigo-50 border border-indigo-200 rounded-xl p-5 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                             <div>
@@ -186,7 +178,6 @@
                 }
             </div>
 
-            <!-- Sticky Bottom Action Bar -->
             @if (layoutId != null && layoutId != 0)
             {
                 <div class="bg-gray-50 border-t border-gray-200 p-4 sm:p-6 flex flex-col sm:flex-row justify-end gap-3 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] relative z-30">
@@ -230,8 +221,6 @@
         let currentGroupsCache = [];
         let fabricCanvas;
 
-        // --- SIGNALR COLLABORATIVE SEAT MAP ---
-        
         const seatConnection = new signalR.HubConnectionBuilder()
             .withUrl("/seathub")
             .withAutomaticReconnect()
@@ -253,7 +242,7 @@
             fabricCanvas.getObjects('group').forEach(group => {
                 if (group.seatId === lockedSeatId) {
                     const rect = group.item(0);
-                    rect.set('fill', '#f59e0b'); // Amber 
+                    rect.set('fill', '#f59e0b'); 
                     rect.set('stroke', '#d97706');
                     group.set('selectable', false);
                     group.set('hoverCursor', 'not-allowed');
@@ -266,10 +255,9 @@
         seatConnection.on("InitializeLocks", (lockedSeatIds) => {
             if (!fabricCanvas) return;
             fabricCanvas.getObjects('group').forEach(group => {
-                // If the server says this seat is locked, turn it amber and disable it immediately
                 if (lockedSeatIds.includes(group.seatId)) {
                     const rect = group.item(0);
-                    rect.set('fill', '#f59e0b'); // Amber 
+                    rect.set('fill', '#f59e0b'); 
                     rect.set('stroke', '#d97706');
                     group.set('selectable', false);
                     group.set('hoverCursor', 'not-allowed');
@@ -284,7 +272,7 @@
             fabricCanvas.getObjects('group').forEach(group => {
                 if (group.seatId === unlockedSeatId && group.lockedByOther) {
                     const rect = group.item(0);
-                    rect.set('fill', '#10b981'); // Emerald 
+                    rect.set('fill', '#10b981'); 
                     rect.set('stroke', '#059669');
                     group.set('selectable', true);
                     group.set('hoverCursor', 'pointer');
@@ -294,8 +282,6 @@
             fabricCanvas.renderAll();
         });
 
-        // --- FABRIC VIEWPORT ENGINES ---
-        
         function updateZoomText() {
             const zoomText = document.getElementById('zoom-level');
             if (zoomText && fabricCanvas) {
@@ -370,12 +356,9 @@
             updateZoomText();
         }
 
-        // --- DOM INITIALIZATION PIPELINE ---
-
         document.addEventListener('DOMContentLoaded', function () {
             
             if (layoutId === 0) return; 
-
 
             fabricCanvas = new fabric.Canvas('seatCanvas', { selection: false });
 
@@ -462,10 +445,10 @@
             }
         }
 
-        // --- FORM DATA & API SUBMISSION ---
-
-        $(document).ready(function () {$("#useEventStartTime").on("change", function() {
-                if ($(this).is(':checked')) {$("#reservationStartTime").val('@Model.StartDateTime.ToString("HH:mm")');
+        $(document).ready(function () {
+            $("#useEventStartTime").on("change", function() {
+                if ($(this).is(':checked')) {
+                    $("#reservationStartTime").val('@Model.StartDateTime.ToString("HH:mm")');
                     $("#reservationStartTime").prop('disabled', true);
                 } else {
                     $("#reservationStartTime").prop('disabled', false);
@@ -473,7 +456,8 @@
             });
 
             $("#useEventEndTime").on("change", function() {
-                 if ($(this).is(':checked')) {$("#reservationEndTime").val('@Model.EndTime.ToString("HH:mm")');
+                 if ($(this).is(':checked')) {
+                     $("#reservationEndTime").val('@Model.EndTime.ToString("HH:mm")');
                      $("#reservationEndTime").prop('disabled', true);
                  } else {
                      $("#reservationEndTime").prop('disabled', false);
@@ -526,8 +510,6 @@
 
             $("#clear-selection").on("click", () => clearAllSelections(fabricCanvas));
         });
-
-        // --- MAP RENDERING ---
 
         function renderMap(canvas, seats, shapes, groups) {
             canvas.clear();
@@ -703,8 +685,6 @@
             updateSelectionSummary();
             canvas.renderAll();
         }
-
-        // --- UI ALERT NOTIFICATIONS ---
 
         function showLoadingOnFabric(canvas) {
             canvas.add(new fabric.Text('Loading interactive map...', { left: canvas.width/2, top: canvas.height/2, originX: 'center', originY: 'center', fill: '#4a5568', fontSize: 18, fontFamily: 'Arial', fontWeight: 'bold' }));

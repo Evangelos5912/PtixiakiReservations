@@ -11,11 +11,13 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace PtixiakiReservations.Controllers;
 
+// Handles CRUD operations for non-selectable layout elements (shapes, tables, stages)
 public class NonSelectableController(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
     : Controller
 {
+    // Replaces all existing non-selectable elements for a layout with a new set
     [HttpPost]
-    [Authorize(Roles = "Admin,Venue,SuperOrganizer")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> SaveElements(int layoutId, [FromBody] List<NonSelectable> elements)
     {
         var existing = await context.NonSelectable
@@ -34,6 +36,7 @@ public class NonSelectableController(ApplicationDbContext context, UserManager<A
         return Ok(new { success = true });
     }
 
+    // Retrieves all non-selectable elements associated with a specific layout
     [Authorize]
     [HttpGet]
     public async Task<IActionResult> GetElements(int layoutId)
@@ -44,6 +47,7 @@ public class NonSelectableController(ApplicationDbContext context, UserManager<A
         return Ok(elements);
     }
 
+    // DTO for updating non-selectable element dimensions and positions
     public class NonSelectableUpdateDto
     {
         public int Id { get; set; }
@@ -54,9 +58,10 @@ public class NonSelectableController(ApplicationDbContext context, UserManager<A
         public decimal Width {get; set; }
     }
 
+    // Updates the position and dimensions of a specific non-selectable element
     [HttpPost]
     [ValidateAntiForgeryToken] 
-    [Authorize(Roles = "Admin,Venue,SuperOrganizer")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> UpdateElement([FromBody] NonSelectableUpdateDto request)
     {
         if (request == null || request.Id <= 0)
@@ -89,14 +94,16 @@ public class NonSelectableController(ApplicationDbContext context, UserManager<A
         }
     }
 
+    // DTO for bulk deletion of non-selectable elements by name
     public class DeleteMultipleElementsRequest
     {
         public List<string> Names { get; set; }
         public int LayoutId { get; set; }
     }
 
+    // Bulk deletes multiple non-selectable elements from a layout
     [HttpPost]
-    [Authorize(Roles = "Admin,Venue,SuperOrganizer")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> DeleteElements([FromBody] DeleteMultipleElementsRequest request)
     {
         if (request == null || request.Names == null || !request.Names.Any())

@@ -144,7 +144,6 @@
                         <div class="hidden md:flex space-x-1">
                             @for (int i = 1; i <= totalPages; i++)
                             {
-                                // Algorithm to only show first, last, and immediate surrounding pages
                                 if (i == 1 || i == totalPages || (i >= currentPage - 2 && i <= currentPage + 2))
                                 {
                                     <a href="?pageNumber=@i&searchQuery=@searchQuery"

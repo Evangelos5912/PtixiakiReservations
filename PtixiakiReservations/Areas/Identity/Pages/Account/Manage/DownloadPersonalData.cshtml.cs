@@ -35,7 +35,6 @@ namespace PtixiakiReservations.Areas.Identity.Pages.Account.Manage
 
             _logger.LogInformation("User with ID '{UserId}' asked for their personal data.", _userManager.GetUserId(User));
 
-            // Only include personal data for download
             var personalData = new Dictionary<string, string>();
             var personalDataProps = typeof(ApplicationUser).GetProperties().Where(
                             prop => Attribute.IsDefined(prop, typeof(PersonalDataAttribute)));

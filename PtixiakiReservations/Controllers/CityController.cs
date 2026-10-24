@@ -15,10 +15,7 @@ using System.IO;
 
 namespace PtixiakiReservations.Controllers
 {
-    /// <summary>
-    /// Manages administrative operations for operational regions (Cities) and Elasticsearch synchronization.
-    /// </summary>
-    [Authorize(Roles = "Admin")]
+    // Handles operational regions (Cities) and syncs them with Elasticsearch
     public class CityController : Controller
     {        
         private readonly ApplicationDbContext _context;
@@ -38,12 +35,14 @@ namespace PtixiakiReservations.Controllers
             _elasticSearchService = elasticSearchService;
         }
 
+        // DTO for Elasticsearch city indexing
         public class CitySearchDto
         {
             public string Id { get; set; }
             public string Name { get; set; }
         }
 
+        // Syncs a single city to Elasticsearch
         private async Task SyncCityToElasticAsync(City city)
         {
             var dto = new CitySearchDto { Id = city.Id.ToString(), Name = city.Name };
@@ -51,12 +50,15 @@ namespace PtixiakiReservations.Controllers
             await _elasticSearchService.AddOrUpdateAsync(dto, "cities");
         }
 
+        // Removes a city from Elasticsearch
         private async Task RemoveCityFromElasticAsync(int cityId)
         {
             await _elasticSearchService.DeleteByIdAsync<CitySearchDto>(cityId.ToString(), "cities");
         }
 
+        // Returns a paginated and searchable list of cities
         [HttpGet]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> ManageCities(string searchQuery = null, int pageNumber = 1)
         {
             const int pageSize = 10; 
@@ -88,14 +90,18 @@ namespace PtixiakiReservations.Controllers
             return View(cities);
         }
 
+        // Renders the city creation form
         [HttpGet]
+        [Authorize(Roles = "Admin")]
         public IActionResult CreateCity()
         {
             return View();
         }
 
+        // Creates a new city if it does not already exist
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> CreateCity(string CityName)
         {
             if (string.IsNullOrWhiteSpace(CityName)) return View();
@@ -119,11 +125,10 @@ namespace PtixiakiReservations.Controllers
             return View();
         }
 
-        /// <summary>
-        /// Permanently removes a city and related dependencies.
-        /// </summary>
+        // Permanently deletes a city along with all its venues, events, layouts, reservations, and files
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteCity(int id)
         {
             var city = await _context.City.FindAsync(id);
@@ -208,7 +213,9 @@ namespace PtixiakiReservations.Controllers
             return RedirectToAction(nameof(ManageCities));
         }
 
+        // Renders the city edit form
         [HttpGet]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> EditCity(int CityId)
         {
             var city = await _context.City.FindAsync(CityId);
@@ -216,8 +223,10 @@ namespace PtixiakiReservations.Controllers
             return View(city);
         }
 
+        // Renames a city and syncs the update to Elasticsearch
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> EditCity(int CityId, string CityName)
         {
             var city = await _context.City.FindAsync(CityId);

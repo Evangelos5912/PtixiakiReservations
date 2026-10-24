@@ -6,9 +6,9 @@
 <div class="min-h-screen bg-gray-50/50 py-10 px-4 sm:px-6 lg:px-8 flex items-start justify-center">
     <div class="max-w-3xl w-full bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
         
-        <!-- Header Section -->
+        <!-- Page Header -->
         <div class="bg-gradient-to-r from-blue-600 to-indigo-700 px-6 sm:px-10 py-10 relative overflow-hidden">
-            <!-- Decorative background pattern -->
+            <!-- Decorative background -->
             <div class="absolute top-0 right-0 -mt-4 -mr-4 w-32 h-32 bg-white opacity-10 rounded-full blur-2xl"></div>
             <div class="relative z-10">
                 <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">Request Account Upgrade</h1>
@@ -19,11 +19,11 @@
         </div>
 
         <div class="p-6 sm:p-10">
-            <!-- CRITICAL: enctype="multipart/form-data" is required for file uploads -->
+            <!-- Role Request Form -->
             <form asp-action="RequestRoles" method="post" enctype="multipart/form-data" class="space-y-8">
                 <div asp-validation-summary="ModelOnly" class="text-red-500 text-sm font-bold bg-red-50 p-4 rounded-lg border border-red-100 hidden"></div>
 
-                <!-- Role Selection Cards -->
+                <!-- Role Selection Group -->
                 <div>
                     <div class="flex items-center mb-4">
                         <div class="h-8 w-8 rounded-lg bg-indigo-50 border border-indigo-100 flex items-center justify-center mr-3">
@@ -34,7 +34,7 @@
 
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         
-                        <!-- Venue Manager Card -->
+                        <!-- Venue Manager Role -->
                         <label class="relative cursor-pointer group">
                             <input type="radio" asp-for="SelectedRoleRequest" value="Venue" id="role_venue" class="peer sr-only">
                             <div class="h-full px-4 py-5 border-2 border-gray-200 rounded-xl hover:bg-gray-50 peer-checked:border-indigo-600 peer-checked:bg-indigo-50 peer-checked:shadow-sm transition-all text-center">
@@ -44,11 +44,11 @@
                                 <span class="block text-sm font-bold text-gray-900">Venue Manager</span>
                                 <span class="block text-[11px] text-gray-500 mt-1 leading-tight">Register physical locations and manage floorplans.</span>
                             </div>
-                            <!-- Active indicator dot -->
+                            <!-- Active State Indicator -->
                             <div class="absolute top-3 right-3 h-3 w-3 bg-indigo-600 rounded-full opacity-0 peer-checked:opacity-100 transition-opacity"></div>
                         </label>
 
-                        <!-- Event Organizer Card -->
+                        <!-- Event Organizer Role -->
                         <label class="relative cursor-pointer group">
                             <input type="radio" asp-for="SelectedRoleRequest" value="Event" id="role_event" class="peer sr-only">
                             <div class="h-full px-4 py-5 border-2 border-gray-200 rounded-xl hover:bg-gray-50 peer-checked:border-indigo-600 peer-checked:bg-indigo-50 peer-checked:shadow-sm transition-all text-center">
@@ -61,7 +61,7 @@
                             <div class="absolute top-3 right-3 h-3 w-3 bg-indigo-600 rounded-full opacity-0 peer-checked:opacity-100 transition-opacity"></div>
                         </label>
 
-                        <!-- Super Organizer Card -->
+                        <!-- Super Organizer Role -->
                         <label class="relative cursor-pointer group">
                             <input type="radio" asp-for="SelectedRoleRequest" value="SuperOrganizer" id="role_super" class="peer sr-only">
                             <div class="h-full px-4 py-5 border-2 border-gray-200 rounded-xl hover:bg-gray-50 peer-checked:border-indigo-600 peer-checked:bg-indigo-50 peer-checked:shadow-sm transition-all text-center">
@@ -78,7 +78,7 @@
                     <span asp-validation-for="SelectedRoleRequest" class="text-sm text-red-500 font-bold mt-2 block"></span>
                 </div>
 
-                <!-- Reason Textarea -->
+                <!-- Request Justification Input -->
                 <div>
                     <div class="flex items-center mb-4">
                         <div class="h-8 w-8 rounded-lg bg-emerald-50 border border-emerald-100 flex items-center justify-center mr-3">
@@ -93,7 +93,7 @@
                     <span asp-validation-for="Reason" class="text-sm text-red-500 font-bold mt-2 block"></span>
                 </div>
 
-                <!-- PDF Verification Document Upload -->
+                <!-- PDF Document Upload -->
                 <div>
                     <div class="flex items-center mb-4">
                         <div class="h-8 w-8 rounded-lg bg-pink-50 border border-pink-100 flex items-center justify-center mr-3">
@@ -109,7 +109,7 @@
                             <svg class="w-10 h-10 text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
                             <span class="font-bold text-indigo-600 hover:text-indigo-500">Click to upload a PDF file</span>
                             <span class="text-[11px] text-gray-500 mt-1 uppercase tracking-wider">Only .pdf files are accepted</span>
-                            <!-- Important: Name attribute added so C# controller can bind it as an IFormFile -->
+                            <!-- Binds to IFormFile -->
                             <input id="pdfDocument" name="pdfDocument" type="file" class="sr-only" accept=".pdf" onchange="updateFileName(this)">
                         </label>
                         <div id="file-name-display" class="hidden mt-4 inline-flex items-center px-3 py-1.5 rounded-lg bg-white border border-gray-200 shadow-sm">
@@ -122,7 +122,7 @@
                     </div>
                 </div>
 
-                <!-- Actions -->
+                <!-- Form Actions -->
                 <div class="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-6 border-t border-gray-100">
                     <a asp-action="Index" class="w-full sm:w-auto text-center px-6 py-2.5 bg-white border border-gray-300 text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition-colors text-sm shadow-sm">
                         Cancel
@@ -141,7 +141,7 @@
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
     
     <script>
-        // Make the validation summary visible only if it actually contains errors
+        // Displays validation summary if errors exist
         document.addEventListener('DOMContentLoaded', function() {
             const valSummary = document.querySelector('[data-valmsg-summary="true"]');
             if (valSummary && valSummary.textContent.trim().length > 0) {
@@ -149,7 +149,7 @@
             }
         });
 
-        // Handle PDF file selection display
+        // Updates UI with selected PDF filename
         function updateFileName(input) {
             const displayBlock = document.getElementById('file-name-display');
             const textSpan = document.getElementById('file-name-text');
@@ -168,6 +168,7 @@
             }
         }
 
+        // Clears selected PDF file
         function clearFile() {
             const input = document.getElementById('pdfDocument');
             input.value = '';

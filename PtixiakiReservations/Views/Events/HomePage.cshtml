@@ -12,32 +12,24 @@
 
     <div class="bg-white dark:bg-gray-900 shadow-sm mb-10 w-full border-b border-gray-200 dark:border-gray-800 transition-colors">
         
-        <!-- Header Banner -->
         <div class="w-full bg-gradient-to-r from-blue-600 to-indigo-700">
             <div class="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
-                <!-- Semantic heading hierarchy correction -->
-                <h2 class="text-xl font-bold text-white tracking-wide">Explore Events</h2>
+                <h1 class="text-xl font-bold text-white tracking-wide">Explore Events</h1>
             </div>
         </div>
 
-        <!-- Search and Hero Panel -->
         <div id="panel-body" class="w-full">
             <div class="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-10 items-center w-full">
                     
-                    <!-- Search Input Column -->
                     <div class="flex flex-col w-full">
                         <div class="flex flex-col w-full lg:col-span-5 xl:col-span-6 z-20">
-                            <div class="inline-flex items-center px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs font-bold tracking-wide uppercase mb-4 w-max border border-blue-100 dark:border-blue-800 transition-colors">
-                                <span class="flex h-2 w-2 rounded-full bg-blue-600 mr-2 animate-pulse"></span>
-                                Discover Experiences
-                            </div>
                             
-                            <h1 class="text-4xl lg:text-5xl font-extrabold text-gray-900 dark:text-white leading-tight mb-6 transition-colors">
+                            <h2 class="text-4xl lg:text-5xl font-extrabold text-gray-900 dark:text-white leading-tight mb-6 transition-colors">
                                 Find your next <br />
-                                <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">unforgettable</span> event.
-                            </h1>
+                                <span class="text-blue-600 ">unforgettable</span> event.
+                            </h2>
                             
                             <div class="bg-white dark:bg-gray-800 p-2 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 mt-2 relative transition-colors">
                                 <label for="search-term" class="sr-only">Search Events</label>
@@ -46,7 +38,6 @@
                                         <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                                     </div>
                                     
-                                    <!-- A11y: 48px touch target height -->
                                     <input type="text" id="search-term" placeholder="Search by event name, venue, or city..." class="block w-full min-h-[48px] pl-12 pr-4 py-4 text-gray-900 dark:text-white bg-transparent border-none focus:ring-0 text-base sm:text-lg font-medium placeholder-gray-400 outline-none" autocomplete="off">
                                         
                                     <button id="search-button" class="hidden sm:flex shrink-0 px-6 py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all transform hover:scale-105 shadow-md border-none !no-underline min-h-[48px]">
@@ -57,14 +48,11 @@
                                 <div id="autocomplete-dropdown" class="absolute left-0 right-0 top-[calc(100%+10px)] z-30 bg-white dark:bg-gray-800 shadow-2xl rounded-2xl border border-gray-100 dark:border-gray-700 hidden max-h-72 overflow-y-auto w-full transition-colors"></div>
                             </div>
                             
-                            <!-- A11y: 48px touch target height -->
                             <button id="search-button-mobile" class="sm:hidden mt-4 w-full px-6 py-4 min-h-[48px] bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 shadow-md border-none !no-underline">Search Events</button>
-                            <!-- Template literal fix -->
                             <p id="search-validation-message" class="text-red-500 text-sm font-medium mt-2 hidden ml-2">Please type something to search.</p>
                         </div>
                     </div>
                     
-                    <!-- Alpine.js Hero Carousel -->
                     <div class="hidden md:block w-full">
                         <div x-data="heroCarousel()" 
                              x-init="fetchEvents()"
@@ -102,12 +90,11 @@
                                                   x-text="getPriceDisplay(event)">
                                             </span>
                                         </div>
-                                        <h2 class="text-3xl font-extrabold mt-1 drop-shadow-md line-clamp-2" x-text="event.name"></h2>
+                                        <h3 class="text-3xl font-extrabold mt-1 drop-shadow-md line-clamp-2" x-text="event.name"></h3>
                                         <div class="flex items-center gap-3 text-gray-200 text-sm mt-2 font-medium">
                                             <span x-text="formatDate(event.startDateTime)"></span>
                                             <span class="text-gray-400">&bull;</span>
                                             
-                                            <!-- Tooltip container for AlpineJS location display -->
                                             <div class="tooltip-container relative inline-block" x-show="getLocationTooltip(event) !== ''">
                                                 <span class="cursor-help border-b border-dashed border-gray-400" x-text="getLocationText(event)"></span>
                                                 <span class="tooltip-text" x-text="getLocationTooltip(event)"></span>
@@ -120,7 +107,6 @@
                                 </div>
                             </template>
 
-                            <!-- A11y: Explicit aria-labels and touch target enforcement -->
                             <button x-on:click="prev()" aria-label="Previous slide" class="absolute left-4 top-1/2 -translate-y-1/2 min-w-[48px] min-h-[48px] p-3 bg-black/30 hover:bg-black/60 text-white rounded-full backdrop-blur-md transition-all hidden md:block z-30 cursor-pointer border-none flex items-center justify-center">
                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
                             </button>
@@ -130,7 +116,6 @@
 
                             <div class="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-30">
                                 <template x-for="(event, index) in events" :key="'dot-'+index">
-                                    <!-- A11y: Expanded touch target via pseudo-element to strictly preserve visual layout -->
                                     <button x-on:click="goTo(index)" aria-label="Select slide"
                                             class="relative h-2 rounded-full transition-all duration-300 border-none cursor-pointer before:absolute before:-inset-y-4 before:-inset-x-2 before:content-['']"
                                             :class="currentIndex === index ? 'w-8 bg-blue-500' : 'w-2 bg-white/50 hover:bg-white/80'"></button>
@@ -151,7 +136,6 @@
         {
             <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg mb-10 overflow-hidden transition-colors">
                 <div class="grid grid-cols-1 bg-gradient-to-r from-blue-600 to-indigo-700 px-6 py-4 flex flex-row items-center justify-between p-5">
-                    <!-- Semantic heading order -->
                     <h2 class="text-2xl font-bold text-white mb-5">Create an Account or Log in</h2>
                     <p class="text-lg font-bold text-white mb-5">Make sure to Create or Log in with an account to get access to the features of the app and your personal profile where you can request higher role privileges.</p>
                     <div class="mb-5">
@@ -166,11 +150,9 @@
             </div>
         }
 
-        <!-- Recent Events -->
         <div class="mb-10 overflow-hidden">
             <div class="flex w-full max-w-7xl justify-between items-center rounded-xl p-5 bg-gradient-to-r from-blue-600 to-indigo-700 rounded">
                 <div>
-                    <!-- Semantic heading order -->
                     <h2 class="text-2xl font-bold text-white mb-2">Recent Events</h2>
                     <p class="text-lg text-white">Don't miss out on the most recent events.</p>
                 </div>
@@ -182,7 +164,6 @@
                 <div class="overflow-hidden rounded-3xl py-4"> 
                     <div id="recent-events-track" class="flex transition-transform duration-500 ease-out" style="transform: translateX(0%);"></div>
                 </div>
-                <!-- Accessible name and 48px touch target height -->
                 <button id="recent-prev-btn" aria-label="Previous recent events" class="absolute left-0 top-1/2 -translate-y-1/2 min-w-[48px] min-h-[48px] flex items-center justify-center bg-white dark:bg-gray-800 text-gray-800 dark:text-white p-3 rounded-full shadow-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors z-10 disabled:opacity-50 border-none cursor-pointer">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
                 </button>
@@ -192,10 +173,8 @@
             </div>
         </div>
 
-        <!-- Event Categories -->
         <div class="mb-10 overflow-hidden">
             <div class="relative w-full max-w-6xl px-5">
-                <!-- Semantic heading order -->
                 <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-2 transition-colors">Event Categories</h2>
                 <p class="text-lg text-gray-700 dark:text-gray-300 transition-colors">Choose one of our many Categories, we must have something you like.</p>
             </div>
@@ -203,7 +182,6 @@
                 <div class="overflow-hidden rounded-xl">
                     <div id="category-track" class="flex transition-transform duration-500 ease-out" style="transform: translateX(0%);"></div>
                 </div>
-                <!-- Accessible name and 48px touch target height -->
                 <button id="prev-btn" aria-label="Previous categories" class="absolute left-0 top-1/2 -translate-y-1/2 min-w-[48px] min-h-[48px] flex items-center justify-center bg-white dark:bg-gray-800 text-gray-800 dark:text-white p-3 rounded-full shadow-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors z-10 disabled:opacity-50 border-none cursor-pointer">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
                 </button>
@@ -213,11 +191,9 @@
             </div>
         </div>
 
-        <!-- New Arrivals -->
         <div class="mb-10 overflow-hidden">
             <div class="flex w-full max-w-7xl justify-between items-center rounded-xl p-5 bg-gradient-to-r from-blue-600 to-indigo-700 rounded">
                 <div>
-                    <!-- Semantic heading order -->
                     <h2 class="text-2xl font-bold text-white mb-2">New Arrivals</h2>
                     <p class="text-lg text-white">View some of our newest Events.</p>
                 </div>
@@ -229,7 +205,6 @@
                 <div class="overflow-hidden rounded-xl py-4"> 
                     <div id="new-events-track" class="flex transition-transform duration-500 ease-out" style="transform: translateX(0%);"></div>
                 </div>
-                <!-- Accessible name and 48px touch target height -->
                 <button id="new-prev-btn" aria-label="Previous new arrivals" class="absolute left-0 top-1/2 -translate-y-1/2 min-w-[48px] min-h-[48px] flex items-center justify-center bg-white dark:bg-gray-800 text-gray-800 dark:text-white p-3 rounded-full shadow-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors z-10 disabled:opacity-50 border-none cursor-pointer">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
                 </button>
@@ -240,27 +215,6 @@
         </div>
     </div>
 </div>
-
-<style>
-    .tooltip-container { position: relative; display: inline-block; cursor: help; overflow: visible; }
-    .tooltip-text {
-        visibility: hidden; opacity: 0; background-color: #333; color: #fff; text-align: center;
-        padding: 8px 12px; border-radius: 6px; width: max-content; max-width: 200px;
-        position: absolute; z-index: 10; bottom: 130%; left: 50%; transform: translateX(-50%);
-        transition: opacity 0.3s ease, visibility 0.3s ease;
-    }
-    .tooltip-text::after {
-        content: ""; position: absolute; top: 100%; left: 50%; margin-left: -6px;
-        border-width: 6px; border-style: solid; border-color: #333 transparent transparent transparent;
-    }
-    .tooltip-container:hover .tooltip-text { visibility: visible; opacity: 1; }
-
-    .wishlist-hover-badge { opacity: 1; visibility: visible; }
-    @@media (min-width: 1024px) {
-        .wishlist-hover-badge { opacity: 0; visibility: hidden; transition: all 0.2s ease-in-out; }
-        .event-card-link:hover .wishlist-hover-badge { opacity: 1; visibility: visible; }
-    }
-</style>
 
 <script>
     const currentUserId = '@UserManager.GetUserId(User)';
@@ -280,7 +234,6 @@
                 success: function(success) {
                     if (success) {
                         const fill = !isWishlisted ? '#eab308' : 'none';
-                        // A11y aria-label support
                         $(`.wishlist-id-${eventId}`).html(`
                             <button type="button" aria-label="Toggle wishlist" onclick="window.wishlistAction(event, ${eventId})" class="border-none bg-transparent cursor-pointer min-w-[48px] min-h-[48px] flex items-center justify-center">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="${fill}" stroke="#eab308" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -293,7 +246,6 @@
         });
     }
 
-    // Helper formatting functions
     function formatCityLocation(event) {
         const childCount = event.childCount || event.ChildCount || 0;
         const distinctCities = event.distinctCities || event.DistinctCities || 0;
@@ -323,7 +275,6 @@
             const minP = event.minPrice !== undefined ? event.minPrice : event.MinPrice;
             const maxP = event.maxPrice !== undefined ? event.maxPrice : event.MaxPrice;
             if (minP != null && maxP != null) {
-                // Template literal correction
                 return minP === maxP ? (minP > 0 ? `€${minP}` : "Free") : `€${minP} - €${maxP}`;
             }
         }
@@ -343,14 +294,13 @@
                 <svg class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                </div>`;
 
-        const categoryHtml = event.eventType ? `<span class="text-xs font-bold text-blue-700 dark:text-blue-300 uppercase tracking-wider bg-blue-50 dark:bg-blue-900/30 px-2 py-1 rounded-md border border-blue-100 dark:border-blue-800">${event.eventType}</span>` : '';
+        const categoryHtml = event.eventType ? `<span class="text-xs font-bold text-white dark:text-blue-300 uppercase tracking-wider bg-blue-600 dark:bg-blue-900/30 px-2 py-1 rounded-md border border-blue-100 dark:border-blue-800">${event.eventType}</span>` : '';
 
         return `
             <div class="w-full sm:w-1/2 lg:w-1/3 flex-shrink-0 px-3">
                 <a href="/Events/Details/${event.id}" class="event-card-link block bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer h-full border border-gray-100 dark:border-gray-700 relative !no-underline">
                     ${imageHtml}
                     <div class="wishlist-hover-badge cursor-help absolute top-2 left-4 mt-3 mr-3 bg-white text-indigo-800 text-xs font-bold z-30 rounded-full shadow-sm wishlist-id-${event.id}">
-                        <!-- A11y aria-label support -->
                         <button type="button" aria-label="Toggle wishlist" onclick="window.wishlistAction(event, ${event.id})" class="border-none bg-transparent cursor-pointer min-w-[48px] min-h-[48px] flex items-center justify-center">
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#eab308" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
                         </button>
@@ -358,12 +308,11 @@
                     <div class="p-5">
                         <div class="flex flex-wrap items-center gap-2 mb-2">
                             ${categoryHtml}
-                            <span class="text-xs font-bold text-emerald-700 dark:text-emerald-300 uppercase tracking-wider bg-emerald-50 dark:bg-emerald-900/30 px-2 py-1 rounded-md border border-emerald-100 dark:border-emerald-800">${priceHtml}</span>
+                            <span class="text-xs font-bold text-white dark:text-emerald-300 uppercase tracking-wider bg-emerald-600 dark:bg-emerald-900/30 px-2 py-1 rounded-md border border-emerald-100 dark:border-emerald-800">${priceHtml}</span>
                         </div>
                         <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2 line-clamp-2">${event.name}</h3>
                         <div class="flex items-center text-sm text-gray-500 dark:text-gray-400 mb-1">
                             <svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                            <!-- Template literal correction -->
                             ${startDate} - ${endDate}
                         </div>
                         <div class="mt-3 text-sm font-bold text-gray-600 dark:text-gray-300">
@@ -375,7 +324,6 @@
         `;
     }
 
-    // Initialize Category Slider
     document.addEventListener('DOMContentLoaded', async function() {
         const track = document.getElementById('category-track');
         const gradients = ['from-purple-500 to-indigo-600', 'from-blue-400 to-blue-600', 'from-green-400 to-teal-500', 'from-yellow-400 to-orange-500', 'from-pink-400 to-rose-500'];
@@ -403,7 +351,6 @@
         } catch (e) { track.innerHTML = '<p class="text-red-500 px-3">Failed to load categories.</p>'; }
     });
 
-    // Load Sliders
     document.addEventListener('DOMContentLoaded', async function() {
         ['newest', 'recent'].forEach(async type => {
             const track = document.getElementById(type === 'newest' ? 'new-events-track' : 'recent-events-track');
@@ -427,7 +374,6 @@
             let visibleCards = window.innerWidth >= 1024 ? 3 : (window.innerWidth >= 640 ? 2 : 1);
             const maxIndex = Math.max(0, cards.length - visibleCards);
             currentIndex = Math.max(0, Math.min(currentIndex, maxIndex));
-            // Template literal logic correction
             trackElement.style.transform = `translateX(-${currentIndex * cards[0].offsetWidth}px)`;
             prevButton.disabled = currentIndex === 0;
             nextButton.disabled = currentIndex >= maxIndex;

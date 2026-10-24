@@ -36,14 +36,12 @@ namespace PtixiakiReservations.Areas.Identity.Pages.Account
             public bool RememberMe { get; set; }
         }
 
-        // This runs when they arrive from the Login page
         public void OnGet(string returnUrl = null, bool rememberMe = false)
         {
             ReturnUrl = returnUrl;
             Input = new InputModel { RememberMe = rememberMe };
         }
 
-        // This runs when they click "Verify and Log in"
         public async Task<IActionResult> OnPostAsync()
         {
             if (!ModelState.IsValid)
@@ -53,12 +51,11 @@ namespace PtixiakiReservations.Areas.Identity.Pages.Account
 
             ReturnUrl = ReturnUrl ?? Url.Content("~/");
 
-            // Verify the 6-digit code
             var result = await _signInManager.TwoFactorSignInAsync(
                 "Email", 
                 Input.Code, 
                 Input.RememberMe, 
-                rememberClient: false); // rememberClient skips 2FA on this browser next time if true
+                rememberClient: false); 
 
             if (result.Succeeded)
             {

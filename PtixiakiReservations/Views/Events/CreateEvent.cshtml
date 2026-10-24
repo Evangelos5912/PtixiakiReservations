@@ -4,10 +4,11 @@
     ViewData["Title"] = "Create New Event";
 }
 
+<!-- Main event creation container spanning the viewport -->
 <div class="min-h-screen bg-gray-50/50 py-6 sm:py-10 px-4 sm:px-6 lg:px-8 pb-32 sm:pb-12">
     <div class="max-w-4xl mx-auto">
         
-        <!-- Header Configuration -->
+        <!-- Header row with title and navigation -->
         <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
             <div>
                 <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">Create New Event</h1>
@@ -21,7 +22,7 @@
             </div>
         </div>
 
-        <!-- Information Panel -->
+        <!-- Instructional banner explaining Master vs Sub-events -->
         <div class="bg-indigo-50 border border-indigo-100 rounded-2xl p-5 sm:p-6 mb-8 shadow-sm relative overflow-hidden">
             <div class="absolute -right-4 -top-4 w-24 h-24 bg-indigo-200 rounded-full opacity-40 blur-2xl pointer-events-none"></div>
             <div class="flex items-start relative z-10">
@@ -63,7 +64,7 @@
         <form asp-action="CreateEvent" asp-controller="Events" method="post" id="createEventForm" enctype="multipart/form-data" class="space-y-8">
             @Html.AntiForgeryToken()
             
-            <!-- Event Mode Selection -->
+            <!-- Toggle block for selecting Master or Sub-Event mode -->
             <div class="bg-white rounded-2xl shadow-sm border border-gray-200 relative z-[80]">
                 <div class="px-6 py-5 border-b border-gray-100 bg-gray-50/30 flex items-center rounded-t-2xl">
                     <div class="h-8 w-8 rounded-lg bg-blue-50 border border-blue-100 flex items-center justify-center mr-3">
@@ -91,7 +92,7 @@
                 </div>
             </div>
 
-            <!-- Parent Event Association -->
+            <!-- Visible only in Child Mode: Interface to search and link a Master Event -->
             <div id="parentEventSection" class="hidden bg-white rounded-2xl shadow-sm border border-gray-200 ring-2 ring-indigo-500 border-transparent relative z-[70]">
                 <div class="px-6 py-5 border-b border-gray-100 bg-indigo-50/50 flex items-center rounded-t-2xl">
                     <div class="h-8 w-8 rounded-lg bg-indigo-100 border border-indigo-200 flex items-center justify-center mr-3">
@@ -113,7 +114,7 @@
                 </div>
             </div>
 
-            <!-- Sub-Events Collection -->
+            <!-- Dashboard listing existing child events once a Master is selected -->
             <div id="subEventsListContainer" class="hidden bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden relative z-[65]">
                 <div class="bg-gray-50 px-6 py-4 border-b border-gray-200 flex flex-col sm:flex-row justify-between sm:items-center gap-4 rounded-t-2xl">
                     <div>
@@ -152,10 +153,10 @@
                 </div>
             </div>
 
-            <!-- Event Data Form -->
+            <!-- Primary form inputs for creating the event/sub-event -->
             <div id="eventDetailsWrapper" class="space-y-8">
                 
-                <!-- General Information -->
+                <!-- Core Identity Section -->
                 <div class="bg-white rounded-2xl shadow-sm border border-gray-200 relative z-[60]">
                     <div class="px-6 py-5 border-b border-gray-100 bg-gray-50/30 flex items-center rounded-t-2xl">
                         <div class="h-8 w-8 rounded-lg bg-indigo-50 border border-indigo-100 flex items-center justify-center mr-3">
@@ -183,6 +184,7 @@
                             <textarea asp-for="Description" rows="4" placeholder="Enter event description..." class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all text-sm text-gray-900 leading-relaxed"></textarea>
                         </div>
 
+                        <!-- Read-only notification displayed during Sub-Event mode -->
                         <div id="childDescriptionNote" class="hidden">
                             <label class="block text-sm font-bold text-gray-700 mb-1.5">Description Status</label>
                             <div class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg">
@@ -206,7 +208,7 @@
                     </div>
                 </div>
 
-                <!-- Location Parameters -->
+                <!-- Venue and Layout Mapping -->
                 <div id="location-section" class="bg-white rounded-2xl shadow-sm border border-gray-200 relative z-[50]">
                     <div class="px-6 py-5 border-b border-gray-100 bg-gray-50/30 flex items-center rounded-t-2xl">
                         <div class="h-8 w-8 rounded-lg bg-emerald-50 border border-emerald-100 flex items-center justify-center mr-3">
@@ -243,7 +245,7 @@
                     </div>
                 </div>
 
-                <!-- Media Uploads -->
+                <!-- Media Asset Management -->
                 <div class="bg-white rounded-2xl shadow-sm border border-gray-200 relative z-[40]">
                     <div class="px-6 py-5 border-b border-gray-100 bg-gray-50/30 flex items-center justify-center text-center rounded-t-2xl">
                         <div class="h-8 w-8 rounded-lg bg-pink-50 border border-pink-100 flex items-center justify-center mr-3">
@@ -253,6 +255,7 @@
                     </div>
                     
                     <div class="p-6 space-y-10 max-w-2xl mx-auto">
+                        <!-- Primary Cover Image -->
                         <div class="flex flex-col items-center text-center">
                             <label class="block text-sm font-bold text-gray-700 mb-3 border-b border-gray-100 pb-2 w-full">Main Event Banner</label>
                             
@@ -271,6 +274,7 @@
                             </div>
                         </div>
 
+                        <!-- Secondary Gallery Collection -->
                         <div class="flex flex-col items-center text-center">
                             <label class="block text-sm font-bold text-gray-700 mb-3 border-b border-gray-100 pb-2 w-full">Gallery Additions</label>
                             <div class="w-full max-w-md flex justify-center px-6 py-6 border-2 border-gray-300 border-dashed rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors mx-auto">
@@ -287,7 +291,7 @@
                     </div>
                 </div>
 
-                <!-- Scheduling Parameters -->
+                <!-- Date and Time Scheduling -->
                 <div class="bg-white rounded-2xl shadow-sm border border-gray-200 relative z-[30]">
                     <div class="px-6 py-5 border-b border-gray-100 bg-gray-50/30 flex items-center rounded-t-2xl">
                         <div class="h-8 w-8 rounded-lg bg-orange-50 border border-orange-100 flex items-center justify-center mr-3">
@@ -302,6 +306,7 @@
                             <label for="isMultiDay" class="ml-3 font-bold text-gray-700 cursor-pointer">Deploy events across multiple days automatically</label>
                         </div>
 
+                        <!-- Single Instance Calendar -->
                         <div id="singleDayContainer" class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
                                 <label asp-for="StartDateTime" class="block text-sm font-bold text-gray-700 mb-1.5">Start Date & Time</label>
@@ -313,6 +318,7 @@
                             </div>
                         </div>
 
+                        <!-- Multi-Instance Generation Settings -->
                         <div id="multiDayContainer" class="hidden space-y-6">
                             <input asp-for="StartDateTime" type="hidden" id="multiStartDateTime" />
                             <input asp-for="EndTime" type="hidden" id="multiEndDateTime" />
@@ -352,7 +358,7 @@
                 </div>
             </div>
 
-            <!-- Form Actions -->
+            <!-- Sticky Bottom Submission Bar -->
             <div id="bottomActionBar" class="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 p-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-50 sm:static sm:bg-transparent sm:border-0 sm:p-0 sm:shadow-none sm:flex sm:justify-end sm:gap-3 sm:mt-4">
                 <div class="flex w-full sm:w-auto gap-3 mt-3 sm:mt-0">
                     <button type="button" id="cancelChildBtn" onclick="hideChildEventForm()" class="hidden w-full sm:w-auto justify-center items-center px-6 py-2.5 bg-white border border-gray-300 rounded-xl text-sm font-bold text-gray-700 hover:bg-gray-50 shadow-sm transition-colors">Cancel Draft</button>
@@ -366,7 +372,7 @@
     </div>
 </div>
 
-<!-- Interactive Elements -->
+<!-- Bulk Rename Modal Dialog -->
 <div id="renameModal" tabindex="-1" class="hidden fixed inset-0 z-[110] flex items-center justify-center bg-gray-900 bg-opacity-60 backdrop-blur-sm transition-opacity">
     <div class="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md relative transform transition-all border border-gray-100">
         <h3 class="text-xl font-extrabold text-gray-900 mb-2">Bulk Rename Elements</h3>
@@ -379,6 +385,7 @@
     </div>
 </div>
     
+<!-- Success Notification Toast -->
 <div id="successMessage" class="hidden mb-6 bg-emerald-50 border border-emerald-200 p-4 rounded-xl shadow-lg fixed top-6 right-6 z-[120] animate-fade-in-up">
     <div class="flex items-center">
         <div class="flex-shrink-0 bg-emerald-100 p-2 rounded-full">
@@ -407,6 +414,7 @@
     <script>
         document.addEventListener("DOMContentLoaded", function () {
             
+            // Core DOM Elements Initialization
             const form = document.getElementById('createEventForm');
             const eventDetailsWrapper = document.getElementById('eventDetailsWrapper');
             const bottomActionBar = document.getElementById('bottomActionBar');
@@ -457,7 +465,7 @@
             let namingIds = [];
             let previewDates = [];
 
-            // Validation Reset
+            // Resets red validation borders on user interaction
             function resetValidationColors() {
                 venueSearch.classList.remove('border-red-500', 'bg-red-50');
                 layoutSelect.classList.remove('border-red-500', 'bg-red-50');
@@ -470,7 +478,7 @@
                 this.classList.remove('border-red-500', 'bg-red-50');
             });
 
-            // UI State Management
+            // Dictates visibility of venue/layout fields based on event mode
             window.handleLayoutAndVenueState = function() {
                 const isMasterMode = radioMaster.checked;
                 const isStandalone = singleCheckbox.checked || isMultiDay.checked;
@@ -496,6 +504,7 @@
                 }
             };
 
+            // Switches the form structure between Master and Sub-Event context
             window.toggleEventMode = function(mode, isManualClick = false) {
                 const isMaster = (mode === 'father');
 
@@ -564,6 +573,7 @@
                 updateRadioStyles();
             };
 
+            // Applies active styling to the toggled mode button
             function updateRadioStyles() {
                 const labelF = document.getElementById('labelFather');
                 const labelC = document.getElementById('labelChild');
@@ -584,11 +594,13 @@
                 }
             }
 
+            // Exits Sub-Event draft and resets the UI for a new Master Event
             window.resetToCleanMasterMode = function() {
                 toggleEventMode('father', true);
                 window.scrollTo({top: 0, behavior: 'smooth'});
             };
 
+            // Displays the entry form to append a new Sub-Event to the selected Master
             window.showChildEventForm = function() {
                 eventDetailsWrapper.classList.remove('hidden');
                 bottomActionBar.classList.remove('hidden');
@@ -597,6 +609,7 @@
                 window.scrollTo({top: eventDetailsWrapper.offsetTop - 50, behavior: 'smooth'});
             };
 
+            // Hides the Sub-Event creation form and clears pending inputs
             window.hideChildEventForm = function() {
                 eventDetailsWrapper.classList.add('hidden');
                 bottomActionBar.classList.add('hidden');
@@ -611,7 +624,7 @@
                 resetValidationColors();
             };
 
-            // Constraint Validation
+            // Fetches the Master Event's time bounds and enforces them on the Sub-Event inputs
             async function applyParentTimingConstraints(parentId) {
                 if (!parentId) return;
                 try {
@@ -646,6 +659,7 @@
                 } catch (err) { console.error("Error applying constraints:", err); }
             }
 
+            // Validates that currently selected dates do not violate the Master Event boundaries
             function enforceParentConstraints() {
                 if (!radioChild.checked || !hiddenIdInput.value) return false;
 
@@ -733,6 +747,7 @@
                 }
             });
 
+            // Locks in the selected Master Event and populates the dashboard with its existing Sub-Events
             async function selectParent(ev) {
                 hiddenIdInput.value = ev.id;
                 searchInput.value = ev.name;
@@ -763,6 +778,7 @@
                 await applyParentTimingConstraints(ev.id);
             }
 
+            // Fetches parent event suggestions via AJAX based on input
             searchInput.addEventListener('input', function(e) {
                 if (e.target.value.length < 2) { resultsList.classList.add('hidden'); return; }
                 fetch(`/Events/SearchParentEvents?query=${encodeURIComponent(e.target.value)}`)
@@ -780,6 +796,7 @@
                     });
             });
 
+            // Resets the Master Event selection and hides dependent UI components
             clearBtn.onclick = () => {
                 hiddenIdInput.value = ''; searchInput.value = ''; searchInput.disabled = false;
                 clearBtn.classList.add('hidden'); 
@@ -798,6 +815,7 @@
                 resetDateConstraints();
             };
 
+            // Fetches venue suggestions via AJAX with keyword highlighting
             venueSearch.addEventListener('input', function(e) {
                 if (e.target.value.length < 1) { venueResultsList.classList.add('hidden'); return; }
                 fetch(`/Events/SearchVenues?query=${encodeURIComponent(e.target.value)}`)
@@ -825,12 +843,14 @@
                     });
             });
 
+            // Wraps matched query text in highlighted span tags
             function highlightMatch(text, query) {
                 if (!query) return text;
                 const regex = new RegExp('(' + query.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&') + ')', 'gi');
                 return text.replace(regex, '<span class="highlight">$1</span>');
             }
 
+            // Clears the selected venue and disables the layout dropdown
             clearVenueBtn.onclick = () => {
                 venueHiddenInput.value = '';
                 venueSearch.value = '';
@@ -840,6 +860,7 @@
                 layoutSelect.disabled = true;
             };
 
+            // Populates the layout dropdown based on the selected venue ID
             function fetchLayouts(vId) {
                 if(!vId) return;
                 fetch(`/Events/GetLayouts?venueId=${vId}`)
@@ -854,6 +875,7 @@
                     });
             }
 
+            // Reinitializes the date and time inputs to current local values
             function resetDateConstraints() {
                 allScheduleInputs.forEach(i => { if(i) { i.removeAttribute('min'); i.removeAttribute('max'); }});
                 const now = new Date();
@@ -869,6 +891,7 @@
                 if(multiEndDate) multiEndDate.value = todayDate;
             }
 
+            // Toggles between single-day inputs and the multi-day generation interface
             if(isMultiDay) {
                 isMultiDay.onchange = function() {
                     singleDayContainer.classList.toggle('hidden', this.checked);
@@ -878,6 +901,7 @@
                 };
             }
 
+            // Calculates the array of dates resulting from the multi-day bounds
             function updatePreview() {
                 enforceParentConstraints();
                 const s = new Date(multiStartDate.value + 'T00:00:00');
@@ -890,6 +914,7 @@
                 renderPreviewTable();
             }
 
+            // Draws the list of computed multi-day events for visual validation
             function renderPreviewTable() {
                 eventPreviewList.innerHTML = '';
                 previewDates.forEach((date, index) => {
@@ -906,12 +931,13 @@
                 cont.classList.remove('hidden');
             }
 
+            // Excises specific dates from the multi-day deployment preview
             window.removeDate = function(index) {
                 previewDates.splice(index, 1); 
                 renderPreviewTable();
             };
 
-            // Form Submission
+            // Intercepts form submission to handle AJAX routing, dynamic payloads, and state refresh
             form.addEventListener('submit', async function(e) {
                 
                 e.preventDefault();
@@ -1117,7 +1143,7 @@
             }
         });
 
-        // Sub-Event Management
+        // Fetches and renders the table of associated Sub-Events for a Master Event
         async function updateSubEventsList(parentId) {
             if (!parentId) return;
             try {
@@ -1171,6 +1197,7 @@
             } catch (e) { console.error("Error updating list", e); }
         }
 
+        // Toggles the visibility of checkboxes for bulk operations
         window.showRenameCheckboxes = function(){
             const checked = document.getElementById('MultiRenameCheckbox').checked;
             document.getElementById('ConfirmMultiRenameBtn').classList.toggle('hidden', !checked);
@@ -1185,17 +1212,20 @@
             }
         };
 
+        // Activates the bulk rename modal dialog
         window.showRenameModal = function() {
             document.getElementById("renameModal").classList.remove('hidden');
             document.body.classList.add('overflow-hidden');
         };
 
+        // Closes the bulk rename modal and resets its state
         window.closeRenameModal = function() {
             namingIds = [];
             document.getElementById("renameModal").classList.add('hidden');
             document.body.classList.remove('overflow-hidden');
         };
 
+        // Processes the bulk renaming payload to the backend
         window.RenameMultiple = async function(NewName){
             const Name = NewName.trim();
             if (!Name) { alert("Name cannot be empty."); return; }
@@ -1221,7 +1251,7 @@
             } catch (e) { console.error("Error bulk rename", e); }
         };
 
-        // Inline Single Edit Functions
+        // Swaps the static name display for an active input field
         window.enableInlineEdit = function(id) {
             document.getElementById(`display-name-${id}`).classList.add('hidden');
             const editMode = document.getElementById(`edit-mode-${id}`);
@@ -1230,6 +1260,7 @@
             document.getElementById(`edit-input-${id}`).focus();
         };
 
+        // Commits the inline name modification to the database
         window.saveEditName = async function(id) {
             const inputField = document.getElementById(`edit-input-${id}`);
             const newName = inputField.value.trim();
@@ -1248,6 +1279,7 @@
             } catch (e) { console.error("Error renaming", e); }
         };
 
+        // Reverts the inline edit mode without saving changes
         window.cancelEditName = function(id) {
             const inputField = document.getElementById(`edit-input-${id}`);
             if(inputField) {
@@ -1258,6 +1290,7 @@
             }
         };
 
+        // Triggers the deletion of a specific Sub-Event
         window.deleteSubEvent = async function(id) {
             if (!confirm("Are you sure you want to delete this specific sub-event?")) return;
             try {
@@ -1266,6 +1299,7 @@
             } catch (e) { console.error("Error deleting", e); }
         };
 
+        // Triggers the server-side duplication of a Sub-Event
         window.DuplicateSubEvent = async function(id) {
             if (!confirm("Are you sure you want to duplicate this specific sub-event?")) return;
             try {
@@ -1274,7 +1308,7 @@
             } catch (e) { console.error("Error duplicating", e); }
         };
 
-        // Media Preview Handlers
+        // Renders a client-side thumbnail for the primary event image upload
         window.previewImage = function(input) {
             if (input.files && input.files[0]) {
                 const reader = new FileReader();
@@ -1286,6 +1320,7 @@
             }
         };
 
+        // Renders client-side thumbnails for bulk gallery uploads
         window.previewGalleryImages = function(input) {
             const container = document.getElementById('galleryPreviewContainer');
             container.innerHTML = ''; 
