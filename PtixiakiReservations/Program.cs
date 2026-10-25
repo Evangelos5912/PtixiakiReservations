@@ -161,7 +161,7 @@ if (!builder.Environment.IsEnvironment("EF"))
         var context = services.GetRequiredService<ApplicationDbContext>();
         var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
         var roleManager = services.GetRequiredService<RoleManager<ApplicationRole>>();
-        context.Database.Migrate();
+        context.Database.EnsureCreated();
         try{
             await PtixiakiReservations.Seeders.RoleSeeder.SeedRolesAndAdminAsync(services);
             Log.Information("Ensuring database is created...");
