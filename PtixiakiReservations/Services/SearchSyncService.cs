@@ -24,11 +24,21 @@ namespace PtixiakiReservations.Services
         public string Name { get; set; }
     }
 
+    public class SearchCoordinates
+    {
+        [System.Text.Json.Serialization.JsonPropertyName("lat")]
+        public double Lat { get; set; }
+        
+        [System.Text.Json.Serialization.JsonPropertyName("lon")]
+        public double Lon { get; set; }
+    }
+
     public class VenueSearchDto
     {
         public string Id { get; set; }
         public string Name { get; set; }
         public string CityName { get; set; }
+        public SearchCoordinates Location { get; set; }
     }
 
     public class EventSearchDto

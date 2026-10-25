@@ -19,7 +19,7 @@ using SixLabors.ImageSharp.Formats.Webp;
 
 namespace PtixiakiReservations.Controllers
 {
-    // Handles venue management, layout assignment, categories, and Elasticsearch syncing
+    // Venue constraint, schema, and search mapping controller.
     public class VenueController : Controller
     {
         private readonly IWebHostEnvironment _environment;
@@ -47,15 +47,24 @@ namespace PtixiakiReservations.Controllers
             _elasticSearch = elasticSearch;
         }
 
-        // DTO for indexing venue data into Elasticsearch
+        public class SearchCoordinates
+        {
+            [System.Text.Json.Serialization.JsonPropertyName("lat")]
+            public double Lat { get; set; }
+            
+            [System.Text.Json.Serialization.JsonPropertyName("lon")]
+            public double Lon { get; set; }
+        }
+
         public class VenueSearchDto
         {
             public string Id { get; set; }
             public string Name { get; set; }
             public string CityName { get; set; }
+            public SearchCoordinates Location { get; set; }
         }
 
-        // Upserts a venue record in the Elasticsearch index
+        // Upserts venue document into Elasticsearch.
         private async Task SyncVenueToElasticAsync(int venueId)
         {
             var venue = await _context.Venue
@@ -68,20 +77,21 @@ namespace PtixiakiReservations.Controllers
                 {
                     Id = venue.Id.ToString(),
                     Name = venue.Name ?? "",
-                    CityName = venue.City != null ? venue.City.Name : ""
+                    CityName = venue.City != null ? venue.City.Name : "",
+                    
                 };
                 await _elasticSearch.CreateIndexIfNotExistsAsync("venues");
                 await _elasticSearch.AddOrUpdateAsync(dto, "venues");
             }
         }
 
-        // Deletes a venue record from the Elasticsearch index
+        // Removes venue document from Elasticsearch.
         private async Task RemoveVenueFromElasticAsync(int venueId)
         {
             await _elasticSearch.DeleteByIdAsync<VenueSearchDto>(venueId.ToString(), "venues");
         }
 
-        // Returns the global directory of all venues for administration
+        // Returns global venue matrix for administration.
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Index(string city)
         {
@@ -95,7 +105,7 @@ namespace PtixiakiReservations.Controllers
             return View(await venuesQuery.ToListAsync());
         }
 
-        // Returns a paginated list of venues owned by the current organizer
+        // Returns paginated list of venues for active organizer.
         [Authorize(Roles = "Admin,Venue,SuperOrganizer")]
         public async Task<IActionResult> MyVenues(string filter = "mine", string searchString = null, int page = 1, int pageSize = 12)
         {
@@ -165,7 +175,7 @@ namespace PtixiakiReservations.Controllers
             return View(venues);
         }
 
-        // Renders the venue editing interface for an authorized owner
+        // Renders authorization-guarded venue edit form.
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Edit(int? id)
         {
@@ -209,7 +219,7 @@ namespace PtixiakiReservations.Controllers
             return View(viewModel);
         }
 
-        // Processes updates to a venue, uploads new imagery, and triggers an Elasticsearch sync
+        // Processes venue updates, transcodes imagery, and synchronizes search index.
         [HttpPost]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Edit(VenueViewModel model)
@@ -314,7 +324,7 @@ namespace PtixiakiReservations.Controllers
             return View(model);
         }
 
-        // Renders the venue creation form with reference data
+        // Renders venue creation form with taxonomy data.
         [Authorize(Roles = "Admin")]
         public IActionResult Create()
         {
@@ -324,7 +334,7 @@ namespace PtixiakiReservations.Controllers
             return View();
         }
 
-        // Processes the creation of a new venue, transcodes images, and updates the search index
+        // Creates physical venue nodes and executes index writing natively.
         [Authorize(Roles = "Admin")]
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -413,7 +423,7 @@ namespace PtixiakiReservations.Controllers
             return View(model);
         }
 
-        // Retrieves the public profile for a specific venue
+        // Constructs public profile hierarchy for specific venue.
         public async Task<IActionResult> Details(int? id)
         {
             if (id is null) return NotFound();
@@ -439,7 +449,7 @@ namespace PtixiakiReservations.Controllers
             return View(venue);
         }
 
-        // Renders the venue deletion confirmation view
+        // Renders deletion confirmation terminal block.
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(int? id)
         {
@@ -451,7 +461,7 @@ namespace PtixiakiReservations.Controllers
             return View(venue);
         }
 
-        // Cascades deletion of a venue, its events, layouts, images, and search entries
+        // Executes cascading index deletion bounding physical records and logical clusters.
         [Authorize(Roles = "Admin")]
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
@@ -568,7 +578,7 @@ namespace PtixiakiReservations.Controllers
             return RedirectToAction(nameof(MyVenues));
         }
         
-        // Returns a JSON list of venues owned by the current user
+        // Exposes JSON endpoint of venues mapped to current user.
         [HttpGet]
         [Authorize(Roles = "Admin,Venue,SuperOrganizer")]
         public IActionResult GetVenuesForUser()
@@ -582,13 +592,13 @@ namespace PtixiakiReservations.Controllers
             return Json(venues);
         }
 
-        // Verifies venue existence in the database
+        // Verifies venue existence in database.
         private bool VenueExists(int id)
         {
             return _context.Venue.Any(e => e.Id == id);
         }
 
-        // Populates dropdown lists for the venue creation/edit forms
+        // Generates nested dropdown items injecting selected values.
         private void PopulateVenueFormLists(int selectedCityId, IEnumerable<int> selectedEventTypeIds = null)
         {
             ViewBag.ListOfCity = new SelectList(_context.City.ToList(), "Id", "Name", selectedCityId);
@@ -599,7 +609,7 @@ namespace PtixiakiReservations.Controllers
                 selectedEventTypeIds ?? Enumerable.Empty<int>());
         }
     
-        // Safely resolves the path to a venue's image
+        // Returns safe file path or fallback default imagery vector.
         private string GetImagePath(string imageUrl)
         {
             if (string.IsNullOrEmpty(imageUrl)) return "~/images/image.jpg";

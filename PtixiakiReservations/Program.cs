@@ -105,12 +105,11 @@ try
             options.Stores.MaxLengthForKeys = 128;
 
             // Password settings
-            options.Password.RequireDigit = true;
-            options.Password.RequireLowercase = false;
-            options.Password.RequireNonAlphanumeric = false;
-            options.Password.RequireUppercase = false;
-            options.Password.RequiredLength = 6;
-            options.Password.RequiredUniqueChars = 0;
+            options.Password.RequireDigit = false;
+    options.Password.RequireLowercase = false;
+    options.Password.RequireNonAlphanumeric = false;
+    options.Password.RequireUppercase = false;
+    options.Password.RequiredLength = 6;
         })
         .AddEntityFrameworkStores<ApplicationDbContext>()
         .AddDefaultUI()
@@ -162,7 +161,7 @@ if (!builder.Environment.IsEnvironment("EF"))
         var context = services.GetRequiredService<ApplicationDbContext>();
         var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
         var roleManager = services.GetRequiredService<RoleManager<ApplicationRole>>();
-
+        context.Database.Migrate();
         try{
             await PtixiakiReservations.Seeders.RoleSeeder.SeedRolesAndAdminAsync(services);
             Log.Information("Ensuring database is created...");

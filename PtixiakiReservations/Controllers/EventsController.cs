@@ -22,7 +22,7 @@ using SixLabors.ImageSharp.Formats.Webp;
 
 namespace PtixiakiReservations.Controllers;
 
-// Handles event management, image processing, and Elasticsearch integration
+// Event lifecycle, asset compression, and search indexing controller.
 public class EventsController(
     ApplicationDbContext context,
     UserManager<ApplicationUser> userManager,
@@ -32,7 +32,7 @@ public class EventsController(
     IWebHostEnvironment environment)
     : Controller
 {
-    // Syncs an event and its relations to the Elasticsearch index
+    // Syncs event document to Elasticsearch.
     private async Task SyncEventToElasticAsync(int eventId)
     {
         var ev = await context.Event
@@ -47,13 +47,13 @@ public class EventsController(
         }
     }
 
-    // Removes an event from the Elasticsearch index
+    // Removes event document from Elasticsearch.
     private async Task RemoveEventFromElasticAsync(int eventId)
     {
         await elasticSearchService.DeleteByIdAsync<Event>(eventId.ToString(), "events");
     }
 
-    // Retrieves a paginated and filtered list of master events for the dashboard
+    // Retrieves paginated master events for organizer dashboard.
     [Authorize]
     [HttpGet]
     public async Task<IActionResult> Index(string filter = "mine", string searchString = null, int page = 1, int pageSize = 12)
@@ -95,7 +95,6 @@ public class EventsController(
         return View(events);
     }
 
-    // DTO for Elasticsearch organizer indexing
     public class OrganizerSearchDto
     {
         public string Id { get; set; }
@@ -105,7 +104,29 @@ public class EventsController(
         public string UserName { get; set; }
     }
 
-    // Resizes and transcodes images to WebP format with caching
+    public class CitySearchDto
+    {
+        public string Id { get; set; }
+        public string Name { get; set; }
+    }
+
+    public class VenueSearchDto
+    {
+        public string Id { get; set; }
+        public string Name { get; set; }
+        public string CityName { get; set; }
+    }
+
+    public class EventSearchDto
+    {
+        public string Id { get; set; }
+        public string Name { get; set; }
+        public string StartDateTime { get; set; }
+        public string VenueName { get; set; }
+        public string CityName { get; set; }
+    }
+
+    // Transcodes and caches requested images to WebP format.
     [AllowAnonymous]
     [HttpGet]
     [ResponseCache(Duration = 86400, Location = ResponseCacheLocation.Any)]
@@ -140,7 +161,7 @@ public class EventsController(
         }
     }
     
-    // Retrieves today's events as JSON
+    // Returns JSON list of today's events.
     [HttpGet]
     [AllowAnonymous]
     public async Task<IActionResult> GetTodayEvents(string city, int page = 1, int pageSize = 12)
@@ -169,7 +190,7 @@ public class EventsController(
         return Json(new { events, totalCount, currentPage = page, totalPages = (int)Math.Ceiling(totalCount / (double)pageSize) });
     }
 
-    // Retrieves future events as JSON
+    // Returns JSON list of upcoming events.
     [HttpGet]
     [AllowAnonymous]
     public async Task<IActionResult> GetUpcomingEvents(string city, int page = 1, int pageSize = 12)
@@ -195,7 +216,7 @@ public class EventsController(
         return Json(new { events, totalCount, currentPage = page, totalPages = (int)Math.Ceiling(totalCount / (double)pageSize) });
     }
 
-    // Retrieves past events as JSON
+    // Returns JSON list of past events.
     [HttpGet]
     [AllowAnonymous]
     public async Task<IActionResult> GetPastEvents(string city, int page = 1, int pageSize = 12)
@@ -221,7 +242,7 @@ public class EventsController(
         return Json(new { events, totalCount, currentPage = page, totalPages = (int)Math.Ceiling(totalCount / (double)pageSize) });
     }
 
-    // Retrieves all events as JSON
+    // Returns JSON list of all events.
     [HttpGet]
     [AllowAnonymous]
     public async Task<IActionResult> GetAllEvents(string city, int page = 1, int pageSize = 12)
@@ -246,7 +267,7 @@ public class EventsController(
         return Json(new { events, totalCount, currentPage = page, totalPages = (int)Math.Ceiling(totalCount / (double)pageSize) });
     }
 
-    // Determines the CSS class based on event timing relative to today
+    // Determines CSS timing class relative to current date.
     [AllowAnonymous]
     public string GetEventTimeClass(DateTime eventDate)
     {
@@ -256,7 +277,7 @@ public class EventsController(
         else return "event-past";
     }
 
-    // Retrieves master events with aggregated child event data and ratings
+    // Returns filtered master events and aggregated child data for search UI.
     [AllowAnonymous]
     public async Task<IActionResult> EventsForToday(int? category, string city, string searchTerm, int page = 1, int pageSize = 12)
     {
@@ -318,7 +339,7 @@ public class EventsController(
         return View(eventsList);
     }
 
-    // Retrieves event details and checks user review eligibility
+    // Renders event details and validates user review eligibility.
     [AllowAnonymous]
     public async Task<IActionResult> Details(int? id)
     {
@@ -364,7 +385,7 @@ public class EventsController(
         return View(@event);
     }
 
-    // Retrieves gallery image paths for an event or its parent
+    // Returns gallery image paths for target or parent event.
     [HttpGet]
     public async Task<IActionResult> GetEventGallery(int eventId)
     {
@@ -389,7 +410,7 @@ public class EventsController(
         return Json(new { success = true, images = paths });
     }
 
-    // Retrieves all events for the current user's venues
+    // Returns JSON list of events for active user's venues.
     [Authorize]
     public async Task<JsonResult> GetEvents()
     {
@@ -408,7 +429,7 @@ public class EventsController(
         return Json(events);
     }
 
-    // Retrieves all events for a specific venue
+    // Returns JSON list of events filtered by venue ID.
     [Authorize]
     [HttpGet]
     public async Task<IActionResult> GetEvents2(int? venueId)
@@ -428,11 +449,11 @@ public class EventsController(
         return Json(result); 
     }
 
-    // Retrieves available event categories
+    // Returns JSON list of available event categories.
     [AllowAnonymous]
     public JsonResult GetEventTypes() => new JsonResult(context.EventType.ToList());
 
-    // Renders the event list view for a specific venue
+    // Renders event list for specific venue.
     [Authorize(Roles = "Admin,Event,SuperOrganizer")]
     public async Task<IActionResult> VenueEvents(int venueId)
     {
@@ -441,7 +462,7 @@ public class EventsController(
         return View(venue);
     }
 
-    // Renders the event creation form with required dropdown data
+    // Renders event creation form and requisite dropdowns.
     [Authorize(Roles = "Admin,Event,SuperOrganizer")]
     [HttpGet]
     public async Task<IActionResult> CreateEvent()
@@ -476,7 +497,7 @@ public class EventsController(
         }
     }
 
-    // Creates a new event, processes image uploads, and handles multi-day child event generation
+    // Processes event creation, image uploads, and schedule generation.
     [Authorize(Roles = "Admin,Event,SuperOrganizer")]
     [HttpPost]
     [ValidateAntiForgeryToken]
@@ -700,7 +721,7 @@ public class EventsController(
         }
     }
 
-    // Renders the event edit form with current data
+    // Renders event edit form with current parameters.
     [Authorize(Roles = "Admin,Event,SuperOrganizer")]
     [HttpGet]
     public async Task<IActionResult> Edit(int? id)
@@ -740,7 +761,7 @@ public class EventsController(
         return View(eventToEdit);
     }
 
-    // Updates an event, processes new images, and validates parent-child timeframes
+    // Processes event updates, image overrides, and timeframe validation.
     [HttpPost]
     [ValidateAntiForgeryToken]
     [Authorize(Roles = "Admin,Event,SuperOrganizer")]
@@ -897,7 +918,7 @@ public class EventsController(
         return View(updatedEvent);
     }
 
-    // Validates if a specific date matches the selected recurring days
+    // Validates if date matches recurring schedule selection.
     [Authorize]
     public bool CorrectDay(JsonEventModel ev, int i, int everyNum)
     {
@@ -913,7 +934,7 @@ public class EventsController(
         return correctDay;
     }
 
-    // Cascades deletion of an event, its children, reservations, images, and search entries
+    // Executes cascading deletion of event, children, reservations, media, and indices.
     [Authorize(Roles = "Admin,Event,SuperOrganizer")]
     [HttpDelete]
     public async Task<IActionResult> Delete(int? id)
@@ -962,10 +983,10 @@ public class EventsController(
         }
     }
     
-    // Checks if an event exists in the database
+    // Verifies event existence in database.
     private bool EventExists(int id) => context.Event.Any(e => e.Id == id);
 
-    // Seeds test events into Elasticsearch
+    // Seeds test events into Elasticsearch index.
     [Authorize]
     [HttpPost]
     public async Task<IActionResult> IndexEventsToElastic()
@@ -981,7 +1002,7 @@ public class EventsController(
         return Ok(result);
     }
 
-    // Performs a unified search across events, venues, and organizers using Elasticsearch and SQL
+    // Executes unified Elasticsearch and SQL cross-domain search.
     [HttpGet]
     [AllowAnonymous]
     public async Task<IActionResult> SearchEvents(
@@ -1016,14 +1037,16 @@ public class EventsController(
             }
 
             List<string> matchingUserIds = new List<string>();
+            List<int> validCityIds = new List<int>();
+            List<int> validVenueIds = new List<int>();
+            List<int> validEventIds = new List<int>();
             
             if (!string.IsNullOrWhiteSpace(term) && string.IsNullOrWhiteSpace(organizerId))
             {
                 IEnumerable<OrganizerSearchDto> matchedUsers = new List<OrganizerSearchDto>();
                 try
                 {
-                    string esQuery = string.Join(" ", term.Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(w => $"*{w}*"));
-                    matchedUsers = await elasticSearchService.SearchAsync<OrganizerSearchDto>(esQuery, "event_organizers");
+                    matchedUsers = await elasticSearchService.SearchAsync<OrganizerSearchDto>(term, "event_organizers");
                 }
                 catch
                 {
@@ -1052,6 +1075,27 @@ public class EventsController(
                 {
                     matchingUserIds = matchedUsers.Select(u => u.Id).ToList();
                 }
+
+                try
+                {
+                    var matchedCities = await elasticSearchService.SearchAsync<CitySearchDto>(term, "cities");
+                    if (matchedCities != null) validCityIds = matchedCities.Select(c => int.Parse(c.Id)).ToList();
+                }
+                catch { }
+
+                try
+                {
+                    var matchedVenues = await elasticSearchService.SearchAsync<VenueSearchDto>(term, "venues");
+                    if (matchedVenues != null) validVenueIds = matchedVenues.Select(v => int.Parse(v.Id)).ToList();
+                }
+                catch { }
+
+                try
+                {
+                    var matchedEvents = await elasticSearchService.SearchAsync<EventSearchDto>(term, "events");
+                    if (matchedEvents != null) validEventIds = matchedEvents.Select(e => int.Parse(e.Id)).ToList();
+                }
+                catch { }
             }
 
             var eq = context.Event
@@ -1080,14 +1124,14 @@ public class EventsController(
                     else
                     {
                         eq = eq.Where(e => 
-                            e.Name.ToLower().Contains(term) ||
-                            (e.Venue != null && e.Venue.Name.ToLower().Contains(term)) ||
-                            (e.Venue != null && e.Venue.City != null && e.Venue.City.Name.ToLower().Contains(term)) ||
+                            validEventIds.Contains(e.Id) || e.Name.ToLower().Contains(term) ||
+                            (e.VenueId.HasValue && validVenueIds.Contains(e.VenueId.Value)) || (e.Venue != null && e.Venue.Name.ToLower().Contains(term)) ||
+                            (e.Venue != null && e.Venue.City != null && (validCityIds.Contains(e.Venue.City.Id) || e.Venue.City.Name.ToLower().Contains(term))) ||
                             (e.OrganizerId != null && matchingUserIds.Contains(e.OrganizerId)) || 
                             e.ChildEvents.Any(c => 
-                                c.Name.ToLower().Contains(term) ||
-                                (c.Venue != null && c.Venue.Name.ToLower().Contains(term)) ||
-                                (c.Venue != null && c.Venue.City != null && c.Venue.City.Name.ToLower().Contains(term))
+                                validEventIds.Contains(c.Id) || c.Name.ToLower().Contains(term) ||
+                                (c.VenueId.HasValue && validVenueIds.Contains(c.VenueId.Value)) || (c.Venue != null && c.Venue.Name.ToLower().Contains(term)) ||
+                                (c.Venue != null && c.Venue.City != null && (validCityIds.Contains(c.Venue.City.Id) || c.Venue.City.Name.ToLower().Contains(term)))
                             )
                         );
                     }
@@ -1113,8 +1157,8 @@ public class EventsController(
                 else if (!string.IsNullOrWhiteSpace(term)) 
                 {
                     vq = vq.Where(v => 
-                        v.Name.ToLower().Contains(term) || 
-                        (v.City != null && v.City.Name.ToLower().Contains(term)) ||
+                        validVenueIds.Contains(v.Id) || v.Name.ToLower().Contains(term) || 
+                        (v.City != null && (validCityIds.Contains(v.City.Id) || v.City.Name.ToLower().Contains(term))) ||
                         (v.UserId != null && matchingUserIds.Contains(v.UserId))
                     );
                 }
@@ -1202,7 +1246,7 @@ public class EventsController(
         }
     }
 
-    // Tests Elasticsearch connectivity and basic operations
+    // Tests Elasticsearch connectivity and basic CRUD operations.
     [HttpGet("test-elasticsearch")]
     [AllowAnonymous] 
     public async Task<IActionResult> TestElasticsearch()
@@ -1227,7 +1271,7 @@ public class EventsController(
         }
     }
 
-    // Bulk generates random events for testing
+    // Generates bulk random events for testing.
     [HttpGet]
     [Route("Events/GenerateEvents/{count}")]
     public async Task<IActionResult> GenerateEvents(int count)
@@ -1266,7 +1310,7 @@ public class EventsController(
         return Json(new { success = true, events = generatedEvents });
     }
 
-    // Retrieves events managed by the current user
+    // Returns JSON list of events managed by active user.
     [Authorize(Roles = "Admin,Event,SuperOrganizer")]
     [HttpGet]
     public async Task<IActionResult> GetUserEvents(string filter = "mine")
@@ -1296,7 +1340,7 @@ public class EventsController(
         }
     }
 
-    // Provides global search autocomplete results for organizers, events, venues, and cities
+    // Returns global search autocomplete results for entities.
     [AllowAnonymous]
     public async Task<IActionResult> GetAutocompleteResults(string query)
     {
@@ -1311,8 +1355,7 @@ public class EventsController(
             IEnumerable<OrganizerSearchDto> matchedUsers = new List<OrganizerSearchDto>();
             try
             {
-                string esQuery = string.Join(" ", query.Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(w => $"*{w}*"));
-                matchedUsers = await elasticSearchService.SearchAsync<OrganizerSearchDto>(esQuery, "event_organizers");
+                matchedUsers = await elasticSearchService.SearchAsync<OrganizerSearchDto>(query, "event_organizers");
             }
             catch
             {
@@ -1353,35 +1396,89 @@ public class EventsController(
 
             if (results.Count < maxResults)
             {
-                var eventResults = await context.Event
-                    .Where(e => e.Name.ToLower().Contains(query))
-                    .OrderBy(e => e.Name)
-                    .Take(maxResults - results.Count)
-                    .Select(e => new { text = e.Name, type = "event", subtext = $"Event on {e.StartDateTime.ToString("MMM d, yyyy")}", id = e.Id.ToString() })
-                    .ToListAsync();
-                results.AddRange(eventResults);
+                bool esFound = false;
+                try
+                {
+                    var esEvents = await elasticSearchService.SearchAsync<EventSearchDto>(query, "events");
+                    if (esEvents != null && esEvents.Any())
+                    {
+                        var eventResults = esEvents
+                            .Take(maxResults - results.Count)
+                            .Select(e => new { text = e.Name, type = "event", subtext = $"Event on {DateTime.Parse(e.StartDateTime).ToString("MMM d, yyyy")}", id = e.Id });
+                        results.AddRange(eventResults);
+                        esFound = true;
+                    }
+                }
+                catch { }
+
+                if (!esFound && results.Count < maxResults)
+                {
+                    var eventResults = await context.Event
+                        .Where(e => e.Name.ToLower().Contains(query))
+                        .OrderBy(e => e.Name)
+                        .Take(maxResults - results.Count)
+                        .Select(e => new { text = e.Name, type = "event", subtext = $"Event on {e.StartDateTime.ToString("MMM d, yyyy")}", id = e.Id.ToString() })
+                        .ToListAsync();
+                    results.AddRange(eventResults);
+                }
             }
 
             if (results.Count < maxResults)
             {
-                var venueResults = await context.Venue
-                    .Where(v => v.Name.ToLower().Contains(query))
-                    .OrderBy(v => v.Name)
-                    .Take(maxResults - results.Count)
-                    .Select(v => new { text = v.Name, type = "location", subtext = v.City != null ? $"Venue in {v.City.Name}" : "Venue", id = v.Id.ToString() })
-                    .ToListAsync();
-                results.AddRange(venueResults);
+                bool esFound = false;
+                try
+                {
+                    var esVenues = await elasticSearchService.SearchAsync<VenueSearchDto>(query, "venues");
+                    if (esVenues != null && esVenues.Any())
+                    {
+                        var venueResults = esVenues
+                            .Take(maxResults - results.Count)
+                            .Select(v => new { text = v.Name, type = "location", subtext = !string.IsNullOrEmpty(v.CityName) ? $"Venue in {v.CityName}" : "Venue", id = v.Id });
+                        results.AddRange(venueResults);
+                        esFound = true;
+                    }
+                }
+                catch { }
+
+                if (!esFound && results.Count < maxResults)
+                {
+                    var venueResults = await context.Venue
+                        .Where(v => v.Name.ToLower().Contains(query))
+                        .OrderBy(v => v.Name)
+                        .Take(maxResults - results.Count)
+                        .Select(v => new { text = v.Name, type = "location", subtext = v.City != null ? $"Venue in {v.City.Name}" : "Venue", id = v.Id.ToString() })
+                        .ToListAsync();
+                    results.AddRange(venueResults);
+                }
             }
 
             if (results.Count < maxResults)
             {
-                var cityResults = await context.City
-                    .Where(c => c.Name.ToLower().Contains(query))
-                    .OrderBy(c => c.Name)
-                    .Take(maxResults - results.Count)
-                    .Select(c => new { text = c.Name, type = "location", subtext = "City", id = c.Id.ToString() })
-                    .ToListAsync();
-                results.AddRange(cityResults);
+                bool esFound = false;
+                try
+                {
+                    var esCities = await elasticSearchService.SearchAsync<CitySearchDto>(query, "cities");
+                    if (esCities != null && esCities.Any())
+                    {
+                        var cityResults = esCities
+                            .Take(maxResults - results.Count)
+                            .Select(c => new { text = c.Name, type = "location", subtext = "City", id = c.Id });
+                        results.AddRange(cityResults);
+                        esFound = true;
+                    }
+                }
+                catch { }
+
+                if (!esFound && results.Count < maxResults)
+                {
+                    var cityResults = await context.City
+                        .Where(c => c.Name.ToLower().Contains(query))
+                        .OrderBy(c => c.Name)
+                        .Take(maxResults - results.Count)
+                        .Select(c => new { text = c.Name, type = "location", subtext = "City", id = c.Id.ToString() })
+                        .ToListAsync();
+                    results.AddRange(cityResults);
+                }
             }
 
             return Json(results);
@@ -1392,7 +1489,7 @@ public class EventsController(
         }
     }
 
-    // Retrieves available layouts for a specific venue
+    // Returns available layouts for specific venue.
     [HttpGet]
     public JsonResult GetLayouts(int venueId)
     {
@@ -1400,7 +1497,7 @@ public class EventsController(
         return Json(layouts);
     }
 
-    // Updates the name of a specific event
+    // Updates name of specific event instance.
     [Authorize(Roles = "Admin,Event,SuperOrganizer")]
     [HttpPost]
     public async Task<IActionResult> EditSubSelectedName(int id, string NewName)
@@ -1424,7 +1521,7 @@ public class EventsController(
         return Json(new { success = true, message = "Update query successfully processed." });
     }
 
-    // Searches for top-level master events
+    // Searches for top-level master events.
     [Authorize(Roles = "Admin,Event,SuperOrganizer")] 
     [HttpGet]
     public async Task<IActionResult> SearchParentEvents(string query)
@@ -1441,7 +1538,7 @@ public class EventsController(
         return Json(events);
     }
 
-    // Retrieves all child events belonging to a master event
+    // Returns child events belonging to master event.
     [HttpGet]
     [Authorize(Roles = "Admin,Event,SuperOrganizer")]
     public async Task<IActionResult> GetSubEvents(int parentId)
@@ -1460,7 +1557,7 @@ public class EventsController(
         return Json(subEvents);
     }
 
-    // Links a child event to a new master event
+    // Links child event to new master event.
     [Authorize(Roles = "Admin,Event,SuperOrganizer")]
     [HttpPost]
     public async Task<IActionResult> UpdateParentEvent([FromBody] LinkEventDto data)
@@ -1485,14 +1582,13 @@ public class EventsController(
         }
     }
 
-    // DTO for linking parent and child events
     public class LinkEventDto
     {
         public int ChildId { get; set; }
         public int? ParentId { get; set; }
     }
 
-    // Renders the view listing all child events for a master event
+    // Renders list view of child events for master event.
     [AllowAnonymous]
     public async Task<IActionResult> ChildEvents(int? id)
     {
@@ -1512,7 +1608,7 @@ public class EventsController(
         return View(childEvents);
     }
 
-    // Searches venues for autocomplete suggestions
+    // Searches venues for autocomplete suggestions.
     [HttpGet]
     public async Task<IActionResult> SearchVenues(string query)
     {
@@ -1529,7 +1625,7 @@ public class EventsController(
         return Json(venues);
     }
 
-    // Creates a duplicate of an existing event
+    // Duplicates existing event configuration.
     [Authorize(Roles = "Admin,Event,SuperOrganizer")]
     [HttpPost]
     public async Task<IActionResult> DuplicateSubEvent(int id)
@@ -1561,7 +1657,7 @@ public class EventsController(
         return Json(new { success = true, id = newEvent.Id });
     }
 
-    // Generates a sequential name for duplicated events
+    // Generates sequential name for duplicated events.
     private string GenerateNextName(string currentName)
     {
         if (string.IsNullOrWhiteSpace(currentName)) return "New Event 1";
@@ -1579,7 +1675,7 @@ public class EventsController(
         return $"{currentName.TrimEnd()} 1";
     }
 
-    // Retrieves the start and end times for an event
+    // Returns start and end times for specific event.
     [Authorize]
     [HttpGet]
     public async Task<IActionResult> GetEventTiming(int id)
@@ -1592,7 +1688,7 @@ public class EventsController(
         return Json(ev);
     }
 
-    // Sequentially renames multiple selected events
+    // Sequentially renames multiple selected events.
     [Authorize(Roles = "Admin,Event,SuperOrganizer")]
     [HttpPost]
     public async Task<IActionResult> MultiSubRename([FromForm] List<int> ids, [FromForm] string NewName)
@@ -1625,12 +1721,12 @@ public class EventsController(
         }
     }
 
-    // Renders the main landing page
+    // Renders main landing page.
     [AllowAnonymous]
     [HttpGet]
     public IActionResult HomePage() => View();
 
-    // Retrieves recently added master events with aggregated child metrics
+    // Returns recently added master events and aggregated child metrics.
     [HttpGet]
     [AllowAnonymous]
     public async Task<IActionResult> getNewestEvents()
@@ -1667,7 +1763,7 @@ public class EventsController(
         return Json(result);
     }
 
-    // Retrieves upcoming master events with aggregated child metrics
+    // Returns upcoming master events and aggregated child metrics.
     [HttpGet]
     [AllowAnonymous]
     public async Task<IActionResult> getRecentEvents()
@@ -1704,7 +1800,7 @@ public class EventsController(
         return Json(result);
     }
 
-    // Retrieves a paginated list of reservations for an event
+    // Returns paginated list of reservations for specific event.
     [Authorize(Roles = "Admin,Event,SuperOrganizer")]
     [HttpGet]
     public async Task<IActionResult> EventReservations(int id, string searchTerm = "", int page = 1, int pageSize = 15)
@@ -1752,7 +1848,7 @@ public class EventsController(
         return View(reservations);
     }
 
-    // Cancels and removes an attendee's reservation
+    // Cancels and removes attendee reservation.
     [Authorize(Roles = "Admin,Event,SuperOrganizer")]
     [HttpPost]
     [ValidateAntiForgeryToken]
@@ -1772,7 +1868,7 @@ public class EventsController(
         return Json(new { success = true, message = "Reservation successfully deleted." });
     }
 
-    // Bulk syncs all authorized organizers to Elasticsearch
+    // Bulk syncs authorized organizers to Elasticsearch.
     [HttpPost("Events/IndexOrganizersToElastic")]
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> IndexOrganizersToElastic()

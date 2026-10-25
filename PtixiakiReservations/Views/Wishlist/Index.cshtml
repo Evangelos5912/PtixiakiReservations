@@ -531,16 +531,7 @@
                                 }
                             }
 
-                            let ratingBadgeHtml = "";
-                            const avgRating = event.avgRating || event.AvgRating;
-                            const reviewCount = event.reviewCount || event.ReviewCount || 0;
-                            if (avgRating && reviewCount > 0) {
-                                ratingBadgeHtml = `
-                                <div class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200">
-                                    <span class="text-amber-500 mr-1">★</span>
-                                    ${parseFloat(avgRating).toFixed(1)} (${reviewCount})
-                                </div>`;
-                            }
+                            
 
                             const distinctCities = event.distinctCities || event.DistinctCities || 0;
                             const cityNames = event.cityNames || event.CityNames || [];
@@ -588,7 +579,7 @@
 
                             const categoryName = event.eventType ? (event.eventType.name || event.eventType) : null;
                             const categoryBadgeHtml = categoryName ? `
-                                <div class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-gray-100 text-gray-600 border border-gray-200">
+                                <div class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-blue-600 text-white border border-gray-200">
                                     ${categoryName}
                                 </div>` : '';
 
@@ -617,7 +608,7 @@
                                             <h3 class="text-lg font-bold text-gray-900 mb-2 line-clamp-2">${eventName}</h3>
                                             ${isMasterEvent ? 
                                             `<div class="tooltip-container flex items-center cursor-help shrink-0">
-                                                <svg class="h-5 w-5 text-indigo-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                                <svg class="h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                                                     <path d="M12 11V5" /><path d="M12 11L6 18" /><path d="M12 11L18 18" />
                                                     <circle cx="12" cy="4" r="2.5" fill="currentColor" stroke="none" />
                                                     <circle cx="6" cy="19" r="2.5" fill="currentColor" stroke="none" />
@@ -629,10 +620,10 @@
                                         
                                         <div class="flex items-center gap-2 mb-3 flex-wrap">
                                             ${categoryBadgeHtml}
-                                            <div class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                            <div class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-emerald-600 text-white border border-emerald-200">
                                                 ${priceDisplayHtml} 
                                             </div>
-                                            ${ratingBadgeHtml}
+                                            
                                         </div>
                                         
                                         <div class="flex items-start mb-3">
@@ -651,8 +642,8 @@
                                 ${showSubEventsLink ? `
                                 <div class="px-5 pb-5 mt-auto">
                                     <div class="event-footer flex justify-between items-center pt-4 border-t border-gray-100">
-                                        <a href="/Events/ChildEvents/${eventId}" class="text-sm font-bold text-blue-600 hover:text-blue-800 transition-colors bg-blue-50 px-3 py-1.5 rounded-lg hover:bg-blue-100 !no-underline cursor-pointer">Manage Sub-Events (${childCount})</a>
-                                        <a href="/Events/Edit/${eventId}" class="text-sm font-bold text-gray-500 hover:text-gray-800 transition-colors !no-underline cursor-pointer">Edit →</a>
+                                        <a href="/Events/ChildEvents/${eventId}" class="text-sm font-bold text-white transition-colors bg-blue-800 px-3 py-1.5 rounded-lg hover:bg-blue-600 !no-underline cursor-pointer">Manage Sub-Events (${childCount})</a>
+                                        <a href="/Events/Edit/${eventId}" class="text-sm font-bold text-gray-500 hover:text-gray-800 transition-colors !no-underline cursor-pointer">Edit </a>
                                     </div>
                                 </div>
                                 ` : '<div class="pb-5"></div>'}

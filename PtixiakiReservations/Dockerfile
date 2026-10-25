@@ -1,3 +1,4 @@
+# Dockerfile
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /src
 
@@ -26,6 +27,9 @@ RUN dotnet publish "PtixiakiReservations.csproj" \
 
 FROM mcr.microsoft.com/dotnet/aspnet:9.0-alpine AS final
 WORKDIR /app
+
+RUN apk add --no-cache icu-libs tzdata
+ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
 
 EXPOSE 5000
 ENV ASPNETCORE_URLS=http://+:5000

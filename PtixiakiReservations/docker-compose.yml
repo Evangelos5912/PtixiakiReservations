@@ -7,15 +7,20 @@ services:
     restart: always
     ports:
       - "80:5000" 
+    volumes:
+      - ./wwwroot/images:/app/wwwroot/images
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
       - ConnectionStrings__DefaultConnection=Host=${DB_HOST};Port=${DB_PORT};Database=${DB_NAME};Username=${DB_USER};Password=${DB_PASS};Include Error Detail=true
       - ElasticSettings__Uri=http://elasticsearch:9200
       - EmailSettings__SenderEmail=${EMAIL_ADDRESS}
       - EmailSettings__SenderPassword=${EMAIL_PASSWORD}
+      - Gemini__ApiKey=${GEMINI_API_KEY}
     depends_on:
-      - elasticsearch
-      - postgres
+      elasticsearch:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
 
   postgres:
     image: postgres:15-alpine
@@ -26,9 +31,14 @@ services:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASS}
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.13.0
@@ -38,10 +48,17 @@ services:
       - discovery.type=single-node
       - xpack.security.enabled=false 
       - ES_JAVA_OPTS=-Xms512m -Xmx512m 
+      - network.host=127.0.0.1      
+      - http.host=0.0.0.0
     ports:
       - "9200:9200"
     volumes:
       - elastic_data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://localhost:9200 >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 volumes:
   postgres_data:

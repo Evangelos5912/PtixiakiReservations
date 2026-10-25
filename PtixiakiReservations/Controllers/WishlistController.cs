@@ -112,6 +112,7 @@ namespace PtixiakiReservations.Controllers
                     e.Name,
                     e.StartDateTime,
                     e.EndTime,
+                    eventType = e.EventType.Name,
                     ImagePath = e.ImagePath ?? (e.ParentEvent != null ? e.ParentEvent.ImagePath : null),
                     VenueName = e.Venue != null ? e.Venue.Name : "No Venue",
                     CityName = (e.Venue != null && e.Venue.City != null) ? e.Venue.City.Name : "N/A",
@@ -133,6 +134,7 @@ namespace PtixiakiReservations.Controllers
                         .Select(c => c.Venue.City.Name)
                         .Distinct()
                         .ToList()
+
                 })
                 .ToListAsync();
 

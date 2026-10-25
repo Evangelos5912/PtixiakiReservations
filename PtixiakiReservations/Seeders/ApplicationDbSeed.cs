@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 
 namespace PtixiakiReservations.Seeders;
 
+// Main orchestrator for cascading database initialization logic.
 public static class ApplicationDbSeed
 {
     private static readonly string AdminRole = "Admin";
@@ -21,17 +22,12 @@ public static class ApplicationDbSeed
         var dbContext = serviceProvider.GetRequiredService<ApplicationDbContext>();
         var elasticSearchService = serviceProvider.GetRequiredService<IElasticSearch>();
 
-        // Ensure Roles and Admin User
         await SeedAsync(userManager, roleManager);
-
-        // Seed Venue and Event Data
-        // await SeedVenuesAndEventsAsync(userManager, dbContext, elasticSearchService);
     }
 
     public static async Task SeedAsync(UserManager<ApplicationUser> userManager,
         RoleManager<ApplicationRole> roleManager)
     {
-        // Ensure Roles
         var roles = ExtractRolesFromControllers();
 
         foreach (var role in roles)
@@ -49,7 +45,6 @@ public static class ApplicationDbSeed
             }
         }
 
-        // Ensure Admin User Exists
         await EnsureAdminUserExists(userManager, roleManager);
     }
 
@@ -66,7 +61,7 @@ public static class ApplicationDbSeed
             adminUser = new ApplicationUser
             {
                 UserName = adminEmail,
-                Email = adminEmail,
+                Email = "admin@email",
                 FirstName = "Admin",
                 LastName = "User",
                 EmailConfirmed = true
@@ -114,7 +109,6 @@ public static class ApplicationDbSeed
             throw new Exception("Admin user not found. Run the role and user seeder first.");
         }
 
-        // Seed cities
         if (!dbContext.City.Any())
         {
             dbContext.City.AddRange(new List<City>
@@ -142,7 +136,6 @@ public static class ApplicationDbSeed
         }
         var eventTypes = dbContext.EventType.ToList();
 
-        // Seed venues
         if (!dbContext.Venue.Any())
         {
             dbContext.Venue.AddRange(new List<Venue>
@@ -174,10 +167,8 @@ public static class ApplicationDbSeed
 
         var venuesFromDb = dbContext.Venue.ToList();
 
-        // Seed events (Migrated to Self-Referencing Parent/Child structure)
         if (!dbContext.Event.Any())
         {
-            // 1. Create the Main/Parent Events (These replace the old FamilyEvents)
             var parentEvents = new List<Event>
             {
                 new Event
@@ -204,9 +195,8 @@ public static class ApplicationDbSeed
             };
 
             dbContext.Event.AddRange(parentEvents);
-            await dbContext.SaveChangesAsync(); // Save to generate the Parent IDs
+            await dbContext.SaveChangesAsync(); 
 
-            // 2. Create the Sub/Child Events pointing to the Parents
             var childEvents = new List<Event>
             {
                 new Event

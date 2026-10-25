@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using System.Linq;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
 using PtixiakiReservations.Models; 
@@ -15,25 +16,21 @@ public static class RoleSeeder
 
         string[] roleNames = { "Admin", "User", "SuperOrganizer", "Event", "Venue" };
 
-        Console.WriteLine("--- STARTING ROLE SEEDER ---");
-
         foreach (var roleName in roleNames)
         {
             if (!await roleManager.RoleExistsAsync(roleName))
             {
-                var newRole = new ApplicationRole
+                await roleManager.CreateAsync(new ApplicationRole
                 {
                     Name = roleName,
                     description = $"{roleName} role",
                     creationDate = DateTime.UtcNow
-                };
-
-                var result = await roleManager.CreateAsync(newRole);
-                if (result.Succeeded) Console.WriteLine($"SUCCESS: Created Role '{roleName}'");
+                });
             }
         }
 
-        string adminEmail = "admin@admin.com";
+        // Must use .com to pass standard ASP.NET Core [EmailAddress] validation
+        string adminEmail = "admin@admin.com"; 
         var adminUser = await userManager.FindByEmailAsync(adminEmail);
 
         if (adminUser == null)
@@ -47,14 +44,17 @@ public static class RoleSeeder
                 EmailConfirmed = true
             };
 
-            var result = await userManager.CreateAsync(adminUser, "Admin123!");
+            // This will only work if Program.cs has Identity password requirements relaxed
+            var result = await userManager.CreateAsync(adminUser, "123456");
 
             if (result.Succeeded)
             {
                 await userManager.AddToRoleAsync(adminUser, "Admin");
-                Console.WriteLine("SUCCESS: Created Admin user.");
+            }
+            else 
+            {
+                Console.WriteLine($"ADMIN CREATION FAILED: {string.Join(", ", result.Errors.Select(e => e.Description))}");
             }
         }
-        Console.WriteLine("--- ROLE SEEDER FINISHED ---");
     }
 }

@@ -2,7 +2,7 @@
 @model PtixiakiReservations.Models.Event
 @inject UserManager<ApplicationUser> UserManager
 
-<!-- Renders the public-facing Details page for a specific Event -->
+<!-- Configures view variables and UI flags -->
 @{
     ViewData["Title"] = "Event Details";
     var displayDescription = Model.Description ?? Model.ParentEvent?.Description;
@@ -26,6 +26,7 @@
     
     @Html.AntiForgeryToken()
     
+    <!-- Renders primary event hero section -->
     <div class="bg-white rounded-xl shadow-lg overflow-hidden relative">
         <div class="bg-gradient-to-r from-blue-600 to-indigo-700 py-6 px-8">
             <h1 class="text-3xl font-bold text-white">@Model.Name</h1>
@@ -56,7 +57,6 @@
             }
             else
             {
-                <!-- Fallback banner when no image is assigned -->
                 <div class="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-gray-800 to-indigo-900 text-white">
                     <svg class="h-16 w-16 text-indigo-400 mb-2 opacity-75" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -66,6 +66,7 @@
             }
         </div>
 
+        <!-- Navigation anchors -->
         <div class="sticky top-0 z-40 bg-white/95 backdrop-blur-sm border-b border-gray-200 shadow-sm w-full">
             <nav class="flex px-8 py-4 space-x-8 overflow-x-auto hide-scrollbar">
                 <a href="#general-info" class="text-sm font-bold text-gray-600 hover:text-blue-600 uppercase tracking-wider transition-colors relative group py-2 min-h-[48px] flex items-center">
@@ -110,6 +111,7 @@
         <div class="p-6">
             <div id="general-info" class="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-6 mb-8 scroll-mt-24">
                 
+                <!-- Core event metadata and location -->
                 <div class="bg-blue-50 p-8 rounded-xl flex flex-col gap-6 border border-blue-100 shadow-sm h-full">
                     
                     <div class="flex items-start">
@@ -186,7 +188,6 @@
                                     {
                                         <p class="text-gray-600">@displayVenue.Address, @displayVenue.City.Name</p>
                                         
-                                        <!-- External link to Google Maps generated from venue data -->
                                         <a href="https://maps.google.com/?q=@(Uri.EscapeDataString($"{displayVenue.Name}, {displayVenue.Address}, {displayVenue.City.Name}"))" 
                                         target="_blank" rel="noopener noreferrer"
                                         class="inline-flex items-center min-h-[48px] mt-3 text-blue-700 hover:text-blue-900 font-medium transition-colors">
@@ -215,12 +216,11 @@
                     }
                 </div>
 
+                <!-- Main CTA and Wishlist actions -->
                 <div>
-                    <!-- Primary Call to Action Panel -->
                     <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-8 sticky top-24">
                         @if(isEmptyMasterEvent)
                         {
-                            <!-- Empty state for Master Events without created Sub-Events -->
                             <div class="text-center">
                                 <div class="bg-amber-50 border border-amber-200 rounded-xl p-5 mb-5 shadow-sm">
                                     <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-amber-100 mb-3">
@@ -238,7 +238,6 @@
                         }
                         else if(!hasSchedules)
                         {
-                            <!-- Direct reservation CTA for standard events -->
                             <div class="text-center">
                                 <h2 class="text-2xl font-bold text-gray-900 mb-2">Reserve Your Spot</h2>
                                 <p class="text-gray-600 mb-6">Select your preferred seats and secure your tickets now.</p>
@@ -250,7 +249,6 @@
                         }
                         else
                         {
-                            <!-- Scroll CTA for Master Events to guide users to schedule table -->
                             <div class="text-center">
                                 <h2 class="text-2xl font-bold text-gray-900 mb-2">Reserve Your Spot</h2>
                                 <p class="text-gray-600 mb-6">Multiple times and locations available.</p>
@@ -260,12 +258,12 @@
                                 </a>
                             </div>
                         }
-                        <!-- Container for dynamic AJAX injection of the Wishlist toggle button -->
                         <div class="mt-6 text-center wishlist-container"></div>
                     </div>
                 </div>
             </div>
 
+            <!-- Event description section -->
             @if (displayDescription != null)
             {
             <div id="descriptionArea" class="mt-8 w-full scroll-mt-24">
@@ -280,6 +278,7 @@
             </div>
             }
             
+            <!-- Gallery carousel -->
             @if (galleryImages.Any())
             {
                 <div class="relative w-full h-[300px] md:h-[450px] lg:h-[600px] group overflow-hidden bg-gray-100 rounded-xl mt-8" id="gallery-container">
@@ -310,6 +309,7 @@
                 </div>
             }
            
+            <!-- Organizer contact details -->
             @if(Model.Organizer != null){
                 <div id="OrganizerInfo" class="mt-8 lg:w-1/2 rounded-xl border border-gray-200 bg-gray-50 shadow-sm p-6 scroll-mt-24">
                     <div class="flex items-center mb-4 border-b border-gray-200 pb-3">
@@ -343,6 +343,7 @@
                 </div>
             }
 
+            <!-- Sub-events schedule table -->
             @if(hasSchedules){
                 var schedulePageSize = 10;
                 var schedulePage = 1;
@@ -419,7 +420,6 @@
                         </tbody>
                     </table>
                     
-                    <!-- Paginator for Sub-Events -->
                     @if (totalSchedulePages > 1)
                     {
                         <div class="bg-white px-8 py-5 border-t border-gray-200 flex items-center justify-center gap-2 flex-wrap">
@@ -460,9 +460,9 @@
                 </div>
             }
 
+            <!-- Attendance and review submission form -->
             @if (isReviewableNode && ViewBag.EligibleToReview == true && ViewBag.ReviewReservationId != null)
             {
-                <!-- Form permitting eligible attendees to submit a review and rating -->
                 <div class="mt-12 pt-8 border-t border-gray-200">
                     <div class="bg-gradient-to-br from-indigo-50 via-blue-50 to-indigo-100 rounded-2xl p-8 border border-indigo-200 shadow-sm">
                         <div class="flex items-center mb-4">
@@ -475,7 +475,7 @@
                             </div>
                         </div>
                         
-                        <form id="ajaxReviewForm" class="space-y-6 bg-white p-6 rounded-xl shadow-sm border border-gray-100 mt-4">
+                        <form id="ajaxReviewForm" method="post" class="space-y-6 bg-white p-6 rounded-xl shadow-sm border border-gray-100 mt-4">
                             <input type="hidden" name="reservationId" value="@ViewBag.ReviewReservationId" />
                             
                             <div class="flex items-center justify-between border-b border-gray-100 pb-4">
@@ -493,11 +493,11 @@
                                 <div>
                                     <label class="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-2">Rate your experience</label>
                                     <div class="flex items-center space-x-4 bg-gray-50 p-4 rounded-xl border border-gray-200">
-                                        <input type="range" name="rating" aria-label="Rating out of 5" id="ratingSlider" min="0.5" max="5.0" step="0.5" value="5.0" 
+                                        <input type="range" name="rating" aria-label="Rating out of 5" id="ratingSlider" min="1" max="5" step="1" value="5" 
                                                class="w-full h-2 py-3 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
-                                               oninput="document.getElementById('ratingDisplay').innerText = parseFloat(this.value).toFixed(1)">
+                                               oninput="document.getElementById('ratingDisplay').innerText = this.value">
                                         <div class="font-black text-xl text-yellow-500 w-16 text-center bg-white py-1 px-2 rounded-lg shadow-sm border border-gray-100">
-                                            <span id="ratingDisplay">5.0</span>★
+                                            <span id="ratingDisplay">5</span>★
                                         </div>
                                     </div>
                                 </div>
@@ -516,9 +516,9 @@
                 </div>
             }
 
+            <!-- User reviews grid -->
             @if (isReviewableNode)
             {
-                <!-- Grid rendering community-submitted reviews -->
                 <div id="community-reviews" class="mt-16 pt-8 border-t border-gray-200 scroll-mt-24">
                     <div class="flex items-center justify-between mb-6">
                         <h2 class="text-2xl font-extrabold text-gray-900 flex items-center">
@@ -603,7 +603,6 @@
 <script>
     document.addEventListener("DOMContentLoaded", function () {
         
-        // Gallery Carousel functionality
         const track = document.getElementById('carousel-track');
         const btnPrev = document.getElementById('btn-prev');
         const btnNext = document.getElementById('btn-next');
@@ -613,7 +612,6 @@
             btnNext.addEventListener('click', () => track.scrollBy({ left: track.offsetWidth, behavior: 'smooth' }));
         }
 
-        // Dynamically injects the Wishlist Action Button
         const eventId = '@Model.Id';
         const wishlistContainer = document.querySelector('.wishlist-container');
         
@@ -631,7 +629,6 @@
             </div>`;
         }
 
-        // Fetches wishlist status and updates the UI button state
         if (currentUserId !== '') {
             fetch(`/Wishlist/returnItem?eventId=${eventId}&userId=${currentUserId}`)
                 .then(response => response.json())
@@ -649,9 +646,54 @@
                     }
                 });
         }
+
+        const reviewForm = document.getElementById('ajaxReviewForm');
+        if (reviewForm) {
+            reviewForm.addEventListener('submit', async function (e) {
+                e.preventDefault();
+
+                const submitBtn = document.getElementById('submitReviewBtn');
+                const tokenInput = document.querySelector('input[name="__RequestVerificationToken"]');
+                
+                if (!tokenInput) {
+                    alert('Security token missing.');
+                    return;
+                }
+
+                submitBtn.disabled = true;
+                submitBtn.innerText = 'Submitting...';
+
+                try {
+                    const formData = new URLSearchParams(new FormData(e.target));
+
+                    const response = await fetch('/Reservation/SubmitReview', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                            'RequestVerificationToken': tokenInput.value,
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: formData.toString()
+                    });
+
+                    if (response.ok) {
+                        location.reload();
+                    } else {
+                        const errorData = await response.json().catch(() => ({}));
+                        alert(errorData.message || "Failed to submit review.");
+                        submitBtn.disabled = false;
+                        submitBtn.innerText = 'Submit Review';
+                    }
+                } catch (error) {
+                    console.error("Submission error", error);
+                    alert("A network error occurred.");
+                    submitBtn.disabled = false;
+                    submitBtn.innerText = 'Submit Review';
+                }
+            });
+        }
     });
 
-    // Processes a click on the Wishlist button via AJAX
     window.wishlistAction = function(e, eventId) {
         e.preventDefault();
         e.stopPropagation();
@@ -691,7 +733,6 @@
             });
     }
 
-    // Toggles visibility of the review form based on attendance confirmation
     window.toggleReviewForm = function() {
         const toggle = document.getElementById('attendedToggle');
         const reviewFields = document.getElementById('reviewFields');
@@ -699,44 +740,6 @@
             if (toggle.checked) reviewFields.classList.remove('hidden');
             else reviewFields.classList.add('hidden');
         }
-    }
-
-    // Submits the user review to the server and refreshes the page
-    const reviewForm = document.getElementById('ajaxReviewForm');
-    if (reviewForm) {
-        reviewForm.addEventListener('submit', function (e) {
-            e.preventDefault();
-
-            const submitBtn = document.getElementById('submitReviewBtn');
-            const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
-            
-            submitBtn.disabled = true;
-            submitBtn.innerText = 'Submitting...';
-
-            const formData = new URLSearchParams(new FormData(this));
-
-            fetch('/Reservation/SubmitReview', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                    'RequestVerificationToken': token
-                },
-                body: formData.toString()
-            })
-            .then(response => {
-                if (response.ok) {
-                    location.reload();
-                } else {
-                    throw new Error('Failed');
-                }
-            })
-            .catch(error => {
-                console.error("Review submission failed", error);
-                alert("Failed to submit review. You may have already reviewed this event.");
-                submitBtn.disabled = false;
-                submitBtn.innerText = 'Submit Review';
-            });
-        });
     }
 </script>
 }

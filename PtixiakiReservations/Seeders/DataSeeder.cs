@@ -25,10 +25,7 @@ public class DataSeeder
 
     public static async Task SeedTestDataAsync(ApplicationDbContext context, UserManager<ApplicationUser> userManager, RoleManager<ApplicationRole> roleManager, IServiceProvider serviceProvider)
     {
-        // Call basic data seeding first
         BasicDataSeed(context, userManager, roleManager);
-    
-        // Then call the test data seeder
         await TestDataSeeder.SeedTestDataAsync(serviceProvider);
     }
     
@@ -36,11 +33,6 @@ public class DataSeeder
         RoleManager<ApplicationRole> roleManager)
     {
         context.Database.EnsureCreated();
-
-        if (!context.Users.Any())
-        {
-            SeedUsers(userManager, roleManager).Wait();
-        }
 
         if (!context.City.Any()){
             SeedCities(context);
@@ -80,10 +72,9 @@ public class DataSeeder
         }
     }
 
-    private static async Task SeedUsers(UserManager<ApplicationUser> userManager,
-        RoleManager<ApplicationRole> roleManager)
+    private static async Task SeedUsers(UserManager<ApplicationUser> userManager, RoleManager<ApplicationRole> roleManager)
     {
-        string[] roleNames = { "Admin", "User", "Venue" };
+        string[] roleNames = { "Admin", "User", "SuperOrganizer", "Event", "Venue" };
         foreach (var roleName in roleNames)
         {
             if (!await roleManager.RoleExistsAsync(roleName))
@@ -94,19 +85,9 @@ public class DataSeeder
 
         var users = new List<ApplicationUser>
         {
-            new ApplicationUser
-            {
-                UserName = "admin@admin", Email = "admin@admin", FirstName = "Admin", LastName = "User"
-            },
-            new ApplicationUser
-            {
-                UserName = "manager@example.com", Email = "manager@example.com", FirstName = "Manager",
-                LastName = "User"
-            },
-            new ApplicationUser
-            {
-                UserName = "user@example.com", Email = "user@example.com", FirstName = "Normal", LastName = "User"
-            },
+            new ApplicationUser { UserName = "admin@admin", Email = "admin@admin", FirstName = "Admin", LastName = "User" },
+            new ApplicationUser { UserName = "manager@example.com", Email = "manager@example.com", FirstName = "Manager", LastName = "User" },
+            new ApplicationUser { UserName = "user@example.com", Email = "user@example.com", FirstName = "Normal", LastName = "User" }
         };
 
         foreach (var user in users)
@@ -114,44 +95,22 @@ public class DataSeeder
             var existingUser = await userManager.FindByEmailAsync(user.Email);
             if (existingUser == null)
             {
-                // Use different password for admin@admin
-                var password = user.Email == "admin@admin" ? "admin123" : "Pass123";
+                var password = user.Email == "admin@admin" ? "123456" : "Pass123";
                 await userManager.CreateAsync(user, password);
 
-                // Assign roles as an example
-                if (user.Email.StartsWith("admin"))
-                    await userManager.AddToRoleAsync(user, "Admin");
-                else if (user.Email.StartsWith("manager"))
-                    await userManager.AddToRoleAsync(user, "Venue");
-                else
-                    await userManager.AddToRoleAsync(user, "User");
+                if (user.Email.StartsWith("admin")) await userManager.AddToRoleAsync(user, "Admin");
+                else if (user.Email.StartsWith("manager")) await userManager.AddToRoleAsync(user, "Venue");
+                else await userManager.AddToRoleAsync(user, "User");
             }
         }
     }
 
     private static void SeedCities(ApplicationDbContext context)
     {
-        var cityNames = new[]
-        {
-            "Athens",
-            "Thessaloniki",
-            "Patras",
-            "Heraklion",
-            "Larissa",
-            "Volos",
-            "Ioannina",
-            "Chania",
-            "Rhodes",
-            "Kalamata",
-            "Corfu"
-        };
-
+        var cityNames = new[] { "Athens", "Thessaloniki", "Patras", "Heraklion", "Larissa", "Volos", "Ioannina", "Chania", "Rhodes", "Kalamata", "Corfu" };
         foreach (var cityName in cityNames)
         {
-            if (!context.City.Any(c => c.Name == cityName))
-            {
-                context.City.Add(new City { Name = cityName });
-            }
+            if (!context.City.Any(c => c.Name == cityName)) context.City.Add(new City { Name = cityName });
         }
     }
 
@@ -159,46 +118,29 @@ public class DataSeeder
     {
         context.EventType.AddRange(new List<EventType>
         {
-            new EventType { Name = "Concert" },
-            new EventType { Name = "Theater" },
-            new EventType { Name = "Exhibition" },
-            new EventType { Name = "Sports" },
-            new EventType { Name = "Conference" }
+            new EventType { Name = "Concert" }, new EventType { Name = "Theater" },
+            new EventType { Name = "Exhibition" }, new EventType { Name = "Sports" }, new EventType { Name = "Conference" }
         });
     }
 
     private static void SeedVenues(ApplicationDbContext context)
     {
         var venuesFilePath = Path.Combine(AppContext.BaseDirectory, "SeedData", "venues.json");
+        if (!File.Exists(venuesFilePath)) return;
 
-        if (!File.Exists(venuesFilePath))
-            return;
-
-        var venueSeeds = JsonSerializer.Deserialize<List<VenueSeedItem>>(
-            File.ReadAllText(venuesFilePath)
-        );
-
-        if (venueSeeds == null || !venueSeeds.Any())
-            return;
+        var venueSeeds = JsonSerializer.Deserialize<List<VenueSeedItem>>(File.ReadAllText(venuesFilePath));
+        if (venueSeeds == null || !venueSeeds.Any()) return;
 
         var random = new Random(42);
         var cities = context.City.ToDictionary(c => c.Name, c => c, StringComparer.OrdinalIgnoreCase);
-        var existingVenueNames = context.Venue
-            .Select(v => v.Name)
-            .ToHashSet(StringComparer.OrdinalIgnoreCase);
-
+        var existingVenueNames = context.Venue.Select(v => v.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
         var venueOwner = context.Users.FirstOrDefault(u => u.Email == "manager@example.com") ?? context.Users.First();
 
         foreach (var venueSeed in venueSeeds)
         {
-            if (string.IsNullOrWhiteSpace(venueSeed.Name))
-                continue;
-
-            if (!existingVenueNames.Add(venueSeed.Name.Trim()))
-                continue;
+            if (string.IsNullOrWhiteSpace(venueSeed.Name) || !existingVenueNames.Add(venueSeed.Name.Trim())) continue;
 
             var cityName = ResolveVenueCityName(venueSeed.City);
-
             if (!cities.TryGetValue(cityName, out var city))
             {
                 city = new City { Name = cityName };
@@ -216,7 +158,7 @@ public class DataSeeder
                 VenueUrl = "www.example.com",
                 SocialMediaUrl = "www.example.com",
                 UserId = venueOwner.Id,
-                imgUrl = $"/images/venues/venue{random.Next(1, 6)}.jpg"
+                imgUrl = $"/images/venues/venue{random.Next(1, 6)}.jpg" 
             });
         }
     }
@@ -224,57 +166,33 @@ public class DataSeeder
     private static string ResolveVenueCityName(string cityName)
     {
         var cityKey = NormalizeCityKey(cityName);
-
         var cityAliases = new Dictionary<string, string>
         {
-            { "ATHENS", "Athens" },
-            { "THESSALONIKI", "Thessaloniki" },
-            { "PATRAS", "Patras" },
-            { "HERAKLION", "Heraklion" },
-            { "LARISSA", "Larissa" },
-            { "VOLOS", "Volos" },
-            { "IOANNINA", "Ioannina" },
-            { "CHANIA", "Chania" },
-            { "RHODES", "Rhodes" },
-            { "KALAMATA", "Kalamata" },
-            { "CORFU", "Corfu" },
-            { "\u0391\u0398\u0397\u039D\u0391", "Athens" },
-            { "\u03A0\u0395\u0399\u03A1\u0391\u0399\u0391\u03A3", "Athens" },
-            { "\u0393\u0391\u039B\u0391\u03A4\u03A3\u0399", "Athens" },
-            { "\u0398\u0395\u03A3\u03A3\u0391\u039B\u039F\u039D\u0399\u039A\u0397", "Thessaloniki" },
-            { "\u03A0\u0391\u03A4\u03A1\u0391", "Patras" },
-            { "\u0397\u03A1\u0391\u039A\u039B\u0395\u0399\u039F", "Heraklion" },
-            { "\u039B\u0391\u03A1\u0399\u03A3\u0391", "Larissa" },
-            { "\u0399\u03A9\u0391\u039D\u039D\u0399\u039D\u0391", "Ioannina" },
-            { "\u03A7\u0391\u039D\u0399\u0391", "Chania" },
-            { "\u03A1\u039F\u0394\u039F\u03A3", "Rhodes" },
-            { "\u039A\u0391\u039B\u0391\u039C\u0391\u03A4\u0391", "Kalamata" },
+            { "ATHENS", "Athens" }, { "THESSALONIKI", "Thessaloniki" }, { "PATRAS", "Patras" },
+            { "HERAKLION", "Heraklion" }, { "LARISSA", "Larissa" }, { "VOLOS", "Volos" },
+            { "IOANNINA", "Ioannina" }, { "CHANIA", "Chania" }, { "RHODES", "Rhodes" },
+            { "KALAMATA", "Kalamata" }, { "CORFU", "Corfu" }, { "\u0391\u0398\u0397\u039D\u0391", "Athens" },
+            { "\u03A0\u0395\u0399\u03A1\u0391\u0399\u0391\u03A3", "Athens" }, { "\u0393\u0391\u039B\u0391\u03A4\u03A3\u0399", "Athens" },
+            { "\u0398\u0395\u03A3\u03A3\u0391\u039B\u039F\u039D\u0399\u039A\u0397", "Thessaloniki" }, { "\u03A0\u0391\u03A4\u03A1\u0391", "Patras" },
+            { "\u0397\u03A1\u0391\u039A\u039B\u0395\u0399\u039F", "Heraklion" }, { "\u039B\u0391\u03A1\u0399\u03A3\u0391", "Larissa" },
+            { "\u0399\u03A9\u0391\u039D\u039D\u0399\u039D\u0391", "Ioannina" }, { "\u03A7\u0391\u039D\u0399\u0391", "Chania" },
+            { "\u03A1\u039F\u0394\u039F\u03A3", "Rhodes" }, { "\u039A\u0391\u039B\u0391\u039C\u0391\u03A4\u0391", "Kalamata" },
             { "\u039A\u0395\u03A1\u039A\u03A5\u03A1\u0391", "Corfu" }
         };
 
         return cityAliases.TryGetValue(cityKey, out var resolvedCityName)
-            ? resolvedCityName
-            : string.IsNullOrWhiteSpace(cityName) ? "Athens" : cityName.Trim();
+            ? resolvedCityName : string.IsNullOrWhiteSpace(cityName) ? "Athens" : cityName.Trim();
     }
 
     private static string NormalizeCityKey(string value)
     {
-        if (string.IsNullOrWhiteSpace(value))
-            return string.Empty;
-
+        if (string.IsNullOrWhiteSpace(value)) return string.Empty;
         var normalized = value.Trim().Normalize(NormalizationForm.FormD);
-        var chars = normalized
-            .Where(c => CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark)
-            .ToArray();
-
+        var chars = normalized.Where(c => CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark).ToArray();
         return new string(chars).Normalize(NormalizationForm.FormC).ToUpperInvariant();
     }
 
-    private static string CreateRandomPhone(Random random)
-    {
-        return $"2{random.Next(100000000, 999999999)}";
-    }
-
+    private static string CreateRandomPhone(Random random) => $"2{random.Next(100000000, 999999999)}";
 
     private static void SeedLayouts(ApplicationDbContext context)
     {
@@ -286,21 +204,8 @@ public class DataSeeder
         {
             void AddLayoutIfMissing(string areaName, decimal width, decimal height, decimal top, decimal left, string desc)
             {
-                if (existingLayouts.Any(sa => sa.VenueId == venue.Id && sa.AreaName == areaName))
-                    return;
-
-                var layout = new Layout
-                {
-                    AreaName = areaName,
-                    Width = width,
-                    Height = height,
-                    Top = top,
-                    Left = left,
-                    Rotate = 0,
-                    Desc = desc,
-                    VenueId = venue.Id
-                };
-
+                if (existingLayouts.Any(sa => sa.VenueId == venue.Id && sa.AreaName == areaName)) return;
+                var layout = new Layout { AreaName = areaName, Width = width, Height = height, Top = top, Left = left, Rotate = 0, Desc = desc, VenueId = venue.Id };
                 layouts.Add(layout);
                 existingLayouts.Add(layout);
             }
@@ -308,39 +213,27 @@ public class DataSeeder
             AddLayoutIfMissing("Main Hall", 500, 300, 0, 0, "Primary area in venue");
             AddLayoutIfMissing("Balcony", 400, 150, 310, 0, "Balcony area in venue");
         }
-
         context.Layout.AddRange(layouts);
     }
 
     private static void SeedEvents(ApplicationDbContext context)
     {
         const int targetParentEventCount = 1000;
-
         var eventsFilePath = Path.Combine(AppContext.BaseDirectory, "SeedData", "events.json");
 
-        if (!File.Exists(eventsFilePath))
-            return;
+        if (!File.Exists(eventsFilePath)) return;
 
-        var eventNamesByType = JsonSerializer.Deserialize<Dictionary<string, List<string>>>(
-            File.ReadAllText(eventsFilePath)
-        );
-
-        if (eventNamesByType == null || !eventNamesByType.Any())
-            return;
+        var eventNamesByType = JsonSerializer.Deserialize<Dictionary<string, List<string>>>(File.ReadAllText(eventsFilePath));
+        if (eventNamesByType == null || !eventNamesByType.Any()) return;
 
         var random = new Random();
-
         var venues = context.Venue.ToList();
         var types = context.EventType.ToList();
         var layouts = context.Layout.ToList();
 
-        if (!venues.Any() || !types.Any())
-            return;
+        if (!venues.Any() || !types.Any()) return;
 
-        var parentEvents = context.Event
-            .Where(e => e.ParentEventId == null)
-            .ToList();
-
+        var parentEvents = context.Event.Where(e => e.ParentEventId == null).ToList();
         var parentEventsToCreate = targetParentEventCount - parentEvents.Count;
         var newParentEvents = new List<Event>();
 
@@ -349,33 +242,21 @@ public class DataSeeder
             var type = types[random.Next(types.Count)];
             var typeKey = ResolveEventTypeKey(type);
 
-            if (!eventNamesByType.ContainsKey(typeKey) || !eventNamesByType[typeKey].Any())
-                continue;
+            if (!eventNamesByType.ContainsKey(typeKey) || !eventNamesByType[typeKey].Any()) continue;
 
             var venue = venues[random.Next(venues.Count)];
-
-            var start = DateTime.Now
-                .AddDays(random.Next(7, 365))
-                .Date
-                .AddHours(9);
-
-            var durationDays = random.Next(3, 11);
-            var end = start.Date
-                .AddDays(durationDays - 1)
-                .AddHours(23);
-
-            var baseEventName = eventNamesByType[typeKey][random.Next(eventNamesByType[typeKey].Count)];
-            var eventName = $"{baseEventName}";
+            var start = DateTime.Now.AddDays(random.Next(7, 365)).Date.AddHours(9);
+            var end = start.Date.AddDays(random.Next(3, 11) - 1).AddHours(23);
 
             newParentEvents.Add(new Event
             {
-                Name = eventName,
+                Name = eventNamesByType[typeKey][random.Next(eventNamesByType[typeKey].Count)],
                 StartDateTime = start,
                 EndTime = end,
                 EventTypeId = type.Id,
                 VenueId = venue.Id,
                 LayoutId = null,
-                ImagePath = $"/images/events/event{random.Next(1, 5)}.jpg"
+                ImagePath = $"/images/events/event{random.Next(1, 5)}.jpg" 
             });
         }
 
@@ -386,37 +267,22 @@ public class DataSeeder
             parentEvents.AddRange(newParentEvents);
         }
 
-        var childEvents = context.Event
-            .Where(e => e.ParentEventId.HasValue)
-            .ToList();
-
-        var childDaysByParentId = childEvents
-            .GroupBy(e => e.ParentEventId!.Value)
-            .ToDictionary(
-                g => g.Key,
-                g => g.Select(e => e.StartDateTime.Date).ToHashSet()
-            );
-
+        var childEvents = context.Event.Where(e => e.ParentEventId.HasValue).ToList();
+        var childDaysByParentId = childEvents.GroupBy(e => e.ParentEventId!.Value).ToDictionary(g => g.Key, g => g.Select(e => e.StartDateTime.Date).ToHashSet());
         var childEventsToCreate = new List<Event>();
 
         foreach (var parentEvent in parentEvents)
         {
             var type = types.FirstOrDefault(t => t.Id == parentEvent.EventTypeId);
-
-            if (type == null)
-                continue;
+            if (type == null) continue;
 
             var typeKey = ResolveEventTypeKey(type);
-
-            if (!eventNamesByType.ContainsKey(typeKey) || !eventNamesByType[typeKey].Any())
-                continue;
+            if (!eventNamesByType.ContainsKey(typeKey) || !eventNamesByType[typeKey].Any()) continue;
 
             if (parentEvent.EndTime.Date <= parentEvent.StartDateTime.Date)
             {
                 parentEvent.StartDateTime = parentEvent.StartDateTime.Date.AddHours(9);
-                parentEvent.EndTime = parentEvent.StartDateTime.Date
-                    .AddDays(random.Next(3, 11) - 1)
-                    .AddHours(23);
+                parentEvent.EndTime = parentEvent.StartDateTime.Date.AddDays(random.Next(3, 11) - 1).AddHours(23);
             }
 
             if (!childDaysByParentId.TryGetValue(parentEvent.Id, out var existingChildDays))
@@ -425,44 +291,29 @@ public class DataSeeder
                 childDaysByParentId[parentEvent.Id] = existingChildDays;
             }
 
-            var venueLayouts = layouts
-                .Where(s => s.VenueId == parentEvent.VenueId)
-                .ToList();
+            var venueLayouts = layouts.Where(s => s.VenueId == parentEvent.VenueId).ToList();
 
             for (var day = parentEvent.StartDateTime.Date; day <= parentEvent.EndTime.Date; day = day.AddDays(1))
             {
-                if (!existingChildDays.Add(day))
-                    continue;
+                if (!existingChildDays.Add(day)) continue;
 
-                var childStart = day
-                    .AddHours(random.Next(10, 21))
-                    .AddMinutes(random.Next(0, 4) * 15);
-
-                var childDurationHours = random.Next(2, 6);
-                var childEnd = childStart.AddHours(childDurationHours);
-
-                if (childEnd.Date > day)
-                    childEnd = day.AddHours(23);
-
-                var childEventName = eventNamesByType[typeKey][random.Next(eventNamesByType[typeKey].Count)];
-                var layout = venueLayouts.Any()
-                    ? venueLayouts[random.Next(venueLayouts.Count)]
-                    : null;
+                var childStart = day.AddHours(random.Next(10, 21)).AddMinutes(random.Next(0, 4) * 15);
+                var childEnd = childStart.AddHours(random.Next(2, 6));
+                if (childEnd.Date > day) childEnd = day.AddHours(23);
 
                 childEventsToCreate.Add(new Event
                 {
-                    Name = $"{childEventName} - Day {(day - parentEvent.StartDateTime.Date).Days + 1}",
+                    Name = $"{eventNamesByType[typeKey][random.Next(eventNamesByType[typeKey].Count)]} Day {(day - parentEvent.StartDateTime.Date).Days + 1}",
                     StartDateTime = childStart,
                     EndTime = childEnd,
                     EventTypeId = parentEvent.EventTypeId,
                     VenueId = parentEvent.VenueId,
-                    LayoutId = layout?.Id,
+                    LayoutId = venueLayouts.Any() ? venueLayouts[random.Next(venueLayouts.Count)].Id : null,
                     ParentEventId = parentEvent.Id,
                     ImagePath = null
                 });
             }
         }
-
         context.Event.AddRange(childEventsToCreate);
     }
 
@@ -470,17 +321,10 @@ public class DataSeeder
     {
         var eventTypeKeys = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
-            { "Concert", "1" },
-            { "Theater", "2" },
-            { "Exhibition", "3" },
-            { "Sports", "4" },
-            { "Sport", "4" },
-            { "Conference", "5" }
+            { "Concert", "1" }, { "Theater", "2" }, { "Exhibition", "3" },
+            { "Sports", "4" }, { "Sport", "4" }, { "Conference", "5" }
         };
-
-        return eventTypeKeys.TryGetValue(eventType.Name, out var typeKey)
-            ? typeKey
-            : eventType.Id.ToString();
+        return eventTypeKeys.TryGetValue(eventType.Name, out var typeKey) ? typeKey : eventType.Id.ToString();
     }
 
     private static void SeedVenueCategories(ApplicationDbContext context)
@@ -489,38 +333,20 @@ public class DataSeeder
         var venues = context.Venue.ToList();
         var categories = new List<VenueCategory>();
 
-        if (!etypes.Any() || !venues.Any())
-            return;
+        if (!etypes.Any() || !venues.Any()) return;
 
         var random = new Random();
         foreach(var venue in venues)
         {
             int randomIndex = random.Next(0, etypes.Count);
-            if (randomIndex == -1)
-            {
-                categories.Add(new VenueCategory
-                {
-                    VenueId = venue.Id,
-                    CategoryId = null
-                });
-            }
+            if (randomIndex == -1) categories.Add(new VenueCategory { VenueId = venue.Id, CategoryId = null });
             else
             {
-                var randomET = etypes
-                .OrderBy(e => random.Next())
-                .Take(randomIndex)
-                .ToList();
-                foreach(var type in randomET)
+                foreach(var type in etypes.OrderBy(e => random.Next()).Take(randomIndex).ToList())
                 {
-                    
-                    categories.Add(new VenueCategory
-                    {
-                        VenueId = venue.Id,
-                        CategoryId = type.Id
-                    });
+                    categories.Add(new VenueCategory { VenueId = venue.Id, CategoryId = type.Id });
                 }
             }
-
         }
         context.VenueCategory.AddRange(categories);
     }
@@ -528,22 +354,12 @@ public class DataSeeder
     private static void SeedSeats(ApplicationDbContext context)
     {
         var layouts = context.Layout.ToList();
-        var layoutIdsWithSeats = context.Seat
-            .Select(s => s.LayoutId)
-            .Distinct()
-            .ToHashSet();
+        var layoutIdsWithSeats = context.Seat.Select(s => s.LayoutId).Distinct().ToHashSet();
         var seats = new List<Seat>();
 
         foreach (var area in layouts)
         {
-            if (layoutIdsWithSeats.Contains(area.Id))
-                continue;
-
-            // Define proper spacing between seats
-            var seatSpacingX = 70m; // Horizontal spacing between seats
-            var seatSpacingY = 75m; // Vertical spacing between rows
-            var startX = 30m; // Starting X position
-            var startY = 30m; // Starting Y position
+            if (layoutIdsWithSeats.Contains(area.Id)) continue;
 
             for (int row = 0; row < 5; row++)
             {
@@ -552,15 +368,14 @@ public class DataSeeder
                     seats.Add(new Seat
                     {
                         Name = $"{(char)('A' + row)}{col + 1:D2}",
-                        X = startX + (col * seatSpacingX),
-                        Y = startY + (row * seatSpacingY),
+                        X = 30m + (col * 70m),
+                        Y = 30m + (row * 75m),
                         LayoutId = area.Id,
                         Available = true,
                     });
                 }
             }
         }
-
         context.Seat.AddRange(seats);
     }
 }

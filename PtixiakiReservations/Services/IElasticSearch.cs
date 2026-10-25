@@ -14,8 +14,7 @@ namespace PtixiakiReservations.Services
 
         Task<T> GetByIdAsync<T>(string id, string indexName) where T : class;
 
-        Task<IEnumerable<T>> SearchAsync<T>(string query, string indexName) where T : class;
-
+        Task<IEnumerable<T>> SearchAsync<T>(string query, string indexName, double? lat = null, double? lon = null, string distance = "50km") where T : class;
         Task<bool> DeleteByIdAsync<T>(string id, string indexName) where T : class;
     }
 }
