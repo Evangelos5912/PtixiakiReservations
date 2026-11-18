@@ -5,7 +5,7 @@ This is a .NET 8.0 ASP.NET Core application that serves as a reservation managem
 ## Prerequisites
 
 ### General Requirements
-- [.NET SDK 8.0](https://dotnet.microsoft.com/download/dotnet/8.0)
+- [.NET SDK 9.0](https://dotnet.microsoft.com/download/dotnet/9.0)
 - [SQL Server](https://www.microsoft.com/en-us/sql-server/) instance for the database
 - [Docker](https://www.docker.com/) (if running the application in a container)
 
@@ -48,7 +48,7 @@ You need to configure the connection string to point to your SQL Server database
 
 4. Open your browser and navigate to:
    ```
-   https://localhost:5001
+   https://localhost:5000
    ```
 
 ---
