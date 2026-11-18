@@ -21,12 +21,10 @@ using System;
 using Microsoft.AspNetCore.Authorization;
 using PtixiakiReservations.Hubs;
 
-// Configure Npgsql to handle DateTime as timestamp without time zone
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
 var builder = WebApplication.CreateBuilder(args);
 
-// EF MODE: Only load DbContext for migrations
 if (builder.Environment.IsEnvironment("EF"))
 {
     builder.Services.AddDbContext<ApplicationDbContext>(options =>
@@ -37,11 +35,9 @@ if (builder.Environment.IsEnvironment("EF"))
 }
 
 
-// Configure Serilog with Elasticsearch
 var elasticUrl = builder.Configuration["ElasticSettings:Url"] ?? "http://elasticsearch:9200";
 var indexPrefix = builder.Configuration["ElasticSettings:DefaultIndex"] ?? "events";
 
-// Configure Serilog
 Log.Logger = new LoggerConfiguration()
     .ReadFrom.Configuration(builder.Configuration)
     .Enrich.FromLogContext()
@@ -68,7 +64,6 @@ Log.Logger = new LoggerConfiguration()
         })
     .CreateLogger();
 
-// Use Serilog for logging
 builder.Host.UseSerilog();
 
 try
@@ -89,13 +84,11 @@ try
 
     builder.Services.AddHttpClient<IAILayoutService, AILayoutService>();
 
-    // Add configuration for forwarded headers
     builder.Services.Configure<ForwardedHeadersOptions>(options =>
     {
         options.ForwardedHeaders = ForwardedHeaders.XForwardedFor |
                                    ForwardedHeaders.XForwardedProto |
                                    ForwardedHeaders.XForwardedHost;
-        // Additional options to help with proxy
         options.KnownNetworks.Clear();
         options.KnownProxies.Clear();
     });
@@ -104,7 +97,6 @@ try
         {
             options.Stores.MaxLengthForKeys = 128;
 
-            // Password settings
             options.Password.RequireDigit = false;
     options.Password.RequireLowercase = false;
     options.Password.RequireNonAlphanumeric = false;
@@ -125,10 +117,8 @@ try
 
     builder.Services.AddTransient<IEmailService, EmailService>();
 
-    // Add Event Generator Service
     builder.Services.AddScoped<IEventGeneratorService, EventGeneratorService>();
 
-    // CHANGE: Remove the global authorization filter and apply it selectively
     builder.Services.AddMvc();
 
     builder.Services.ConfigureApplicationCookie(options =>
@@ -136,11 +126,9 @@ try
         options.LoginPath = "/Identity/Account/Login";
         options.LogoutPath = "/Identity/Account/Logout";
         options.AccessDeniedPath = "/Identity/Account/AccessDenied";
-        // Set the default return URL after login
         options.ReturnUrlParameter = "returnUrl";
         options.SlidingExpiration = true;
 
-        // Add this to fix the redirect issue
         options.Cookie.SameSite = Microsoft.AspNetCore.Http.SameSiteMode.Lax;
     });
 
@@ -148,10 +136,8 @@ try
     builder.Services.AddScoped<SearchSyncService>();
     builder.Services.AddHostedService<ElasticsearchStartupService>();
 
-    // Build the app
     var app = builder.Build();
 
-    // Configure the HTTP Request Pipeline
 
 if (!builder.Environment.IsEnvironment("EF"))
 {
@@ -179,7 +165,6 @@ if (!builder.Environment.IsEnvironment("EF"))
     }
 }
 
-    // Use forwarded headers - this must come first in the pipeline
     app.UseForwardedHeaders();
 
     if (app.Environment.IsDevelopment())

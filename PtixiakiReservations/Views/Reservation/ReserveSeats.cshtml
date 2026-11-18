@@ -36,7 +36,7 @@
                             </span>
                         </div>
                     </div>
-                    <div class="bg-black/20 backdrop-blur-md border border-white/20 rounded-lg px-4 py-2 text-right">
+                    <div class="bg-black/20 backdrop-blur-md border border-white/20 rounded-lg px-4 py-2 text-left md:text-right">
                         <p class="text-[11px] text-blue-200 uppercase tracking-wider font-bold">Venue & Floorplan</p>
                         <p class="text-white font-bold text-sm">@Model.Venue.Name</p>
                         @if (Model.Layout != null) { <p class="text-blue-100 text-xs mt-0.5">Area: @Model.Layout.AreaName</p> }
@@ -133,21 +133,21 @@
                     </div>
 
                     <div class="mb-8 relative z-10">
-                        <div id="canvas-wrapper" class="bg-gray-100 rounded-xl border border-gray-200 overflow-hidden relative shadow-inner w-full" style="height: 65vh; min-height: 500px; max-height: 800px;">
+                        <div id="canvas-wrapper" class="bg-gray-100 rounded-xl border border-gray-200 overflow-hidden relative shadow-inner w-full touch-none" style="height: 65vh; min-height: 500px; max-height: 800px;">
                             
                             <div class="absolute bottom-4 right-4 z-50 flex items-center gap-1 bg-white/95 backdrop-blur-md p-1.5 rounded-xl shadow-lg border border-gray-200">
-                                <button type="button" aria-label="Zoom Out" onclick="ZoomOut()" class="w-12 h-12 flex items-center justify-center hover:bg-gray-100 rounded-lg text-gray-700 transition-colors cursor-pointer border-none" title="Zoom Out">
-                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM13 10H7"/></svg>
+                                <button type="button" aria-label="Zoom Out" onclick="ZoomOut()" class="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center hover:bg-gray-100 rounded-lg text-gray-700 transition-colors cursor-pointer border-none" title="Zoom Out">
+                                    <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM13 10H7"/></svg>
                                 </button>
                                 
-                                <span id="zoom-level" class="w-16 text-center text-sm font-extrabold text-gray-800 select-none" aria-live="polite">100%</span>
+                                <span id="zoom-level" class="w-12 sm:w-16 text-center text-xs sm:text-sm font-extrabold text-gray-800 select-none" aria-live="polite">100%</span>
                                 
-                                <button type="button" aria-label="Zoom In" onclick="ZoomIn()" class="w-12 h-12 flex items-center justify-center hover:bg-gray-100 rounded-lg text-gray-700 transition-colors cursor-pointer border-none" title="Zoom In">
-                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"/></svg>
+                                <button type="button" aria-label="Zoom In" onclick="ZoomIn()" class="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center hover:bg-gray-100 rounded-lg text-gray-700 transition-colors cursor-pointer border-none" title="Zoom In">
+                                    <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"/></svg>
                                 </button>
-                                <div class="w-px h-8 bg-gray-300 mx-1"></div>
-                                <button type="button" aria-label="Reset View" onclick="ResetZoom()" class="w-12 h-12 flex items-center justify-center hover:bg-gray-100 rounded-lg text-gray-700 transition-colors cursor-pointer border-none" title="Reset View to Fit Everything">
-                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                                <div class="w-px h-6 sm:h-8 bg-gray-300 mx-1"></div>
+                                <button type="button" aria-label="Reset View" onclick="ResetZoom()" class="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center hover:bg-gray-100 rounded-lg text-gray-700 transition-colors cursor-pointer border-none" title="Reset View to Fit Everything">
+                                    <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
                                 </button>
                             </div>
 
@@ -164,13 +164,13 @@
                                     <svg class="w-5 h-5 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                                     Ready for Checkout
                                 </h3>
-                                <div class="flex items-center text-indigo-800">
+                                <div class="flex items-center text-indigo-800 flex-wrap">
                                     <span class="mr-2">Selected: <span id="selected-count" class="font-extrabold text-lg">0</span> seats</span>
-                                    <span class="text-indigo-300 mx-2">|</span>
-                                    <span id="selected-seats-list" class="text-sm font-bold truncate max-w-xs sm:max-w-md" aria-live="polite"></span>
+                                    <span class="text-indigo-300 mx-2 hidden sm:inline">|</span>
+                                    <span id="selected-seats-list" class="text-sm font-bold truncate max-w-full sm:max-w-md w-full sm:w-auto mt-2 sm:mt-0" aria-live="polite"></span>
                                 </div>
                             </div>
-                            <button id="clear-selection" aria-label="Clear selected seats" class="text-sm font-bold text-indigo-600 hover:text-indigo-800 bg-white border border-indigo-200 hover:bg-indigo-50 px-4 py-2 min-h-[48px] rounded-lg shadow-sm transition-colors whitespace-nowrap">
+                            <button id="clear-selection" aria-label="Clear selected seats" class="text-sm font-bold text-indigo-600 hover:text-indigo-800 bg-white border border-indigo-200 hover:bg-indigo-50 px-4 py-2 min-h-[48px] rounded-lg shadow-sm transition-colors whitespace-nowrap self-start sm:self-auto">
                                 Clear Selection
                             </button>
                         </div>
@@ -181,10 +181,10 @@
             @if (layoutId != null && layoutId != 0)
             {
                 <div class="bg-gray-50 border-t border-gray-200 p-4 sm:p-6 flex flex-col sm:flex-row justify-end gap-3 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] relative z-30">
-                    <a href="@Url.Action("Details", "Events", new { id = Model.Id })" class="px-6 py-2.5 min-h-[48px] flex items-center justify-center bg-white border border-gray-300 text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition-colors shadow-sm text-center !no-underline">
+                    <a href="@Url.Action("Details", "Events", new { id = Model.Id })" class="px-6 py-2.5 min-h-[48px] flex items-center justify-center bg-white border border-gray-300 text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition-colors shadow-sm text-center !no-underline w-full sm:w-auto">
                         Cancel
                     </a>
-                    <button id="confirm-reservation" class="px-8 py-2.5 min-h-[48px] bg-indigo-600 text-white font-bold rounded-xl shadow-md hover:bg-indigo-700 transition-all flex items-center justify-center focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 border-none">
+                    <button id="confirm-reservation" class="px-8 py-2.5 min-h-[48px] bg-indigo-600 text-white font-bold rounded-xl shadow-md hover:bg-indigo-700 transition-all flex items-center justify-center focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 border-none w-full sm:w-auto">
                         <span>Proceed to Payment</span>
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
@@ -204,6 +204,9 @@
     .animate-fade-in-up {
         animation: fadeInUp 0.3s ease-out forwards;
     }
+    .touch-none {
+        touch-action: none;
+    }
 </style>
 
 @section Scripts {
@@ -220,6 +223,9 @@
         let currentShapesCache = [];
         let currentGroupsCache = [];
         let fabricCanvas;
+        
+        let initialDistance = null;
+        let initialScale = null;
 
         const seatConnection = new signalR.HubConnectionBuilder()
             .withUrl("/seathub")
@@ -239,7 +245,9 @@
 
         seatConnection.on("SeatLocked", (lockedSeatId, userConnectionId) => {
             if (!fabricCanvas) return;
-            fabricCanvas.getObjects('group').forEach(group => {
+            const objects = fabricCanvas.getObjects('group');
+            for (let i = 0; i < objects.length; i++) {
+                const group = objects[i];
                 if (group.seatId === lockedSeatId) {
                     const rect = group.item(0);
                     rect.set('fill', '#f59e0b'); 
@@ -247,14 +255,17 @@
                     group.set('selectable', false);
                     group.set('hoverCursor', 'not-allowed');
                     group.lockedByOther = true;
+                    fabricCanvas.requestRenderAll();
+                    break;
                 }
-            });
-            fabricCanvas.renderAll();
+            }
         });
 
         seatConnection.on("InitializeLocks", (lockedSeatIds) => {
             if (!fabricCanvas) return;
-            fabricCanvas.getObjects('group').forEach(group => {
+            const objects = fabricCanvas.getObjects('group');
+            for (let i = 0; i < objects.length; i++) {
+                const group = objects[i];
                 if (lockedSeatIds.includes(group.seatId)) {
                     const rect = group.item(0);
                     rect.set('fill', '#f59e0b'); 
@@ -263,13 +274,15 @@
                     group.set('hoverCursor', 'not-allowed');
                     group.lockedByOther = true;
                 }
-            });
-            fabricCanvas.renderAll();
+            }
+            fabricCanvas.requestRenderAll();
         });
 
         seatConnection.on("SeatUnlocked", (unlockedSeatId, userConnectionId) => {
             if (!fabricCanvas) return;
-            fabricCanvas.getObjects('group').forEach(group => {
+            const objects = fabricCanvas.getObjects('group');
+            for (let i = 0; i < objects.length; i++) {
+                const group = objects[i];
                 if (group.seatId === unlockedSeatId && group.lockedByOther) {
                     const rect = group.item(0);
                     rect.set('fill', '#10b981'); 
@@ -277,9 +290,10 @@
                     group.set('selectable', true);
                     group.set('hoverCursor', 'pointer');
                     group.lockedByOther = false;
+                    fabricCanvas.requestRenderAll();
+                    break;
                 }
-            });
-            fabricCanvas.renderAll();
+            }
         });
 
         function updateZoomText() {
@@ -327,7 +341,7 @@
             const maxX = Math.max(...maxXs);
             const maxY = Math.max(...maxYs);
 
-            const padding = 100; 
+            const padding = window.innerWidth < 640 ? 50 : 100; 
             const contentWidth = (maxX - minX) + (padding * 2);
             const contentHeight = (maxY - minY) + (padding * 2);
 
@@ -340,7 +354,7 @@
 
             const scaleX = viewportWidth / contentWidth;
             const scaleY = viewportHeight / contentHeight;
-            const optimalScale = Math.max(0.1, Math.min(scaleX, scaleY, 1.2)); 
+            const optimalScale = Math.max(0.05, Math.min(scaleX, scaleY, 1.2)); 
 
             const centerX = (minX + maxX) / 2;
             const centerY = (minY + maxY) / 2; 
@@ -354,13 +368,82 @@
             fabricCanvas.setViewportTransform(vpt);
             fabricCanvas.calcOffset(); 
             updateZoomText();
+            fabricCanvas.requestRenderAll();
         }
 
         document.addEventListener('DOMContentLoaded', function () {
             
             if (layoutId === 0) return; 
 
-            fabricCanvas = new fabric.Canvas('seatCanvas', { selection: false });
+            fabricCanvas = new fabric.Canvas('seatCanvas', { 
+                selection: false,
+                renderOnAddRemove: false,
+                preserveObjectStacking: true,
+                allowTouchScrolling: false
+            });
+            
+            const wrapper = document.getElementById('canvas-wrapper');
+            
+            wrapper.addEventListener('touchstart', function(e) {
+                if (e.touches.length === 2) {
+                    e.preventDefault();
+                    const touch1 = e.touches[0];
+                    const touch2 = e.touches[1];
+                    initialDistance = Math.hypot(touch2.clientX - touch1.clientX, touch2.clientY - touch1.clientY);
+                    initialScale = fabricCanvas.getZoom();
+                } else if (e.touches.length === 1) {
+                    const target = fabricCanvas.findTarget(e);
+                    if (!target || (target && target.selectable === false && !target.seatId)) {
+                        fabricCanvas.isDragging = true;
+                        fabricCanvas.lastPosX = e.touches[0].clientX;
+                        fabricCanvas.lastPosY = e.touches[0].clientY;
+                        fabricCanvas.selection = false;
+                    }
+                }
+            }, {passive: false});
+            
+            wrapper.addEventListener('touchmove', function(e) {
+                if (e.touches.length === 2 && initialDistance !== null) {
+                    e.preventDefault();
+                    const touch1 = e.touches[0];
+                    const touch2 = e.touches[1];
+                    const currentDistance = Math.hypot(touch2.clientX - touch1.clientX, touch2.clientY - touch1.clientY);
+                    
+                    const rect = wrapper.getBoundingClientRect();
+                    const mouseX = ((touch1.clientX + touch2.clientX) / 2) - rect.left;
+                    const mouseY = ((touch1.clientY + touch2.clientY) / 2) - rect.top;
+                    
+                    let newScale = initialScale * (currentDistance / initialDistance);
+                    if (newScale > 5) newScale = 5;
+                    if (newScale < 0.05) newScale = 0.05;
+                    
+                    fabricCanvas.zoomToPoint({ x: mouseX, y: mouseY }, newScale);
+                    updateZoomText();
+                } else if (e.touches.length === 1 && fabricCanvas.isDragging) {
+                    e.preventDefault();
+                    const vpt = fabricCanvas.viewportTransform.slice();
+                    vpt[4] += e.touches[0].clientX - fabricCanvas.lastPosX;
+                    vpt[5] += e.touches[0].clientY - fabricCanvas.lastPosY;
+                    
+                    fabricCanvas.setViewportTransform(vpt);
+                    
+                    fabricCanvas.lastPosX = e.touches[0].clientX;
+                    fabricCanvas.lastPosY = e.touches[0].clientY;
+                    fabricCanvas.requestRenderAll();
+                }
+            }, {passive: false});
+            
+            wrapper.addEventListener('touchend', function(e) {
+                if (e.touches.length < 2) {
+                    initialDistance = null;
+                    initialScale = null;
+                }
+                
+                if (e.touches.length === 0) {
+                    fabricCanvas.isDragging = false;
+                    fabricCanvas.calcOffset();
+                }
+            }, {passive: false});
 
             fabricCanvas.on('mouse:down', function (opt) {
                 const evt = opt.e;
@@ -383,6 +466,7 @@
                     
                     this.lastPosX = e.clientX;
                     this.lastPosY = e.clientY;
+                    this.requestRenderAll();
                 }
             });
             
@@ -395,7 +479,7 @@
                 let delta = opt.e.deltaY;
                 let zoom = fabricCanvas.getZoom() * (0.999 ** delta);
                 if (zoom > 5) zoom = 5;
-                if (zoom < 0.1) zoom = 0.1;
+                if (zoom < 0.05) zoom = 0.05;
                 
                 fabricCanvas.zoomToPoint({ x: opt.e.offsetX, y: opt.e.offsetY }, zoom);
                 fabricCanvas.calcOffset(); 
@@ -405,8 +489,12 @@
                 updateZoomText();
             });
 
+            let resizeTimer;
             window.addEventListener('resize', () => {
-                if (fabricCanvas) fitLayoutToViewport();
+                clearTimeout(resizeTimer);
+                resizeTimer = setTimeout(() => {
+                    if (fabricCanvas) fitLayoutToViewport();
+                }, 250);
             });
 
             loadSeatMap(layoutId, eventId).then(() => {
@@ -513,6 +601,7 @@
 
         function renderMap(canvas, seats, shapes, groups) {
             canvas.clear();
+            const objectsToAdd = [];
 
             if (groups) {
                 groups.forEach(group => {
@@ -538,10 +627,11 @@
                         stroke: '#6366f1', strokeWidth: 2,
                         strokeDashArray: [5, 5],
                         rx: 8, ry: 8,
-                        selectable: false, evented: false
+                        selectable: false, evented: false,
+                        objectCaching: true
                     });
                     
-                    canvas.add(groupRect);
+                    objectsToAdd.push(groupRect);
                 });
             }
 
@@ -584,9 +674,10 @@
 
                     const shapeGroup = new fabric.Group([fabricShape, shapeText], {
                         left: posX, top: posY,
-                        selectable: false, evented: false
+                        selectable: false, evented: false,
+                        objectCaching: true
                     });
-                    canvas.add(shapeGroup);
+                    objectsToAdd.push(shapeGroup);
                 });
             }
 
@@ -621,7 +712,8 @@
                         lockScalingX: true,
                         lockScalingY: true,
                         
-                        hoverCursor: seat.available ? 'pointer' : 'default'
+                        hoverCursor: seat.available ? 'pointer' : 'default',
+                        objectCaching: true
                     });
 
                     seatGroup.seatId = seat.id;
@@ -632,10 +724,12 @@
                     if (seat.available) {
                         seatGroup.on('mousedown', function() { toggleSeatSelection(this, canvas); });
                     }
-                    canvas.add(seatGroup);
+                    objectsToAdd.push(seatGroup);
                 });
             }
-            canvas.renderAll();
+            
+            canvas.add(...objectsToAdd);
+            canvas.requestRenderAll();
         }
 
         function toggleSeatSelection(seatGroup, canvas) {
@@ -655,7 +749,7 @@
             }
 
             updateSelectionSummary();
-            canvas.renderAll();
+            canvas.requestRenderAll();
         }
 
         function updateSelectionSummary() {
@@ -676,27 +770,30 @@
                 seatConnection.invoke("UnlockSeat", layoutId, seatId).catch(console.error);
             });
 
-            canvas.getObjects('group').forEach(group => {
+            const objects = canvas.getObjects('group');
+            for (let i = 0; i < objects.length; i++) {
+                const group = objects[i];
                 if (group.available && group.seatId && !group.lockedByOther) {
                     group.item(0).set('fill', '#10b981'); 
                 }
-            });
+            }
+            
             selectedSeats = [];
             updateSelectionSummary();
-            canvas.renderAll();
+            canvas.requestRenderAll();
         }
 
         function showLoadingOnFabric(canvas) {
             canvas.add(new fabric.Text('Loading interactive map...', { left: canvas.width/2, top: canvas.height/2, originX: 'center', originY: 'center', fill: '#4a5568', fontSize: 18, fontFamily: 'Arial', fontWeight: 'bold' }));
-            canvas.renderAll();
+            canvas.requestRenderAll();
         }
         function showNoSeatsMessageOnFabric(canvas) {
             canvas.add(new fabric.Text('No seats have been placed in this floorplan yet.', { left: canvas.width/2, top: canvas.height/2, originX: 'center', originY: 'center', fill: '#6b7280', fontSize: 18, fontFamily: 'Arial', fontWeight: 'bold' }));
-            canvas.renderAll();
+            canvas.requestRenderAll();
         }
         function showErrorMessageOnFabric(canvas) {
             canvas.add(new fabric.Text('Failed to load map data. Please refresh.', { left: canvas.width/2, top: canvas.height/2, originX: 'center', originY: 'center', fill: '#ef4444', fontSize: 18, fontFamily: 'Arial', fontWeight: 'bold' }));
-            canvas.renderAll();
+            canvas.requestRenderAll();
         }
         function showNotification(message, type = 'info') {
             $('.notification').remove();
