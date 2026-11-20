@@ -371,6 +371,8 @@
             fabricCanvas.requestRenderAll();
         }
 
+        let lastWindowWidth = window.innerWidth;
+
         document.addEventListener('DOMContentLoaded', function () {
             
             if (layoutId === 0) return; 
@@ -385,8 +387,11 @@
             const wrapper = document.getElementById('canvas-wrapper');
             
             wrapper.addEventListener('touchstart', function(e) {
+                if (e.target.closest('button')) return;
+
                 if (e.touches.length === 2) {
                     e.preventDefault();
+                    fabricCanvas.isDragging = false;
                     const touch1 = e.touches[0];
                     const touch2 = e.touches[1];
                     initialDistance = Math.hypot(touch2.clientX - touch1.clientX, touch2.clientY - touch1.clientY);
@@ -400,7 +405,7 @@
                         fabricCanvas.selection = false;
                     }
                 }
-            }, {passive: false});
+            }, { passive: false });
             
             wrapper.addEventListener('touchmove', function(e) {
                 if (e.touches.length === 2 && initialDistance !== null) {
@@ -421,17 +426,23 @@
                     updateZoomText();
                 } else if (e.touches.length === 1 && fabricCanvas.isDragging) {
                     e.preventDefault();
-                    const vpt = fabricCanvas.viewportTransform.slice();
-                    vpt[4] += e.touches[0].clientX - fabricCanvas.lastPosX;
-                    vpt[5] += e.touches[0].clientY - fabricCanvas.lastPosY;
-                    
-                    fabricCanvas.setViewportTransform(vpt);
-                    
-                    fabricCanvas.lastPosX = e.touches[0].clientX;
-                    fabricCanvas.lastPosY = e.touches[0].clientY;
-                    fabricCanvas.requestRenderAll();
+                    const touchX = e.touches[0].clientX;
+                    const touchY = e.touches[0].clientY;
+                    const dx = touchX - fabricCanvas.lastPosX;
+                    const dy = touchY - fabricCanvas.lastPosY;
+
+                    if (!isNaN(dx) && !isNaN(dy)) {
+                        const vpt = fabricCanvas.viewportTransform.slice();
+                        vpt[4] += dx;
+                        vpt[5] += dy;
+                        fabricCanvas.setViewportTransform(vpt);
+                        fabricCanvas.requestRenderAll();
+                    }
+
+                    fabricCanvas.lastPosX = touchX;
+                    fabricCanvas.lastPosY = touchY;
                 }
-            }, {passive: false});
+            }, { passive: false });
             
             wrapper.addEventListener('touchend', function(e) {
                 if (e.touches.length < 2) {
@@ -443,10 +454,12 @@
                     fabricCanvas.isDragging = false;
                     fabricCanvas.calcOffset();
                 }
-            }, {passive: false});
+            }, { passive: false });
 
             fabricCanvas.on('mouse:down', function (opt) {
                 const evt = opt.e;
+                if (evt.touches || evt.pointerType === 'touch' || (evt.type && evt.type.startsWith('touch'))) return;
+
                 if (!opt.target || (opt.target && opt.target.selectable === false && !opt.target.seatId)) {
                     this.isDragging = true;
                     this.lastPosX = evt.clientX;
@@ -456,8 +469,10 @@
             });
             
             fabricCanvas.on('mouse:move', function (opt) {
+                const e = opt.e;
+                if (e.touches || e.pointerType === 'touch' || (e.type && e.type.startsWith('touch'))) return;
+
                 if (this.isDragging) {
-                    const e = opt.e;
                     const vpt = this.viewportTransform.slice();
                     vpt[4] += e.clientX - this.lastPosX;
                     vpt[5] += e.clientY - this.lastPosY;
@@ -470,7 +485,10 @@
                 }
             });
             
-            fabricCanvas.on('mouse:up', function () {
+            fabricCanvas.on('mouse:up', function (opt) {
+                const e = opt.e;
+                if (e.touches || e.pointerType === 'touch' || (e.type && e.type.startsWith('touch'))) return;
+
                 this.isDragging = false;
                 this.calcOffset();
             });
@@ -491,6 +509,8 @@
 
             let resizeTimer;
             window.addEventListener('resize', () => {
+                if (window.innerWidth === lastWindowWidth) return;
+                lastWindowWidth = window.innerWidth;
                 clearTimeout(resizeTimer);
                 resizeTimer = setTimeout(() => {
                     if (fabricCanvas) fitLayoutToViewport();
