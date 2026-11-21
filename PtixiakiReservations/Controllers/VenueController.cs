@@ -92,7 +92,7 @@ namespace PtixiakiReservations.Controllers
         }
 
         // Returns global venue matrix for administration.
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin, Venue, SuperOrganizer")]
         public async Task<IActionResult> Index(string city)
         {
             var venuesQuery = _context.Venue.Include(v => v.City).AsQueryable();
@@ -176,7 +176,7 @@ namespace PtixiakiReservations.Controllers
         }
 
         // Renders authorization-guarded venue edit form.
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin, Venue, SuperOrganizer")]
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null) return NotFound();
@@ -221,7 +221,7 @@ namespace PtixiakiReservations.Controllers
 
         // Processes venue updates, transcodes imagery, and synchronizes search index.
         [HttpPost]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin, Venue, SuperOrganizer")]
         public async Task<IActionResult> Edit(VenueViewModel model)
         {
             var venue = await _context.Venue
@@ -325,7 +325,7 @@ namespace PtixiakiReservations.Controllers
         }
 
         // Renders venue creation form with taxonomy data.
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin, Venue, SuperOrganizer")]
         public IActionResult Create()
         {
             ViewBag.ListOfCity = _context.City.ToList();
@@ -335,7 +335,7 @@ namespace PtixiakiReservations.Controllers
         }
 
         // Creates physical venue nodes and executes index writing natively.
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin, Venue, SuperOrganizer")]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(VenueViewModel model)
@@ -450,7 +450,7 @@ namespace PtixiakiReservations.Controllers
         }
 
         // Renders deletion confirmation terminal block.
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin, Venue, SuperOrganizer")]
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null) return NotFound();
@@ -462,7 +462,7 @@ namespace PtixiakiReservations.Controllers
         }
 
         // Executes cascading index deletion bounding physical records and logical clusters.
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin, Venue, SuperOrganizer")]
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         [Obsolete]

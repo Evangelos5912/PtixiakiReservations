@@ -114,7 +114,7 @@
                                         Canvas Navigation
                                     </strong>
                                     <ul class="list-disc pl-5 space-y-1 text-indigo-800/80 text-xs sm:text-sm">
-                                        <li><strong>Pan (Move):</strong> Use two fingers on mobile, or Hold <kbd class="bg-indigo-100 px-1 rounded text-indigo-800">Alt</kbd> or <kbd class="bg-indigo-100 px-1 rounded text-indigo-800">Middle-Click</kbd> + Drag on desktop to pan.</li>
+                                        <li><strong>Pan (Move):</strong> Use two fingers on mobile, or Hold <kbd class="bg-indigo-100 px-1 rounded text-indigo-800">Ctrl</kbd> / <kbd class="bg-indigo-100 px-1 rounded text-indigo-800">Alt</kbd> or <kbd class="bg-indigo-100 px-1 rounded text-indigo-800">Middle-Click</kbd> + Drag on desktop to pan.</li>
                                         <li><strong>Zoom:</strong> Pinch on mobile, or Hold <kbd class="bg-indigo-100 px-1 rounded text-indigo-800">Ctrl</kbd> + Scroll Wheel to zoom.</li>
                                         <li><strong>Select:</strong> Tap and drag on empty space to box-select.</li>
                                     </ul>
@@ -199,20 +199,20 @@
                                     </div>
                                     <div class="w-px h-6 bg-gray-300 mx-1 shrink-0 self-center"></div>
 
-                                    <button type="button" id="add-seat-single" data-type="single" class="toolbar-drag shrink-0 px-3 py-1.5 text-xs sm:text-sm font-bold text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm touch-none">Single</button>
-                                    <button type="button" id="add-seat-hline" class="shrink-0 px-3 py-1.5 text-xs sm:text-sm font-bold text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm">Horiz. Row</button>
-                                    <button type="button" id="add-seat-vline" class="shrink-0 px-3 py-1.5 text-xs sm:text-sm font-bold text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm">Vert. Row</button>
-                                    <button type="button" id="add-seat-grid" class="shrink-0 px-3 py-1.5 text-xs sm:text-sm font-bold text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm">Grid</button>
+                                    <div role="button" tabindex="0" id="add-seat-single" draggable="true" data-type="single" class="toolbar-drag shrink-0 px-3 py-1.5 text-xs sm:text-sm font-bold text-gray-700 bg-white border border-gray-300 hover:border-blue-400 rounded-md shadow-sm cursor-grab active:cursor-grabbing select-none touch-none">Single</div>
+                                    <button type="button" id="add-seat-hline" class="shrink-0 px-3 py-1.5 text-xs sm:text-sm font-bold text-gray-700 bg-white border border-gray-300 hover:border-blue-400 rounded-md shadow-sm">Horiz. Row</button>
+                                    <button type="button" id="add-seat-vline" class="shrink-0 px-3 py-1.5 text-xs sm:text-sm font-bold text-gray-700 bg-white border border-gray-300 hover:border-blue-400 rounded-md shadow-sm">Vert. Row</button>
+                                    <button type="button" id="add-seat-grid" class="shrink-0 px-3 py-1.5 text-xs sm:text-sm font-bold text-gray-700 bg-white border border-gray-300 hover:border-blue-400 rounded-md shadow-sm">Grid</button>
                                 </div>
                                 
                                 <div class="AddContainer w-full hidden flex flex-nowrap hide-scrollbar gap-2" id="tableContainer">
-                                    <button type="button" id="add-table-square" data-type="square" class="toolbar-drag shrink-0 px-3 py-1.5 text-xs sm:text-sm font-bold text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm touch-none">Square Table</button>
-                                    <button type="button" id="add-table-circle" data-type="circle" class="toolbar-drag shrink-0 px-3 py-1.5 text-xs sm:text-sm font-bold text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm touch-none">Circular Table</button>
-                                    <button type="button" id="add-table-triangle" data-type="triangle" class="toolbar-drag shrink-0 px-3 py-1.5 text-xs sm:text-sm font-bold text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm touch-none">Triangular Table</button>
+                                    <div role="button" tabindex="0" id="add-table-square" draggable="true" data-type="square" class="toolbar-drag shrink-0 px-3 py-1.5 text-xs sm:text-sm font-bold text-gray-700 bg-white border border-gray-300 hover:border-blue-400 rounded-md shadow-sm cursor-grab active:cursor-grabbing select-none touch-none">Square Table</div>
+                                    <div role="button" tabindex="0" id="add-table-circle" draggable="true" data-type="circle" class="toolbar-drag shrink-0 px-3 py-1.5 text-xs sm:text-sm font-bold text-gray-700 bg-white border border-gray-300 hover:border-blue-400 rounded-md shadow-sm cursor-grab active:cursor-grabbing select-none touch-none">Circular Table</div>
+                                    <div role="button" tabindex="0" id="add-table-triangle" draggable="true" data-type="triangle" class="toolbar-drag shrink-0 px-3 py-1.5 text-xs sm:text-sm font-bold text-gray-700 bg-white border border-gray-300 hover:border-blue-400 rounded-md shadow-sm cursor-grab active:cursor-grabbing select-none touch-none">Triangular Table</div>
                                 </div>
                                 
                                 <div class="AddContainer w-full hidden flex flex-nowrap hide-scrollbar gap-2" id="sceneContainer">
-                                    <button type="button" id="add-scene-stage" data-type="stage" class="toolbar-drag shrink-0 px-3 py-1.5 text-xs sm:text-sm font-bold text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm touch-none">Performance Stage</button>
+                                    <div role="button" tabindex="0" id="add-scene-stage" draggable="true" data-type="stage" class="toolbar-drag shrink-0 px-3 py-1.5 text-xs sm:text-sm font-bold text-gray-700 bg-white border border-gray-300 hover:border-blue-400 rounded-md shadow-sm cursor-grab active:cursor-grabbing select-none touch-none">Performance Stage</div>
                                 </div>
                             </div>
                         </div>
@@ -364,7 +364,7 @@
                 const response = await fetch('/Layouts/GenerateFromPrompt', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ Prompt: promptText, LayoutId: parseInt(layoutId),CanvasWidth: baseW, CanvasHeight: baseH })
+                    body: JSON.stringify({ Prompt: promptText, LayoutId: parseInt(layoutId), CanvasWidth: baseW, CanvasHeight: baseH })
                 });
 
                 if (!response.ok) {
@@ -1063,8 +1063,13 @@
         document.querySelectorAll('.toolbar-drag').forEach(btn => {
             btn.addEventListener('dragstart', (e) => {
                 draggedItemType = btn.dataset.type;
+                e.dataTransfer.setData('text/plain', draggedItemType);
                 e.dataTransfer.setData('itemType', draggedItemType);
                 e.dataTransfer.effectAllowed = 'copy';
+            });
+
+            btn.addEventListener('dragend', () => {
+                draggedItemType = null;
             });
             
             btn.addEventListener('touchstart', (e) => {
@@ -1080,7 +1085,7 @@
             const touch = e.changedTouches[0];
             const elem = document.elementFromPoint(touch.clientX, touch.clientY);
             
-            if (elem === seatMap || elem === zoomContainer || elem.closest('#zoom-container')) {
+            if (elem && (elem === seatMap || elem === zoomContainer || elem.closest('#zoom-container'))) {
                 const rect = zoomContainer.getBoundingClientRect();
                 dropNewItem(draggedItemType, touch.clientX, touch.clientY, rect);
             }
@@ -1089,11 +1094,16 @@
             draggedItemType = null;
         });
 
-        seatMap.addEventListener('dragover', (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; });
+        seatMap.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'copy';
+        });
+
         seatMap.addEventListener('drop', (e) => {
             e.preventDefault();
-            const itemType = e.dataTransfer.getData('itemType') || draggedItemType;
-            if(!itemType) return;
+            const itemType = e.dataTransfer.getData('itemType') || e.dataTransfer.getData('text/plain') || draggedItemType;
+            draggedItemType = null;
+            if (!itemType) return;
             
             const rect = zoomContainer.getBoundingClientRect();
             dropNewItem(itemType, e.clientX, e.clientY, rect);
@@ -1196,10 +1206,10 @@
 
             const onStart = function(e) {
                 if (e.target.closest('.cursor-nwse-resize')) return; 
-                if (e.ctrlKey || e.metaKey || (e.touches && e.touches.length > 1)) return; 
+                if (e.ctrlKey || e.metaKey || e.altKey || e.button === 1 || (e.touches && e.touches.length > 1)) return; 
                 
                 isTouch = e.type === 'touchstart';
-                if(isTouch) e.preventDefault();
+                if (e.cancelable) e.preventDefault();
 
                 e.stopPropagation();
 
@@ -1237,7 +1247,7 @@
                     const dx = (clientX - startX) / currentScale; const dy = (clientY - startY) / currentScale;
                     if (!isDragging && (Math.abs(dx) > 3 || Math.abs(dy) > 3)) {
                         isDragging = true;
-                        if(isTouch && moveEvent.cancelable) moveEvent.preventDefault();
+                        if (moveEvent.cancelable) moveEvent.preventDefault();
                     }
 
                     if (isDragging) {
@@ -1319,10 +1329,10 @@
             let isTouch = false;
 
             const onStart = function(e) {
-                if (e.ctrlKey || e.metaKey || (e.touches && e.touches.length > 1)) return; 
+                if (e.ctrlKey || e.metaKey || e.altKey || e.button === 1 || (e.touches && e.touches.length > 1)) return; 
                 
                 isTouch = e.type === 'touchstart';
-                if(isTouch) e.preventDefault();
+                if (e.cancelable) e.preventDefault();
 
                 e.stopPropagation();
                 isResizing = true; 
@@ -1332,7 +1342,7 @@
 
                 const onMove = function(moveEvent) {
                     if (!isResizing) return;
-                    if (isTouch && moveEvent.cancelable) moveEvent.preventDefault();
+                    if (moveEvent.cancelable) moveEvent.preventDefault();
                     
                     const clientX = isTouch ? moveEvent.touches[0].clientX : moveEvent.clientX;
                     const clientY = isTouch ? moveEvent.touches[0].clientY : moveEvent.clientY;
@@ -1393,7 +1403,7 @@
             
             isTouchBox = e.type === 'touchstart';
 
-            if (!isTouchBox && (e.ctrlKey || e.metaKey || e.button === 1)) {
+            if (!isTouchBox && (e.ctrlKey || e.metaKey || e.altKey || e.button === 1)) {
                 e.preventDefault();
                 let isPanning = true;
                 let panStartX = e.clientX;
@@ -1425,7 +1435,7 @@
             }
 
             if (e.target !== seatMap && e.target !== zoomContainer && e.target.id !== 'layout-boundary') return; 
-            if(isTouchBox && e.cancelable) e.preventDefault();
+            if (e.cancelable) e.preventDefault();
 
             hideAllOptions(); isBoxSelecting = true;
             const rect = zoomContainer.getBoundingClientRect();
@@ -1438,7 +1448,7 @@
 
             const onMove = function(eMove) {
                 if (!isBoxSelecting) return; 
-                if (isTouchBox && eMove.cancelable) eMove.preventDefault();
+                if (eMove.cancelable) eMove.preventDefault();
                 
                 const mClientX = isTouchBox ? eMove.touches[0].clientX : eMove.clientX;
                 const mClientY = isTouchBox ? eMove.touches[0].clientY : eMove.clientY;
