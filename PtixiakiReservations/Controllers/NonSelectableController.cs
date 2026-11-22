@@ -17,7 +17,7 @@ public class NonSelectableController(ApplicationDbContext context, UserManager<A
 {
     // Replaces all existing non-selectable elements for a layout with a new set
     [HttpPost]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Venue,Admin,SuperOrganizer")]
     public async Task<IActionResult> SaveElements(int layoutId, [FromBody] List<NonSelectable> elements)
     {
         var existing = await context.NonSelectable
@@ -61,7 +61,7 @@ public class NonSelectableController(ApplicationDbContext context, UserManager<A
     // Updates the position and dimensions of a specific non-selectable element
     [HttpPost]
     [ValidateAntiForgeryToken] 
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Venue,Admin,SuperOrganizer")]
     public async Task<IActionResult> UpdateElement([FromBody] NonSelectableUpdateDto request)
     {
         if (request == null || request.Id <= 0)
@@ -103,7 +103,7 @@ public class NonSelectableController(ApplicationDbContext context, UserManager<A
 
     // Bulk deletes multiple non-selectable elements from a layout
     [HttpPost]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Venue,Admin,SuperOrganizer")]
     public async Task<IActionResult> DeleteElements([FromBody] DeleteMultipleElementsRequest request)
     {
         if (request == null || request.Names == null || !request.Names.Any())

@@ -67,7 +67,7 @@ public class SeatController(ApplicationDbContext context, UserManager<Applicatio
     // Updates coordinates and name of an existing seat
     [HttpPost]
     [ValidateAntiForgeryToken] 
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Venue,Admin,SuperOrganizer")]
     public async Task<IActionResult> UpdateSeat([FromBody] SeatUpdateDto request)
     {
         if (request == null || request.Id <= 0)
@@ -120,7 +120,7 @@ public class SeatController(ApplicationDbContext context, UserManager<Applicatio
     }
 
     // Retrieves seat data as JSON
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Venue,Admin,SuperOrganizer")]
     public async Task<IActionResult> Single(int? id)
     {
         if (id == null)
@@ -139,7 +139,7 @@ public class SeatController(ApplicationDbContext context, UserManager<Applicatio
     }
 
     // Renders the seat creation interface
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Venue,Admin,SuperOrganizer")]
     public IActionResult Create(int? layoutId)
     {
         if (layoutId == null)
@@ -156,7 +156,7 @@ public class SeatController(ApplicationDbContext context, UserManager<Applicatio
     // Completely replaces all seats in a layout with a newly provided array
     [HttpPost]     
     [Route("Seat/CreateTableMap")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Venue,Admin,SuperOrganizer")]
     public async Task<IActionResult> CreateTableMap(int layoutId, [FromBody] List<Seat> layoutElements)
     {
         try
@@ -212,7 +212,7 @@ public class SeatController(ApplicationDbContext context, UserManager<Applicatio
     }
     
     // Renders the seat edit form
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Venue,Admin,SuperOrganizer")]
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null)
@@ -232,7 +232,7 @@ public class SeatController(ApplicationDbContext context, UserManager<Applicatio
     // Processes standard seat form edits
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Venue,Admin,SuperOrganizer")]
     public async Task<IActionResult> Edit(int id, [Bind("ID,ReservationId,VenueId")] Seat Seat)
     {
         if (id != Seat.Id)
@@ -297,7 +297,7 @@ public class SeatController(ApplicationDbContext context, UserManager<Applicatio
 
     // Bulk deletes selected seats by name
     [HttpPost]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Venue,Admin,SuperOrganizer")]
     public async Task<IActionResult> DeleteMultipleSeats([FromBody] DeleteMultipleSeatsRequest request)
     {
         var seatsToRemove = await context.Seat
@@ -314,7 +314,7 @@ public class SeatController(ApplicationDbContext context, UserManager<Applicatio
     }
     
     // Renders the seat deletion confirmation view
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Venue,Admin,SuperOrganizer")]
     public async Task<IActionResult> Delete(int? id)
     {
         if (id == null)
@@ -333,7 +333,7 @@ public class SeatController(ApplicationDbContext context, UserManager<Applicatio
     }
 
     // Permanently removes a seat and its active reservations
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Venue,Admin,SuperOrganizer")]
     [HttpPost, ActionName("Delete")]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
@@ -371,7 +371,7 @@ public class SeatController(ApplicationDbContext context, UserManager<Applicatio
     [HttpPost]
     [ValidateAntiForgeryToken]
     [Route("Seat/SaveCompleteLayout")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Venue,Admin,SuperOrganizer")]
     public async Task<IActionResult> SaveCompleteLayout(int layoutId, [FromBody] LayoutPayloadViewModel payload)
     {
         if (payload == null) return BadRequest("Invalid layout data.");

@@ -119,7 +119,7 @@ namespace PtixiakiReservations.Controllers
         }
 
         // Bulk creates new sub-areas for a venue
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Venue,Admin,SuperOrganizer")]
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] JsonLayoutModel[] layouts)
         {
@@ -163,7 +163,7 @@ namespace PtixiakiReservations.Controllers
         }
 
         // Generates default layouts based on venue context
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Venue,Admin,SuperOrganizer")]
         [HttpPost]
         public async Task<IActionResult> CreateFromVenue([FromBody]JsonLayoutModel[] layouts)
         {
@@ -197,7 +197,7 @@ namespace PtixiakiReservations.Controllers
         }
 
         // Renders the layout edit form
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Venue,Admin,SuperOrganizer")]
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null) return NotFound();
@@ -216,7 +216,7 @@ namespace PtixiakiReservations.Controllers
 
         // Updates layout properties and saves changes
         [HttpPost]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Venue,Admin,SuperOrganizer")]
         public async Task<IActionResult> Edit(int id, Layout layoutEdit)
         {
             var layout = await _context.Layout.SingleOrDefaultAsync(s => s.Id == id);
@@ -255,7 +255,7 @@ namespace PtixiakiReservations.Controllers
         }
 
         // Renders the layout deletion confirmation view
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Venue,Admin,SuperOrganizer")]
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null) return NotFound();
@@ -276,7 +276,7 @@ namespace PtixiakiReservations.Controllers
 
         // Cascades deletion for a layout, removing associated seats, shapes, and events
         [HttpPost, ActionName("Delete")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Venue,Admin,SuperOrganizer")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
@@ -390,7 +390,7 @@ namespace PtixiakiReservations.Controllers
 
         // Clones an existing layout including all seats and shapes
         [HttpPost]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Venue,Admin,SuperOrganizer")]
         public async Task<IActionResult> Duplicate([FromBody] DuplicateLayoutRequest request)
         {
             var originalLayout = await _context.Layout
@@ -491,7 +491,7 @@ namespace PtixiakiReservations.Controllers
 
         // Calls the AI service to generate a layout payload from a text prompt
         [HttpPost]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Venue,Admin,SuperOrganizer")]
         public async Task<IActionResult> GenerateFromPrompt([FromBody] PromptRequest request)
         {
             if (string.IsNullOrWhiteSpace(request.Prompt))
